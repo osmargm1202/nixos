@@ -103,7 +103,7 @@ func Toggle(stateHome string, printOnly bool, stdout io.Writer) error {
 	if err := atomicWriteJSON(requestPath, request); err != nil {
 		return err
 	}
-	cmd := []string{"quickshell", "-c", keyhelperShellPath()}
+	cmd := []string{"quickshell", "-p", keyhelperShellPath()}
 	if printOnly {
 		fmt.Fprintln(stdout, shellJoin(cmd))
 		return nil

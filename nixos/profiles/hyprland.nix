@@ -214,6 +214,7 @@ in
     sushi
     warehouse
     gnome-software
+    obsidian
 
     # Desktop integration / theming
     gsettings-desktop-schemas

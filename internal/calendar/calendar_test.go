@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -77,7 +78,7 @@ func TestRunSyncPreservesExistingCacheOnParseFailure(t *testing.T) {
 func TestRunToggleUIWritesRequestAndStartsQuickshellOnlyWhenNeeded(t *testing.T) {
 	root := t.TempDir()
 	logPath := filepath.Join(root, "quick.log")
-	writeExecutable(t, filepath.Join(root, "quickshell"), "#!/bin/sh\necho quickshell:$* >>\"$ORGM_TEST_LOG\"\n")
+	writeExecutable(t, filepath.Join(root, "quickshell"), "#!/bin/sh\necho quickshell:$* show:${ORGM_CALENDAR_SHOW:-} >>\"$ORGM_TEST_LOG\"\n")
 	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("ORGM_TEST_LOG", logPath)
 	t.Setenv("ORGM_CALENDAR_QUICKSHELL_CMD", filepath.Join(root, "quickshell"))
@@ -95,8 +96,8 @@ func TestRunToggleUIWritesRequestAndStartsQuickshellOnlyWhenNeeded(t *testing.T)
 	if got, want := request.Source, "orgm-hypr calendar toggle-ui"; got != want {
 		t.Fatalf("source=%q want %q", got, want)
 	}
-	if got := readFile(t, logPath); !strings.Contains(got, "quickshell:-c calendar") {
-		t.Fatalf("quickshell log=%q", got)
+	if got := readFile(t, logPath); !strings.Contains(got, "quickshell:-c calendar") || !strings.Contains(got, "show:1") {
+		t.Fatalf("quickshell log=%q, want calendar launch with ORGM_CALENDAR_SHOW=1", got)
 	}
 
 	t.Setenv("ORGM_CALENDAR_UI_RUNNING", "1")
@@ -106,6 +107,29 @@ func TestRunToggleUIWritesRequestAndStartsQuickshellOnlyWhenNeeded(t *testing.T)
 	}
 	if got := readFile(t, logPath); got != before {
 		t.Fatalf("quickshell restarted: before=%q after=%q", before, got)
+	}
+}
+
+func TestRunToggleUIUpdatesExistingRequestInPlaceForFileWatchers(t *testing.T) {
+	root := t.TempDir()
+	requestPath := filepath.Join(root, "state", "orgm-calendar", "ui-request.json")
+	writeFile(t, requestPath, `{"schemaVersion":1,"action":"toggle","requestedAt":"old","source":"test"}`)
+	before := inodeOf(t, requestPath)
+	writeExecutable(t, filepath.Join(root, "pgrep"), "#!/bin/sh\nexit 0\n")
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("XDG_STATE_HOME", filepath.Join(root, "state"))
+	t.Setenv("ORGM_CALENDAR_NOW", "2026-05-24T10:00:00Z")
+
+	if err := Run([]string{"toggle-ui"}, nil, nil); err != nil {
+		t.Fatalf("Run(toggle-ui) error = %v", err)
+	}
+
+	if after := inodeOf(t, requestPath); after != before {
+		t.Fatalf("request inode changed from %d to %d; file watchers need in-place updates", before, after)
+	}
+	request := readJSON[UIRequest](t, requestPath)
+	if request.RequestedAt != "2026-05-24T10:00:00Z" {
+		t.Fatalf("requestedAt=%q want updated timestamp", request.RequestedAt)
 	}
 }
 
@@ -160,6 +184,19 @@ func readFile(t *testing.T, path string) string {
 	}
 	return string(data)
 }
+func inodeOf(t *testing.T, path string) uint64 {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		t.Fatalf("stat type = %T, want *syscall.Stat_t", info.Sys())
+	}
+	return stat.Ino
+}
+
 func readJSON[T any](t *testing.T, path string) T {
 	t.Helper()
 	var out T

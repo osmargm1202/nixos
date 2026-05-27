@@ -87,6 +87,8 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return runCalcWithIO(args[1:], stdout, stderr)
 	case "pi":
 		return runPiWithIO(args[1:], stdout, stderr)
+	case "obsidian":
+		return runObsidianWithIO(args[1:], stdout, stderr)
 	case "updates":
 		return cli.UsageError("%s: command group not implemented yet", args[0])
 	default:
@@ -1249,13 +1251,14 @@ func runLauncherWithIO(args []string, stdout, stderr io.Writer) error {
 
 func runNotifyWithIO(args []string, stdout, stderr io.Writer) error {
 	if len(args) < 1 || args[0] != "focus-app" {
-		return cli.UsageError("usage: orgm-hypr notify focus-app [--print]")
+		return cli.UsageError("usage: orgm-hypr notify focus-app [--print] [--config PATH]")
 	}
 	flags := flag.NewFlagSet("orgm-hypr notify focus-app", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	printOnly := flags.Bool("print", false, "print focus plan")
 	pid := flags.String("pid", os.Getenv("SWAYNC_HINT_PI_FOCUS_PID"), "pid hint")
 	pattern := flags.String("match", "", "class/title match")
+	configPath := flags.String("config", defaultNotifyFocusConfigPath(), "notify focus allowlist config")
 	if err := flags.Parse(args[1:]); err != nil {
 		return cli.UsageError(err.Error())
 	}
@@ -1272,11 +1275,22 @@ func runNotifyWithIO(args []string, stdout, stderr io.Writer) error {
 	if *pattern == "" {
 		*pattern = firstNonEmpty(os.Getenv("SWAYNC_DESKTOP_ENTRY"), os.Getenv("SWAYNC_APP_NAME"), os.Getenv("SWAYNC_SUMMARY"))
 	}
+	allowed, normalizedPattern, err := notifyFocusAllowed(*pattern, *configPath)
+	if err != nil {
+		return err
+	}
 	if *printOnly {
-		fmt.Fprintf(stdout, "focus-match=%s\n", normalizeNotifyPattern(*pattern))
+		if allowed {
+			fmt.Fprintf(stdout, "focus-match=%s\n", normalizedPattern)
+		} else {
+			fmt.Fprintf(stdout, "focus-disabled=%s\n", normalizedPattern)
+		}
 		return nil
 	}
-	return focusNotifyMatch(*pattern, stdout, stderr)
+	if !allowed {
+		return nil
+	}
+	return focusNotifyMatch(normalizedPattern, stdout, stderr)
 }
 
 func runFileWithIO(args []string, stdout, stderr io.Writer) error {
@@ -1307,7 +1321,7 @@ func runFileWithIO(args []string, stdout, stderr io.Writer) error {
 	path := filepath.Join(*home, selection)
 	cmd := windows.Command{Name: "xdg-open", Args: []string{path}}
 	if mode == "open-dir" {
-		cmd = windows.Command{Name: "nautilus", Args: []string{filepath.Dir(path)}}
+		cmd = windows.Command{Name: "nautilus", Args: []string{"--new-window", filepath.Dir(path)}}
 	}
 	if mode == "open-terminal" {
 		cmd = windows.Command{Name: "kitty", Args: []string{"--directory", filepath.Dir(path)}}
@@ -1477,6 +1491,107 @@ func focusNotifyMatch(pattern string, stdout, stderr io.Writer) error {
 		}
 	}
 	return nil
+}
+
+type notifyFocusConfig struct {
+	Allow []notifyFocusRule `json:"allow"`
+}
+
+type notifyFocusRule struct {
+	Match string `json:"match"`
+}
+
+func defaultNotifyFocusConfigPath() string {
+	configHome := os.Getenv("XDG_CONFIG_HOME")
+	if configHome == "" {
+		configHome = filepath.Join(os.Getenv("HOME"), ".config")
+	}
+	return filepath.Join(configHome, "orgm-hypr", "notify-focus.json")
+}
+
+func defaultNotifyFocusRules() []notifyFocusRule {
+	return []notifyFocusRule{{Match: "Pi Question"}, {Match: "pi-question"}, {Match: "Dota 2"}, {Match: "dota2"}, {Match: "steam_app_570"}}
+}
+
+func loadNotifyFocusRules(path string) ([]notifyFocusRule, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) && path == defaultNotifyFocusConfigPath() {
+			return defaultNotifyFocusRules(), nil
+		}
+		return nil, err
+	}
+	var config notifyFocusConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	if len(config.Allow) == 0 {
+		return nil, nil
+	}
+	return config.Allow, nil
+}
+
+func notifyFocusAllowed(pattern, configPath string) (bool, string, error) {
+	normalizedPattern := normalizeNotifyPattern(pattern)
+	if normalizedPattern == "" {
+		return false, "", nil
+	}
+	rules, err := loadNotifyFocusRules(configPath)
+	if err != nil {
+		return false, normalizedPattern, err
+	}
+	for _, rule := range rules {
+		normalizedRule := normalizeNotifyPattern(rule.Match)
+		if normalizedRule != "" && strings.Contains(normalizedPattern, normalizedRule) {
+			return true, normalizedPattern, nil
+		}
+	}
+	return false, normalizedPattern, nil
+}
+
+func runObsidianWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "open-or-focus" {
+		return cli.UsageError("usage: orgm-hypr obsidian open-or-focus [--print] [--clients PATH]")
+	}
+	flags := flag.NewFlagSet("orgm-hypr obsidian open-or-focus", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print focus/open plan")
+	clientsPath := flags.String("clients", "", "hyprctl clients JSON file for tests")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() != 0 {
+		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+	}
+	command, err := obsidianOpenOrFocusCommand(*clientsPath)
+	if err != nil {
+		return err
+	}
+	return runOrPrintCommand(command, *printOnly, stdout, stderr)
+}
+
+func obsidianOpenOrFocusCommand(clientsPath string) (windows.Command, error) {
+	data, err := readHyprClientsJSON(clientsPath)
+	if err != nil {
+		return windows.Command{}, err
+	}
+	var clients []struct {
+		Address      string `json:"address"`
+		Class        string `json:"class"`
+		InitialClass string `json:"initialClass"`
+		Title        string `json:"title"`
+	}
+	if err := json.Unmarshal(data, &clients); err != nil {
+		return windows.Command{}, err
+	}
+	for _, client := range clients {
+		label := normalizeNotifyPattern(strings.Join([]string{client.Class, client.InitialClass, client.Title}, " "))
+		if strings.Contains(label, "obsidian") {
+			cmd, _ := windows.FocusCommand(client.Address)
+			return cmd, nil
+		}
+	}
+	return windows.Command{Name: "obsidian"}, nil
 }
 
 func recentFiles(home string) ([]string, error) {
@@ -2149,5 +2264,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|helper|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
+	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|helper|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi|obsidian] ..."
 }

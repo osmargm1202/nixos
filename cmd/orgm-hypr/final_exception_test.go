@@ -45,6 +45,46 @@ func TestRunWithIOFinalExceptionNotifyFocusAppPrintsPidPlan(t *testing.T) {
 	}
 }
 
+func TestRunWithIOFinalExceptionNotifyFocusAppOnlyPrintsAllowedMatches(t *testing.T) {
+	tests := []struct {
+		name  string
+		match string
+		want  string
+	}{
+		{name: "pi question", match: "Pi Question", want: "focus-match=pi[-_.]*question\n"},
+		{name: "dota", match: "Dota 2", want: "focus-match=dota[-_.]*2\n"},
+		{name: "unlisted", match: "Slack", want: "focus-disabled=slack\n"},
+		{name: "partial pi", match: "Pi", want: "focus-disabled=pi\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			err := runWithIO([]string{"notify", "focus-app", "--print", "--match", tt.match}, &stdout, &stderr)
+			if err != nil {
+				t.Fatalf("runWithIO(notify focus-app --print --match) error = %v", err)
+			}
+			if got := stdout.String(); got != tt.want {
+				t.Fatalf("stdout = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunWithIOFinalExceptionNotifyFocusAppLoadsAllowlistConfig(t *testing.T) {
+	config := filepath.Join(t.TempDir(), "notify-focus.json")
+	if err := os.WriteFile(config, []byte(`{"allow":[{"match":"Slack"}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"notify", "focus-app", "--print", "--config", config, "--match", "Slack"}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(notify focus-app --print --config --match) error = %v", err)
+	}
+	if got, want := stdout.String(), "focus-match=slack\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+}
+
 func TestRunWithIOFinalExceptionFileOpenPrintPlans(t *testing.T) {
 	home := t.TempDir()
 	file := filepath.Join(home, "notes", "todo.txt")
@@ -60,6 +100,16 @@ func TestRunWithIOFinalExceptionFileOpenPrintPlans(t *testing.T) {
 		t.Fatalf("runWithIO(file open-terminal --print) error = %v", err)
 	}
 	if got, want := stdout.String(), "kitty --directory "+filepath.Dir(file)+"\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	err = runWithIO([]string{"file", "open-dir", "--print", "--home", home, "--select", "notes/todo.txt"}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(file open-dir --print) error = %v", err)
+	}
+	if got, want := stdout.String(), "nautilus --new-window "+filepath.Dir(file)+"\n"; got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}
 }
@@ -112,6 +162,36 @@ func TestRunWithIOFinalExceptionPiPromptPrintPlan(t *testing.T) {
 		t.Fatalf("runWithIO(pi prompt --print) error = %v", err)
 	}
 	if got, want := stdout.String(), "kitty --class kitty --hold -e distrobox-enter arch -- pi hola\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+}
+
+func TestRunWithIOFinalExceptionObsidianOpenOrFocusPrintsFocusWhenWindowExists(t *testing.T) {
+	clients := filepath.Join(t.TempDir(), "clients.json")
+	if err := os.WriteFile(clients, []byte(`[{"address":"0xabc","class":"obsidian","title":"Notes","workspace":{"name":"2"}}]`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"obsidian", "open-or-focus", "--print", "--clients", clients}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(obsidian open-or-focus --print --clients) error = %v", err)
+	}
+	if got, want := stdout.String(), "hyprctl dispatch hl.dsp.focus({ window = \"address:0xabc\" })\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+}
+
+func TestRunWithIOFinalExceptionObsidianOpenOrFocusPrintsLaunchWhenMissing(t *testing.T) {
+	clients := filepath.Join(t.TempDir(), "clients.json")
+	if err := os.WriteFile(clients, []byte(`[]`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"obsidian", "open-or-focus", "--print", "--clients", clients}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(obsidian open-or-focus --print --clients) error = %v", err)
+	}
+	if got, want := stdout.String(), "obsidian\n"; got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}
 }

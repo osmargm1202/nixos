@@ -84,8 +84,8 @@ func TestTogglePrintWritesCacheAndRequest(t *testing.T) {
 			t.Fatalf("expected %s: %v", path, err)
 		}
 	}
-	if !strings.Contains(out.String(), "quickshell") || !strings.Contains(out.String(), "modules/keyhelper/shell.qml") {
-		t.Fatalf("stdout = %q, want quickshell command", out.String())
+	if !strings.Contains(out.String(), "quickshell -p ") || !strings.Contains(out.String(), "modules/keyhelper/shell.qml") {
+		t.Fatalf("stdout = %q, want quickshell -p command", out.String())
 	}
 }
 
@@ -144,7 +144,7 @@ func TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning(t *testing.T) {
 		t.Fatalf("Run(toggle) error = %v", err)
 	}
 
-	waitForFileContains(t, logPath, "launched:-c ")
+	waitForFileContains(t, logPath, "launched:-p ")
 	if got := readFile(t, logPath); !strings.Contains(got, "modules/keyhelper/shell.qml") {
 		t.Fatalf("quickshell log = %q, want keyhelper shell path", got)
 	}

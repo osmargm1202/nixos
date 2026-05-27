@@ -572,14 +572,27 @@ func startCalendarUI() error {
 		return &cli.ExitError{Code: 2, Err: fmt.Errorf("quickshell required")}
 	}
 	c := exec.Command(cmd[0], append(cmd[1:], "-c", "calendar")...)
+	c.Env = append(os.Environ(), "ORGM_CALENDAR_SHOW=1")
 	if os.Getenv("ORGM_CALENDAR_QUICKSHELL_CMD") != "" {
 		return c.Run()
 	}
 	return c.Start()
 }
+func writeUIRequest(req UIRequest) error {
+	path := uiRequestPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(req, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(data, '\n'), 0o600)
+}
+
 func toggleUI() error {
 	req := UIRequest{SchemaVersion: SchemaVersion, Action: "toggle", RequestedAt: iso(now()), Source: "orgm-hypr calendar toggle-ui"}
-	if err := atomicWriteJSON(uiRequestPath(), req); err != nil {
+	if err := writeUIRequest(req); err != nil {
 		return err
 	}
 	if calendarUIRunning() {
