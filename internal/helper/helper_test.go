@@ -73,6 +73,24 @@ func TestTogglePrintWritesCacheAndRequest(t *testing.T) {
 	}
 }
 
+func TestTogglePrintUsesQuickshellPlanWhenBinaryMissing(t *testing.T) {
+	state := t.TempDir()
+	configHome := filepath.Join(t.TempDir(), "config")
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+	var out, errOut strings.Builder
+
+	if err := Run([]string{"toggle", "--state-home", state, "--print"}, &out, &errOut); err != nil {
+		t.Fatalf("Run(toggle --print) error = %v", err)
+	}
+
+	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
+	got := out.String()
+	if !strings.Contains(got, "quickshell -p ") || !strings.Contains(got, wantPath) {
+		t.Fatalf("stdout = %q, want quickshell print plan for %q", got, wantPath)
+	}
+}
+
 func TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning(t *testing.T) {
 	state := t.TempDir()
 	bin := t.TempDir()

@@ -103,7 +103,7 @@ func Toggle(stateHome string, printOnly bool, stdout io.Writer) error {
 	if err := atomicWriteJSON(requestPath, request); err != nil {
 		return err
 	}
-	plan, err := keyhelperLaunchPlan(cache, requestPath)
+	plan, err := keyhelperLaunchPlan(cache, requestPath, printOnly)
 	if err != nil {
 		return err
 	}
@@ -135,11 +135,15 @@ func (p launchPlan) display() string {
 	return shellEnvJoin(p.env) + " " + cmd
 }
 
-func keyhelperLaunchPlan(cache, requestPath string) (launchPlan, error) {
+func keyhelperLaunchPlan(cache, requestPath string, printOnly bool) (launchPlan, error) {
 	shellPath := keyhelperShellPath()
 	env := []string{"ORGM_HELPER_CACHE=" + cache, "ORGM_HELPER_REQUEST=" + requestPath, "ORGM_HELPER_SHOW=1"}
+	quickshellPlan := launchPlan{name: "quickshell", args: []string{"-p", shellPath}, env: env}
+	if printOnly {
+		return quickshellPlan, nil
+	}
 	if _, err := exec.LookPath("quickshell"); err == nil {
-		return launchPlan{name: "quickshell", args: []string{"-p", shellPath}, env: env}, nil
+		return quickshellPlan, nil
 	}
 	if _, err := exec.LookPath("distrobox-host-exec"); err == nil {
 		script := shellEnvJoin(env) + " " + shellJoin([]string{"quickshell", "-p", shellPath}) + " >/tmp/orgm-keyhelper.log 2>&1 &"
