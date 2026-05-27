@@ -87,8 +87,6 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return runCalcWithIO(args[1:], stdout, stderr)
 	case "pi":
 		return runPiWithIO(args[1:], stdout, stderr)
-	case "obsidian":
-		return runObsidianWithIO(args[1:], stdout, stderr)
 	case "updates":
 		return cli.UsageError("%s: command group not implemented yet", args[0])
 	default:
@@ -1549,51 +1547,6 @@ func notifyFocusAllowed(pattern, configPath string) (bool, string, error) {
 	return false, normalizedPattern, nil
 }
 
-func runObsidianWithIO(args []string, stdout, stderr io.Writer) error {
-	if len(args) < 1 || args[0] != "open-or-focus" {
-		return cli.UsageError("usage: orgm-hypr obsidian open-or-focus [--print] [--clients PATH]")
-	}
-	flags := flag.NewFlagSet("orgm-hypr obsidian open-or-focus", flag.ContinueOnError)
-	flags.SetOutput(stderr)
-	printOnly := flags.Bool("print", false, "print focus/open plan")
-	clientsPath := flags.String("clients", "", "hyprctl clients JSON file for tests")
-	if err := flags.Parse(args[1:]); err != nil {
-		return cli.UsageError(err.Error())
-	}
-	if flags.NArg() != 0 {
-		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
-	}
-	command, err := obsidianOpenOrFocusCommand(*clientsPath)
-	if err != nil {
-		return err
-	}
-	return runOrPrintCommand(command, *printOnly, stdout, stderr)
-}
-
-func obsidianOpenOrFocusCommand(clientsPath string) (windows.Command, error) {
-	data, err := readHyprClientsJSON(clientsPath)
-	if err != nil {
-		return windows.Command{}, err
-	}
-	var clients []struct {
-		Address      string `json:"address"`
-		Class        string `json:"class"`
-		InitialClass string `json:"initialClass"`
-		Title        string `json:"title"`
-	}
-	if err := json.Unmarshal(data, &clients); err != nil {
-		return windows.Command{}, err
-	}
-	for _, client := range clients {
-		label := normalizeNotifyPattern(strings.Join([]string{client.Class, client.InitialClass, client.Title}, " "))
-		if strings.Contains(label, "obsidian") {
-			cmd, _ := windows.FocusCommand(client.Address)
-			return cmd, nil
-		}
-	}
-	return windows.Command{Name: "obsidian"}, nil
-}
-
 func recentFiles(home string) ([]string, error) {
 	out := []string{}
 	err := filepath.WalkDir(home, func(path string, d os.DirEntry, err error) error {
@@ -2264,5 +2217,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|helper|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi|obsidian] ..."
+	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|helper|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
 }

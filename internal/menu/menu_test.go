@@ -141,7 +141,7 @@ func TestKeybindingEntriesFilterCategories(t *testing.T) {
 		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr helper toggle", launchers[0])
 	}
 	assertKeybinding(t, launchers, "Win+E", "orgm-hypr file open-dir --launcher fuzzel")
-	assertKeybinding(t, launchers, "Win+O", "orgm-hypr obsidian open-or-focus")
+	assertNoKeybinding(t, launchers, "Win+O")
 	media := KeybindingEntries("media")
 	if len(media) == 0 || media[0].Command != "orgm-hypr osd volume up/down" {
 		t.Fatalf("media entries = %#v, want first orgm-hypr osd volume up/down", media)
@@ -159,6 +159,15 @@ func assertKeybinding(t *testing.T, entries []KeybindingEntry, key, command stri
 		}
 	}
 	t.Fatalf("missing keybinding %s", key)
+}
+
+func assertNoKeybinding(t *testing.T, entries []KeybindingEntry, key string) {
+	t.Helper()
+	for _, entry := range entries {
+		if entry.Key == key {
+			t.Fatalf("unexpected keybinding %s", key)
+		}
+	}
 }
 
 func plansEqual(a, b ActionPlan) bool {

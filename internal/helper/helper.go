@@ -103,18 +103,49 @@ func Toggle(stateHome string, printOnly bool, stdout io.Writer) error {
 	if err := atomicWriteJSON(requestPath, request); err != nil {
 		return err
 	}
-	cmd := []string{"quickshell", "-p", keyhelperShellPath()}
+	plan, err := keyhelperLaunchPlan(cache, requestPath)
+	if err != nil {
+		return err
+	}
 	if printOnly {
-		fmt.Fprintln(stdout, shellJoin(cmd))
+		fmt.Fprintln(stdout, plan.display())
 		return nil
 	}
 	if isKeyhelperRunning() {
 		return nil
 	}
-	if _, err := exec.LookPath("quickshell"); err != nil {
-		return fmt.Errorf("quickshell not found: %w", err)
+	cmd := exec.Command(plan.name, plan.args...)
+	if len(plan.env) > 0 {
+		cmd.Env = append(os.Environ(), plan.env...)
 	}
-	return exec.Command(cmd[0], cmd[1:]...).Start()
+	return cmd.Start()
+}
+
+type launchPlan struct {
+	name string
+	args []string
+	env  []string
+}
+
+func (p launchPlan) display() string {
+	cmd := shellJoin(append([]string{p.name}, p.args...))
+	if len(p.env) == 0 {
+		return cmd
+	}
+	return shellEnvJoin(p.env) + " " + cmd
+}
+
+func keyhelperLaunchPlan(cache, requestPath string) (launchPlan, error) {
+	shellPath := keyhelperShellPath()
+	env := []string{"ORGM_HELPER_CACHE=" + cache, "ORGM_HELPER_REQUEST=" + requestPath, "ORGM_HELPER_SHOW=1"}
+	if _, err := exec.LookPath("quickshell"); err == nil {
+		return launchPlan{name: "quickshell", args: []string{"-p", shellPath}, env: env}, nil
+	}
+	if _, err := exec.LookPath("distrobox-host-exec"); err == nil {
+		script := shellEnvJoin(env) + " " + shellJoin([]string{"quickshell", "-p", shellPath}) + " >/tmp/orgm-keyhelper.log 2>&1 &"
+		return launchPlan{name: "distrobox-host-exec", args: []string{"sh", "-lc", script}}, nil
+	}
+	return launchPlan{}, fmt.Errorf("quickshell not found")
 }
 
 func defaultStateHome() string {
@@ -131,6 +162,7 @@ func keyhelperShellPath() string {
 	}
 	return filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
 }
+
 func helperDir(stateHome string) string { return filepath.Join(stateHome, "orgm-helper") }
 func cachePath(stateHome string) string {
 	return filepath.Join(helperDir(stateHome), "keybindings.json")
@@ -161,7 +193,23 @@ func atomicWriteJSON(path string, payload any) error {
 }
 
 func isKeyhelperRunning() bool {
-	return exec.Command("pgrep", "-f", "quickshell .*keyhelper").Run() == nil
+	return exec.Command("pgrep", "-f", `quickshell.*keyhelper[/]shell[.]qml`).Run() == nil
+}
+
+func shellEnvJoin(assignments []string) string {
+	out := ""
+	for i, assignment := range assignments {
+		if i > 0 {
+			out += " "
+		}
+		name, value, found := strings.Cut(assignment, "=")
+		if !found {
+			out += shellQuote(assignment)
+			continue
+		}
+		out += name + "=" + shellQuote(value)
+	}
+	return out
 }
 
 func shellJoin(args []string) string {

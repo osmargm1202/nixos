@@ -166,36 +166,6 @@ func TestRunWithIOFinalExceptionPiPromptPrintPlan(t *testing.T) {
 	}
 }
 
-func TestRunWithIOFinalExceptionObsidianOpenOrFocusPrintsFocusWhenWindowExists(t *testing.T) {
-	clients := filepath.Join(t.TempDir(), "clients.json")
-	if err := os.WriteFile(clients, []byte(`[{"address":"0xabc","class":"obsidian","title":"Notes","workspace":{"name":"2"}}]`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	var stdout, stderr bytes.Buffer
-	err := runWithIO([]string{"obsidian", "open-or-focus", "--print", "--clients", clients}, &stdout, &stderr)
-	if err != nil {
-		t.Fatalf("runWithIO(obsidian open-or-focus --print --clients) error = %v", err)
-	}
-	if got, want := stdout.String(), "hyprctl dispatch hl.dsp.focus({ window = \"address:0xabc\" })\n"; got != want {
-		t.Fatalf("stdout = %q, want %q", got, want)
-	}
-}
-
-func TestRunWithIOFinalExceptionObsidianOpenOrFocusPrintsLaunchWhenMissing(t *testing.T) {
-	clients := filepath.Join(t.TempDir(), "clients.json")
-	if err := os.WriteFile(clients, []byte(`[]`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	var stdout, stderr bytes.Buffer
-	err := runWithIO([]string{"obsidian", "open-or-focus", "--print", "--clients", clients}, &stdout, &stderr)
-	if err != nil {
-		t.Fatalf("runWithIO(obsidian open-or-focus --print --clients) error = %v", err)
-	}
-	if got, want := stdout.String(), "obsidian\n"; got != want {
-		t.Fatalf("stdout = %q, want %q", got, want)
-	}
-}
-
 func TestRunWithIOFinalExceptionWebappInteractiveCancellationIsSafe(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	err := runWithIO([]string{"webapp", "create", "--interactive", "--cancel"}, &stdout, &stderr)
