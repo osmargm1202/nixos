@@ -1,12 +1,11 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
+let
+  engram = pkgs.callPackage ../packages/engram.nix { };
+in
 {
-  home.packages = [ pkgs.go ];
-
-  home.activation.installEngram = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$HOME/.local/bin"
-    if [ -z "''${DRY_RUN:-}" ]; then
-      GOBIN="$HOME/.local/bin" GOPATH="$HOME/go" ${pkgs.go}/bin/go install github.com/Gentleman-Programming/engram/cmd/engram@latest
-    fi
-  '';
+  # First build is expected to fail with hash mismatches because the package uses
+  # lib.fakeHash for src.hash and vendorHash. Replace both hashes with the values
+  # reported by Nix, then rebuild.
+  home.packages = [ engram ];
 }

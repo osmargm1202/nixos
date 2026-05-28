@@ -53,6 +53,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
       orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { };
       orgmHypr = pkgs.callPackage ./nixos/packages/orgm-hypr.nix { };
+      engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       mkHost =
         {
@@ -94,7 +95,7 @@
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
       packages.${system} = {
-        inherit orgmDot orgmHypr;
+        inherit orgmDot orgmHypr engram;
         "orgm-dot" = orgmDot;
         "orgm-hypr" = orgmHypr;
         default = orgmDot;

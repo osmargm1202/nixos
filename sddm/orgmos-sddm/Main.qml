@@ -228,7 +228,7 @@ Item {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 propagateComposedEvents: false
-                                onClicked: {
+                                onClicked: (mouse) => {
                                     mouse.accepted = false;
                                     if (session.popup.opened) {
                                         session.popup.close();
@@ -289,7 +289,7 @@ Item {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     propagateComposedEvents: true
-                                    onClicked: {
+                                    onClicked: (mouse) => {
                                         mouse.accepted = false;
                                         session.currentIndex = index;
                                         session.popup.close();

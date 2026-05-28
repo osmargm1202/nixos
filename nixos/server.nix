@@ -29,7 +29,7 @@ let
 
   autoUpgrade = {
     enable = false;
-    flake = "/home/osmarg/Hobby/dotfiles#ero-server";
+    flake = "/home/osmarg/Hobby/nixos#ero-server";
     dates = "Sun 04:00";
     randomizedDelaySec = "45min";
     allowReboot = false;
