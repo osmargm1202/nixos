@@ -8,7 +8,7 @@ buildGoModule {
     owner = "Gentleman-Programming";
     repo = "engram";
     rev = "main";
-    hash = lib.fakeHash;
+    hash = "sha256-e0gjrUhO/5JpcUntbZJ2QasfSP2hP1N7RvRE4vBl5eE=";
   };
 
   subPackages = [ "cmd/engram" ];
