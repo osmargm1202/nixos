@@ -26,7 +26,7 @@
       "org.gnome.gitlab.somas.Apostrophe"
       "org.libreoffice.LibreOffice"
       "com.discordapp.Discord"
-      "net.thunderbird.Thunderbird"
+      "org.mozilla.Thunderbird"
       "fr.arnaudmichel.launcherstudio"
       "io.podman_desktop.PodmanDesktop"
       "org.blender.Blender"
