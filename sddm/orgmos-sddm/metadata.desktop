@@ -1,0 +1,16 @@
+[SddmGreeterTheme]
+Name=ORGMOS SDDM Theme
+Description=Custom SDDM theme for ORGMOS System
+Author=ORGMOS
+Copyright=(c) 2025, ORGMOS
+License=MIT
+Type=sddm-theme
+Version=1.0.0
+Screenshot=preview.jpg
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Email=orgm@or-gm.com
+Theme-Id=orgmos-sddm
+Theme-API=2.0
+QtVersion=6

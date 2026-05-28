@@ -780,6 +780,21 @@
         "type": "github"
       }
     },
+    "nix-flatpak": {
+      "locked": {
+        "lastModified": 1777402031,
+        "narHash": "sha256-6gkfl9y3+ti0Z6dgby8/R4/DRT8sWU0I0TLCIxwWtjk=",
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "rev": "22a3adbe7c5c8c8a10a635d32c9ef7fc01a6e4b8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1779357205,
@@ -935,6 +950,7 @@
         "hyprland": "hyprland",
         "hyprpaper": "hyprpaper",
         "ltmnight-sddm-theme": "ltmnight-sddm-theme",
+        "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
         "nwg-dock-hyprland-src": "nwg-dock-hyprland-src",
         "sddm-astronaut-theme": "sddm-astronaut-theme",

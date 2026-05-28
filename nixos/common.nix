@@ -2,28 +2,48 @@
 # your system. Help is available in configuration.nix(5) man page
 # and in NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, lib, inputs ? null, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs ? null,
+  ...
+}:
 
 let
   orgmDot = pkgs.callPackage ./packages/orgm-dot.nix { };
 in
 {
   imports =
-    lib.optionals (inputs != null) [ inputs.home-manager.nixosModules.home-manager ]
+    lib.optionals (inputs != null) [
+      inputs.home-manager.nixosModules.home-manager
+      inputs.nix-flatpak.nixosModules.nix-flatpak
+      ./flatpak.nix
+    ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
+  home-manager.users.osmarg = {
+    imports = [ ./home/engram.nix ];
+    home.stateVersion = "25.11";
+  };
+
   # Polkit
-  
 
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   nix.settings.auto-optimise-store = true;
   nix.settings.extra-substituters = [ "https://hyprland.cachix.org" ];
-  nix.settings.extra-trusted-public-keys = [ "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" ];
+  nix.settings.extra-trusted-public-keys = [
+    "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+  ];
 
   programs.nh = {
     enable = true;
-    flake = "/home/osmarg/Hobby/dotfiles";
+    flake = "/home/osmarg/Hobby/nixos";
     clean = {
       enable = true;
       dates = "daily";
@@ -38,7 +58,7 @@ in
     operation = "switch";
     randomizedDelaySec = "45min";
     allowReboot = false;
-    flake = "/home/osmarg/Hobby/dotfiles";
+    flake = "/home/osmarg/Hobby/nixos";
     flags = [
       "--update-input"
       "nixpkgs"
@@ -85,17 +105,6 @@ in
   };
 
   #virtualisation.docker.enable = true;
-
-  services.flatpak.enable = true;
-  systemd.services.flatpak-repo = {
-    wantedBy = [ "multi-user.target" ];
-    path = [ pkgs.flatpak ];
-    script = ''
-      flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-      flatpak remote-add --if-not-exists gnome-nightly https://nightly.gnome.org/gnome-nightly.flatpakrepo
-      flatpak remote-add --if-not-exists flathub-beta https://dl.flathub.org/beta-repo/flathub-beta.flatpakrepo
-    '';
-  };
 
   programs.fish.enable = true;
   programs.zoxide.enable = true;
@@ -160,9 +169,28 @@ in
     isNormalUser = true;
     description = "osmarg";
     shell = pkgs.fish;
-    subUidRanges = [{ startUid = 100000; count = 65536; }];
-    subGidRanges = [{ startGid = 100000; count = 65536; }];
-    extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" "podman" "input" "video" "render" ];
+    subUidRanges = [
+      {
+        startUid = 100000;
+        count = 65536;
+      }
+    ];
+    subGidRanges = [
+      {
+        startGid = 100000;
+        count = 65536;
+      }
+    ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+      "osmarg"
+      "podman"
+      "input"
+      "video"
+      "render"
+    ];
     packages = with pkgs; [
       # thunderbird
     ];

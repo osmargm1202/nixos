@@ -1,0 +1,21 @@
+[General]
+# Colors
+backgroundColor="#0a1929"
+boxColor="#0d2137"
+borderColor="#1e3a5f"
+buttonColor="#153047"
+textColor="#e3f2fd"
+secondaryTextColor="#bbdefb"
+accentColor="#87ceeb"
+onAccentColor="#001e3c"
+dangerColor="#ff6b6b"
+
+# Wallpaper
+background=orgmos.jpg
+
+# Icons
+eyePath="./assets/eye.png"
+eyeSlashPath="./assets/eye-slash.png"
+restartPath="./assets/restart.png"
+shutdownPath="./assets/shutdown.png"
+chevronDownPath="./assets/chevron-down.png"
