@@ -1,4 +1,9 @@
-{ pkgs, lib, inputs, ... }:
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 let
   system = pkgs.stdenv.hostPlatform.system;
@@ -9,6 +14,10 @@ let
     src = inputs.nwg-dock-hyprland-src;
     vendorHash = "sha256-AJGyBCTWtgTpn+e4HLlX/8EgWITw25py4UJJJDLhoOM=";
   });
+  dotfilesOrgmSource = inputs.dotfiles-orgm-source;
+  orgmDot = pkgs.callPackage ../packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
+  orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
+  orgmCalendar = pkgs.callPackage ../packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
   orgmHypr = pkgs.callPackage ../packages/orgm-hypr.nix { };
 in
 {
@@ -96,10 +105,22 @@ in
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
-      "text/html" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium-browser.desktop" "chromium.desktop" ];
+      "text/html" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "application/xhtml+xml" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/http" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/https" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
       "image/png" = [ "org.gnome.Loupe.desktop" ];
       "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
@@ -136,6 +157,9 @@ in
     hyprpaperPkg
     mpvpaper
     quickshell
+    orgmDot
+    orgmWallpaper
+    orgmCalendar
     orgmHypr
     # Google Calendar support: gcalcli is a Python application and may pull
     # Python via Nix. python3Minimal below was pre-existing; the Go helper does

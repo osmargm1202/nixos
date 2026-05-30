@@ -154,6 +154,22 @@
         "type": "github"
       }
     },
+    "dotfiles-orgm-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780142237,
+        "narHash": "sha256-xyvB9VQGXOMz/GXvMpswNIbCPU9b7RCXqNdBNxa5CUQ=",
+        "owner": "osmargm1202",
+        "repo": "dotfiles",
+        "rev": "8d0eb089450b24ca26760e75d5ca63aff2215b99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "dotfiles",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -946,6 +962,7 @@
         "caelestia-shell": "caelestia-shell",
         "dgop": "dgop",
         "dms": "dms",
+        "dotfiles-orgm-source": "dotfiles-orgm-source",
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprpaper": "hyprpaper",
