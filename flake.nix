@@ -68,6 +68,18 @@
       orgmHypr = pkgs.callPackage ./nixos/packages/orgm-hypr.nix { };
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
+      profiles = {
+        gnome = ./nixos/profiles/gnome.nix;
+        hyprland = ./nixos/profiles/hyprland.nix;
+        labwc = ./nixos/profiles/labwc.nix;
+        labwc-light = ./nixos/profiles/labwc-light.nix;
+        sway = ./nixos/profiles/sway.nix;
+        i3 = ./nixos/profiles/i3.nix;
+      };
+      getProfile =
+        profileName:
+        profiles.${profileName}
+          or (throw "Unknown ORGMOS profile '${profileName}'. Valid profiles: ${builtins.concatStringsSep ", " (builtins.attrNames profiles)}");
       mkHost =
         {
           hostName,
@@ -103,8 +115,31 @@
           ]
           ++ extraModules;
         };
+      mkGeneralHost =
+        {
+          hardware,
+          profile,
+          hostName,
+          extraModules ? [ ],
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./nixos/common.nix
+            ./nixos/general.nix
+            hardware
+            (getProfile profile)
+            { networking.hostName = hostName; }
+          ]
+          ++ extraModules;
+        };
     in
     {
+      lib = {
+        inherit mkGeneralHost;
+      };
+
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
       packages.${system} = {
