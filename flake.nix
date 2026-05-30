@@ -42,6 +42,11 @@
       url = "github:osmargm1202/ltmnight-sddm-theme";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # flake.lock intentionally not updated in this branch; update after dotfiles helper branch lands.
+    dotfiles-orgm-source = {
+      url = "github:osmargm1202/dotfiles";
+      flake = false;
+    };
   };
 
   outputs =
@@ -51,7 +56,15 @@
       # Generic profile outputs use eval-only hardware so pure flake checks do not
       # depend on /etc or any real host. Host-specific outputs pass real hardware.
       pkgs = nixpkgs.legacyPackages.${system};
-      orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { };
+      # During staged migration, verify unpublished dotfiles helper changes with:
+      # --override-input dotfiles-orgm-source path:/path/to/dotfiles-worktree
+      # Committed default uses the reproducible GitHub source below.
+      dotfilesOrgmSource = inputs.dotfiles-orgm-source;
+      orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
+      orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
+        inherit dotfilesOrgmSource;
+      };
+      orgmCalendar = pkgs.callPackage ./nixos/packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
       orgmHypr = pkgs.callPackage ./nixos/packages/orgm-hypr.nix { };
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
@@ -95,8 +108,16 @@
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
       packages.${system} = {
-        inherit orgmDot orgmHypr engram;
+        inherit
+          orgmDot
+          orgmWallpaper
+          orgmCalendar
+          orgmHypr
+          engram
+          ;
         "orgm-dot" = orgmDot;
+        "orgm-wallpaper" = orgmWallpaper;
+        "orgm-calendar" = orgmCalendar;
         "orgm-hypr" = orgmHypr;
         default = orgmDot;
       };
