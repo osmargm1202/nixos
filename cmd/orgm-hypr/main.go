@@ -412,7 +412,7 @@ func runSessionWithIO(args []string, stdout, stderr io.Writer) error {
 
 func runWaybarWithIO(args []string, stdout, stderr io.Writer) error {
 	if len(args) < 1 {
-		return cli.UsageError("usage: orgm-hypr waybar [date|swap-usage|watch|watch-plan|workspace]")
+		return cli.UsageError("usage: orgm-hypr waybar [date|swap-usage|watch|watch-plan|restart|workspace]")
 	}
 	switch args[0] {
 	case "date":
@@ -470,10 +470,12 @@ func runWaybarWithIO(args []string, stdout, stderr io.Writer) error {
 		return nil
 	case "watch":
 		return runWaybarWatchWithIO(args[1:], stdout, stderr)
+	case "restart":
+		return runWaybarRestartWithIO(args[1:], stdout, stderr)
 	case "workspace":
 		return runWaybarWorkspaceWithIO(args[1:], stdout, stderr)
 	default:
-		return cli.UsageError("usage: orgm-hypr waybar [date|swap-usage|watch|watch-plan|workspace]")
+		return cli.UsageError("usage: orgm-hypr waybar [date|swap-usage|watch|watch-plan|restart|workspace]")
 	}
 }
 
@@ -512,6 +514,75 @@ func runWaybarWatchWithIO(args []string, stdout, stderr io.Writer) error {
 		_ = logFile.Close()
 		time.Sleep(2 * time.Second)
 	}
+}
+
+func runWaybarRestartWithIO(args []string, stdout, stderr io.Writer) error {
+	flags := flag.NewFlagSet("orgm-hypr waybar restart", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print restart command without running")
+	if err := flags.Parse(args); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() > 1 {
+		return cli.UsageError("usage: orgm-hypr waybar restart [CONFIG_DIR] [--print]")
+	}
+	configDir := filepath.Join(os.Getenv("HOME"), ".config", "waybar-hypr")
+	if flags.NArg() == 1 {
+		configDir = flags.Arg(0)
+	}
+	hostExec := shouldUseHostExecForWaybar()
+	command := waybarRestartCommand(configDir, hostExec)
+	if *printOnly {
+		fmt.Fprintln(stdout, command)
+		return nil
+	}
+	if hostExec {
+		runIgnoreCommand("distrobox-host-exec", []string{"pkill", "-KILL", "-f", "[o]rgm-hypr waybar watch"})
+		runIgnoreCommand("distrobox-host-exec", []string{"pkill", "-KILL", "-f", `(^|/)[w]aybar($| )|[.]waybar-wrapped`})
+		return runCommand("distrobox-host-exec", []string{"sh", "-lc", waybarRestartLaunchCommand(configDir)}, stdout, stderr, false)
+	}
+	runIgnoreCommand("pkill", []string{"-KILL", "-f", "[o]rgm-hypr waybar watch"})
+	runIgnoreCommand("pkill", []string{"-KILL", "-f", `(^|/)[w]aybar($| )|[.]waybar-wrapped`})
+	return runCommand("sh", []string{"-lc", waybarRestartLaunchCommand(configDir)}, stdout, stderr, false)
+}
+
+func waybarRestartCommand(configDir string, hostExec bool) string {
+	killWatcher := "pkill -KILL -f '[o]rgm-hypr waybar watch' || true"
+	killWaybar := "pkill -KILL -f '(^|/)[w]aybar($| )|[.]waybar-wrapped' || true"
+	launch := waybarRestartLaunchCommand(configDir)
+	if hostExec {
+		return "distrobox-host-exec " + killWatcher + "; distrobox-host-exec " + killWaybar + "; distrobox-host-exec sh -lc " + shellQuote(launch)
+	}
+	return killWatcher + "; " + killWaybar + "; " + launch
+}
+
+func waybarRestartLaunchCommand(configDir string) string {
+	return "nohup orgm-hypr waybar watch " + shellQuote(configDir) + " >/dev/null 2>&1 &"
+}
+
+func runIgnoreCommand(name string, args []string) {
+	_ = exec.Command(name, args...).Run()
+}
+
+func shouldUseHostExecForWaybar() bool {
+	if os.Getenv("ORGM_HYPR_DISABLE_HOST_EXEC") == "1" {
+		return false
+	}
+	if _, err := exec.LookPath("distrobox-host-exec"); err != nil {
+		return false
+	}
+	out, err := exec.Command("systemd-detect-virt", "--container").Output()
+	return err == nil && strings.TrimSpace(string(out)) != ""
+}
+
+func shellQuote(arg string) string {
+	if arg == "" {
+		return "''"
+	}
+	if !strings.ContainsAny(arg, " \t\n'\\\"$`!*?[]{}();&|<>") {
+		return arg
+	}
+	return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
 }
 
 func runWaybarWorkspaceWithIO(args []string, stdout, stderr io.Writer) error {
@@ -1248,16 +1319,27 @@ func runLauncherWithIO(args []string, stdout, stderr io.Writer) error {
 }
 
 func runNotifyWithIO(args []string, stdout, stderr io.Writer) error {
-	if len(args) < 1 || args[0] != "focus-app" {
-		return cli.UsageError("usage: orgm-hypr notify focus-app [--print] [--config PATH]")
+	if len(args) < 1 {
+		return cli.UsageError("usage: orgm-hypr notify [focus-app|battery-daemon]")
 	}
+	switch args[0] {
+	case "focus-app":
+		return runNotifyFocusAppWithIO(args[1:], stdout, stderr)
+	case "battery-daemon":
+		return runNotifyBatteryDaemonWithIO(args[1:], stdout, stderr)
+	default:
+		return cli.UsageError("usage: orgm-hypr notify [focus-app|battery-daemon]")
+	}
+}
+
+func runNotifyFocusAppWithIO(args []string, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("orgm-hypr notify focus-app", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	printOnly := flags.Bool("print", false, "print focus plan")
 	pid := flags.String("pid", os.Getenv("SWAYNC_HINT_PI_FOCUS_PID"), "pid hint")
 	pattern := flags.String("match", "", "class/title match")
 	configPath := flags.String("config", defaultNotifyFocusConfigPath(), "notify focus allowlist config")
-	if err := flags.Parse(args[1:]); err != nil {
+	if err := flags.Parse(args); err != nil {
 		return cli.UsageError(err.Error())
 	}
 	if flags.NArg() != 0 {
@@ -1289,6 +1371,174 @@ func runNotifyWithIO(args []string, stdout, stderr io.Writer) error {
 		return nil
 	}
 	return focusNotifyMatch(normalizedPattern, stdout, stderr)
+}
+
+func runNotifyBatteryDaemonWithIO(args []string, stdout, stderr io.Writer) error {
+	flags := flag.NewFlagSet("orgm-hypr notify battery-daemon", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print notify command without running")
+	once := flags.Bool("once", false, "check once instead of looping")
+	statePath := flags.String("state", defaultBatteryAlertStatePath(), "battery alert state file")
+	capacityOverride := flags.Int("capacity", -1, "battery capacity override for tests")
+	statusOverride := flags.String("status", "", "battery status override for tests")
+	interval := flags.Duration("interval", 60*time.Second, "poll interval")
+	if err := flags.Parse(args); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() != 0 {
+		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+	}
+	if *once {
+		return runBatteryAlertOnce(*capacityOverride, *statusOverride, *statePath, *printOnly, stdout, stderr)
+	}
+	for {
+		if err := runBatteryAlertOnce(*capacityOverride, *statusOverride, *statePath, *printOnly, stdout, stderr); err != nil {
+			fmt.Fprintln(stderr, err)
+		}
+		time.Sleep(*interval)
+	}
+}
+
+func runBatteryAlertOnce(capacityOverride int, statusOverride, statePath string, printOnly bool, stdout, stderr io.Writer) error {
+	snapshot, err := currentBatterySnapshot(capacityOverride, statusOverride)
+	if err != nil {
+		return err
+	}
+	state := loadBatteryAlertState(statePath)
+	decision, next := evaluateBatteryAlert(snapshot, state)
+	if !printOnly {
+		_ = saveBatteryAlertState(statePath, next)
+	}
+	if decision.Notify == nil {
+		return nil
+	}
+	args := batteryNotifyArgs(*decision.Notify)
+	if printOnly {
+		fmt.Fprintln(stdout, shellCommand("notify-send", args))
+		return nil
+	}
+	if commandExists("notify-send") {
+		_ = runSilent("notify-send", args, stderr)
+	}
+	return nil
+}
+
+type batterySnapshot struct {
+	Capacity int
+	Status   string
+}
+
+type batteryAlertState struct {
+	Sent map[int]bool `json:"sent,omitempty"`
+}
+
+type batteryNotification struct {
+	Urgency string
+	Summary string
+	Body    string
+}
+
+type batteryAlertDecision struct {
+	Notify *batteryNotification
+}
+
+func evaluateBatteryAlert(snapshot batterySnapshot, state batteryAlertState) (batteryAlertDecision, batteryAlertState) {
+	if !strings.EqualFold(snapshot.Status, "Discharging") {
+		return batteryAlertDecision{}, batteryAlertState{}
+	}
+	next := batteryAlertState{Sent: map[int]bool{}}
+	for threshold, sent := range state.Sent {
+		next.Sent[threshold] = sent
+	}
+	threshold := batteryThresholdForCapacity(snapshot.Capacity)
+	if threshold == 0 || next.Sent[threshold] {
+		return batteryAlertDecision{}, next
+	}
+	next.Sent[threshold] = true
+	return batteryAlertDecision{Notify: batteryNotificationForThreshold(threshold)}, next
+}
+
+func batteryThresholdForCapacity(capacity int) int {
+	for _, threshold := range []int{10, 20, 50} {
+		if capacity <= threshold {
+			return threshold
+		}
+	}
+	return 0
+}
+
+func batteryNotificationForThreshold(threshold int) *batteryNotification {
+	switch threshold {
+	case 10:
+		return &batteryNotification{Urgency: "critical", Summary: "✖ BATERÍA CRÍTICA", Body: "🔴 󰂃 10%"}
+	case 20:
+		return &batteryNotification{Urgency: "normal", Summary: "Batería baja", Body: "󰁻 20%"}
+	case 50:
+		return &batteryNotification{Urgency: "normal", Summary: "Batería al 50%", Body: "󰁾 50%"}
+	default:
+		return nil
+	}
+}
+
+func currentBatterySnapshot(capacityOverride int, statusOverride string) (batterySnapshot, error) {
+	if capacityOverride >= 0 || statusOverride != "" {
+		return batterySnapshot{Capacity: capacityOverride, Status: statusOverride}, nil
+	}
+	entries, err := os.ReadDir("/sys/class/power_supply")
+	if err != nil {
+		return batterySnapshot{}, err
+	}
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), "BAT") {
+			continue
+		}
+		base := filepath.Join("/sys/class/power_supply", entry.Name())
+		capacityText, err := os.ReadFile(filepath.Join(base, "capacity"))
+		if err != nil {
+			continue
+		}
+		statusText, err := os.ReadFile(filepath.Join(base, "status"))
+		if err != nil {
+			continue
+		}
+		capacity, err := strconv.Atoi(strings.TrimSpace(string(capacityText)))
+		if err != nil {
+			continue
+		}
+		return batterySnapshot{Capacity: capacity, Status: strings.TrimSpace(string(statusText))}, nil
+	}
+	return batterySnapshot{}, fmt.Errorf("no BAT* battery found in /sys/class/power_supply")
+}
+
+func defaultBatteryAlertStatePath() string {
+	return filepath.Join(defaultXDGPath("XDG_STATE_HOME", ".local/state"), "orgm-hypr", "battery-alerts.json")
+}
+
+func loadBatteryAlertState(path string) batteryAlertState {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return batteryAlertState{}
+	}
+	var state batteryAlertState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return batteryAlertState{}
+	}
+	return state
+}
+
+func saveBatteryAlertState(path string, state batteryAlertState) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	data, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o600)
+}
+
+func batteryNotifyArgs(payload batteryNotification) []string {
+	return []string{"-a", "orgm-hypr-battery", "-u", payload.Urgency, "-h", "string:x-canonical-private-synchronous:orgm-hypr-battery", payload.Summary, payload.Body}
 }
 
 func runFileWithIO(args []string, stdout, stderr io.Writer) error {

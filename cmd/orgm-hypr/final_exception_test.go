@@ -85,6 +85,68 @@ func TestRunWithIOFinalExceptionNotifyFocusAppLoadsAllowlistConfig(t *testing.T)
 	}
 }
 
+func TestEvaluateBatteryAlertSendsEachThresholdOnceAndResets(t *testing.T) {
+	state := batteryAlertState{}
+	decision, next := evaluateBatteryAlert(batterySnapshot{Capacity: 50, Status: "Discharging"}, state)
+	assertBatteryAlert(t, decision, "normal", "Batería al 50%", "󰁾 50%")
+
+	decision, next = evaluateBatteryAlert(batterySnapshot{Capacity: 49, Status: "Discharging"}, next)
+	if decision.Notify != nil {
+		t.Fatalf("49%% repeated notify = %#v, want nil", decision.Notify)
+	}
+
+	decision, next = evaluateBatteryAlert(batterySnapshot{Capacity: 20, Status: "Discharging"}, next)
+	assertBatteryAlert(t, decision, "normal", "Batería baja", "󰁻 20%")
+
+	decision, next = evaluateBatteryAlert(batterySnapshot{Capacity: 10, Status: "Discharging"}, next)
+	assertBatteryAlert(t, decision, "critical", "✖ BATERÍA CRÍTICA", "🔴 󰂃 10%")
+
+	decision, next = evaluateBatteryAlert(batterySnapshot{Capacity: 21, Status: "Charging"}, next)
+	if decision.Notify != nil {
+		t.Fatalf("charging notify = %#v, want nil", decision.Notify)
+	}
+
+	decision, _ = evaluateBatteryAlert(batterySnapshot{Capacity: 20, Status: "Discharging"}, next)
+	assertBatteryAlert(t, decision, "normal", "Batería baja", "󰁻 20%")
+}
+
+func assertBatteryAlert(t *testing.T, decision batteryAlertDecision, urgency, summary, body string) {
+	t.Helper()
+	if decision.Notify == nil {
+		t.Fatalf("Notify = nil, want %q", summary)
+	}
+	if decision.Notify.Urgency != urgency || decision.Notify.Summary != summary || decision.Notify.Body != body {
+		t.Fatalf("Notify = %#v, want urgency=%q summary=%q body=%q", decision.Notify, urgency, summary, body)
+	}
+}
+
+func TestRunWithIOFinalExceptionNotifyBatteryDaemonPrintsCriticalAlert(t *testing.T) {
+	statePath := filepath.Join(t.TempDir(), "battery-alerts.json")
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"notify", "battery-daemon", "--once", "--print", "--capacity", "10", "--status", "Discharging", "--state", statePath}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(notify battery-daemon --once --print) error = %v", err)
+	}
+	got := stdout.String()
+	for _, want := range []string{"notify-send", "-a orgm-hypr-battery", "-u critical", "x-canonical-private-synchronous:orgm-hypr-battery", "✖ BATERÍA CRÍTICA", "🔴 󰂃 10%"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stdout = %q, want substring %q", got, want)
+		}
+	}
+}
+
+func TestRunWithIOFinalExceptionNotifyBatteryDaemonSkipsWhenCharging(t *testing.T) {
+	statePath := filepath.Join(t.TempDir(), "battery-alerts.json")
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"notify", "battery-daemon", "--once", "--print", "--capacity", "10", "--status", "Charging", "--state", statePath}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(notify battery-daemon charging) error = %v", err)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("stdout = %q, want empty", got)
+	}
+}
+
 func TestRunWithIOFinalExceptionFileOpenPrintPlans(t *testing.T) {
 	home := t.TempDir()
 	file := filepath.Join(home, "notes", "todo.txt")

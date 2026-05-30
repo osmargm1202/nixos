@@ -942,17 +942,43 @@ func TestRunWithIOLauncherAppsHonorsFuzzelEnvOverrides(t *testing.T) {
 	}
 }
 
-func TestMenuSystemRestartWaybarUsesOrgmHyprWatcher(t *testing.T) {
+func TestMenuSystemRestartWaybarUsesOrgmHyprHelper(t *testing.T) {
 	plan, ok := menu.PlanSelection("system", "󰑓 Restart Waybar")
 	if !ok {
 		t.Fatalf("PlanSelection(system, Restart Waybar) ok = false")
 	}
 	got := shellCommand(plan.Command.Name, plan.Command.Args)
-	wantParts := []string{"pkill", "orgm-hypr waybar watch", "waybar-hypr", "orgm-hypr waybar watch"}
+	if got != "orgm-hypr waybar restart" {
+		t.Fatalf("command = %q, want orgm-hypr waybar restart", got)
+	}
+}
+
+func TestWaybarRestartPrintsDefaultRelaunchPlan(t *testing.T) {
+	home := t.TempDir()
+	stateHome := filepath.Join(home, ".local", "state")
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_STATE_HOME", stateHome)
+	t.Setenv("ORGM_HYPR_DISABLE_HOST_EXEC", "1")
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"waybar", "restart", "--print"}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(waybar restart --print) error = %v", err)
+	}
+	got := stdout.String()
+	wantParts := []string{
+		"pkill -KILL -f '[o]rgm-hypr waybar watch'",
+		"pkill -KILL -f '(^|/)[w]aybar($| )|[.]waybar-wrapped'",
+		"nohup orgm-hypr waybar watch " + filepath.Join(home, ".config", "waybar-hypr"),
+	}
 	for _, want := range wantParts {
 		if !strings.Contains(got, want) {
-			t.Fatalf("command = %q, want substring %q", got, want)
+			t.Fatalf("stdout = %q, want substring %q", got, want)
 		}
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
 	}
 }
 
