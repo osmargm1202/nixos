@@ -1,6 +1,9 @@
 package menu
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestModelMainListsCompatibilityItems(t *testing.T) {
 	model, ok := Model("main")
@@ -115,14 +118,31 @@ func TestSystemMenuUsesCanonicalOrgmHyprCommands(t *testing.T) {
 	}
 }
 
-func TestSystemRestartWaybarDelegatesToOrgmHyprHelper(t *testing.T) {
+func TestSystemRestartWaybarKillsAndRelaunchesWatcher(t *testing.T) {
 	got, ok := PlanSelection("system", "󰑓 Restart Waybar")
 	if !ok {
 		t.Fatalf("PlanSelection(system, Restart Waybar) ok = false")
 	}
-	want := ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"waybar", "restart"}}}
-	if !plansEqual(got, want) {
-		t.Fatalf("Restart Waybar command = %#v, want %#v", got, want)
+	if got.Command.Name != "sh" || len(got.Command.Args) != 2 || got.Command.Args[0] != "-lc" {
+		t.Fatalf("Restart Waybar command = %#v, want sh -lc command", got.Command)
+	}
+	command := got.Command.Args[1]
+	wantParts := []string{
+		"pkill",
+		"[o]rgm-hypr waybar watch",
+		"waybar",
+		"orgm-hypr waybar watch",
+		`"$HOME/.config/waybar-hypr"`,
+	}
+	for _, want := range wantParts {
+		if !strings.Contains(command, want) {
+			t.Fatalf("Restart Waybar command = %q, want substring %q", command, want)
+		}
+	}
+	for _, forbidden := range []string{"SIGUSR2", "pkill -SIGUSR2 waybar"} {
+		if strings.Contains(command, forbidden) {
+			t.Fatalf("Restart Waybar command = %q, must not contain %q", command, forbidden)
+		}
 	}
 }
 
