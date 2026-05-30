@@ -11,7 +11,12 @@
 }:
 
 let
-  orgmDot = pkgs.callPackage ./packages/orgm-dot.nix { };
+  dotfilesOrgmSource =
+    if inputs != null && inputs ? dotfiles-orgm-source then
+      inputs.dotfiles-orgm-source
+    else
+      throw "orgm-dot packaging requires flake input dotfiles-orgm-source";
+  orgmDot = pkgs.callPackage ./packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
 in
 {
   imports =

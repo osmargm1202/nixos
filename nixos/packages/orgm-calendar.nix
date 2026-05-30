@@ -22,16 +22,16 @@ let
   };
 in
 buildGoModule {
-  pname = "orgm-dot";
+  pname = "orgm-calendar";
   version = "0.1.0";
 
   src = filteredSource;
 
-  subPackages = [ "cmd/orgm-dot" ];
+  subPackages = [ "cmd/orgm-calendar" ];
   vendorHash = null;
 
   meta = {
-    description = "ORGM dotfile manager";
-    mainProgram = "orgm-dot";
+    description = "ORGM calendar helper";
+    mainProgram = "orgm-calendar";
   };
 }
