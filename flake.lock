@@ -157,11 +157,11 @@
     "dotfiles-orgm-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1780142237,
-        "narHash": "sha256-xyvB9VQGXOMz/GXvMpswNIbCPU9b7RCXqNdBNxa5CUQ=",
+        "lastModified": 1780225704,
+        "narHash": "sha256-+/W0opjItZ1khLF40j5upZXhUTz0Ma1An+vNmAeRMuM=",
         "owner": "osmargm1202",
         "repo": "dotfiles",
-        "rev": "8d0eb089450b24ca26760e75d5ca63aff2215b99",
+        "rev": "4d01df1f560c9be32f82b08f17965516318e8bff",
         "type": "github"
       },
       "original": {
