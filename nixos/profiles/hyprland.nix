@@ -18,7 +18,6 @@ let
   orgmDot = pkgs.callPackage ../packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmCalendar = pkgs.callPackage ../packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
-  orgmHypr = pkgs.callPackage ../packages/orgm-hypr.nix { };
 in
 {
   imports = [
@@ -160,7 +159,6 @@ in
     orgmDot
     orgmWallpaper
     orgmCalendar
-    orgmHypr
     # Google Calendar support: gcalcli is a Python application and may pull
     # Python via Nix. python3Minimal below was pre-existing; the Go helper does
     # not add or require extra Python packages.

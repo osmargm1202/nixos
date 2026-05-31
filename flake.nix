@@ -65,7 +65,6 @@
         inherit dotfilesOrgmSource;
       };
       orgmCalendar = pkgs.callPackage ./nixos/packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
-      orgmHypr = pkgs.callPackage ./nixos/packages/orgm-hypr.nix { };
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       profiles = {
@@ -147,13 +146,11 @@
           orgmDot
           orgmWallpaper
           orgmCalendar
-          orgmHypr
           engram
           ;
         "orgm-dot" = orgmDot;
         "orgm-wallpaper" = orgmWallpaper;
         "orgm-calendar" = orgmCalendar;
-        "orgm-hypr" = orgmHypr;
         default = orgmDot;
       };
 
