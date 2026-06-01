@@ -7,8 +7,8 @@ buildGoModule {
   src = fetchFromGitHub {
     owner = "Gentleman-Programming";
     repo = "engram";
-    rev = "main";
-    hash = "sha256-e0gjrUhO/5JpcUntbZJ2QasfSP2hP1N7RvRE4vBl5eE=";
+    rev = "07445ba99eac95083d7c6d56c5d795bb68e90834";
+    hash = "sha256-q5X6W/6qkD0zisM1yo6MpU3PgbotRhygLsi/pc2ZeuE=";
   };
 
   postPatch = ''
