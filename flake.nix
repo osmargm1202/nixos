@@ -21,6 +21,12 @@
       url = "github:nwg-piotr/nwg-dock-hyprland";
       flake = false;
     };
+    waybar-source-target-src = {
+      # Pending upstream support for pulseaudio source sliders.
+      # PR: https://github.com/Alexays/Waybar/pull/4908
+      url = "github:7FM/Waybar/ab5b1a6cd41d10da238e6ab5da32d798aa6ba04c";
+      flake = false;
+    };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
       url = "github:caelestia-dots/shell";

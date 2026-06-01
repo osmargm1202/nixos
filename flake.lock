@@ -971,7 +971,8 @@
         "nixpkgs": "nixpkgs_3",
         "nwg-dock-hyprland-src": "nwg-dock-hyprland-src",
         "sddm-astronaut-theme": "sddm-astronaut-theme",
-        "snappy-switcher": "snappy-switcher"
+        "snappy-switcher": "snappy-switcher",
+        "waybar-source-target-src": "waybar-source-target-src"
       }
     },
     "sddm-astronaut-theme": {
@@ -1051,6 +1052,23 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "waybar-source-target-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772754102,
+        "narHash": "sha256-qygk19boxh9rsDz40J7S0by5unKT2CtriAnuGoy+DKY=",
+        "owner": "7FM",
+        "repo": "Waybar",
+        "rev": "ab5b1a6cd41d10da238e6ab5da32d798aa6ba04c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "7FM",
+        "repo": "Waybar",
+        "rev": "ab5b1a6cd41d10da238e6ab5da32d798aa6ba04c",
         "type": "github"
       }
     },

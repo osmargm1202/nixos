@@ -9,6 +9,10 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
+  waybarSourceTarget = (pkgs.waybar.override { cavaSupport = false; }).overrideAttrs (old: {
+    version = "0.15.0";
+    src = inputs.waybar-source-target-src;
+  });
   nwgDockHyprlandGit = pkgs.nwg-dock-hyprland.overrideAttrs (old: {
     version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";
     src = inputs.nwg-dock-hyprland-src;
@@ -173,7 +177,7 @@ in
     hyprpolkitagent
 
     # Shell / panel for Hyprland.
-    waybar
+    waybarSourceTarget
     nwgDockHyprlandGit
     nwg-drawer
     nwg-displays
