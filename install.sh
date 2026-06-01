@@ -3,6 +3,8 @@ set -euo pipefail
 
 REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos}"
 NIXOS_DIR="${ORGMOS_NIXOS_DIR:-/etc/nixos}"
+DRY_RUN=false
+PROMPT_INPUT=""
 FLAKE_PATH="$NIXOS_DIR/flake.nix"
 HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
 
@@ -19,10 +21,75 @@ fail() {
   exit 1
 }
 
+usage() {
+  cat <<EOF
+Usage: install.sh [options]
+
+Options:
+  --dry-run             Print generated flake only; do not write or rebuild.
+  --repo-url URL        Override ORGMOS flake input URL.
+  --nixos-dir PATH      Override NixOS config directory.
+  -h, --help            Show this help.
+
+Examples:
+  curl -fsSL https://nixos.or-gm.com/orgmos.sh | bash
+  curl -fsSL https://nixos.or-gm.com/orgmos.sh | bash -s -- --dry-run
+EOF
+}
+
+parse_args() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --dry-run)
+        DRY_RUN=true
+        shift
+        ;;
+      --repo-url)
+        [ "$#" -ge 2 ] || fail "--repo-url requires a value"
+        REPO_URL="$2"
+        shift 2
+        ;;
+      --nixos-dir)
+        [ "$#" -ge 2 ] || fail "--nixos-dir requires a value"
+        NIXOS_DIR="$2"
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        fail "unknown option: $1"
+        ;;
+    esac
+  done
+
+  FLAKE_PATH="$NIXOS_DIR/flake.nix"
+  HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
+}
+
+setup_prompt_input() {
+  PROMPT_INPUT=""
+  if [ ! -t 0 ] && [ -e /dev/tty ] && { : < /dev/tty; } 2>/dev/null; then
+    PROMPT_INPUT="/dev/tty"
+  fi
+}
+
+read_prompt() {
+  local prompt="$1"
+  local var_name="$2"
+
+  if [ -n "$PROMPT_INPUT" ]; then
+    read -r -p "$prompt" "$var_name" < "$PROMPT_INPUT"
+  else
+    read -r -p "$prompt" "$var_name"
+  fi
+}
+
 confirm() {
   local prompt="$1"
   local answer=""
-  read -r -p "$prompt [y/N]: " answer
+  read_prompt "$prompt [y/N]: " answer
   case "$answer" in
     y|Y|yes|YES) return 0 ;;
     *) return 1 ;;
@@ -47,7 +114,7 @@ choose_profile() {
 
   local choice=""
   while true; do
-    read -r -p "Profile [1-${#profiles[@]}] default 1 (${profiles[0]}): " choice
+    read_prompt "Profile [1-${#profiles[@]}] default 1 (${profiles[0]}): " choice
     choice="${choice:-1}"
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#profiles[@]}" ]; then
       SELECTED_PROFILE="${profiles[$((choice - 1))]}"
@@ -66,7 +133,7 @@ choose_gpu() {
 
   local choice=""
   while true; do
-    read -r -p "GPU [1-${#gpus[@]}] default 1 (${gpus[0]}): " choice
+    read_prompt "GPU [1-${#gpus[@]}] default 1 (${gpus[0]}): " choice
     choice="${choice:-1}"
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#gpus[@]}" ]; then
       SELECTED_GPU="${gpus[$((choice - 1))]}"
@@ -90,7 +157,7 @@ choose_kernel() {
 
   local choice=""
   while true; do
-    read -r -p "Kernel [1-${#kernels[@]}] default 1 (${kernels[0]}): " choice
+    read_prompt "Kernel [1-${#kernels[@]}] default 1 (${kernels[0]}): " choice
     choice="${choice:-1}"
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#kernels[@]}" ]; then
       SELECTED_KERNEL="${kernels[$((choice - 1))]}"
@@ -107,7 +174,7 @@ choose_kernel() {
 choose_hostname() {
   local current="orgmos"
   current="$(hostname 2>/dev/null || printf orgmos)"
-  read -r -p "Hostname default ($current): " SELECTED_HOSTNAME
+  read_prompt "Hostname default ($current): " SELECTED_HOSTNAME
   SELECTED_HOSTNAME="${SELECTED_HOSTNAME:-$current}"
 
   if ! [[ "$SELECTED_HOSTNAME" =~ ^[a-zA-Z0-9-]+$ ]]; then
@@ -147,10 +214,10 @@ prompt_bus_id() {
 
   while true; do
     if [ -n "$detected" ]; then
-      read -r -p "$label Bus ID default ($detected): " value
+      read_prompt "$label Bus ID default ($detected): " value
       value="${value:-$detected}"
     else
-      read -r -p "$label Bus ID (example PCI:0:2:0): " value
+      read_prompt "$label Bus ID (example PCI:0:2:0): " value
     fi
 
     if valid_bus_id "$value"; then
@@ -265,6 +332,12 @@ EOF
   cat "$tmp"
   say "---"
 
+  if [ "$DRY_RUN" = true ]; then
+    say "Dry run: not writing $FLAKE_PATH."
+    rm -f "$tmp"
+    return 0
+  fi
+
   if confirm "Write this to $FLAKE_PATH?"; then
     backup_existing_flake
     nixos_dir_command install -m 0644 "$tmp" "$FLAKE_PATH"
@@ -276,11 +349,19 @@ EOF
 }
 
 main() {
-  say "ORGMOS installer"
-  require_nixos
+  parse_args "$@"
+  setup_prompt_input
 
-  if [ ! -f "$HARDWARE_PATH" ]; then
-    fail "missing $HARDWARE_PATH; run nixos-generate-config first"
+  say "ORGMOS installer"
+
+  if [ "$DRY_RUN" = true ]; then
+    say "Dry run: no files will be written and nixos-rebuild will not run."
+  else
+    require_nixos
+
+    if [ ! -f "$HARDWARE_PATH" ]; then
+      fail "missing $HARDWARE_PATH; run nixos-generate-config first"
+    fi
   fi
 
   choose_profile
@@ -308,6 +389,13 @@ main() {
   say ""
 
   write_flake
+
+  if [ "$DRY_RUN" = true ]; then
+    say ""
+    say "Dry run complete. To install, run without --dry-run:"
+    say "  curl -fsSL https://nixos.or-gm.com/orgmos.sh | bash"
+    return 0
+  fi
 
   say ""
   say "Next command: sudo nixos-rebuild switch --flake $NIXOS_DIR#default"
