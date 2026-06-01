@@ -48,7 +48,7 @@ in
 
   programs.nh = {
     enable = true;
-    flake = "/home/osmarg/Hobby/nixos";
+    flake = lib.mkDefault "/etc/nixos";
     clean = {
       enable = true;
       dates = "daily";
@@ -63,7 +63,7 @@ in
     operation = "switch";
     randomizedDelaySec = "45min";
     allowReboot = false;
-    flake = "/home/osmarg/Hobby/nixos";
+    flake = lib.mkDefault "/etc/nixos";
     flags = [
       "--update-input"
       "nixpkgs"

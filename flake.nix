@@ -147,6 +147,20 @@
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
+      nixosModules = {
+        gpu = {
+          intel = ./nixos/hardware/gpu/intel.nix;
+          radeon = ./nixos/hardware/gpu/radeon.nix;
+          nvidia = ./nixos/hardware/gpu/nvidia.nix;
+          nvidia-offload = ./nixos/hardware/gpu/nvidia-offload.nix;
+        };
+
+        kernel = {
+          zen = ./nixos/hardware/kernel/zen.nix;
+          lts = ./nixos/hardware/kernel/lts.nix;
+        };
+      };
+
       packages.${system} = {
         inherit
           orgmDot
@@ -185,6 +199,7 @@
           hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -194,6 +209,7 @@
           hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -204,6 +220,7 @@
           hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -213,6 +230,7 @@
           hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -222,19 +240,28 @@
           hostName = "ero";
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix;
-          extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+          extraModules = [
+            ./nixos/hardware/gpu/intel.nix
+            ./nixos/hosts/ero/plymouth.nix
+          ];
         };
         ero-i3 = mkHost {
           hostName = "ero";
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/i3.nix;
-          extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+          extraModules = [
+            ./nixos/hardware/gpu/intel.nix
+            ./nixos/hosts/ero/plymouth.nix
+          ];
         };
         ero-sway = mkHost {
           hostName = "ero";
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
-          extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+          extraModules = [
+            ./nixos/hardware/gpu/intel.nix
+            ./nixos/hosts/ero/plymouth.nix
+          ];
         };
         ero-server = nixpkgs.lib.nixosSystem {
           inherit system;
@@ -251,6 +278,13 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia-offload.nix
+            {
+              hardware.nvidia.prime = {
+                intelBusId = "PCI:0:2:0";
+                nvidiaBusId = "PCI:1:0:0";
+              };
+            }
             ./nixos/hosts/lenovo/plymouth.nix
             ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
@@ -262,6 +296,13 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia-offload.nix
+            {
+              hardware.nvidia.prime = {
+                intelBusId = "PCI:0:2:0";
+                nvidiaBusId = "PCI:1:0:0";
+              };
+            }
             ./nixos/hosts/lenovo/plymouth.nix
             ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
@@ -273,6 +314,13 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia-offload.nix
+            {
+              hardware.nvidia.prime = {
+                intelBusId = "PCI:0:2:0";
+                nvidiaBusId = "PCI:1:0:0";
+              };
+            }
             ./nixos/hosts/lenovo/plymouth.nix
             ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
@@ -285,6 +333,13 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
+            ./nixos/hardware/gpu/nvidia-offload.nix
+            {
+              hardware.nvidia.prime = {
+                intelBusId = "PCI:0:2:0";
+                nvidiaBusId = "PCI:1:0:0";
+              };
+            }
             ./nixos/hosts/lenovo/plymouth.nix
             ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
