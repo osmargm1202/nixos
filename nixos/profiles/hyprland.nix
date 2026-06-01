@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   inputs,
@@ -34,16 +35,25 @@ in
     defaultSession = "hyprland";
     sddm = {
       enable = true;
-      wayland.enable = true;
+      wayland = {
+        enable = true;
+        compositor = "kwin";
+      };
       autoNumlock = true;
       enableHidpi = true;
       theme = "ltmnight";
       settings.General = {
-        InputMethod = "qtvirtualkeyboard";
         Numlock = "on";
       };
     };
   };
+
+  environment.etc."sddm/kwinoutputconfig-${config.networking.hostName}.json".source =
+    ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
+  systemd.tmpfiles.rules = [
+    "d /var/lib/sddm/.config 0755 sddm sddm -"
+    "C /var/lib/sddm/.config/kwinoutputconfig.json 0644 sddm sddm - /etc/sddm/kwinoutputconfig-${config.networking.hostName}.json"
+  ];
 
   programs.hyprland = {
     enable = true;
