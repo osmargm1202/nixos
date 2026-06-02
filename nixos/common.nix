@@ -225,6 +225,7 @@ in
     age
     fd
     jq
+    trash-cli
     orgmDot
     eza
     htop
