@@ -3,6 +3,12 @@ set -euo pipefail
 
 REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos}"
 NIXOS_DIR="${ORGMOS_NIXOS_DIR:-/etc/nixos}"
+NIXOS_DIR_EXPLICIT=false
+if [ -n "${ORGMOS_NIXOS_DIR+x}" ]; then
+  NIXOS_DIR_EXPLICIT=true
+fi
+NIXOS_DIR_CANDIDATES="${ORGMOS_NIXOS_DIR_CANDIDATES:-/etc/nixos:/mnt/etc/nixos}"
+INSTALL_ACTION="rebuild"
 DRY_RUN=false
 PROMPT_INPUT=""
 FLAKE_PATH="$NIXOS_DIR/flake.nix"
@@ -52,6 +58,7 @@ parse_args() {
       --nixos-dir)
         [ "$#" -ge 2 ] || fail "--nixos-dir requires a value"
         NIXOS_DIR="$2"
+        NIXOS_DIR_EXPLICIT=true
         shift 2
         ;;
       -h|--help)
@@ -64,8 +71,7 @@ parse_args() {
     esac
   done
 
-  FLAKE_PATH="$NIXOS_DIR/flake.nix"
-  HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
+  refresh_nixos_paths
 }
 
 setup_prompt_input() {
@@ -96,13 +102,100 @@ confirm() {
   esac
 }
 
+refresh_nixos_paths() {
+  FLAKE_PATH="$NIXOS_DIR/flake.nix"
+  HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
+  INSTALL_ACTION="rebuild"
+  case "$NIXOS_DIR" in
+    /mnt|/mnt/*|*/mnt/etc/nixos)
+      INSTALL_ACTION="install"
+      ;;
+  esac
+}
+
+final_command() {
+  case "$INSTALL_ACTION" in
+    install) printf 'sudo nixos-install --flake %s#default' "$NIXOS_DIR" ;;
+    *) printf 'sudo nixos-rebuild switch --flake %s#default' "$NIXOS_DIR" ;;
+  esac
+}
+
+can_prompt() {
+  [ -t 0 ] || [ -n "$PROMPT_INPUT" ]
+}
+
+prompt_nixos_dir() {
+  local value=""
+  while true; do
+    read_prompt "NixOS config dir containing hardware-configuration.nix: " value
+    value="${value%/}"
+    if [ -f "$value/hardware-configuration.nix" ]; then
+      NIXOS_DIR="$value"
+      refresh_nixos_paths
+      return 0
+    fi
+    say "Missing $value/hardware-configuration.nix."
+  done
+}
+
+resolve_nixos_dir() {
+  local checked=""
+  local candidate=""
+
+  if [ "$NIXOS_DIR_EXPLICIT" = true ]; then
+    NIXOS_DIR="${NIXOS_DIR%/}"
+    refresh_nixos_paths
+    if [ -f "$HARDWARE_PATH" ]; then
+      return 0
+    fi
+    if can_prompt; then
+      say "Missing $HARDWARE_PATH."
+      prompt_nixos_dir
+      return 0
+    fi
+    fail "missing $HARDWARE_PATH"
+  fi
+
+  local old_ifs="$IFS"
+  IFS=:
+  for candidate in $NIXOS_DIR_CANDIDATES; do
+    candidate="${candidate%/}"
+    [ -n "$candidate" ] || continue
+    checked="${checked}${checked:+, }$candidate/hardware-configuration.nix"
+    if [ -f "$candidate/hardware-configuration.nix" ]; then
+      NIXOS_DIR="$candidate"
+      refresh_nixos_paths
+      IFS="$old_ifs"
+      return 0
+    fi
+  done
+  IFS="$old_ifs"
+
+  if can_prompt; then
+    say "No hardware-configuration.nix found in default locations."
+    prompt_nixos_dir
+    return 0
+  fi
+
+  fail "missing hardware-configuration.nix; checked: $checked"
+}
+
 require_nixos() {
   if [ ! -e /etc/NIXOS ]; then
     fail "this installer must run on NixOS"
   fi
-  if ! command -v nixos-rebuild >/dev/null 2>&1; then
-    fail "nixos-rebuild not found; this installer must run on NixOS"
-  fi
+  case "$INSTALL_ACTION" in
+    install)
+      if ! command -v nixos-install >/dev/null 2>&1; then
+        fail "nixos-install not found; this installer must run in the NixOS installer"
+      fi
+      ;;
+    *)
+      if ! command -v nixos-rebuild >/dev/null 2>&1; then
+        fail "nixos-rebuild not found; this installer must run on NixOS"
+      fi
+      ;;
+  esac
 }
 
 choose_profile() {
@@ -354,14 +447,12 @@ main() {
 
   say "ORGMOS installer"
 
+  resolve_nixos_dir
+
   if [ "$DRY_RUN" = true ]; then
-    say "Dry run: no files will be written and nixos-rebuild will not run."
+    say "Dry run: no files will be written and no install command will run."
   else
     require_nixos
-
-    if [ ! -f "$HARDWARE_PATH" ]; then
-      fail "missing $HARDWARE_PATH; run nixos-generate-config first"
-    fi
   fi
 
   choose_profile
@@ -378,6 +469,7 @@ main() {
   say "  Repository: $REPO_URL"
   say "  NixOS dir:  $NIXOS_DIR"
   say "  Hardware:   $HARDWARE_PATH"
+  say "  Mode:       $INSTALL_ACTION"
   say "  Profile:    $SELECTED_PROFILE"
   say "  GPU:        $SELECTED_GPU"
   say "  Kernel:     $SELECTED_KERNEL"
@@ -392,19 +484,24 @@ main() {
 
   if [ "$DRY_RUN" = true ]; then
     say ""
-    say "Dry run complete. To install, run without --dry-run:"
-    say "  curl -fsSL https://nixos.or-gm.com/orgmos.sh | bash"
+    say "Dry run complete. Next command would be:"
+    say "  $(final_command)"
     return 0
   fi
 
   say ""
-  say "Next command: sudo nixos-rebuild switch --flake $NIXOS_DIR#default"
-  if confirm "Run rebuild now?"; then
-    sudo nixos-rebuild switch --flake "$NIXOS_DIR#default"
+  say "Next command: $(final_command)"
+  if confirm "Run command now?"; then
+    case "$INSTALL_ACTION" in
+      install) sudo nixos-install --flake "$NIXOS_DIR#default" ;;
+      *) sudo nixos-rebuild switch --flake "$NIXOS_DIR#default" ;;
+    esac
   else
-    say "Skipped rebuild. Run manually when ready:"
-    say "  sudo nixos-rebuild switch --flake $NIXOS_DIR#default"
+    say "Skipped command. Run manually when ready:"
+    say "  $(final_command)"
   fi
 }
 
-main "$@"
+if [ "${ORGMOS_INSTALLER_TEST:-}" != "1" ]; then
+  main "$@"
+fi
