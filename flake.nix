@@ -70,6 +70,7 @@
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;
       };
+      orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
       orgmCalendar = pkgs.callPackage ./nixos/packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
@@ -181,11 +182,13 @@
         inherit
           orgmDot
           orgmWallpaper
+          orgmThemes
           orgmCalendar
           engram
           ;
         "orgm-dot" = orgmDot;
         "orgm-wallpaper" = orgmWallpaper;
+        "orgm-themes" = orgmThemes;
         "orgm-calendar" = orgmCalendar;
         default = orgmDot;
       };
