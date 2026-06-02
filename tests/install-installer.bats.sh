@@ -15,6 +15,24 @@ assert_eq() {
   [ "$got" = "$want" ] || fail "$name: got '$got', want '$want'"
 }
 
+assert_file_contains() {
+  local file="$1" want="$2" name="$3"
+  grep -qF -- "$want" "$file" || {
+    echo "--- $file ---" >&2
+    cat "$file" >&2 2>/dev/null || true
+    fail "$name expected: $want"
+  }
+}
+
+assert_file_not_contains() {
+  local file="$1" want="$2" name="$3"
+  if grep -qF -- "$want" "$file"; then
+    echo "--- $file ---" >&2
+    cat "$file" >&2 2>/dev/null || true
+    fail "$name must not contain: $want"
+  fi
+}
+
 source_installer() {
   ORGMOS_INSTALLER_TEST=1 source "$REPO_DIR/install.sh"
 }
@@ -60,6 +78,42 @@ NIXOS_DIR_EXPLICIT=false
 resolve_nixos_dir
 assert_eq "$NIXOS_DIR" "$etc_real" "autodetect prefers installed config over live config"
 assert_eq "$INSTALL_ACTION" "rebuild" "installed config uses nixos-rebuild mode"
+
+server_dir="$TMP_ROOT/server/etc/nixos"
+make_nixos_dir "$server_dir"
+NIXOS_DIR="$server_dir"
+NIXOS_DIR_EXPLICIT=true
+DRY_RUN=false
+SELECTED_PROFILE="server"
+SELECTED_HOSTNAME="serverbox"
+FLAKE_PATH="$server_dir/flake.nix"
+HARDWARE_PATH="$server_dir/hardware-configuration.nix"
+refresh_nixos_paths
+printf 'y\n' | write_flake > "$TMP_ROOT/server.out"
+assert_file_contains "$FLAKE_PATH" "orgmos.lib.mkServerHost" "server flake uses mkServerHost"
+assert_file_contains "$FLAKE_PATH" 'hostName = "serverbox";' "server flake includes hostname"
+assert_file_not_contains "$FLAKE_PATH" "mkGeneralHost" "server flake skips desktop host helper"
+assert_file_not_contains "$FLAKE_PATH" "nixosModules.gpu" "server flake skips GPU modules"
+assert_file_not_contains "$FLAKE_PATH" "nixosModules.kernel" "server flake skips kernel modules"
+
+desktop_dir="$TMP_ROOT/desktop/etc/nixos"
+make_nixos_dir "$desktop_dir"
+NIXOS_DIR="$desktop_dir"
+NIXOS_DIR_EXPLICIT=true
+DRY_RUN=false
+SELECTED_PROFILE="hyprland"
+SELECTED_HOSTNAME="deskbox"
+SELECTED_GPU="intel"
+SELECTED_GPU_MODULE="orgmos.nixosModules.gpu.intel"
+SELECTED_KERNEL="zen"
+SELECTED_KERNEL_MODULE="orgmos.nixosModules.kernel.zen"
+FLAKE_PATH="$desktop_dir/flake.nix"
+HARDWARE_PATH="$desktop_dir/hardware-configuration.nix"
+refresh_nixos_paths
+printf 'y\n' | write_flake > "$TMP_ROOT/desktop.out"
+assert_file_contains "$FLAKE_PATH" "orgmos.lib.mkGeneralHost" "desktop flake keeps mkGeneralHost"
+assert_file_contains "$FLAKE_PATH" "orgmos.nixosModules.gpu.intel" "desktop flake includes GPU module"
+assert_file_contains "$FLAKE_PATH" "orgmos.nixosModules.kernel.zen" "desktop flake includes kernel module"
 
 bash -n "$REPO_DIR/install.sh"
 

@@ -139,10 +139,26 @@
           ]
           ++ extraModules;
         };
+      mkServerHost =
+        {
+          hardware,
+          hostName,
+          extraModules ? [ ],
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            hardware
+            ./nixos/server.nix
+            { networking.hostName = hostName; }
+          ]
+          ++ extraModules;
+        };
     in
     {
       lib = {
-        inherit mkGeneralHost;
+        inherit mkGeneralHost mkServerHost;
       };
 
       formatter.${system} = pkgs.nixfmt-rfc-style;

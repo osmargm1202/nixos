@@ -14,7 +14,7 @@ PROMPT_INPUT=""
 FLAKE_PATH="$NIXOS_DIR/flake.nix"
 HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
 
-profiles=(hyprland gnome labwc sway i3)
+profiles=(hyprland gnome labwc sway i3 server)
 gpus=(intel radeon nvidia nvidia-offload)
 kernels=(zen lts)
 
@@ -100,6 +100,10 @@ confirm() {
     y|Y|yes|YES) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+is_server_profile() {
+  [ "${SELECTED_PROFILE:-}" = "server" ]
 }
 
 refresh_nixos_paths() {
@@ -399,11 +403,25 @@ EOF
 
 write_flake() {
   local tmp
-  local extra_modules
+  local extra_modules=""
   tmp="$(mktemp)"
-  extra_modules="$(extra_modules_nix)"
 
-  cat > "$tmp" <<EOF
+  if is_server_profile; then
+    cat > "$tmp" <<EOF
+{
+  inputs.orgmos.url = "$REPO_URL";
+
+  outputs = { self, orgmos, ... }: {
+    nixosConfigurations.default = orgmos.lib.mkServerHost {
+      hardware = ./hardware-configuration.nix;
+      hostName = "$SELECTED_HOSTNAME";
+    };
+  };
+}
+EOF
+  else
+    extra_modules="$(extra_modules_nix)"
+    cat > "$tmp" <<EOF
 {
   inputs.orgmos.url = "$REPO_URL";
 
@@ -419,6 +437,7 @@ $extra_modules
   };
 }
 EOF
+  fi
 
   say "Generated flake:"
   say "---"
@@ -456,11 +475,13 @@ main() {
   fi
 
   choose_profile
-  choose_gpu
-  choose_kernel
+  if ! is_server_profile; then
+    choose_gpu
+    choose_kernel
+  fi
   choose_hostname
 
-  if [ "$SELECTED_GPU" = "nvidia-offload" ]; then
+  if [ "${SELECTED_GPU:-}" = "nvidia-offload" ]; then
     detect_offload_bus_ids
   fi
 
@@ -471,10 +492,12 @@ main() {
   say "  Hardware:   $HARDWARE_PATH"
   say "  Mode:       $INSTALL_ACTION"
   say "  Profile:    $SELECTED_PROFILE"
-  say "  GPU:        $SELECTED_GPU"
-  say "  Kernel:     $SELECTED_KERNEL"
+  if ! is_server_profile; then
+    say "  GPU:        $SELECTED_GPU"
+    say "  Kernel:     $SELECTED_KERNEL"
+  fi
   say "  Hostname:   $SELECTED_HOSTNAME"
-  if [ "$SELECTED_GPU" = "nvidia-offload" ]; then
+  if [ "${SELECTED_GPU:-}" = "nvidia-offload" ]; then
     say "  Intel Bus:  $OFFLOAD_INTEL_BUS_ID"
     say "  NVIDIA Bus: $OFFLOAD_NVIDIA_BUS_ID"
   fi
