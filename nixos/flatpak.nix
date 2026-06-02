@@ -24,7 +24,7 @@
       "io.gitlab.theevilskeleton.Upscaler"
       "io.podman_desktop.PodmanDesktop"
       "md.obsidian.Obsidian"
-      "net.thunderbird.Thunderbird"
+      "org.mozilla.Thunderbird"
       "org.blender.Blender"
       "org.gimp.GIMP"
       "org.gnome.SimpleScan"
