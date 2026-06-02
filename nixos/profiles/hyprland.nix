@@ -84,6 +84,7 @@ in
   };
 
   services.dbus.enable = true;
+  services.udisks2.enable = true;
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
@@ -223,6 +224,8 @@ in
 
     # Hardware controls
     brightnessctl
+    udiskie
+    usbutils
     pamixer
     playerctl
     pavucontrol
