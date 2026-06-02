@@ -23,6 +23,8 @@ let
   orgmDot = pkgs.callPackage ../packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmCalendar = pkgs.callPackage ../packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
+  sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
+  hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
 in
 {
   imports = [
@@ -48,9 +50,10 @@ in
     };
   };
 
-  environment.etc."sddm/kwinoutputconfig-${config.networking.hostName}.json".source =
-    ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
-  systemd.tmpfiles.rules = [
+  environment.etc = lib.mkIf hasSddmKwinOutputConfig {
+    "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
+  };
+  systemd.tmpfiles.rules = lib.optionals hasSddmKwinOutputConfig [
     "d /var/lib/sddm/.config 0755 sddm sddm -"
     "C /var/lib/sddm/.config/kwinoutputconfig.json 0644 sddm sddm - /etc/sddm/kwinoutputconfig-${config.networking.hostName}.json"
   ];
