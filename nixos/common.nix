@@ -7,6 +7,7 @@
   pkgs,
   lib,
   inputs ? null,
+  userName ? "osmarg",
   ...
 }:
 
@@ -29,7 +30,7 @@ in
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
-  home-manager.users.osmarg = {
+  home-manager.users.${userName} = {
     imports = [ ./home/engram.nix ];
     home.stateVersion = "25.11";
   };
@@ -170,9 +171,9 @@ in
   # services.xserver.libinput.enable = true;
 
   # Define user account. Don’t forget to set password with ‘passwd’.
-  users.users.osmarg = {
+  users.users.${userName} = {
     isNormalUser = true;
-    description = "osmarg";
+    description = userName;
     shell = pkgs.fish;
     subUidRanges = [
       {
@@ -190,7 +191,7 @@ in
       "networkmanager"
       "wheel"
       "docker"
-      "osmarg"
+      userName
       "podman"
       "input"
       "video"

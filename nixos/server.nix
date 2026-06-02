@@ -17,7 +17,8 @@ let
     sshPort
     80
     443
-  ] ++ lib.optionals allowPiholeDNS [ 53 ];
+  ]
+  ++ lib.optionals allowPiholeDNS [ 53 ];
   allowedUDPPorts = lib.optionals allowPiholeDNS [ 53 ];
 
   fail2ban = {
@@ -159,7 +160,12 @@ in
   };
 
   services.restic.backups.server = lib.mkIf resticBackup.enable {
-    inherit (resticBackup) repositoryFile passwordFile paths exclude;
+    inherit (resticBackup)
+      repositoryFile
+      passwordFile
+      paths
+      exclude
+      ;
     initialize = true;
     timerConfig = {
       OnCalendar = "daily";
@@ -174,7 +180,13 @@ in
   };
 
   system.autoUpgrade = {
-    inherit (autoUpgrade) enable flake dates randomizedDelaySec allowReboot;
+    inherit (autoUpgrade)
+      enable
+      flake
+      dates
+      randomizedDelaySec
+      allowReboot
+      ;
     operation = "switch";
   };
 

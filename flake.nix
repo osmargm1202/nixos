@@ -92,10 +92,11 @@
           hardware,
           profile,
           extraModules ? [ ],
+          userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = { inherit inputs userName; };
           modules = [
             ./nixos/common.nix
             hardware
@@ -109,10 +110,11 @@
           profile,
           hostName ? "nixos",
           extraModules ? [ ],
+          userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = { inherit inputs userName; };
           modules = [
             ./nixos/common.nix
             defaultHardware
@@ -127,10 +129,11 @@
           profile,
           hostName,
           extraModules ? [ ],
+          userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = { inherit inputs userName; };
           modules = [
             ./nixos/common.nix
             ./nixos/general.nix
@@ -145,10 +148,11 @@
           hardware,
           hostName,
           extraModules ? [ ],
+          userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = { inherit inputs userName; };
           modules = [
             hardware
             ./nixos/server.nix
@@ -211,6 +215,16 @@
         };
         i3 = mkProfile {
           profile = ./nixos/profiles/i3.nix;
+        };
+        jarq = mkHost {
+          hostName = "jarq";
+          hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+          profile = ./nixos/profiles/gnome.nix;
+          userName = "jarq";
+          extraModules = [
+            ./nixos/hardware/gpu/intel.nix
+            ./nixos/hosts/jarq/default.nix
+          ];
         };
         orgm-gnome = mkHost {
           hostName = "orgm";

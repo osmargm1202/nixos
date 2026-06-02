@@ -73,10 +73,22 @@
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
 
       # HTML / Web
-      "text/html" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium-browser.desktop" "chromium.desktop" ];
+      "text/html" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "application/xhtml+xml" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/http" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/https" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
 
       # PDF
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
@@ -89,12 +101,30 @@
       "image/svg+xml" = [ "org.gnome.Loupe.desktop" ];
 
       # Videos / audio
-      "video/mp4" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
-      "video/x-matroska" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
-      "video/webm" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
-      "audio/mpeg" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
-      "audio/flac" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
-      "audio/ogg" = [ "org.gnome.Totem.desktop" "mpv.desktop" ];
+      "video/mp4" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
+      "video/x-matroska" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
+      "video/webm" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
+      "audio/mpeg" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
+      "audio/flac" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
+      "audio/ogg" = [
+        "org.gnome.Totem.desktop"
+        "mpv.desktop"
+      ];
 
       # Comprimidos
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];
