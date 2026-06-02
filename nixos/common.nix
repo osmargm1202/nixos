@@ -230,6 +230,7 @@ in
     eza
     htop
     btop
+    fastfetch
     ntfs3g
     gcc
     zoxide
