@@ -224,6 +224,7 @@
           extraModules = [
             ./nixos/hardware/gpu/intel.nix
             ./nixos/hosts/jarq/default.nix
+            ./nixos/hosts/jarq/plymouth.nix
           ];
         };
         orgm-gnome = mkHost {
@@ -232,6 +233,7 @@
           profile = ./nixos/profiles/gnome.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -242,6 +244,7 @@
           profile = ./nixos/profiles/hyprland.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -253,6 +256,7 @@
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
@@ -263,6 +267,7 @@
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
             ./nixos/hosts/orgm/plymouth.nix
             ./nixos/gaming/default.nix
           ];
