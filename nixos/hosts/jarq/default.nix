@@ -9,6 +9,12 @@
   # Lenovo Flex 3-1570 (80JM): Intel Broadwell + Broadcom BCM4352 WiFi.
   hardware.enableRedistributableFirmware = true;
 
+  # BCM4352 needs Broadcom STA. Nixpkgs marks it insecure because upstream
+  # abandoned it, but this host depends on it unless the WiFi card is replaced.
+  nixpkgs.config.permittedInsecurePackages = [
+    "broadcom-sta-6.30.223.271-59-7.0.9"
+  ];
+
   boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
   boot.blacklistedKernelModules = [
     "b43"
