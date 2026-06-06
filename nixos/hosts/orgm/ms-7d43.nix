@@ -17,4 +17,9 @@
     "nvidia_uvm"
     "nvidia_drm"
   ];
+
+  boot.kernelParams = lib.mkAfter [ "nvidia-drm.modeset=1" ];
+  boot.extraModprobeConfig = lib.mkAfter ''
+    options nvidia_drm modeset=1
+  '';
 }
