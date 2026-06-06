@@ -23,7 +23,6 @@ let
   orgmDot = pkgs.callPackage ../packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
-  orgmCalendar = pkgs.callPackage ../packages/orgm-calendar.nix { inherit dotfilesOrgmSource; };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
 in
@@ -178,11 +177,6 @@ in
     orgmDot
     orgmWallpaper
     orgmThemes
-    orgmCalendar
-    # Google Calendar support: gcalcli is a Python application and may pull
-    # Python via Nix. python3Minimal below was pre-existing; the Go helper does
-    # not add or require extra Python packages.
-    gcalcli
     libnotify
     ffmpeg
     python3Minimal
