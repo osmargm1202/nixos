@@ -75,6 +75,7 @@
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       profiles = {
+        cinnamon = ./nixos/profiles/cinnamon.nix;
         gnome = ./nixos/profiles/gnome.nix;
         hyprland = ./nixos/profiles/hyprland.nix;
         labwc = ./nixos/profiles/labwc.nix;
@@ -197,6 +198,9 @@
       };
 
       nixosConfigurations = {
+        cinnamon = mkProfile {
+          profile = ./nixos/profiles/cinnamon.nix;
+        };
         gnome = mkProfile {
           profile = ./nixos/profiles/gnome.nix;
         };
@@ -227,10 +231,32 @@
             ./nixos/hosts/jarq/plymouth.nix
           ];
         };
+        jarq-cinnamon = mkHost {
+          hostName = "jarq";
+          hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+          profile = ./nixos/profiles/cinnamon.nix;
+          userName = "jarq";
+          extraModules = [
+            ./nixos/hardware/gpu/intel.nix
+            ./nixos/hosts/jarq/default.nix
+            ./nixos/hosts/jarq/plymouth.nix
+          ];
+        };
         orgm-gnome = mkHost {
           hostName = "orgm";
           hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix;
+          extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
+            ./nixos/hosts/orgm/plymouth.nix
+            ./nixos/gaming/default.nix
+          ];
+        };
+        orgm-cinnamon = mkHost {
+          hostName = "orgm";
+          hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+          profile = ./nixos/profiles/cinnamon.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
             ./nixos/hosts/orgm/ms-7d43.nix
