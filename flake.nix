@@ -217,7 +217,7 @@
         i3 = mkProfile {
           profile = ./nixos/profiles/i3.nix;
         };
-        jarq = mkHost {
+        jarq-gnome = mkHost {
           hostName = "jarq";
           hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix;
