@@ -18,6 +18,9 @@
     "intremap=off"
   ];
 
+  # Plymouth hangs this laptop during early boot after system initialization.
+  boot.plymouth.enable = lib.mkForce false;
+
   # BCM4352 needs Broadcom STA. Nixpkgs marks it insecure because upstream
   # abandoned it, but this host depends on it unless the WiFi card is replaced.
   nixpkgs.config.allowInsecurePredicate = pkg:
