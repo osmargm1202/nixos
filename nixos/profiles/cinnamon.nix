@@ -6,19 +6,15 @@
   # Force Cinnamon-only desktop stack.
   services.desktopManager.gnome.enable = lib.mkForce false;
   services.displayManager.defaultSession = lib.mkForce "cinnamon";
-  services.displayManager.gdm.enable = lib.mkForce false;
+  services.displayManager.gdm = {
+    enable = true;
+    autoSuspend = false;
+  };
+  services.xserver.displayManager.lightdm.enable = lib.mkForce false;
+
   # Cinnamon as desktop environment.
   services.xserver.desktopManager.cinnamon.enable = true;
   services.cinnamon.apps.enable = true;
-  services.xserver.displayManager = {
-    lightdm = {
-      enable = true;
-      greeter = {
-        package = pkgs.lightdm-slick-greeter;
-        name = "slick-greeter";
-      };
-    };
-  };
 
   services.libinput.enable = true;
   services.dbus.enable = true;
