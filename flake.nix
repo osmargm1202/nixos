@@ -237,6 +237,7 @@
             ./nixos/hardware/gpu/intel.nix
             ./nixos/hosts/jarq/default.nix
             ./nixos/hosts/jarq/plymouth.nix
+            ./nixos/hosts/jarq/cinnamon-display.nix
           ];
         };
         orgm-gnome = mkHost {
