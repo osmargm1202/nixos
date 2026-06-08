@@ -16,6 +16,7 @@
     "intel_iommu=off"
     "iommu=off"
     "intremap=off"
+    "module_blacklist=i2c_designware_platform,i2c_designware_core"
   ];
 
   # Plymouth hangs this laptop during early boot after system initialization.
@@ -32,6 +33,10 @@
     "bcma"
     "brcmsmac"
     "ssb"
+    # ACPI INT3432 I2C controller times out and hangs this laptop during boot.
+    # Side effect: touchscreen/tablet sensors may stay disabled.
+    "i2c_designware_platform"
+    "i2c_designware_core"
   ];
 
   services.fwupd.enable = true;
