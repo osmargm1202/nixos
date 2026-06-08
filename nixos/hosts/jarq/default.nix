@@ -19,6 +19,9 @@
     "module_blacklist=i2c_designware_platform,i2c_designware_core"
   ];
 
+  # Disable Plymouth while debugging Jarq boot hangs so kernel/systemd errors stay visible.
+  boot.plymouth.enable = lib.mkForce false;
+
   # BCM4352 needs Broadcom STA. Nixpkgs marks it insecure because upstream
   # abandoned it, but this host depends on it unless the WiFi card is replaced.
   nixpkgs.config.allowInsecurePredicate = pkg:
