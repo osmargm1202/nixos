@@ -9,6 +9,11 @@
   # Lenovo Flex 3-1570 (80JM): Intel Broadwell + Broadcom BCM4352 WiFi.
   hardware.enableRedistributableFirmware = true;
 
+  # BIOS exposes broken VT-d/RMRR reserved-memory regions on this Broadwell laptop.
+  # Disable Intel IOMMU to avoid boot hangs such as:
+  # "Firmware Bug: No firmware reserved region can cover this RMRR".
+  boot.kernelParams = lib.mkAfter [ "intel_iommu=off" ];
+
   # BCM4352 needs Broadcom STA. Nixpkgs marks it insecure because upstream
   # abandoned it, but this host depends on it unless the WiFi card is replaced.
   nixpkgs.config.allowInsecurePredicate = pkg:
