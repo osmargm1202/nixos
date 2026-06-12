@@ -122,6 +122,10 @@ in
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
+      "text/x-lua" = [ "org.gnome.TextEditor.desktop" ];
+      "text/x-python" = [ "org.gnome.TextEditor.desktop" ];
+      "application/json" = [ "org.gnome.TextEditor.desktop" ];
+      "application/x-shellscript" = [ "org.gnome.TextEditor.desktop" ];
       "text/html" = [
         "chromium-browser.desktop"
         "chromium.desktop"
