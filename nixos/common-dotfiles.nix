@@ -1,0 +1,319 @@
+{
+  config,
+  pkgs,
+  lib,
+  userName ? "osmarg",
+  ...
+}:
+
+let
+  dotfilesRepo = "https://github.com/osmargm1202/dotfiles.git";
+  dotfilesBranch = "master";
+  dotfilesPath = "/home/${userName}/Hobby/dotfiles";
+  dotfilesParent = "/home/${userName}/Hobby";
+  hostName = config.networking.hostName;
+  sharedPaths = [
+    ".config/Kvantum"
+    ".config/bat"
+    ".config/btop"
+    ".config/delta"
+    ".config/dolphinrc"
+    ".config/dunst"
+    ".config/fastfetch"
+    ".config/fish"
+    ".config/fish/functions/code.fish"
+    ".config/gtk-4.0"
+    ".config/helix"
+    ".config/hypr"
+    ".config/i3"
+    ".config/kdeglobals"
+    ".config/kitty"
+    ".config/labwc"
+    ".config/mpv"
+    ".config/niri"
+    ".config/nvim"
+    ".config/orgm-hypr"
+    ".config/nwg-dock-hyprland"
+    ".config/picom"
+    ".config/polybar"
+    ".config/posting"
+    ".config/qt5ct"
+    ".config/qt6ct"
+    ".config/quickshell"
+    ".config/rofi"
+    ".config/starship.toml"
+    ".config/swappy"
+    ".config/sway"
+    ".config/swaylock"
+    ".config/swaync"
+    ".config/wallpapers"
+    ".config/waybar"
+    ".config/waybar-hypr"
+    ".config/wlogout"
+    ".config/wofi"
+    ".config/yazi"
+    ".config/zathura"
+    ".config/zellij"
+    ".icons"
+    ".local/bin/kbd-layout-next"
+    ".local/bin/labwc-kill-windows"
+    ".local/bin/sway-app-dock"
+    ".local/bin/sway-keybindings-help"
+    ".local/bin/sway-kill-windows"
+    ".local/bin/sway-random-wallpaper"
+    ".local/bin/windows-rdp"
+    ".local/share/applications/windows-rdp.desktop"
+    ".local/share/icons/nixos.svg"
+    ".local/share/icons/windows.png"
+    ".local/share/posting"
+    ".local/share/themes"
+    ".pi/agent/AGENTS.md"
+    ".pi/agent/RTK.md"
+    ".pi/agent/ask.jsonc"
+    ".tmux.conf"
+    ".local/bin/brightness-osd"
+    ".local/bin/hypr-apps-menu"
+    ".local/bin/hypr-battery-alerts"
+    ".local/bin/hypr-app-launcher"
+    ".local/bin/hypr-audio-device-menu"
+    ".local/bin/hypr-bluetooth-menu"
+    ".local/bin/hypr-config-editor"
+    ".local/bin/hypr-current-wallpaper"
+    ".local/bin/hypr-devices-menu"
+    ".local/bin/hypr-display-targets"
+    ".local/bin/hypr-focus-notification-app"
+    ".local/bin/hypr-help-menu"
+    ".local/bin/hypr-keybindings-help"
+    ".local/bin/hypr-keyhelper"
+    ".local/bin/hypr-keyboard-menu"
+    ".local/bin/hypr-kill-windows"
+    ".local/bin/hypr-lock"
+    ".local/bin/hypr-main-menu"
+    ".local/bin/hypr-nwg-dock"
+    ".local/bin/hypr-obsidian-open-or-focus"
+    ".local/bin/hypr-orgm-dot"
+    ".local/bin/hypr-performance-menu"
+    ".local/bin/hypr-pi-prompt"
+    ".local/bin/hypr-power-menu"
+    ".local/bin/hypr-random-wallpaper"
+    ".local/bin/hypr-session-import-env"
+    ".local/bin/hypr-smart-run"
+    ".local/bin/hypr-start-containers"
+    ".local/bin/hypr-start-discord"
+    ".local/bin/hypr-system-menu"
+    ".local/bin/hypr-tools-menu"
+    ".local/bin/hypr-tweaks-menu"
+    ".local/bin/hypr-transition-menu"
+    ".local/bin/hypr-usb-menu"
+    ".local/bin/hypr-webapp-maker"
+    ".local/bin/hypr-webapp-remover"
+    ".local/bin/hypr-wifi-menu"
+    ".local/bin/hypr-workspace-button"
+    ".local/bin/hypr-zen-new-window"
+    ".local/bin/memclean-dev"
+    ".local/bin/mic-volume-osd"
+    ".local/bin/volume-osd"
+    ".local/bin/waybar-date-es"
+    ".local/bin/waybar-day-month-es"
+    ".local/bin/waybar-pi-status"
+    ".local/bin/waybar-swap-usage"
+    ".local/bin/waybar-metric-widget"
+    ".local/bin/waybar-time-ampm"
+    ".local/bin/waybar-watch"
+    ".config/orgm-theme"
+    ".local/bin/hypr-theme-chooser"
+    ".local/bin/waybar-theme-toggle"
+    ".local/bin/hypr-bluetooth-reconnect"
+    ".local/bin/hypr-rofi-calc"
+    ".local/bin/hypr-rofi-clipboard"
+    ".local/bin/hypr-rofi-lib"
+    ".local/bin/hypr-rofi-open-file"
+    ".local/bin/hypr-rofi-open-file-dir"
+    ".local/bin/hypr-rofi-open-file-terminal"
+    ".local/bin/hypr-rofi-ssh-host"
+    ".local/bin/hypr-rofi-tmux-arch"
+    ".local/bin/hypr-rofi-window"
+  ];
+  hostPaths = {
+    ero = [
+      ".config/fish/age-host.fish"
+      ".local/share/applications"
+      ".local/share/icons"
+    ];
+    lenovo = [
+      ".config/DankMaterialShell"
+      ".config/fish/age-host.fish"
+      ".config/fish/host-lenovo.fish"
+      ".config/rofi/hypr-menu.env"
+      ".local/share/applications"
+      ".local/share/icons"
+    ];
+    orgm = [
+      ".config/DankMaterialShell"
+      ".config/fish/age-host.fish"
+      ".config/fish/host-orgm.fish"
+      ".config/rofi/hypr-menu.env"
+      ".local/share/applications"
+      ".local/share/icons"
+    ];
+  };
+  localOnlyPaths = [
+    ".config/fish/fish_variables"
+    ".config/fish/functions/dir.txt"
+    ".config/fish/insforge.env"
+    ".config/fish/pdd"
+    ".config/fish/private-env.fish"
+    ".config/gtk-4.0/gtk-dark.css"
+    ".config/gtk-4.0/gtk.css"
+    ".pi/agent/agent-status.json"
+    ".pi/agent/auth.json"
+    ".pi/agent/extensions/.pi-lens"
+    ".pi/agent/git"
+    ".pi/agent/git/github.com/osmargm1202/pi-harness"
+    ".pi/agent/git/github.com/osmargm1202/pi-skills"
+    ".pi/agent/npm/pi-harness"
+    ".pi/agent/npm/pi-skills"
+    ".pi/agent/mcp-cache.json"
+    ".pi/agent/mcp-npx-cache.json"
+    ".pi/agent/mcp.json"
+    ".pi/agent/mcp.json.bak-20260420-151836"
+    ".pi/agent/orgm.json"
+    ".pi/agent/pi-crash.log"
+    ".pi/agent/settings.json"
+    ".config/gtk-3.0"
+    ".config/gtk-4.0/settings.ini"
+    ".config/gtk-4.0/orgm-hypr-settings.ini"
+    ".config/gtk-4.0/orgm-hypr-theme.css"
+    ".config/qt5ct/qt5ct.conf"
+    ".config/qt5ct/orgm-hypr.conf"
+    ".config/qt5ct/colors/orgm-hypr.colors"
+    ".config/qt6ct/qt6ct.conf"
+    ".config/qt6ct/orgm-hypr.conf"
+    ".config/qt6ct/colors/orgm-hypr.colors"
+    ".config/Kvantum/kvantum.kvconfig"
+    ".config/Kvantum/orgm-hypr/orgm-hypr.kvconfig"
+    ".config/kdeglobals"
+    ".config/kdeglobals.orgm-hypr"
+    ".config/rofi/orgm-hypr-theme.rasi"
+    ".config/kitty/orgm-hypr-theme.conf"
+    ".config/waybar-hypr/orgm-hypr-theme.css"
+    ".config/nwg-dock-hyprland/orgm-hypr-theme.css"
+    ".config/helix/themes/orgm-hypr.toml"
+    ".config/kitty/current-theme.conf"
+    ".config/orgm-hypr/display-targets.json"
+    ".local/state/hypr-rofi-ssh-host"
+    ".config/rofi/orgm-current.rasi"
+    ".config/waybar/orgm-current.css"
+    ".config/waybar-hypr/orgm-current.css"
+    ".config/nwg-dock-hyprland/orgm-current.css"
+    ".config/swaync/orgm-current.css"
+    ".config/qt5ct/colors/orgm-current.colors"
+    ".config/qt6ct/colors/orgm-current.colors"
+    ".config/hypr/scheme/current.conf"
+    ".local/state/orgm-theme/current"
+    ".local/state/orgm-theme/current.env"
+    ".config/quickshell/theme/theme.json"
+    ".local/share/icons/default/index.theme"
+  ];
+  localOnlyPatterns = [
+    "**/.git"
+    "**/.git/**"
+    "**/.gitignore"
+    "**/.DS_Store"
+    "**/Icon?"
+    "**/icon-theme.cache"
+    "**/mimeinfo.cache"
+    "**/*~"
+    "**/*.bak"
+  ];
+  localOnlyTypes = [
+    "symlink"
+  ];
+  localDefaultsPaths = [
+    ".config/rofi/orgm-current.rasi"
+    ".config/waybar/orgm-current.css"
+    ".config/waybar-hypr/orgm-current.css"
+    ".config/nwg-dock-hyprland/orgm-current.css"
+    ".config/swaync/orgm-current.css"
+    ".config/hypr/scheme/current.conf"
+    ".config/quickshell/theme/theme.json"
+  ];
+
+  pathsForHost = hostPaths.${hostName} or [ ];
+  mkSharedFile = path: {
+    name = path;
+    value.source = config.home-manager.users.${userName}.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
+  };
+  mkHostFile = path: {
+    name = path;
+    value = lib.mkForce {
+      source = config.home-manager.users.${userName}.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/hosts/${hostName}/${path}";
+    };
+  };
+in
+{
+  systemd.tmpfiles.rules = [
+    "d ${dotfilesParent} 0755 ${userName} users - -"
+  ];
+
+  systemd.services.orgm-dotfiles-repo = {
+    description = "Clone and update ORGM dotfiles repository";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    before = [ "home-manager-${userName}.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = with pkgs; [
+      bash
+      coreutils
+      git
+      gnugrep
+      openssh
+      util-linux
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -euo pipefail
+
+      install -d -m 0755 -o ${userName} -g users "${dotfilesParent}"
+
+      as_user() {
+        runuser -u ${userName} -- "$@"
+      }
+
+      if [ ! -e "${dotfilesPath}/.git" ]; then
+        if [ -e "${dotfilesPath}" ]; then
+          echo "${dotfilesPath} exists but is not a git repository" >&2
+          exit 1
+        fi
+        as_user git clone --branch "${dotfilesBranch}" "${dotfilesRepo}" "${dotfilesPath}"
+      else
+        as_user git -C "${dotfilesPath}" fetch origin "${dotfilesBranch}"
+        as_user git -C "${dotfilesPath}" checkout "${dotfilesBranch}"
+        as_user git -C "${dotfilesPath}" pull --ff-only origin "${dotfilesBranch}"
+      fi
+
+      chown -R ${userName}:users "${dotfilesPath}"
+    '';
+  };
+
+  home-manager.users.${userName} = {
+    home.file = lib.mkMerge [
+      (builtins.listToAttrs (map mkSharedFile sharedPaths))
+      (builtins.listToAttrs (map mkHostFile pathsForHost))
+    ];
+  };
+
+  assertions = [
+    {
+      assertion = localOnlyPaths != [ ] && localOnlyPatterns != [ ] && localOnlyTypes != [ ];
+      message = "common-dotfiles.nix must keep local_only inventory from dotfiles.json as exclusions/documentation";
+    }
+    {
+      assertion = localDefaultsPaths != [ ];
+      message = "common-dotfiles.nix must keep local_defaults inventory from dotfiles.json as documentation";
+    }
+  ];
+}
