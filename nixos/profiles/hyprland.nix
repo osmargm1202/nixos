@@ -20,7 +20,6 @@ let
     vendorHash = "sha256-AJGyBCTWtgTpn+e4HLlX/8EgWITw25py4UJJJDLhoOM=";
   });
   dotfilesOrgmSource = inputs.dotfiles-orgm-source;
-  orgmDot = pkgs.callPackage ../packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
@@ -178,7 +177,6 @@ in
     hyprpaperPkg
     mpvpaper
     quickshell
-    orgmDot
     orgmWallpaper
     orgmThemes
     libnotify

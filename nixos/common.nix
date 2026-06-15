@@ -11,20 +11,13 @@
   ...
 }:
 
-let
-  dotfilesOrgmSource =
-    if inputs != null && inputs ? dotfiles-orgm-source then
-      inputs.dotfiles-orgm-source
-    else
-      throw "orgm-dot packaging requires flake input dotfiles-orgm-source";
-  orgmDot = pkgs.callPackage ./packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
-in
 {
   imports =
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
       inputs.nix-flatpak.nixosModules.nix-flatpak
       ./flatpak.nix
+      ./common-dotfiles.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
@@ -227,7 +220,6 @@ in
     fd
     jq
     trash-cli
-    orgmDot
     eza
     htop
     btop
