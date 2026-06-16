@@ -240,6 +240,22 @@ let
   ];
 
   pathsForHost = hostPaths.${hostName} or [ ];
+
+  # Pass 1: drop shared paths that are children of a host directory
+  # (host dir takes priority over individual shared files)
+  pass1SharedPaths = lib.filter (
+    sp: !builtins.any (hp: lib.hasPrefix (hp + "/") sp) pathsForHost
+  ) sharedPaths;
+
+  # Pass 2: drop any path (shared or host) that has child paths in the
+  # combined list — home-manager cannot create a file inside a dir symlink
+  pass1All = pass1SharedPaths ++ pathsForHost;
+  filteredSharedPaths = lib.filter (
+    sp: !builtins.any (other: lib.hasPrefix (sp + "/") other) pass1All
+  ) pass1SharedPaths;
+  filteredHostPaths = lib.filter (
+    hp: !builtins.any (other: lib.hasPrefix (hp + "/") other) pass1All
+  ) pathsForHost;
 in
 {
   systemd.tmpfiles.rules = [
@@ -297,7 +313,7 @@ in
           map (path: {
             name = path;
             value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
-          }) sharedPaths
+          }) filteredSharedPaths
         ))
         (builtins.listToAttrs (
           map (path: {
@@ -305,7 +321,7 @@ in
             value = lib.mkForce {
               source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/hosts/${hostName}/${path}";
             };
-          }) pathsForHost
+          }) filteredHostPaths
         ))
       ];
     };
