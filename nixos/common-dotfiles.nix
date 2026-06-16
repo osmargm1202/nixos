@@ -309,6 +309,18 @@ in
   home-manager.users.${userName} =
     { config, ... }:
     {
+      home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
+        declare -a managed_paths=(
+          ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (filteredSharedPaths ++ filteredHostPaths)}
+        )
+        for p in "''${managed_paths[@]}"; do
+          target="$HOME/$p"
+          if [ -e "$target" ] && [ ! -L "$target" ]; then
+            $DRY_RUN_CMD rm -rf "$target"
+          fi
+        done
+      '';
+
       home.file = lib.mkMerge [
         (builtins.listToAttrs (
           map (path: {

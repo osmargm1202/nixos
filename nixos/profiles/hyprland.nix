@@ -177,6 +177,7 @@ in
     hyprpaperPkg
     mpvpaper
     quickshell
+    matugen
     orgmWallpaper
     orgmThemes
     libnotify
