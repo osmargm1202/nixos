@@ -307,7 +307,7 @@ in
   };
 
   home-manager.users.${userName} =
-    { config, ... }:
+    { config, lib, ... }:
     {
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
         declare -a managed_paths=(
