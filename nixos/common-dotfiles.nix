@@ -213,6 +213,7 @@ let
     ".local/state/orgm-theme/current"
     ".local/state/orgm-theme/current.env"
     ".config/quickshell/theme/theme.json"
+    ".config/quickshell/theme/current.json"
     ".local/share/icons/default/index.theme"
   ];
   localOnlyPatterns = [
