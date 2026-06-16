@@ -240,16 +240,6 @@ let
   ];
 
   pathsForHost = hostPaths.${hostName} or [ ];
-  mkSharedFile = path: {
-    name = path;
-    value.source = config.home-manager.users.${userName}.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
-  };
-  mkHostFile = path: {
-    name = path;
-    value = lib.mkForce {
-      source = config.home-manager.users.${userName}.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/hosts/${hostName}/${path}";
-    };
-  };
 in
 {
   systemd.tmpfiles.rules = [
@@ -299,12 +289,26 @@ in
     '';
   };
 
-  home-manager.users.${userName} = {
-    home.file = lib.mkMerge [
-      (builtins.listToAttrs (map mkSharedFile sharedPaths))
-      (builtins.listToAttrs (map mkHostFile pathsForHost))
-    ];
-  };
+  home-manager.users.${userName} =
+    { config, ... }:
+    {
+      home.file = lib.mkMerge [
+        (builtins.listToAttrs (
+          map (path: {
+            name = path;
+            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
+          }) sharedPaths
+        ))
+        (builtins.listToAttrs (
+          map (path: {
+            name = path;
+            value = lib.mkForce {
+              source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/hosts/${hostName}/${path}";
+            };
+          }) pathsForHost
+        ))
+      ];
+    };
 
   assertions = [
     {
