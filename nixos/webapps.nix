@@ -25,8 +25,10 @@ let
       inherit name;
       exec = ''chromium --app="${url}" --new-window'';
       inherit icon comment categories;
-      startupWMClass = wmClass;
-      settings.StartupNotify = "true";
+      settings = {
+        StartupNotify = "true";
+        StartupWMClass = wmClass;
+      };
     };
 
   multimediaApps = {
