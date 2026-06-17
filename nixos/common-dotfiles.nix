@@ -360,6 +360,22 @@ in
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"
         fi
 
+        # These directories used to be managed as whole-directory symlinks.
+        # Now they are real directories with individual file symlinks inside.
+        # If the old directory symlink still exists, remove it so HM can create
+        # the real directory and individual file symlinks correctly.
+        for old_dir in \
+          .config/waybar .config/waybar-hypr \
+          .config/swaync .config/nwg-dock-hyprland \
+          .config/qt5ct .config/qt6ct \
+          .config/quickshell .config/gtk-4.0 \
+          .config/Kvantum; do
+          target="$HOME/$old_dir"
+          if [ -L "$target" ]; then
+            $DRY_RUN_CMD rm "$target"
+          fi
+        done
+
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (filteredSharedPaths ++ filteredHostPaths)}
         )
