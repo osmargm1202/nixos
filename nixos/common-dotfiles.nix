@@ -26,7 +26,6 @@ let
     ".config/helix"
     ".config/hypr"
     ".config/i3"
-    ".config/kdeglobals"
     ".config/kitty"
     ".config/labwc"
     ".config/mpv"
@@ -309,7 +308,7 @@ in
   home-manager.users.${userName} =
     { config, lib, ... }:
     {
-      home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
+      home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (filteredSharedPaths ++ filteredHostPaths)}
         )
