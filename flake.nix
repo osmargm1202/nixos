@@ -62,10 +62,9 @@
       # Generic profile outputs use eval-only hardware so pure flake checks do not
       # depend on /etc or any real host. Host-specific outputs pass real hardware.
       pkgs = nixpkgs.legacyPackages.${system};
-      # During staged migration, verify unpublished dotfiles helper changes with:
-      # --override-input dotfiles-orgm-source path:/path/to/dotfiles-worktree
-      # Committed default uses the reproducible GitHub source below.
-      dotfilesOrgmSource = inputs.dotfiles-orgm-source;
+      # Use local working tree so orgm-wallpaper picks up uncommitted colors.go fix.
+      # Revert to inputs.dotfiles-orgm-source once colors.go is committed and pushed.
+      dotfilesOrgmSource = /home/osmarg/Hobby/dotfiles;
       orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;
