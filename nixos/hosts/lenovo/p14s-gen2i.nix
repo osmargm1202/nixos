@@ -10,6 +10,8 @@ let
   intelMediaRuntime = pkgs.vpl-gpu-rt or pkgs.onevpl-intel-gpu;
 in
 {
+  imports = [ ./webapps.nix ];
+
   # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2
   # profile, kept in-repo so Lenovo carries its own host-specific GPU setup.
 

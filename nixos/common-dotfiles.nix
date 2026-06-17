@@ -136,7 +136,6 @@ let
   hostPaths = {
     ero = [
       ".config/fish/age-host.fish"
-      ".local/share/applications"
       ".local/share/icons"
     ];
     lenovo = [
@@ -144,7 +143,17 @@ let
       ".config/fish/age-host.fish"
       ".config/fish/host-lenovo.fish"
       ".config/rofi/hypr-menu.env"
-      ".local/share/applications"
+      ".local/share/applications/arch.desktop"
+      ".local/share/applications/cursor.desktop"
+      ".local/share/applications/Cursor.desktop"
+      ".local/share/applications/desktop-apps.desktop"
+      ".local/share/applications/dota.desktop"
+      ".local/share/applications/jsignpdf.desktop"
+      ".local/share/applications/opencode.desktop"
+      ".local/share/applications/silksong.desktop"
+      ".local/share/applications/vscode.desktop"
+      ".local/share/applications/webapps.json"
+      ".local/share/applications/zed.desktop"
       ".local/share/icons"
     ];
     orgm = [
@@ -152,7 +161,18 @@ let
       ".config/fish/age-host.fish"
       ".config/fish/host-orgm.fish"
       ".config/rofi/hypr-menu.env"
-      ".local/share/applications"
+      ".local/share/applications/arch.desktop"
+      ".local/share/applications/claude-code-url-handler.desktop"
+      ".local/share/applications/cursor.desktop"
+      ".local/share/applications/Cursor.desktop"
+      ".local/share/applications/desktop-apps.desktop"
+      ".local/share/applications/dota.desktop"
+      ".local/share/applications/jsignpdf.desktop"
+      ".local/share/applications/opencode.desktop"
+      ".local/share/applications/silksong.desktop"
+      ".local/share/applications/vscode.desktop"
+      ".local/share/applications/webapps.json"
+      ".local/share/applications/zed.desktop"
       ".local/share/icons"
     ];
   };
@@ -309,6 +329,12 @@ in
     { config, lib, ... }:
     {
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+        # Remove old .local/share/applications directory symlink so HM can
+        # manage individual webapp .desktop files via xdg.desktopEntries.
+        if [ -L "$HOME/.local/share/applications" ]; then
+          $DRY_RUN_CMD rm "$HOME/.local/share/applications"
+        fi
+
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (filteredSharedPaths ++ filteredHostPaths)}
         )

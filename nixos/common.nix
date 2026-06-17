@@ -18,6 +18,7 @@
       inputs.nix-flatpak.nixosModules.nix-flatpak
       ./flatpak.nix
       ./common-dotfiles.nix
+      ./webapps.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
