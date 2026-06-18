@@ -162,6 +162,7 @@ let
     ".local/bin/waybar-pi-status"
     ".local/bin/waybar-swap-usage"
     ".local/bin/waybar-metric-widget"
+    ".local/bin/waybar-power-profile"
     ".local/bin/waybar-time-ampm"
     ".local/bin/waybar-watch"
     ".config/orgm-theme"

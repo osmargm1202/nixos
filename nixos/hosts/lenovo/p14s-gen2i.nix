@@ -46,6 +46,8 @@ in
     open = lib.mkOverride 990 (nvidiaPackage ? open && nvidiaPackage ? firmware);
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
+    powerManagement.enable = true;
+    powerManagement.finegrained = true;
 
     prime = {
       intelBusId = "PCI:0:2:0";

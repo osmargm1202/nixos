@@ -82,6 +82,8 @@ in
     terminal = "kitty";
   };
 
+  services.power-profiles-daemon.enable = true;
+
   services.dbus.enable = true;
   services.udisks2.enable = true;
   services.gvfs.enable = true;
