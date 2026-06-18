@@ -19,6 +19,7 @@
       ./flatpak.nix
       ./common-dotfiles.nix
       ./webapps.nix
+      ./distrobox-apps.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 

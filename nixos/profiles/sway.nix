@@ -187,6 +187,7 @@
     wlogout
     fuzzel
     kitty
+    quickshell
 
     # Portal / XDG
     xdg-utils
