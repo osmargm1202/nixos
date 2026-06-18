@@ -229,9 +229,7 @@
           userName = "jarq";
           extraModules = [
             ./nixos/hardware/gpu/intel.nix
-            ./nixos/hosts/jarq/default.nix
-            ./nixos/hosts/jarq/plymouth.nix
-          ];
+            ./nixos/hosts/jarq/default.nix          ];
         };
         jarq-mate = mkHost {
           hostName = "jarq";
@@ -240,9 +238,7 @@
           userName = "jarq";
           extraModules = [
             ./nixos/hardware/gpu/intel.nix
-            ./nixos/hosts/jarq/default.nix
-            ./nixos/hosts/jarq/plymouth.nix
-          ];
+            ./nixos/hosts/jarq/default.nix          ];
         };
         orgm-gnome = mkHost {
           hostName = "orgm";
@@ -250,9 +246,7 @@
           profile = ./nixos/profiles/gnome.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
-            ./nixos/hosts/orgm/ms-7d43.nix
-            ./nixos/hosts/orgm/plymouth.nix
-            ./nixos/gaming/default.nix
+            ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
         orgm-cinnamon = mkHost {
@@ -261,9 +255,7 @@
           profile = ./nixos/profiles/cinnamon.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
-            ./nixos/hosts/orgm/ms-7d43.nix
-            ./nixos/hosts/orgm/plymouth.nix
-            ./nixos/gaming/default.nix
+            ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
         orgm-hyprland = mkHost {
@@ -272,9 +264,7 @@
           profile = ./nixos/profiles/hyprland.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
-            ./nixos/hosts/orgm/ms-7d43.nix
-            ./nixos/hosts/orgm/plymouth.nix
-            ./nixos/gaming/default.nix
+            ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
 
@@ -284,9 +274,7 @@
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
-            ./nixos/hosts/orgm/ms-7d43.nix
-            ./nixos/hosts/orgm/plymouth.nix
-            ./nixos/gaming/default.nix
+            ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
         orgm-sway = mkHost {
@@ -295,9 +283,7 @@
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
             ./nixos/hardware/gpu/nvidia.nix
-            ./nixos/hosts/orgm/ms-7d43.nix
-            ./nixos/hosts/orgm/plymouth.nix
-            ./nixos/gaming/default.nix
+            ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
 
@@ -306,27 +292,21 @@
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
-            ./nixos/hardware/gpu/intel.nix
-            ./nixos/hosts/ero/plymouth.nix
-          ];
+            ./nixos/hardware/gpu/intel.nix          ];
         };
         ero-i3 = mkHost {
           hostName = "ero";
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/i3.nix;
           extraModules = [
-            ./nixos/hardware/gpu/intel.nix
-            ./nixos/hosts/ero/plymouth.nix
-          ];
+            ./nixos/hardware/gpu/intel.nix          ];
         };
         ero-sway = mkHost {
           hostName = "ero";
           hardware = ./nixos/hosts/ero/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
-            ./nixos/hardware/gpu/intel.nix
-            ./nixos/hosts/ero/plymouth.nix
-          ];
+            ./nixos/hardware/gpu/intel.nix          ];
         };
         ero-server = nixpkgs.lib.nixosSystem {
           inherit system;
@@ -343,9 +323,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];
@@ -355,9 +333,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];
@@ -367,9 +343,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];
@@ -380,9 +354,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];
@@ -392,9 +364,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/xfce.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];
@@ -404,9 +374,7 @@
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/mate.nix;
           extraModules = [
-            ./nixos/hosts/lenovo/p14s-gen2i.nix
-            ./nixos/hosts/lenovo/plymouth.nix
-            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/hosts/lenovo/p14s-gen2i.nix            ./nixos/hosts/lenovo/audio.nix
             ./nixos/gaming/steam.nix
             ./nixos/gaming/emulators.nix
           ];

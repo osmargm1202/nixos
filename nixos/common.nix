@@ -72,7 +72,10 @@
   # only when hardware needs a different kernel.
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_zen;
 
-  boot.plymouth.enable = true;
+  boot.plymouth = {
+    enable = true;
+    theme = "bgrt";
+  };
   boot.initrd.systemd.enable = true;
   boot.kernelParams = [
     "quiet"
