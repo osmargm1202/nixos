@@ -39,7 +39,9 @@ in
   };
 
   # common/gpu/nvidia/prime.nix + common/gpu/nvidia/turing
-  services.xserver.videoDrivers = [ "modesetting" ];
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  environment.systemPackages = [ nvidiaPackage ];
 
   hardware.nvidia = {
     modesetting.enable = true;
