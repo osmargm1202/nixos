@@ -23,6 +23,7 @@ let
     ".config/fastfetch"
     ".config/fish"
     ".config/fish/functions/code.fish"
+    ".config/fish/functions/qs.fish"
     # gtk-4.0: only static CSS helpers; gtk.css / settings.ini / gtk-dark.css generated
     ".config/gtk-4.0/noctalia.css"
     ".config/gtk-4.0/colors.css"
