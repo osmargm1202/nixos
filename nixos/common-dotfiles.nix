@@ -73,6 +73,7 @@ let
     ".config/waybar-hypr/orgm.png"
     ".config/waybar-hypr/orgm-hypr.png"
     ".config/waybar-hypr/icons"
+    ".config/warp-terminal/settings.toml"
     ".config/wlogout"
     ".config/wofi"
     ".config/yazi"
