@@ -188,6 +188,8 @@ let
       ".config/DankMaterialShell"
       ".config/fish/age-host.fish"
       ".config/fish/host-lenovo.fish"
+      ".config/hypr/lua/monitors/lenovo.lua"
+      ".config/niri/20-output.kdl"
       ".config/rofi/hypr-menu.env"
       ".local/share/applications/arch.desktop"
       ".local/share/applications/desktop-apps.desktop"
