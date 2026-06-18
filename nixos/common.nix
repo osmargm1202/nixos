@@ -26,7 +26,6 @@
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.${userName} = {
-    imports = [ ./home/engram.nix ];
     home.stateVersion = "25.11";
   };
 

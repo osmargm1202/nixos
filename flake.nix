@@ -70,7 +70,6 @@
         inherit dotfilesOrgmSource;
       };
       orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
-      engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       profiles = {
         cinnamon = ./nixos/profiles/cinnamon.nix;
@@ -80,6 +79,8 @@
         labwc-light = ./nixos/profiles/labwc-light.nix;
         sway = ./nixos/profiles/sway.nix;
         i3 = ./nixos/profiles/i3.nix;
+        xfce = ./nixos/profiles/xfce.nix;
+        mate = ./nixos/profiles/mate.nix;
       };
       getProfile =
         profileName:
@@ -185,7 +186,6 @@
           orgmDot
           orgmWallpaper
           orgmThemes
-          engram
           ;
         "orgm-dot" = orgmDot;
         "orgm-wallpaper" = orgmWallpaper;
@@ -216,10 +216,16 @@
         i3 = mkProfile {
           profile = ./nixos/profiles/i3.nix;
         };
-        jarq-gnome = mkHost {
+        xfce = mkProfile {
+          profile = ./nixos/profiles/xfce.nix;
+        };
+        mate = mkProfile {
+          profile = ./nixos/profiles/mate.nix;
+        };
+        jarq-xfce = mkHost {
           hostName = "jarq";
           hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/gnome.nix;
+          profile = ./nixos/profiles/xfce.nix;
           userName = "jarq";
           extraModules = [
             ./nixos/hardware/gpu/intel.nix
@@ -227,10 +233,10 @@
             ./nixos/hosts/jarq/plymouth.nix
           ];
         };
-        jarq-cinnamon = mkHost {
+        jarq-mate = mkHost {
           hostName = "jarq";
           hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/cinnamon.nix;
+          profile = ./nixos/profiles/mate.nix;
           userName = "jarq";
           extraModules = [
             ./nixos/hardware/gpu/intel.nix
@@ -373,6 +379,30 @@
           hostName = "lenovo";
           hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/sway.nix;
+          extraModules = [
+            ./nixos/hosts/lenovo/p14s-gen2i.nix
+            ./nixos/hosts/lenovo/plymouth.nix
+            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/gaming/steam.nix
+            ./nixos/gaming/emulators.nix
+          ];
+        };
+        lenovo-xfce = mkHost {
+          hostName = "lenovo";
+          hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+          profile = ./nixos/profiles/xfce.nix;
+          extraModules = [
+            ./nixos/hosts/lenovo/p14s-gen2i.nix
+            ./nixos/hosts/lenovo/plymouth.nix
+            ./nixos/hosts/lenovo/audio.nix
+            ./nixos/gaming/steam.nix
+            ./nixos/gaming/emulators.nix
+          ];
+        };
+        lenovo-mate = mkHost {
+          hostName = "lenovo";
+          hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+          profile = ./nixos/profiles/mate.nix;
           extraModules = [
             ./nixos/hosts/lenovo/p14s-gen2i.nix
             ./nixos/hosts/lenovo/plymouth.nix

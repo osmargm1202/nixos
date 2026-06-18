@@ -8,6 +8,7 @@
     rpcs3 # PlayStation 3
   ];
 
-  # Flathub is enabled globally in common.nix. Install Yuzu manually when needed:
-  # flatpak install flathub org.yuzu_emu.yuzu
+  services.flatpak.packages = [
+    "org.yuzu_emu.yuzu"
+  ];
 }
