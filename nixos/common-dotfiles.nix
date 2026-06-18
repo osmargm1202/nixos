@@ -162,6 +162,7 @@ let
   hostPaths = {
     ero = [
       ".config/fish/age-host.fish"
+      ".config/fish/host-ero.fish"
       ".local/share/icons"
     ];
     lenovo = [
