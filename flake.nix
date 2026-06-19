@@ -286,6 +286,26 @@
             ./nixos/hosts/orgm/ms-7d43.nix            ./nixos/gaming/default.nix
           ];
         };
+        orgm-xfce = mkHost {
+          hostName = "orgm";
+          hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+          profile = ./nixos/profiles/xfce.nix;
+          extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
+            ./nixos/gaming/default.nix
+          ];
+        };
+        orgm-mate = mkHost {
+          hostName = "orgm";
+          hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+          profile = ./nixos/profiles/mate.nix;
+          extraModules = [
+            ./nixos/hardware/gpu/nvidia.nix
+            ./nixos/hosts/orgm/ms-7d43.nix
+            ./nixos/gaming/default.nix
+          ];
+        };
 
         ero-labwc = mkHost {
           hostName = "ero";
