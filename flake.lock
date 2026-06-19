@@ -783,11 +783,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779386453,
-        "narHash": "sha256-NBR0GXFXmAEuTPWRgjHCbfXSd8W9qh7M85Fh0jc+4H8=",
+        "lastModified": 1781761991,
+        "narHash": "sha256-pWCCPZY7GRg7jA9M9PE/HxgrAyRDxUCKnBu8vtzG5CQ=",
         "owner": "osmargm1202",
         "repo": "ltmnight-sddm-theme",
-        "rev": "eaa25c32020b0c3bbef0459dde66056921f6c088",
+        "rev": "ba21c396f1f721e940290fdeb272bb4399e293f1",
         "type": "github"
       },
       "original": {

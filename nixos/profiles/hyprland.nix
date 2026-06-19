@@ -191,6 +191,9 @@ in
     hyprsunset
     hyprpolkitagent
 
+    # Desktop widgets
+    conky
+
     # Shell / panel for Hyprland.
     waybarSourceTarget
     nwgDockHyprlandGit

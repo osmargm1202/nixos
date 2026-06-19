@@ -17,6 +17,8 @@ let
     ".config/Kvantum/catppuccin-macchiato-teal-standard#"
     ".config/bat"
     ".config/btop"
+    ".config/conky/conky.conf"
+    ".config/conky/conky-top.conf"
     ".config/delta"
     ".config/dolphinrc"
     ".config/dunst"
@@ -30,7 +32,25 @@ let
     ".config/gtk-4.0/thunar.css"
     ".config/gtk-4.0/dank-colors.css"
     ".config/helix"
-    ".config/hypr"
+    ".config/hypr/hypridle.conf"
+    ".config/hypr/hyprland.lua"
+    ".config/hypr/hyprlock.conf"
+    ".config/hypr/lua/autostart.lua"
+    ".config/hypr/lua/environment.lua"
+    ".config/hypr/lua/input.lua"
+    ".config/hypr/lua/keybindings.lua"
+    ".config/hypr/lua/layout.lua"
+    ".config/hypr/lua/look-and-feel.lua"
+    ".config/hypr/lua/monitors.lua"
+    ".config/hypr/lua/permissions.lua"
+    ".config/hypr/lua/programs.lua"
+    ".config/hypr/lua/README.md"
+    ".config/hypr/lua/windows-workspaces.lua"
+    ".config/hypr/noctalia/noctalia-colors.conf"
+    ".config/hypr/scripts/pi-walker-prompt.sh"
+    ".config/hypr/scripts/walker-window-switch.sh"
+    ".config/hypr/wallpaper-picker/README.md"
+    ".config/hypr/wallpaper-picker/wallpaper_picker.py"
     ".config/i3"
     ".config/kitty"
     ".config/labwc"
@@ -116,7 +136,9 @@ let
     ".pi/agent/ask.jsonc"
     ".tmux.conf"
     ".local/bin/brightness-osd"
+    ".local/bin/conky-gpu-stat"
     ".local/bin/hypr-apps-menu"
+    ".local/bin/hypr-conky-toggle"
     ".local/bin/hypr-battery-alerts"
     ".local/bin/hypr-app-launcher"
     ".local/bin/hypr-audio-device-menu"
@@ -207,6 +229,7 @@ let
       ".config/DankMaterialShell"
       ".config/fish/age-host.fish"
       ".config/fish/host-orgm.fish"
+      ".config/hypr/lua/monitors/orgm.lua"
       ".config/niri/20-output.kdl"
       ".config/niri/dms/outputs.kdl"
       ".config/orgm-hypr/display-targets.json"
@@ -388,6 +411,9 @@ in
         # If the old directory symlink still exists, remove it so HM can create
         # the real directory and individual file symlinks correctly.
         for old_dir in \
+          .config/hypr \
+          .config/niri \
+          .config/orgm-hypr \
           .config/waybar .config/waybar-hypr \
           .config/swaync .config/nwg-dock-hyprland \
           .config/qt5ct .config/qt6ct \
