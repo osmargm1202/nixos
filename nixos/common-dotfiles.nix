@@ -21,6 +21,8 @@ let
     ".config/conky/conky-apps.conf"
     ".config/conky/conky-clock.conf"
     ".config/conky/conky-top.conf"
+    ".config/conky/conky-top-clock.conf"
+    ".config/conky/conky-top-apps.conf"
     ".config/conky/conky-draw.lua"
     ".config/delta"
     ".config/dolphinrc"
