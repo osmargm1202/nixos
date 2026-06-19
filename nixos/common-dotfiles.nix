@@ -402,8 +402,9 @@ in
   };
 
   home-manager.users.${userName} =
-    { config, lib, ... }:
+    { config, lib, pkgs, ... }:
     {
+      home.packages = [ pkgs.conky ];
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         # Remove old .local/share/applications directory symlink so HM can
         # manage individual webapp .desktop files via xdg.desktopEntries.
