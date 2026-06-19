@@ -4,7 +4,7 @@
   services.xserver.enable = true;
   services.xserver.desktopManager.mate.enable = true;
   services.displayManager.defaultSession = "mate";
-  services.displayManager.lightdm.enable = true;
+  services.displayManager.sddm.enable = true;
 
   services.libinput.enable = true;
   security.polkit.enable = true;
@@ -15,7 +15,7 @@
   services.power-profiles-daemon.enable = true;
 
   programs.dconf.enable = true;
-  security.pam.services.lightdm.enableGnomeKeyring = true;
+  security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
 
   services.pulseaudio.enable = false;
