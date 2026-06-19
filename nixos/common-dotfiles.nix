@@ -544,12 +544,11 @@ in
             value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
           }) filteredSharedPaths
         ))
-        # Profile-specific paths — dotfiles/config/shared/<path> for now;
-        # move to dotfiles/config/profiles/${profileName}/<path> when dotfiles repo is reorganised.
+        # Profile-specific paths — dotfiles/config/profiles/<profile>/<path>
         (builtins.listToAttrs (
           map (path: {
             name = path;
-            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
+            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/profiles/${profileName}/${path}";
           }) filteredProfilePaths
         ))
         # Host paths — dotfiles/config/hosts/<host>/<path>
