@@ -168,8 +168,13 @@
   # services.xserver.libinput.enable = true;
 
   # Define user account. Don’t forget to set password with ‘passwd’.
+  # Fixed uid/gid + own primary group so ownership is stable across
+  # reinstalls and nixbld can't steal uid 1000 (rootless podman needs this).
+  users.groups.${userName}.gid = 1000;
   users.users.${userName} = {
     isNormalUser = true;
+    uid = 1000;
+    group = userName;
     description = userName;
     shell = pkgs.fish;
     subUidRanges = [
@@ -188,7 +193,6 @@
       "networkmanager"
       "wheel"
       "docker"
-      userName
       "podman"
       "input"
       "video"
