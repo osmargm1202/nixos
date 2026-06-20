@@ -160,6 +160,23 @@
           ]
           ++ extraModules;
         };
+      mkMinimalHost =
+        {
+          hardware,
+          hostName,
+          extraModules ? [ ],
+          userName ? "osmarg",
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs userName; };
+          modules = [
+            hardware
+            ./nixos/minimal.nix
+            { networking.hostName = hostName; }
+          ]
+          ++ extraModules;
+        };
     in
     {
       lib = {
@@ -194,6 +211,20 @@
       };
 
       nixosConfigurations = {
+        orgm-minimal = mkMinimalHost {
+          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        };
+        lenovo-minimal = mkMinimalHost {
+          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        };
+        ero-minimal = mkMinimalHost {
+          hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+        };
+        jarq-minimal = mkMinimalHost {
+          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+          userName = "jarq";
+        };
+
         cinnamon = mkProfile { profile = ./nixos/profiles/cinnamon.nix; profileName = "cinnamon"; };
         gnome    = mkProfile { profile = ./nixos/profiles/gnome.nix;    profileName = "gnome"; };
         hyprland = mkProfile { profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland"; };
