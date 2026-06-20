@@ -62,9 +62,7 @@
       # Generic profile outputs use eval-only hardware so pure flake checks do not
       # depend on /etc or any real host. Host-specific outputs pass real hardware.
       pkgs = nixpkgs.legacyPackages.${system};
-      # Use local working tree so orgm-wallpaper picks up uncommitted colors.go fix.
-      # Revert to inputs.dotfiles-orgm-source once colors.go is committed and pushed.
-      dotfilesOrgmSource = /home/osmarg/Hobby/dotfiles;
+      dotfilesOrgmSource = inputs.dotfiles-orgm-source;
       orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;
