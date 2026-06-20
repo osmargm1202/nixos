@@ -54,7 +54,6 @@ in
     description = userName;
     shell = pkgs.fish;
     group = userName;
-    initialPassword = "recovery";
     subUidRanges = [{ startUid = 100000; count = 65536; }];
     subGidRanges = [{ startGid = 100000; count = 65536; }];
     extraGroups = [
@@ -68,7 +67,6 @@ in
     ];
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
-  users.users.root.initialPassword = "recovery";
 
   programs.fish.enable = true;
   programs.git.enable = true;
