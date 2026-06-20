@@ -53,8 +53,10 @@ in
     isNormalUser = true;
     shell = pkgs.fish;
     extraGroups = [ "wheel" ];
+    initialPassword = "recovery";
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
+  users.users.root.initialPassword = "recovery";
 
   programs.fish.enable = true;
 
