@@ -211,16 +211,16 @@
       };
 
       nixosConfigurations = {
-        orgm-minimal = mkMinimalHost {
+        orgm-terminal = mkMinimalHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         };
-        lenovo-minimal = mkMinimalHost {
+        lenovo-terminal = mkMinimalHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
         };
-        ero-minimal = mkMinimalHost {
+        ero-terminal = mkMinimalHost {
           hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         };
-        jarq-minimal = mkMinimalHost {
+        jarq-terminal = mkMinimalHost {
           hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
           userName = "jarq";
         };
