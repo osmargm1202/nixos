@@ -66,7 +66,7 @@ in
     subGidRanges = [{ startGid = 100000; count = 65536; }];
     extraGroups = [
       "wheel"
-      "docker"
+      "podman"
       "networkmanager"
       "input"
       "video"
@@ -99,13 +99,9 @@ in
     };
   };
 
-  virtualisation.docker = {
+  virtualisation.podman = {
     enable = true;
-    daemon.settings = {
-      "live-restore" = true;
-      "log-driver" = "json-file";
-      "log-opts" = { "max-size" = "50m"; "max-file" = "5"; };
-    };
+    dockerCompat = true;
   };
 
   environment.systemPackages = with pkgs; [
