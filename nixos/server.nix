@@ -83,7 +83,7 @@ in
   nix.optimise.automatic = true;
 
   networking = {
-    useDHCP = lib.mkDefault true;
+    networkmanager.enable = true; # nmtui / nmcli for network config
     firewall = {
       enable = true;
       inherit allowedTCPPorts allowedUDPPorts;
@@ -109,6 +109,7 @@ in
       "wheel"
       "docker"
       "systemd-journal"
+      "networkmanager"
     ];
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
