@@ -1,8 +1,9 @@
-# Minimal recovery system: SSH only. No desktop, no home-manager.
+# Minimal recovery system: SSH + terminal tools. No desktop.
 {
   config,
   lib,
   pkgs,
+  inputs,
   userName ? "osmarg",
   ...
 }:
@@ -13,6 +14,10 @@ let
   ];
 in
 {
+  imports = [
+    inputs.home-manager.nixosModules.home-manager
+  ];
+
   boot.kernelPackages = pkgs.linuxPackages_lts;
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.editor = false;
@@ -69,7 +74,14 @@ in
   };
 
   programs.fish.enable = true;
-  programs.git.enable = true;
+  programs.git = {
+    enable = true;
+    config = {
+      init.defaultBranch = "master";
+    };
+  };
+  programs.zoxide.enable = true;
+  programs.starship.enable = true;
 
   security.sudo.wheelNeedsPassword = false;
 
@@ -96,22 +108,34 @@ in
   virtualisation.podman.enable = true;
 
   environment.systemPackages = with pkgs; [
-    git
-    vim
-    curl
-    wget
-    htop
+    # core
+    git vim curl wget rsync stow age gnumake
+    # terminal tools
+    fish tmux zellij
+    fzf fd eza bat delta jq trash-cli
+    htop btop fastfetch ncdu
+    zoxide starship
+    # editors
+    helix neovim
+    # file manager
+    yazi
+    # dev
+    lazygit gh
     ripgrep
-    fish
-    distrobox
-    gh
-    ncdu
-    podman
-    rsync
-    parted
-    gptfdisk
-    e2fsprogs
+    # container / storage
+    distrobox podman
+    parted gptfdisk e2fsprogs
   ];
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    extraSpecialArgs = { inherit inputs; profileName = "terminal"; };
+    users.${userName} = {
+      imports = [ ./common-dotfiles.nix ];
+      home.stateVersion = "25.11";
+    };
+  };
 
   system.stateVersion = "25.11";
 }
