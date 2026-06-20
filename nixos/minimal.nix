@@ -16,6 +16,7 @@ in
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    ./common-dotfiles.nix
   ];
 
   boot.kernelPackages = pkgs.linuxPackages_lts;
@@ -130,11 +131,7 @@ in
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; profileName = "terminal"; };
-    users.${userName} = {
-      imports = [ ./common-dotfiles.nix ];
-      home.stateVersion = "25.11";
-    };
+    users.${userName}.home.stateVersion = "25.11";
   };
 
   system.stateVersion = "25.11";

@@ -169,7 +169,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs userName; };
+          specialArgs = { inherit inputs userName; profileName = "terminal"; };
           modules = [
             hardware
             ./nixos/minimal.nix
