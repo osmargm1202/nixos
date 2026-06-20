@@ -160,23 +160,6 @@
           ]
           ++ extraModules;
         };
-      mkMinimalHost =
-        {
-          hardware,
-          hostName,
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit inputs userName; profileName = "terminal"; };
-          modules = [
-            hardware
-            ./nixos/minimal.nix
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
     in
     {
       lib = {
