@@ -17,6 +17,10 @@ in
   boot.loader.efi.canTouchEfiVariables = true;
   boot.tmp.cleanOnBoot = true;
 
+  documentation.enable = false;
+  documentation.man.enable = false;
+  documentation.nixos.enable = false;
+
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
     trusted-users = [ "root" userName ];
