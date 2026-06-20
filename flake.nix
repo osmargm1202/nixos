@@ -160,6 +160,23 @@
           ]
           ++ extraModules;
         };
+      mkMinimalHost =
+        {
+          hardware,
+          hostName,
+          extraModules ? [ ],
+          userName ? "osmarg",
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs userName; profileName = "terminal"; };
+          modules = [
+            hardware
+            ./nixos/terminal.nix
+            { networking.hostName = hostName; }
+          ]
+          ++ extraModules;
+        };
     in
     {
       lib = {
@@ -194,21 +211,17 @@
       };
 
       nixosConfigurations = {
-        orgm-minimal = mkHost {
+        orgm-minimal = mkMinimalHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/terminal.nix; profileName = "terminal";
         };
-        lenovo-minimal = mkHost {
+        lenovo-minimal = mkMinimalHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/terminal.nix; profileName = "terminal";
         };
-        ero-minimal = mkHost {
+        ero-minimal = mkMinimalHost {
           hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-          profile = ./nixos/profiles/terminal.nix; profileName = "terminal";
         };
-        jarq-minimal = mkHost {
+        jarq-minimal = mkMinimalHost {
           hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/terminal.nix; profileName = "terminal";
           userName = "jarq";
         };
 
