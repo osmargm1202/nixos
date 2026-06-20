@@ -169,11 +169,14 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs userName; };
+          specialArgs = { inherit inputs; };
           modules = [
             hardware
             ./nixos/minimal.nix
-            { networking.hostName = hostName; }
+            {
+              networking.hostName = hostName;
+              _module.args.userName = userName;
+            }
           ]
           ++ extraModules;
         };
