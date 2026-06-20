@@ -53,13 +53,15 @@ in
   time.timeZone = "America/Santo_Domingo";
   i18n.defaultLocale = "en_US.UTF-8";
 
-  users.mutableUsers = true;
+  users.mutableUsers = false;
   users.groups.${userName} = { };
   users.users.${userName} = {
     isNormalUser = true;
     description = userName;
     shell = pkgs.fish;
     group = userName;
+    # recovery password: change with passwd after first login
+    initialPassword = "recovery";
     subUidRanges = [{ startUid = 100000; count = 65536; }];
     subGidRanges = [{ startGid = 100000; count = 65536; }];
     extraGroups = [
@@ -73,6 +75,7 @@ in
     ];
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
+  users.users.root.initialPassword = "recovery";
 
   programs.fish.enable = true;
   programs.git = {
