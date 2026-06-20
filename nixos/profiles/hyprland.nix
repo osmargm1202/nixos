@@ -43,8 +43,14 @@ in
       autoNumlock = true;
       enableHidpi = true;
       theme = "ltmnight";
-      settings.General = {
-        Numlock = "on";
+      settings = {
+        General.Numlock = "on";
+        # kwin wayland greeter needs an explicit cursor theme or the
+        # pointer is invisible.
+        Wayland = {
+          CursorTheme = "Catppuccin-Macchiato-Teal-Cursors";
+          CursorSize = 36;
+        };
       };
     };
   };
@@ -267,6 +273,8 @@ in
     gnome-tweaks
     yaru-remix-theme
     catppuccin-gtk
+    catppuccin-cursors.macchiatoTeal
+    catppuccin-cursors.latteTeal
     colloid-icon-theme
     libsForQt5.qtstyleplugin-kvantum
     libsForQt5.qt5ct
