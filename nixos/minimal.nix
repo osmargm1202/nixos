@@ -1,4 +1,4 @@
-# Minimal recovery system: SSH only. Use to rebuild the real config from scratch.
+# Minimal recovery system: SSH only. No desktop, no home-manager.
 {
   config,
   lib,
@@ -14,7 +14,6 @@ let
 in
 {
   boot.kernelPackages = pkgs.linuxPackages_lts;
-
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.editor = false;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -49,16 +48,30 @@ in
   i18n.defaultLocale = "en_US.UTF-8";
 
   users.mutableUsers = true;
+  users.groups.${userName} = { };
   users.users.${userName} = {
     isNormalUser = true;
+    description = userName;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" ];
+    group = userName;
     initialPassword = "recovery";
+    subUidRanges = [{ startUid = 100000; count = 65536; }];
+    subGidRanges = [{ startGid = 100000; count = 65536; }];
+    extraGroups = [
+      "wheel"
+      "docker"
+      "podman"
+      "networkmanager"
+      "input"
+      "video"
+      "render"
+    ];
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
   users.users.root.initialPassword = "recovery";
 
   programs.fish.enable = true;
+  programs.git.enable = true;
 
   security.sudo.wheelNeedsPassword = false;
 
@@ -72,6 +85,17 @@ in
       PermitRootLogin = "no";
     };
   };
+
+  virtualisation.docker = {
+    enable = true;
+    daemon.settings = {
+      "live-restore" = true;
+      "log-driver" = "json-file";
+      "log-opts" = { "max-size" = "50m"; "max-file" = "5"; };
+    };
+  };
+
+  virtualisation.podman.enable = true;
 
   environment.systemPackages = with pkgs; [
     git
