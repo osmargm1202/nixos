@@ -67,7 +67,6 @@ in
     extraGroups = [
       "wheel"
       "docker"
-      "podman"
       "networkmanager"
       "input"
       "video"
@@ -109,8 +108,6 @@ in
     };
   };
 
-  virtualisation.podman.enable = true;
-
   environment.systemPackages = with pkgs; [
     # core
     git vim curl wget rsync stow age gnumake
@@ -127,7 +124,7 @@ in
     lazygit gh
     ripgrep
     # container / storage
-    distrobox podman
+    distrobox
     parted gptfdisk e2fsprogs
   ];
 
