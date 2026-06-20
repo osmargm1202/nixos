@@ -3,7 +3,6 @@
 {
   # No display server, no desktop
   services.xserver.enable = false;
-  boot.plymouth.enable = lib.mkForce false;
 
   # LTS kernel for stability (common.nix uses zen via mkDefault)
   boot.kernelPackages = pkgs.linuxPackages_6_12;
