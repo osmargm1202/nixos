@@ -54,9 +54,10 @@ in
   i18n.defaultLocale = "en_US.UTF-8";
 
   users.mutableUsers = false;
-  users.groups.${userName} = { };
+  users.groups.${userName} = { gid = 1000; };
   users.users.${userName} = {
     isNormalUser = true;
+    uid = 1000;
     description = userName;
     shell = pkgs.fish;
     group = userName;
