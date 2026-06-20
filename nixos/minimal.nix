@@ -72,6 +72,7 @@ in
     htop
     ripgrep
     fish
+    distrobox
   ];
 
   system.stateVersion = "25.11";
