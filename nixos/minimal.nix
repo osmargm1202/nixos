@@ -73,6 +73,13 @@ in
     ripgrep
     fish
     distrobox
+    gh
+    ncdu
+    podman
+    rsync
+    parted
+    gptfdisk
+    e2fsprogs
   ];
 
   system.stateVersion = "25.11";
