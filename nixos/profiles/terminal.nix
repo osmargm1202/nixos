@@ -3,13 +3,13 @@
 {
   # No display server, no desktop
   services.xserver.enable = false;
-  boot.plymouth.enable = false;
+  boot.plymouth.enable = lib.mkForce false;
 
-  # LTS kernel for stability
+  # LTS kernel for stability (common.nix uses zen via mkDefault)
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.loader.systemd-boot.editor = false;
 
-  # No GUI apps, no docs
+  # No GUI apps, no docs, no flatpak (common.nix imports flatpak.nix)
   documentation.enable = false;
   documentation.man.enable = false;
   documentation.nixos.enable = false;
@@ -21,23 +21,17 @@
     allowedTCPPorts = [ 22 ];
   };
 
-  virtualisation.podman = {
-    enable = true;
-    dockerCompat = true;
-  };
-
+  # Only packages NOT already in common.nix
   environment.systemPackages = with pkgs; [
-    # terminal tools
-    tmux zellij
-    fzf fd eza bat delta jq trash-cli
-    btop fastfetch
-    # editors
-    helix neovim
-    # file manager
+    bat
+    delta
+    zellij
+    helix
+    neovim
     yazi
-    # dev
     lazygit
-    # storage
-    parted gptfdisk e2fsprogs
+    parted
+    gptfdisk
+    e2fsprogs
   ];
 }
