@@ -3,6 +3,19 @@
 # curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh | bash
 set -euo pipefail
 
+SCRIPT_URL="https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh"
+
+# Re-exec as root — download to tmpfile so sudo has a real script path
+if [ "$(id -u)" -ne 0 ]; then
+  tmpf=$(mktemp /tmp/orgmos-install.XXXXXX.sh)
+  trap 'rm -f "$tmpf"' EXIT
+  printf 'Downloading installer to %s...\n' "$tmpf"
+  curl -fsSL "$SCRIPT_URL" -o "$tmpf"
+  chmod +x "$tmpf"
+  printf 'Entering root shell (one password prompt)...\n'
+  exec sudo bash "$tmpf" "$@"
+fi
+
 REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos}"
 NIXOS_DIR="${ORGMOS_NIXOS_DIR:-/etc/nixos}"
 NIXOS_DIR_EXPLICIT=false
@@ -96,7 +109,18 @@ can_prompt() { [ -t 0 ] || [ -n "$PROMPT_INPUT" ]; }
 
 # ── disk auto-partition ───────────────────────────────────────────────────────
 
+detect_firmware() {
+  if [ -d /sys/firmware/efi ]; then
+    FIRMWARE="uefi"
+  else
+    FIRMWARE="bios"
+  fi
+  say "Firmware detected: ${FIRMWARE}"
+}
+
 auto_partition() {
+  detect_firmware
+
   say ""
   say "Available disks:"
   lsblk -d -o NAME,SIZE,MODEL | grep -v loop
@@ -105,14 +129,9 @@ auto_partition() {
   local disk="/dev/${raw_disk}"
   [ -b "$disk" ] || fail "Not a block device: $disk"
   say ""
+  say "Layout: 512MB boot + rest root, no swap (${FIRMWARE} mode)"
   say "WARNING: ALL DATA ON $disk WILL BE ERASED."
   confirm "Continue?" || fail "Aborted."
-
-  say "Partitioning ${disk} (GPT, UEFI, ext4)..."
-  parted -s "$disk" -- mklabel gpt
-  parted -s "$disk" -- mkpart ESP fat32 1MB 512MB
-  parted -s "$disk" -- set 1 esp on
-  parted -s "$disk" -- mkpart primary ext4 512MB 100%
 
   local part_boot part_root
   if echo "$disk" | grep -q "nvme"; then
@@ -121,9 +140,27 @@ auto_partition() {
     part_boot="${disk}1";  part_root="${disk}2"
   fi
 
-  say "Formatting..."
-  mkfs.fat -F 32 -n BOOT "$part_boot"
-  mkfs.ext4 -L nixos "$part_root"
+  if [ "$FIRMWARE" = "uefi" ]; then
+    say "Partitioning ${disk} (GPT, UEFI)..."
+    parted -s "$disk" -- mklabel gpt
+    parted -s "$disk" -- mkpart ESP fat32 1MB 512MB
+    parted -s "$disk" -- set 1 esp on
+    parted -s "$disk" -- mkpart primary ext4 512MB 100%
+
+    say "Formatting..."
+    mkfs.fat -F 32 -n BOOT "$part_boot"
+    mkfs.ext4 -L nixos -F "$part_root"
+  else
+    say "Partitioning ${disk} (MBR, BIOS)..."
+    parted -s "$disk" -- mklabel msdos
+    parted -s "$disk" -- mkpart primary ext4 1MB 512MB
+    parted -s "$disk" -- set 1 boot on
+    parted -s "$disk" -- mkpart primary ext4 512MB 100%
+
+    say "Formatting..."
+    mkfs.ext4 -L boot -F "$part_boot"
+    mkfs.ext4 -L nixos -F "$part_root"
+  fi
 
   say "Mounting to /mnt..."
   mount "$part_root" /mnt
@@ -144,7 +181,7 @@ maybe_auto_partition() {
   if [ "$INSTALL_ACTION" = "install" ] || ! mountpoint -q /mnt 2>/dev/null; then
     say ""
     say "Disk setup:"
-    say "  1) Auto-partition a disk (UEFI GPT + ext4)"
+    say "  1) Auto-partition a disk (512MB boot + rest root, no swap)"
     say "  2) Skip — I already mounted /mnt"
     say ""
     local choice=""
