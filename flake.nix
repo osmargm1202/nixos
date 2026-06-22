@@ -178,7 +178,8 @@
     in
     {
       lib = {
-        inherit mkGeneralHost mkServerHost;
+        inherit mkGeneralHost mkServerHost mkMinimalHost;
+        mkTerminalHost = mkMinimalHost;
       };
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
