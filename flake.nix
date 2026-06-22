@@ -230,6 +230,8 @@
         i3       = mkProfile { profile = ./nixos/profiles/i3.nix;       profileName = "i3"; };
         xfce     = mkProfile { profile = ./nixos/profiles/xfce.nix;     profileName = "xfce"; };
         mate     = mkProfile { profile = ./nixos/profiles/mate.nix;     profileName = "mate"; };
+        terminal = mkMinimalHost { hostName = "nixos"; hardware = defaultHardware; };
+        server   = mkServerHost  { hostName = "nixos"; hardware = defaultHardware; };
 
         jarq-xfce = mkHost {
           hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
