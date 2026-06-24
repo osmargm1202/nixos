@@ -11,6 +11,10 @@
       }
     ];
 
+    overrides = {
+      "com.discordapp.Discord".Context.devices = "!all";
+    };
+
     packages = [
       "app.zen_browser.zen"
       "be.alexandervanhee.gradia"
