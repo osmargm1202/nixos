@@ -243,6 +243,9 @@ in
     overskride
     iwgtk
 
+    # Communication
+    vesktop
+
     # GNOME apps used as defaults
     nautilus
     gnome-text-editor
