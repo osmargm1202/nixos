@@ -12,7 +12,7 @@
     ];
 
     overrides = {
-      "com.discordapp.Discord".Context.devices = "!all";
+      "app.zen_browser.zen".Context.allow = "devel";
     };
 
     packages = [
@@ -27,6 +27,7 @@
       "md.obsidian.Obsidian"
       "org.mozilla.Thunderbird"
       "org.blender.Blender"
+      "io.github.intoolswetrust.JSignPdf"
       "org.gimp.GIMP"
       "org.gnome.SimpleScan"
       "org.inkscape.Inkscape"
