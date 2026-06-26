@@ -253,7 +253,6 @@ let
       ".local/bin/hypr-rofi-tmux-arch"
       ".local/bin/hypr-rofi-window"
       ".local/bin/hypr-session-import-env"
-      ".local/bin/hypr-show-desktop"
       ".local/bin/hypr-smart-run"
       ".local/bin/hypr-start-containers"
       ".local/bin/hypr-start-discord"
