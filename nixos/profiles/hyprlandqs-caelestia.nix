@@ -26,12 +26,16 @@ in
     # Display management
     nwg-displays
     nwg-look
+    nwg-dock-hyprland
 
     # Power menu
     wlogout
 
     # Screen recorder (used by caelestia record)
     gpu-screen-recorder
+
+    # Video wallpapers
+    mpvpaper
 
     # Fonts — hypremoji / emoji support in bar
     noto-fonts-color-emoji
@@ -48,7 +52,7 @@ in
       enable = true;
       package = caelestiaShell;
       settings = {
-        bar.position = "top";
+        bar.workspaces.shown = 10;
       };
     };
   };

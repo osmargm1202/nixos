@@ -74,7 +74,6 @@
         cinnamon = ./nixos/profiles/cinnamon.nix;
         gnome = ./nixos/profiles/gnome.nix;
         hyprland = ./nixos/profiles/hyprland.nix;
-        hyprlandqs-yahr = ./nixos/profiles/hyprlandqs-yahr.nix;
         hyprlandqs-caelestia = ./nixos/profiles/hyprlandqs-caelestia.nix;
         labwc = ./nixos/profiles/labwc.nix;
         i3 = ./nixos/profiles/i3.nix;
@@ -264,11 +263,6 @@
           profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland"; userName = "jarq";
           extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
         };
-        jarq-hyprlandqs-yahr = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-yahr.nix; profileName = "hyprlandqs-yahr"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
         jarq-hyprlandqs-caelestia = mkHost {
           hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia"; userName = "jarq";
@@ -288,11 +282,6 @@
         orgm-hyprland = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-hyprlandqs-yahr = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-yahr.nix; profileName = "hyprlandqs-yahr";
           extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
         };
         orgm-hyprlandqs-caelestia = mkHost {
@@ -354,11 +343,6 @@
         lenovo-hyprland = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-hyprlandqs-yahr = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-yahr.nix; profileName = "hyprlandqs-yahr";
           extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
         };
         lenovo-hyprlandqs-caelestia = mkHost {
