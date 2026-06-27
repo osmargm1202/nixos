@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, fetchurl, autoPatchelfHook }:
+{ lib, stdenvNoCC, fetchurl, autoPatchelfHook, stdenv, zlib }:
 
 stdenvNoCC.mkDerivation rec {
   pname = "codebase-memory-mcp";
@@ -10,6 +10,7 @@ stdenvNoCC.mkDerivation rec {
   };
 
   nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [ stdenv.cc.cc.lib zlib ];
 
   sourceRoot = ".";
 
