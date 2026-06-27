@@ -29,7 +29,7 @@
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
-      url = "github:caelestia-dots/shell";
+      url = "github:osmargm1202/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dms = {

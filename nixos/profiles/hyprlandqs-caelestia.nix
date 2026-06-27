@@ -16,6 +16,8 @@ in
     ./common_hyprland.nix
   ];
 
+  programs.gpu-screen-recorder.enable = true;
+
   environment.systemPackages = with pkgs; [
     # Notification daemon (replaces swaync/waybar)
     mako
@@ -51,9 +53,6 @@ in
     programs.caelestia = {
       enable = true;
       package = caelestiaShell;
-      settings = {
-        bar.workspaces.shown = 10;
-      };
     };
   };
 }
