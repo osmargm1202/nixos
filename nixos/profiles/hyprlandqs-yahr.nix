@@ -1,13 +1,8 @@
 {
   pkgs,
-  inputs,
   ...
 }:
 
-let
-  system = pkgs.stdenv.hostPlatform.system;
-  hyprlandPkgs = inputs.hyprland.packages.${system};
-in
 {
   imports = [
     ./common_hyprland.nix
@@ -31,8 +26,9 @@ in
     # Power menu
     wlogout
 
-    # Fonts — hypremoji for emoji support in bar
+    # Fonts — hypremoji / emoji support in bar
     noto-fonts-emoji
-    (nerdfonts.override { fonts = [ "JetBrainsMono" "NerdFontsSymbolsOnly" ]; })
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.symbols-only
   ];
 }

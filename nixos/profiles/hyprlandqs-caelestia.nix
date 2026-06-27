@@ -31,9 +31,10 @@ in
     # Power menu
     wlogout
 
-    # Fonts — hypremoji for emoji support in bar
+    # Fonts — hypremoji / emoji support in bar
     noto-fonts-emoji
-    (nerdfonts.override { fonts = [ "JetBrainsMono" "NerdFontsSymbolsOnly" ]; })
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.symbols-only
   ];
 
   home-manager.users.${userName} = {
