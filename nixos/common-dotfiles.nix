@@ -398,7 +398,6 @@ let
       ".config/hypr/scripts/pi-walker-prompt.sh"
       ".config/hypr/scripts/walker-window-switch.sh"
       ".config/mako"
-      ".config/orgm-hypr/keyhelper/shell.qml"
       ".config/orgm-hypr/notify-focus.json"
       ".config/orgm-hypr/themes.json"
       ".config/orgm-theme"
