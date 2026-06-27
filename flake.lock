@@ -100,11 +100,11 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1782599521,
-        "narHash": "sha256-4nSFAUE6ZsRc1iCETN80aDBlDPeGE9oY47t5ZP8qKl0=",
+        "lastModified": 1782604786,
+        "narHash": "sha256-ZbM55fquvaQtF7yWzpcUTPpmVr57M69Urtq9Bvv1l+M=",
         "owner": "osmargm1202",
         "repo": "shell",
-        "rev": "23a7b6b6fe3c999435ae66469286a196c1b06b02",
+        "rev": "a6391c6dfe501d66fbcdd685bea6c2a709f8d05e",
         "type": "github"
       },
       "original": {
