@@ -17,7 +17,6 @@
 
     # Launcher / menus
     rofi
-    wofi
 
     # Display management (no nwg-dock in QS stack)
     nwg-displays

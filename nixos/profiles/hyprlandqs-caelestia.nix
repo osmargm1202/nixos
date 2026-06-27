@@ -22,7 +22,6 @@ in
 
     # Launcher / menus
     rofi
-    wofi
 
     # Display management
     nwg-displays
