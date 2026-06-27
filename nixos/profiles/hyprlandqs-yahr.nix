@@ -16,7 +16,7 @@
     mako
 
     # Launcher / menus
-    rofi-wayland
+    rofi
     wofi
 
     # Display management (no nwg-dock in QS stack)

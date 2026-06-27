@@ -253,6 +253,7 @@
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
+    (pkgs.callPackage ./packages/codebase-memory-mcp.nix { })
   ];
 
   programs.dconf.enable = true;

@@ -21,7 +21,7 @@ in
     mako
 
     # Launcher / menus
-    rofi-wayland
+    rofi
     wofi
 
     # Display management

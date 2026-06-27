@@ -68,6 +68,7 @@
         inherit dotfilesOrgmSource;
       };
       orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
+      codebaseMcp = pkgs.callPackage ./nixos/packages/codebase-memory-mcp.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       profiles = {
         cinnamon = ./nixos/profiles/cinnamon.nix;
@@ -204,10 +205,12 @@
           orgmDot
           orgmWallpaper
           orgmThemes
+          codebaseMcp
           ;
         "orgm-dot" = orgmDot;
         "orgm-wallpaper" = orgmWallpaper;
         "orgm-themes" = orgmThemes;
+        "codebase-memory-mcp" = codebaseMcp;
         default = orgmDot;
       };
 
