@@ -20,9 +20,9 @@ in
     # Notification daemon (replaces swaync/waybar)
     mako
 
-    # Launcher
+    # Launcher / menus
+    rofi-wayland
     wofi
-    fuzzel
 
     # Display management
     nwg-displays
@@ -30,6 +30,9 @@ in
 
     # Power menu
     wlogout
+
+    # Screen recorder (used by caelestia record)
+    gpu-screen-recorder
 
     # Fonts — hypremoji / emoji support in bar
     noto-fonts-color-emoji

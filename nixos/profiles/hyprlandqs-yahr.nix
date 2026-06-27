@@ -15,9 +15,9 @@
     # Notification daemon (replaces swaync)
     mako
 
-    # Launcher
+    # Launcher / menus
+    rofi-wayland
     wofi
-    fuzzel
 
     # Display management (no nwg-dock in QS stack)
     nwg-displays
