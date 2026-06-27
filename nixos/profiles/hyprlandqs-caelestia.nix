@@ -32,7 +32,7 @@ in
     wlogout
 
     # Fonts — hypremoji / emoji support in bar
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
   ];
