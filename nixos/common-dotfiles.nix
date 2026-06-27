@@ -380,8 +380,6 @@ let
     ];
 
     hyprlandqs-caelestia = [
-      ".config/gtk-4.0/noctalia.css"
-      ".config/gtk-4.0/colors.css"
       ".config/hypr/hypridle.conf"
       ".config/hypr/hyprland.lua"
       ".config/hypr/hyprlock.conf"
@@ -413,7 +411,6 @@ let
       ".local/bin/hypr-bluetooth-menu"
       ".local/bin/hypr-bluetooth-reconnect"
       ".local/bin/hypr-config-editor"
-      ".local/bin/hypr-current-wallpaper"
       ".local/bin/hypr-devices-menu"
       ".local/bin/hypr-display-targets"
       ".local/bin/hypr-focus-notification-app"
@@ -427,7 +424,6 @@ let
       ".local/bin/hypr-performance-menu"
       ".local/bin/hypr-pi-prompt"
       ".local/bin/hypr-power-menu"
-      ".local/bin/hypr-random-wallpaper"
       ".local/bin/hypr-rofi-calc"
       ".local/bin/hypr-rofi-clipboard"
       ".local/bin/hypr-rofi-lib"
@@ -480,16 +476,12 @@ let
     orgm = [
       ".config/fish/age-host.fish"
       ".config/fish/host-orgm.fish"
-      ".local/share/applications/arch.desktop"
       ".local/share/applications/claude-code-url-handler.desktop"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
-      ".local/share/applications/jsignpdf.desktop"
       ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
-      ".local/share/applications/vscode.desktop"
       ".local/share/applications/webapps.json"
-      ".local/share/applications/zed.desktop"
       ".local/share/icons"
     ];
     jarq = [
