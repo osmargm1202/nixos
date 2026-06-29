@@ -122,8 +122,6 @@ let
     ".icons"
     ".local/bin/kbd-layout-next"
     ".local/bin/memclean-dev"
-    ".local/bin/mic-volume-osd"
-    ".local/bin/volume-osd"
     ".local/bin/brightness-osd"
     ".local/bin/windows-rdp"
     ".local/share/applications/windows-rdp.desktop"
@@ -276,6 +274,8 @@ let
       ".local/bin/waybar-theme-toggle"
       ".local/bin/waybar-time-ampm"
       ".local/bin/waybar-watch"
+      ".local/bin/mic-volume-osd"
+      ".local/bin/volume-osd"
     ];
 
     i3 = [
@@ -371,6 +371,8 @@ let
       ".local/bin/hypr-workspace-button"
       ".local/bin/hypr-zen-new-window"
       ".local/bin/orgm-wallpaper"
+      ".local/bin/mic-volume-osd"
+      ".local/bin/volume-osd"
     ];
 
     xfce     = [];
