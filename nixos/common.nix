@@ -281,6 +281,7 @@
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
     (pkgs.callPackage ./packages/codebase-memory-mcp.nix { })
+    (import ./packages/dev-shell.nix pkgs)
   ];
 
   programs.dconf.enable = true;
