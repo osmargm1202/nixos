@@ -254,7 +254,7 @@
                 zip
                 unzip
                 pigz
-                gnuTime
+                time
                 # Search / navigation
                 fd
                 fzf
