@@ -26,7 +26,7 @@ config/tmux/.tmux/plugins/
 .superpowers/
 
 # orgm-themes compiled binary (built from cmd/orgm-themes)
-orgm-themes
+/orgm-themes
 
 # orgm-themes generated files — managed at runtime, not in git
 config/shared/.config/waybar/orgm-current.css
