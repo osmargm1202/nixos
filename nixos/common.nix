@@ -243,6 +243,33 @@
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
     noto-fonts-color-emoji
+    # CLI tools (replaces distrobox)
+    bat
+    ripgrep
+    glow
+    gum
+    yazi
+    duf
+    neovim
+    git-lfs
+    sops
+    just
+    watchexec
+    inotify-tools
+    wl-clipboard
+    xclip
+    zip
+    unzip
+    pigz
+    tree
+    mtr
+    lsof
+    tcpdump
+    bc
+    # GUI apps (replaces distrobox versions — NixOS patches loaders automatically)
+    vscode
+    warp-terminal
+    zed-editor
     (chromium.override { enableWideVine = true; })
     (pkgs.writeShellApplication {
       name = "ns";

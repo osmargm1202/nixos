@@ -213,6 +213,51 @@
         default = orgmDot;
       };
 
+      devShells.${system}.default =
+        let
+          fhs = pkgs.buildFHSEnv {
+            name = "dev";
+            targetPkgs =
+              pkgs: with pkgs; [
+                # Node.js ecosystem
+                nodejs_22
+                nodePackages.pnpm
+                bun
+                # Python
+                python3
+                uv
+                # Go
+                go
+                # Rust
+                rustup
+                # Build deps for native npm modules (node-gyp etc.)
+                openssl
+                pkg-config
+                # AI/dev CLIs available in nixpkgs
+                claude-code
+                gemini-cli
+                pyright
+                nodePackages.typescript-language-server
+                nodePackages.svelte-language-server
+              ];
+            # Sourced before runScript — sets up user-writable npm/go/cargo paths
+            profile = ''
+              export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+              export PATH="$HOME/.npm-global/bin:$PATH"
+              export GOPATH="$HOME/go"
+              export PATH="$GOPATH/bin:$PATH"
+              export CARGO_HOME="$HOME/.cargo"
+              export PATH="$CARGO_HOME/bin:$PATH"
+            '';
+          };
+        in
+        pkgs.mkShell {
+          packages = [ fhs ];
+          shellHook = ''
+            exec ${fhs}/bin/dev fish
+          '';
+        };
+
       nixosConfigurations = {
         orgm-terminal = mkMinimalHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
