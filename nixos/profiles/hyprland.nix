@@ -24,7 +24,10 @@ in
     ./common_hyprland.nix
   ];
 
+  security.pam.services.hyprlock = {};
+
   environment.systemPackages = with pkgs; [
+    hyprlock
     # Shell / panel for Hyprland — waybar stack
     waybarSourceTarget
     nwgDockHyprlandGit
