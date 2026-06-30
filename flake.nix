@@ -222,6 +222,8 @@
             name = "dev";
             targetPkgs =
               pkgs: with pkgs; [
+                # Shell
+                fish
                 # Node.js ecosystem
                 nodejs_22
                 nodePackages.pnpm
@@ -243,6 +245,7 @@
                 nodePackages.typescript-language-server
                 nodePackages.svelte-language-server
               ];
+            runScript = "fish";
             # Sourced before runScript — sets up user-writable npm/go/cargo paths
             profile = ''
               export NPM_CONFIG_PREFIX="$HOME/.npm-global"
@@ -257,7 +260,7 @@
         pkgsDev.mkShell {
           packages = [ fhs ];
           shellHook = ''
-            exec ${fhs}/bin/dev fish
+            exec ${fhs}/bin/dev
           '';
         };
 
