@@ -235,7 +235,69 @@
                 go
                 # Rust
                 rustup
+                # Core utils
+                wget
+                curl
+                rsync
+                git
+                git-lfs
+                gh
+                vim
+                neovim
+                nano
+                tmux
+                stow
+                less
+                bc
+                diffutils
+                tree
+                zip
+                unzip
+                pigz
+                gnuTime
+                # Search / navigation
+                fd
+                fzf
+                ripgrep
+                zoxide
+                eza
+                # Terminal tools
+                starship
+                glow
+                gum
+                yazi
+                bat
+                duf
+                fastfetch
+                figlet
+                # System monitoring
+                htop
+                btop
+                ncdu
+                lsof
+                mtr
+                traceroute
+                tcpdump
+                inetutils
+                # Dev tools
+                age
+                sops
+                jq
+                just
+                watchexec
+                inotify-tools
+                trash-cli
+                # Clipboard / X11
+                wl-clipboard
+                xclip
+                xorg.xauth
+                # Network
+                openssh
+                # Notifications
+                libnotify
                 # Build deps for native npm modules (node-gyp etc.)
+                gcc
+                gnumake
                 openssl
                 pkg-config
                 # AI/dev CLIs available in nixpkgs
