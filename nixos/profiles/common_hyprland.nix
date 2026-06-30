@@ -70,6 +70,7 @@ in
   };
   security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
+  security.pam.services.hyprlock = {};
 
   programs.nautilus-open-any-terminal = {
     enable = true;

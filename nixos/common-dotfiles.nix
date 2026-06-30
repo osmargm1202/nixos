@@ -301,9 +301,7 @@ let
     ];
 
     hyprlandqs-caelestia = [
-      ".config/hypr/hypridle.conf"
       ".config/hypr/hyprland.lua"
-      ".config/hypr/hyprlock.conf"
       ".config/hypr/lua/autostart.lua"
       ".config/hypr/lua/environment.lua"
       ".config/hypr/lua/input.lua"
