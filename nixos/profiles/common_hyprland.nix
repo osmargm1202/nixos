@@ -10,7 +10,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
-  dotfilesOrgmSource = inputs.dotfiles-orgm-source;
+  dotfilesOrgmSource = ../../dotfiles;
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;

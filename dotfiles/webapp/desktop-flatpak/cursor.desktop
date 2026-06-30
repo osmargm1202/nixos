@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Cursor
+GenericName=Terminal entering Cursor IDE
+Comment=Terminal entering Cursor IDE
+Categories=Distrobox;System;Utility
+Exec=distrobox-enter  arch -- cursor
+Icon=cursor
+Keywords=distrobox;
+NoDisplay=false
+Terminal=false
+TryExec=distrobox
+StartupWMClass=cursor
+Type=Application

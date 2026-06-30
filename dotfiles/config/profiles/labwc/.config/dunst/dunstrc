@@ -1,0 +1,80 @@
+# Dunst configuration - Tokyo Night Edition
+# Fuente única para Myconfig
+
+[global]
+    monitor = 0
+    follow = mouse
+    width = 420
+    height = (0, 300)
+    origin = top-center
+    offset = (0,48)
+    notification_limit = 20
+
+    alignment = center
+    vertical_alignment = center
+    horizontal_padding = 20
+    padding = 16
+    text_icon_padding = 14
+    separator_height = 2
+    frame_width = 2
+    frame_color = "#7aa2f7"
+    corner_radius = 14
+    transparency = 0
+    gap_size = 8
+
+    font = "JetBrainsMono Nerd Font 11"
+    line_height = 0
+    markup = full
+    format = "%s\n%b"
+    ellipsize = middle
+    word_wrap = yes
+    ignore_newline = no
+    show_age_threshold = 90
+    idle_threshold = 0
+
+    indicate_hidden = yes
+    stack_duplicates = true
+    hide_duplicate_count = true
+    sort = yes
+    sticky_history = yes
+    history_length = 20
+
+    icon_position = left
+    min_icon_size = 56
+    max_icon_size = 96
+
+    progress_bar = false
+    enable_recursive_icon_lookup = false
+
+    browser = /usr/bin/xdg-open
+    dmenu = /usr/bin/rofi -show drun -i
+    title = Dunst
+    class = Dunst
+
+    mouse_left_click = close_current
+    mouse_middle_click = do_action
+    mouse_right_click = close_all
+
+[urgency_low]
+    background = "#1a1b26"
+    foreground = "#c0caf5"
+    frame_color = "#565f89"
+    timeout = 4
+    icon = "/home/osmar/.config/dunst/icons/low.svg"
+
+[urgency_normal]
+    background = "#1f2335"
+    foreground = "#c0caf5"
+    frame_color = "#7aa2f7"
+    timeout = 6
+    icon = "/home/osmar/.config/dunst/icons/normal.svg"
+
+[urgency_critical]
+    background = "#2b1a24"
+    foreground = "#f8f8f2"
+    frame_color = "#f7768e"
+    timeout = 0
+    icon = "/home/osmar/.config/dunst/icons/critical.svg"
+
+[fullscreen_delay]
+    fullscreen = delay

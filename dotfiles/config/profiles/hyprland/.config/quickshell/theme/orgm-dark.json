@@ -1,0 +1,20 @@
+{
+  "overlay": "#000000",
+  "border": "#33494d64",
+  "text": "#cad3f5",
+  "subtext": "#a5adcb",
+  "muted": "#6e738d",
+  "accent": "#8aadf4",
+  "success": "#a6da95",
+  "warning": "#eed49f",
+  "error": "#ed8796",
+  "pink": "#f5bde6",
+  "button": "#22363a4f",
+  "buttonStrong": "#33494d64",
+  "buttonSoft": "#1e363a4f",
+  "eventCard": "#2b363a4f",
+  "hover": "#55363a4f",
+  "outline": "#494d64",
+  "onAccent": "#11111b",
+  "disabled": "#363a4f"
+}

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google AI Studio
+Comment=Google AI Studio Web Application
+Exec=chromium --app="https://aistudio.google.com/" --new-window
+Icon=Google AI Studio
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-aistudio.google.com__-Default
+StartupNotify=true
+Terminal=false

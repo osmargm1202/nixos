@@ -1,0 +1,1 @@
+../../../../../Hobby/dotfiles/config/pi/.pi/agent/skills/imagegen/scripts/image_gen.py

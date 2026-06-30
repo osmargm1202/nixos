@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_file="${HYPR_DISPLAY_TARGETS_STATE:-${XDG_CONFIG_HOME:-$HOME/.config}/orgm-hypr/display-targets.json}"
+cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/orgm-hypr/waybar"
+rofi_lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+
+usage() {
+  cat >&2 <<'EOF'
+usage: hypr-display-targets ensure|menu|status|waybar-config CONFIG_DIR|dock-env
+EOF
+  exit 2
+}
+
+state_dir() { dirname "$state_file"; }
+
+monitors_json() {
+  if [ -n "${HYPR_DISPLAY_TARGETS_MONITORS_JSON:-}" ]; then
+    cat "$HYPR_DISPLAY_TARGETS_MONITORS_JSON"
+    return
+  fi
+  hyprctl -j monitors 2>/dev/null || printf '[]\n'
+}
+
+monitor_rows() {
+  monitors_json | jq -r '
+    .[] |
+    ((.description // "") | tostring) as $description |
+    ((.make // "") | tostring) as $make |
+    ((.model // "") | tostring) as $model |
+    ((.serial // "") | tostring) as $serial |
+    ((.name // "") | tostring) as $name |
+    (if $description != "" and $description != "Unknown" then $description
+     elif (($make + $model + $serial) != "") then ([$make,$model,$serial] | map(select(. != "")) | join(" "))
+     else $name end) as $key |
+    [$key, $name, ($description // $name), ((.focused // false) | tostring)] | @tsv
+  '
+}
+
+monitor_count() {
+  monitors_json | jq 'length'
+}
+
+focused_key() {
+  monitor_rows | awk -F '\t' '$4 == "true" { print $1; exit } END { }'
+}
+
+first_key() {
+  monitor_rows | awk -F '\t' 'NR == 1 { print $1; exit }'
+}
+
+output_for_key() {
+  local key="$1"
+  monitor_rows | awk -F '\t' -v key="$key" '$1 == key { print $2; exit }'
+}
+
+ensure_valid_state() {
+  mkdir -p "$(state_dir)"
+  if [ -f "$state_file" ] && ! jq empty "$state_file" >/dev/null 2>&1; then
+    mv "$state_file" "$state_file.bak-$(date +%Y%m%d%H%M%S)"
+  fi
+  if [ ! -f "$state_file" ]; then
+    cat >"$state_file" <<'JSON'
+{
+  "version": 1,
+  "waybar": { "mode": "primary", "selected": [] },
+  "dock": { "monitor": "primary" },
+  "monitors": {}
+}
+JSON
+  fi
+}
+
+merge_monitors() {
+  local tmp rows_json
+  tmp="$(mktemp)"
+  rows_json="$(monitor_rows | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {key: .[0], output: .[1], label: .[2], focused: (.[3] == "true")})')"
+  jq --argjson rows "$rows_json" '
+    .version = 1 |
+    .waybar = (.waybar // {"mode":"primary","selected":[]}) |
+    .dock = (.dock // {"monitor":"primary"}) |
+    .monitors = (.monitors // {}) |
+    reduce $rows[] as $row (.;
+      .monitors[$row.key] = ((.monitors[$row.key] // {}) + {"label": ((.monitors[$row.key].label // $row.label))})
+    )
+  ' "$state_file" >"$tmp"
+  mv "$tmp" "$state_file"
+}
+
+primary_key() {
+  jq -r '.monitors | to_entries[] | select(.value.primary == true) | .key' "$state_file" | head -n 1
+}
+
+set_primary() {
+  local key="$1" tmp
+  [ -n "$key" ] || return 0
+  tmp="$(mktemp)"
+  jq --arg key "$key" '
+    .monitors = (.monitors | with_entries(.value.primary = (.key == $key))) |
+    .dock.monitor = (.dock.monitor // "primary")
+  ' "$state_file" >"$tmp"
+  mv "$tmp" "$state_file"
+}
+
+choose_with_rofi() {
+  local prompt="$1"
+  if [ -n "${HYPR_DISPLAY_TARGETS_ROFI:-}" ]; then
+    "${HYPR_DISPLAY_TARGETS_ROFI}" "$prompt"
+    return
+  fi
+  if [ -f "$rofi_lib" ]; then
+    # shellcheck disable=SC1090
+    . "$rofi_lib"
+    hypr_rofi_dmenu "$prompt"
+    return
+  fi
+  rofi -dmenu -p "$prompt" 2>/dev/null || true
+}
+
+prompt_primary() {
+  local choice key
+  choice="$(monitor_rows | awk -F '\t' '{ print $3 " :: " $1 }' | choose_with_rofi 'Monitor principal' || true)"
+  key="${choice##* :: }"
+  if [ -n "$key" ] && output_for_key "$key" >/dev/null; then
+    set_primary "$key"
+  fi
+}
+
+ensure_cmd() {
+  ensure_valid_state
+  merge_monitors
+  local count primary fallback
+  count="$(monitor_count)"
+  primary="$(primary_key || true)"
+  if [ -z "$primary" ]; then
+    if [ "$count" -eq 1 ]; then
+      set_primary "$(first_key)"
+    elif [ "$count" -gt 1 ] && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v rofi >/dev/null 2>&1; then
+      prompt_primary
+      [ -n "$(primary_key || true)" ] || set_primary "$(focused_key || first_key)"
+    else
+      fallback="$(focused_key || true)"
+      [ -n "$fallback" ] || fallback="$(first_key || true)"
+      set_primary "$fallback"
+    fi
+  fi
+}
+
+connected_selected_outputs_json() {
+  jq -r '.waybar.selected[]? // empty' "$state_file" | while IFS= read -r key; do
+    output_for_key "$key" || true
+  done | awk 'NF' | jq -R -s 'split("\n") | map(select(length > 0))'
+}
+
+waybar_output_json() {
+  local mode key output selected
+  mode="$(jq -r '.waybar.mode // "primary"' "$state_file")"
+  case "$mode" in
+    all)
+      printf '[]\n'
+      ;;
+    selected)
+      selected="$(connected_selected_outputs_json)"
+      if [ "$(printf '%s' "$selected" | jq 'length')" -gt 0 ]; then
+        printf '%s\n' "$selected"
+      else
+        key="$(primary_key || true)"
+        output="$(output_for_key "$key" || true)"
+        jq -cn --arg output "$output" 'if $output == "" then [] else [$output] end'
+      fi
+      ;;
+    primary|*)
+      key="$(primary_key || true)"
+      output="$(output_for_key "$key" || true)"
+      jq -cn --arg output "$output" 'if $output == "" then [] else [$output] end'
+      ;;
+  esac
+}
+
+strip_jsonc() {
+  sed '/^[[:space:]]*\/\//d' "$1"
+}
+
+waybar_config_cmd() {
+  [ "$#" -eq 1 ] || usage
+  local config_dir="$1" profile out_dir source_config generated outputs mode
+  ensure_cmd
+  profile="$(basename "$config_dir")"
+  out_dir="$cache_root/$profile"
+  mkdir -p "$out_dir"
+  source_config="$config_dir/config"
+  generated="$out_dir/config"
+  outputs="$(waybar_output_json)"
+  mode="$(jq -r '.waybar.mode // "primary"' "$state_file")"
+  if [ "$mode" = "all" ] || [ "$(monitor_count)" -le 1 ] || [ "$(printf '%s' "$outputs" | jq 'length')" -eq 0 ]; then
+    strip_jsonc "$source_config" | jq 'map(del(.output))' >"$generated"
+  else
+    strip_jsonc "$source_config" | jq --argjson outs "$outputs" '[ $outs[] as $out | .[] | . + {output: $out} ]' >"$generated"
+  fi
+  printf '%s\n' "$generated"
+}
+
+dock_env_cmd() {
+  ensure_cmd
+  local target key output
+  target="$(jq -r '.dock.monitor // "primary"' "$state_file")"
+  if [ "$target" = "primary" ]; then
+    key="$(primary_key || true)"
+  else
+    key="$target"
+  fi
+  output="$(output_for_key "$key" || true)"
+  [ -n "$output" ] && printf -- '-o %s\n' "$output"
+}
+
+status_cmd() {
+  ensure_cmd
+  printf 'State: %s\n' "$state_file"
+  printf 'Waybar mode: %s\n' "$(jq -r '.waybar.mode // "primary"' "$state_file")"
+  printf 'Primary: %s\n' "$(primary_key || true)"
+  printf 'Dock monitor: %s\n' "$(jq -r '.dock.monitor // "primary"' "$state_file")"
+  printf 'Connected monitors:\n'
+  monitor_rows | awk -F '\t' '{ printf "- %s -> %s (%s)\n", $1, $2, $3 }'
+}
+
+set_waybar_mode() {
+  local mode="$1" tmp
+  tmp="$(mktemp)"
+  jq --arg mode "$mode" '.waybar.mode = $mode' "$state_file" >"$tmp"
+  mv "$tmp" "$state_file"
+}
+
+set_dock_monitor() {
+  local key="$1" tmp
+  tmp="$(mktemp)"
+  jq --arg key "$key" '.dock.monitor = $key' "$state_file" >"$tmp"
+  mv "$tmp" "$state_file"
+}
+
+set_waybar_selected_monitor() {
+  local key="$1" tmp
+  tmp="$(mktemp)"
+  jq --arg key "$key" '.waybar.mode = "selected" | .waybar.selected = [$key]' "$state_file" >"$tmp"
+  mv "$tmp" "$state_file"
+}
+
+menu_cmd() {
+  ensure_cmd
+  local choice monitor_choice key
+  choice="$(printf '%s\n' \
+    '󰍹 Set primary monitor' \
+    '󰍺 Waybar: primary monitor' \
+    '󰍺 Waybar: all monitors' \
+    '󰍺 Waybar: choose monitor' \
+    '󰧨 Dock: primary monitor' \
+    '󰧨 Dock: choose monitor' \
+    '󰋼 Status' \
+    '󰅖 Quit' | choose_with_rofi 'Waybar/Dock Displays' || true)"
+  case "$choice" in
+    *'Set primary') prompt_primary ;;
+    *'Waybar: primary') set_waybar_mode primary ;;
+    *'Waybar: all') set_waybar_mode all ;;
+    *'Waybar: choose')
+      monitor_choice="$(monitor_rows | awk -F '\t' '{ print $3 " :: " $1 }' | choose_with_rofi 'Waybar monitor' || true)"
+      key="${monitor_choice##* :: }"
+      [ -n "$key" ] && set_waybar_selected_monitor "$key"
+      ;;
+    *'Dock: primary') set_dock_monitor primary ;;
+    *'Dock: choose')
+      monitor_choice="$(monitor_rows | awk -F '\t' '{ print $3 " :: " $1 }' | choose_with_rofi 'Dock monitor' || true)"
+      key="${monitor_choice##* :: }"
+      [ -n "$key" ] && set_dock_monitor "$key"
+      ;;
+    *'Status') status_cmd | ${PAGER:-less} ;;
+    *'Quit'|'') exit 0 ;;
+  esac
+}
+
+cmd="${1:-}"
+shift || true
+case "$cmd" in
+  ensure) [ "$#" -eq 0 ] || usage; ensure_cmd ;;
+  menu) [ "$#" -eq 0 ] || usage; menu_cmd ;;
+  status) [ "$#" -eq 0 ] || usage; status_cmd ;;
+  waybar-config) waybar_config_cmd "$@" ;;
+  dock-env) [ "$#" -eq 0 ] || usage; dock_env_cmd ;;
+  *) usage ;;
+esac

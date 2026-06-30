@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Desktop Apps
+Comment=Open local applications directory
+Exec=xdg-open /home/osmar/.local/share/applications
+Icon=folder-applications
+Categories=System;Utility;
+Terminal=false
+NoDisplay=false
+StartupNotify=true

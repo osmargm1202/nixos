@@ -1,0 +1,28 @@
+#!/bin/sh
+
+case "$(date +%u)" in
+  1) day="Lunes" ;;
+  2) day="Martes" ;;
+  3) day="Miércoles" ;;
+  4) day="Jueves" ;;
+  5) day="Viernes" ;;
+  6) day="Sábado" ;;
+  7) day="Domingo" ;;
+esac
+
+case "$(date +%m)" in
+  01) month="Enero" ;;
+  02) month="Febrero" ;;
+  03) month="Marzo" ;;
+  04) month="Abril" ;;
+  05) month="Mayo" ;;
+  06) month="Junio" ;;
+  07) month="Julio" ;;
+  08) month="Agosto" ;;
+  09) month="Septiembre" ;;
+  10) month="Octubre" ;;
+  11) month="Noviembre" ;;
+  12) month="Diciembre" ;;
+esac
+
+printf '%s - %s\n' "$day" "$month"

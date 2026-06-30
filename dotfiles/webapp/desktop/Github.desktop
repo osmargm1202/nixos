@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Github
+Comment=osmargm1202 Gitub App
+Exec=chromium --app="https://github.com/osmargm1202" --new-window
+Icon=Github
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-github.com__-Default
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Youtube
+Comment=Youtube Web Application
+Exec=chromium --app="https://youtube.com" --new-window
+Icon=Youtube
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=chrome-youtube.com__-Default
+StartupNotify=true
+Terminal=false

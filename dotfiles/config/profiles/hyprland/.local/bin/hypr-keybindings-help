@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+width="${HYPR_KEYBINDINGS_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 760 * s }')}"
+lines="${HYPR_KEYBINDINGS_LINES:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 14 * s }')}"
+
+pick() {
+  local prompt="$1"
+  hypr_rofi_markup_dmenu "$prompt" "$lines" "$width"
+}
+
+categories() {
+  cat <<'EOF_CATEGORIES'
+󰘳 Todos
+󰀻 Launchers
+󰒓 Tools
+󰖲 Ventanas
+󰝘 Workspaces
+󰕾 Media
+󰒲 Sistema
+󰅖 Salir
+EOF_CATEGORIES
+}
+
+category_id() {
+  case "$1" in
+    *'Todos') echo all ;;
+    *'Launchers') echo launchers ;;
+    *'Tools') echo tools ;;
+    *'Ventanas') echo windows ;;
+    *'Workspaces') echo workspaces ;;
+    *'Media') echo media ;;
+    *'Sistema') echo system ;;
+    *) echo quit ;;
+  esac
+}
+
+entry() {
+  local key="$1" desc="$2" command="$3"
+  printf '<span color="#8aadf4">%-18s</span> <span color="#cad3f5">%-30s</span> <span color="#6e738d">%s</span>\n' "$key" "$desc" "$command"
+}
+
+entries() {
+  local category="${1:-all}"
+  case "$category" in
+    all)
+      entries launchers
+      entries tools
+      entries windows
+      entries workspaces
+      entries media
+      entries system
+      ;;
+    launchers)
+      entry 'Win+/' 'Atajos Hyprland' 'hypr-keybindings-help'
+      entry 'Win+Enter' 'Terminal' 'kitty'
+      entry 'Win+Shift+Enter' 'Terminal Arch' 'kitty -e distrobox-enter arch'
+      entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
+      entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
+      entry 'Win+E' 'Archivos' 'nautilus'
+      entry 'Win+W' 'Browser' 'hypr-zen-new-window'
+      entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
+      entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'
+      entry 'Win+Shift+R' 'Buscar RNC' 'orgmrnc find'
+      entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
+      ;;
+    tools)
+      entry 'Win+M' 'Buscar archivo' 'hypr-rofi-open-file'
+      entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
+      entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
+      entry 'Win+Esc' 'Cambiar ventana' 'hypr-rofi-window'
+      entry 'Win+Shift+T' 'tmux Arch' 'hypr-rofi-tmux-arch'
+      entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
+      entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
+      entry 'Win+V' 'Clipboard' 'cliphist + rofi'
+      entry 'Print' 'Screenshot área' 'grim/slurp/swappy'
+      entry 'Ctrl+Print' 'Screenshot pantalla' 'grim/swappy'
+      entry 'Win+Print' 'Grabar pantalla MP4' 'record_screen_mp4'
+      entry 'Win+Shift+Print' 'Grabar pantalla GIF' 'record_screen_gif'
+      ;;
+    windows)
+      entry 'Win+Tab' 'Última ventana' 'focus last'
+      entry 'Win+Q' 'Cerrar enfocada' 'killactive'
+      entry 'Win+Shift+Q' 'Cerrar por lista' 'hypr-kill-windows'
+      entry 'Win+F' 'Fullscreen app' 'fullscreen 1'
+      entry 'Win+Shift+F' 'Fullscreen total' 'fullscreen 0'
+      entry 'Win+Shift+Space' 'Floating toggle' 'togglefloating'
+      entry 'Win+T / Win+R' 'Split toggle' 'layoutmsg togglesplit'
+      entry 'Win+C' 'Centrar ventana' 'centerwindow'
+      entry 'Win+←/↓/↑/→' 'Mover foco' 'movefocus'
+      entry 'Win+H/J/K/L' 'Mover foco vim' 'movefocus'
+      entry 'Win+Ctrl+←/↓/↑/→' 'Mover ventana' 'movewindow'
+      entry 'Win+Ctrl+H/J/K/L' 'Mover ventana vim' 'movewindow'
+      entry 'Win+- / Win+=' 'Resize ancho' 'resizeactive'
+      entry 'Win+Shift+- / +=' 'Resize alto' 'resizeactive'
+      ;;
+    workspaces)
+      entry 'Win+1..0' 'Ir workspace' 'workspace 1..10'
+      entry 'Win+Shift+1..0' 'Mover a workspace' 'movetoworkspace 1..10'
+      entry 'Win+Home/End' 'Workspace 1/10' 'workspace 1/10'
+      entry 'Win+Ctrl+Home/End' 'Mover a 1/10' 'movetoworkspace 1/10'
+      entry 'Win+PageUp/PageDown' 'Workspace relativo' 'workspace r+1/r-1'
+      entry 'Win+U/I' 'Workspace relativo' 'workspace r-1/r+1'
+      entry 'Win+Ctrl+PageUp/PageDown' 'Mover relativo' 'movetoworkspace r+1/r-1'
+      entry 'Win+Ctrl+U/I' 'Mover relativo' 'movetoworkspace r-1/r+1'
+      entry 'Win+S' 'Mostrar scratchpad' 'togglespecialworkspace magic'
+      entry 'Win+Shift+S' 'Enviar scratchpad' 'movetoworkspacesilent special:magic'
+      entry 'Win+Ctrl+S' 'Devolver scratchpad' 'movetoworkspace current'
+      ;;
+    media)
+      entry 'Vol+ / Vol-' 'Volumen' 'volume-osd up/down'
+      entry 'Mute' 'Silenciar audio' 'volume-osd mute'
+      entry 'Ctrl+Vol+ / Ctrl+Vol-' 'Micrófono volumen' 'mic-volume-osd up/down'
+      entry 'MicMute' 'Silenciar micrófono' 'mic-volume-osd mute'
+      entry 'Play/Pause' 'Reproducir/Pausar' 'playerctl play-pause'
+      entry 'Stop' 'Parar media' 'playerctl stop'
+      entry 'Prev/Next' 'Media anterior/siguiente' 'playerctl previous/next'
+      entry 'Brightness +/-' 'Brillo' 'brightness-osd up/down'
+      ;;
+    system)
+      entry 'Win+P' 'Pantallas' 'nwg-displays'
+      entry 'Win+Ctrl+,' 'Pantallas' 'nwg-displays'
+      entry 'Win+Alt+E' 'Power menu' 'nwg-bar'
+      entry 'Win+Alt+L' 'Lock' 'hyprlock'
+      entry 'Win+N' 'Notificaciones' 'swaync-client -t -sw'
+      entry 'Win+Ctrl+Shift+M' 'Limpiar notificaciones' 'swaync-client -C'
+      entry 'Win+Shift+W' 'Elegir wallpaper' 'hypr-random-wallpaper next'
+      entry 'Ctrl+Space' 'Cambiar teclado' 'hyprctl switchxkblayout all next'
+      entry 'Win+Shift+E' 'Salir Hyprland' 'exit'
+      entry 'Ctrl+Alt+Delete' 'Salir Hyprland' 'exit'
+      ;;
+  esac
+}
+
+copy_selection() {
+  local selected="$1"
+  local plain key desc command
+  plain="$(printf '%s' "$selected" | sed -E 's/<[^>]+>//g; s/[[:space:]]+/ /g; s/^ //; s/ $//')"
+  key="$(printf '%s' "$plain" | awk '{print $1}')"
+  command="$(printf '%s' "$plain" | awk '{print $NF}')"
+  desc="$plain"
+
+  if command -v wl-copy >/dev/null 2>&1; then
+    printf '%s' "$plain" | wl-copy || true
+    notify-send "Hyprland keybindings" "Copiado: $desc" 2>/dev/null || true
+  else
+    notify-send "Hyprland keybindings" "$desc" 2>/dev/null || true
+  fi
+}
+
+if [ "${1:-}" = "--list-categories" ]; then
+  categories
+  exit 0
+fi
+
+if [ "${1:-}" = "--list" ]; then
+  entries "${2:-all}"
+  exit 0
+fi
+
+hypr_rofi_need
+
+while true; do
+  category_choice="$(categories | pick 'Atajos Hyprland' || true)"
+  [ -n "$category_choice" ] || exit 0
+
+  category="$(category_id "$category_choice")"
+  [ "$category" = quit ] && exit 0
+
+  selected="$(entries "$category" | pick "${category_choice#* }" || true)"
+  [ -n "$selected" ] || continue
+
+  copy_selection "$selected"
+done

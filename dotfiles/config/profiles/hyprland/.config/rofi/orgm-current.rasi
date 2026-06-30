@@ -1,0 +1,10 @@
+/* Default ORGM dark theme. orgm-theme regenerates this in ~/.config/rofi/orgm-current.rasi. */
+* {
+    bg-col: #000000dd;
+    surface-col: #22363a4f;
+    border-col: #8aadf4;
+    selected-col: #33494d64;
+    fg-col: #cad3f5;
+    fg-col2: #8aadf4;
+    prompt-fg: #11111b;
+}

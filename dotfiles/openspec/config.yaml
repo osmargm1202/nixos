@@ -1,0 +1,78 @@
+# OpenSpec / SDD project context for Gentle AI.
+# Created automatically because this repository did not yet have SDD configuration.
+project:
+  name: dotfiles
+  root: /home/osmarg/Hobby/dotfiles
+  repository_type: personal dotfiles and NixOS flake
+  primary_stack:
+    - NixOS flake
+    - Home Manager via NixOS module
+    - Bash dotfile sync helper
+    - Hyprland/Wayland desktop profiles
+  artifact_store: openspec
+
+sdd:
+  strict_tdd: true
+  phase_order:
+    - init
+    - explore
+    - proposal
+    - spec
+    - design
+    - tasks
+    - apply
+    - verify
+    - archive
+  phase_rules:
+    init: establish project context, stack, validation commands, and skill registry availability
+    explore: gather existing behavior and external references without implementation
+    proposal: define change scope, goals, non-goals, and acceptance criteria
+    spec: capture user-visible requirements and compatibility expectations
+    design: document Nix module/profile structure, inputs, host matrix, and migration plan
+    tasks: sequence work in RED/GREEN/TRIANGULATE/REFACTOR order where practical
+    apply: implement only after approved proposal/spec/design/tasks artifacts
+    verify: run declared validation commands and audit preservation of current Hyprland behavior
+    archive: record final decisions and evidence after verification
+
+quality:
+  review_budget_changed_lines: 400
+  require_chained_pr_consideration: true
+  preserve_existing_behavior: true
+
+validation:
+  default_runner: nix flake check
+  test_runner: nix flake check
+  format_command: nix fmt
+  commands:
+    - name: flake evaluation and checks
+      command: nix flake check
+      when: after Nix flake/profile/module changes
+    - name: focused NixOS build for existing Hyprland profile
+      command: nix build .#nixosConfigurations.orgm-hyprland.config.system.build.toplevel --no-link
+      when: when preserving current orgm Hyprland behavior is in scope
+    - name: focused NixOS build for new hyprchy profile
+      command: nix build .#nixosConfigurations.orgm-hyprchy.config.system.build.toplevel --no-link
+      when: after the new profile and host configuration are added
+    - name: dotfile sync diff for orgm
+      command: ./dot.sh diff --host orgm
+      when: after changes to tracked dotfile sources or dotfiles.json
+
+project_conventions:
+  nix_formatter: nixfmt-rfc-style via flake formatter
+  flake_system: x86_64-linux
+  profile_directory: nixos/profiles
+  host_directory: nixos/hosts
+  dotfile_sync:
+    command_style: ./dot.sh <command> --host <host>
+    config_file: config/dotfiles.json
+
+current_change_context:
+  change_name: hyprchy
+  requested_profile: nixos/profiles/hyprchy.nix
+  intent: Omarchy-inspired Hyprland-based NixOS profile using Walker as central launcher
+  known_requirements:
+    - use git/flaked versions of Walker and Elephant
+    - use Walker as the central launcher
+    - support multiple hosts
+    - preserve current Hyprland functionality
+  implementation_status: not_started

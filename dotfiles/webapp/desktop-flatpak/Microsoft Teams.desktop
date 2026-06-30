@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Microsoft Teams
+Comment=Microsoft Teams Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://teams.microsoft.com/" --new-window
+Icon=Microsoft Teams
+Categories=Office;
+NoDisplay=false
+StartupWMClass=chrome-teams.microsoft.com__-Default
+StartupNotify=true
+Terminal=false
+
+

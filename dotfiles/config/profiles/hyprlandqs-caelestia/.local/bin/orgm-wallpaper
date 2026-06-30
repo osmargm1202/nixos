@@ -1,0 +1,62 @@
+#!/bin/sh
+set -eu
+
+STATIC_DIR="${WALLPAPER_STATIC_DIR:-$HOME/Pictures/Wallpapers}"
+VIDEO_DIR="${WALLPAPER_VIDEO_DIR:-$HOME/Videos/wallpapers}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
+PICKER="$HOME/.config/hypr/wallpaper-picker/wallpaper_picker.py"
+
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+  pick)
+    exec python3 "$PICKER" --theme "${HYPR_WALLPAPER_PICKER_THEME:-auto}" "$@"
+    ;;
+  set-static)
+    path="${1:?set-static requires PATH}"
+    # caelestia wallpaper --file applies Material You theming + swww
+    sh -lc 'caelestia wallpaper --file "$1"' -- "$path"
+    ;;
+  set-video)
+    path="${1:?set-video requires PATH}"
+    # Stop any running mpvpaper before starting new one
+    pkill -x mpvpaper 2>/dev/null || true
+    sleep 0.3
+    exec mpvpaper -o "loop no-audio" "*" "$path"
+    ;;
+  random-static)
+    sh -lc 'caelestia wallpaper --random "$1"' -- "$STATIC_DIR"
+    ;;
+  random-video)
+    video="$(find "$VIDEO_DIR" -type f \( -name "*.mp4" -o -name "*.mkv" -o -name "*.webm" -o -name "*.mov" \) 2>/dev/null | shuf -n 1 || true)"
+    if [ -z "$video" ]; then
+      echo "orgm-wallpaper: no videos in $VIDEO_DIR" >&2
+      exit 1
+    fi
+    exec "$0" set-video "$video"
+    ;;
+  status)
+    sh -lc 'caelestia wallpaper'
+    ;;
+  warm-page)
+    # Preload thumbnails: generate .thumb/ next to each file using ffmpegthumbnailer/ffmpeg
+    kind="${1:-static}"
+    page="${2:-0}"
+    page_size="${3:-20}"
+    dir="$([ "$kind" = "video" ] && echo "$VIDEO_DIR" || echo "$STATIC_DIR")"
+    if [ "$kind" = "video" ]; then
+      find "$dir" -maxdepth 1 -type f \( -name "*.mp4" -o -name "*.mkv" -o -name "*.webm" \) | \
+        sort | tail -n +"$((page * page_size + 1))" | head -n "$page_size" | while read -r f; do
+          thumb="$(dirname "$f")/.thumb/$(basename "$f").png"
+          mkdir -p "$(dirname "$thumb")"
+          [ -f "$thumb" ] || ffmpegthumbnailer -i "$f" -o "$thumb" -s 256 2>/dev/null || \
+            ffmpeg -y -i "$f" -ss 0 -vframes 1 -vf scale=256:-1 "$thumb" 2>/dev/null || true
+        done
+    fi
+    ;;
+  *)
+    printf 'Usage: orgm-wallpaper {pick|set-static PATH|set-video PATH|random-static|random-video|status|warm-page [static|video] [page] [size]}\n' >&2
+    exit 1
+    ;;
+esac

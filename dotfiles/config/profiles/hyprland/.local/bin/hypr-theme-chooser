@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+orgm_themes_cmd() {
+  if [ -x "$HOME/go/bin/orgm-themes" ]; then
+    printf '%s\n' "$HOME/go/bin/orgm-themes"
+  elif [ -x "$HOME/.local/bin/orgm-themes" ]; then
+    printf '%s\n' "$HOME/.local/bin/orgm-themes"
+  else
+    command -v orgm-themes
+  fi
+}
+
+theme_cmd="$(orgm_themes_cmd || true)"
+current="$([ -n "$theme_cmd" ] && "$theme_cmd" current 2>/dev/null || echo orgm-dark)"
+choice="$(printf '%s\n' \
+  "󰔎 Toggle ($current)" \
+  '󰖔 orgm-dark' \
+  '󰖨 orgm-light' \
+  '󰒓 Status' \
+  '󰅖 Cancel' \
+  | hypr_rofi_dmenu 'Theme' || true)"
+
+case "$choice" in
+  *Toggle*) [ -n "$theme_cmd" ] && exec "$theme_cmd" toggle ;;
+  *orgm-dark*) [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-dark ;;
+  *orgm-light*) [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-light ;;
+  *Status*) [ -n "$theme_cmd" ] && "$theme_cmd" status | hypr_rofi_dmenu 'Theme status' >/dev/null || true ;;
+  *) exit 0 ;;
+esac

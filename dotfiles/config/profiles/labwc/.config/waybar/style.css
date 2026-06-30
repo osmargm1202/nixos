@@ -1,0 +1,239 @@
+@import "orgm-current.css";
+
+* {
+  border: none;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Symbols Nerd Font Mono", "Noto Color Emoji", sans-serif;
+  font-size: 17px;
+}
+
+window.top_bar#waybar,
+window.bottom_bar#waybar {
+  background: rgba(0, 0, 0, 0.45);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+#workspaces {
+  background: transparent;
+  border-radius: 12px;
+  padding: 0 4px;
+  margin: 4px 0;
+}
+#workspaces button {
+  color: @text;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 12px;
+}
+#workspaces button.empty { color: @overlay0; }
+#workspaces button.active,
+#workspaces button.focused {
+  color: @blue;
+}
+#workspaces button.urgent { color: @red; }
+#mode, #submap, window.top_bar .modules-center, window.top_bar .modules-right,
+window.bottom_bar .modules-left, window.bottom_bar .modules-center, window.bottom_bar .modules-right,
+#group-system, #system {
+  background: transparent;
+  border-radius: 12px;
+  min-height: 32px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+window.top_bar .modules-center {
+  font-weight: bold;
+  color: @blue;
+  padding: 0 8px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+window.top_bar .modules-right { padding-left: 24px; padding-right: 0; }
+window.bottom_bar .modules-left { border-radius: 12px; margin-left: 0; }
+window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
+#custom-day_month, #custom-date {
+  color: @text;
+  padding: 0 12px;
+  margin: 4px 4px;
+}
+#custom-time {
+  background: transparent;
+  border-radius: 12px;
+  color: @text;
+  font-size: 24px;
+  font-weight: 800;
+  padding: 0 10px;
+  margin: 0 4px;
+}
+#custom-menu {
+  background: transparent;
+  box-shadow: none;
+  color: @text;
+  font-size: 29px;
+  padding: 0;
+  min-width: 47px;
+  margin: 4px 0 4px 13px;
+}
+#custom-orgm_logo {
+  background: transparent;
+  background-image: url("orgm.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 28px auto;
+  font-size: 0;
+  min-height: 0;
+  min-width: 34px;
+  padding: 0;
+  margin: 0 2px 0 0;
+}
+#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-memclean, #bluetooth, #network, #privacy, #tray { color: @text; }
+#group-usage, #usage {
+  background: transparent;
+}
+#custom-wallpaper, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
+#cpu, #memory, #temperature, #disk, #custom-swap {
+  background: transparent;
+}
+#group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
+#usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,
+#group-system #backlight, #group-system #pulseaudio, #group-system #pulseaudio-slider, #group-system #battery,
+#system #backlight, #system #pulseaudio, #system #pulseaudio-slider, #system #battery {
+  background: transparent;
+  padding: 0 5px;
+  margin: 0;
+}
+#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
+#network.disconnected, #battery.critical, #temperature.critical { color: @red; }
+#privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
+#custom-logout_menu { color: @red; font-weight: bold; font-size: 23px; }
+#custom-usb_devices { color: @sky; font-size: 20px; }
+#custom-memclean { color: @peach; font-size: 20px; }
+#custom-nixclean { color: @green; font-size: 20px; }
+#custom-user { color: @text; font-weight: bold; }
+#window { color: @text; }
+#idle_inhibitor.activated { color: @blue; }
+#mpris { color: @text; }
+#backlight { color: @text; }
+#pulseaudio { color: @blue; font-size: 20px; }
+#pulseaudio:not(.microphone).muted { color: @red; }
+#pulseaudio.microphone.source-muted { color: @red; }
+#pulseaudio-slider {
+  min-width: 88px;
+  padding: 0 6px;
+}
+#pulseaudio-slider slider {
+  min-height: 0;
+  min-width: 0;
+  opacity: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+#pulseaudio-slider trough {
+  min-height: 8px;
+  min-width: 82px;
+  border-radius: 999px;
+  background: linear-gradient(to right, @surface0 0%, @surface0 65.8%, @panel_border 65.8%, @panel_border 67.5%, @surface0 67.5%, @surface0 100%);
+}
+#pulseaudio-slider highlight {
+  min-height: 8px;
+  border-radius: 999px;
+  background: @blue;
+}
+#pulseaudio-slider.microphone.muted highlight,
+#pulseaudio-slider.microphone.source-muted highlight {
+  background: @red;
+}
+#battery { color: @text; }
+#keyboard-state label.capslock { color: @base; font-weight: bold; }
+#keyboard-state label.capslock.locked { color: @text; }
+#custom-kbd_layout { color: @text; font-weight: bold; }
+#idle_inhibitor, #custom-keybindings_help {
+  background: transparent;
+  border-radius: 12px;
+  min-height: 28px;
+  padding: 0 10px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+#custom-keybindings_help { color: @text; font-weight: bold; }
+#battery.charging { color: @blue; }
+#battery.plugged, #battery.full { color: @text; }
+#battery.warning { color: @text; }
+
+window.dock_bar#waybar {
+  background-color: @panel_bg;
+  border: none;
+  border-radius: 12px;
+}
+#custom-dock_windows,
+#custom-dock_kitty,
+#custom-dock_nautilus,
+#custom-dock_zen,
+#custom-dock_chromium,
+#custom-dock_obsidian,
+#custom-dock_software {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center 4px;
+  background-size: 38px auto;
+  color: transparent;
+  font-size: 1px;
+  font-weight: 900;
+  min-width: 62px;
+  min-height: 50px;
+  padding: 36px 0 0 0;
+  margin: 0;
+}
+#custom-dock_windows.running,
+#custom-dock_kitty.running,
+#custom-dock_nautilus.running,
+#custom-dock_zen.running,
+#custom-dock_chromium.running,
+#custom-dock_obsidian.running,
+#custom-dock_software.running {
+  color: @blue;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+#custom-dock_windows.active,
+#custom-dock_kitty.active,
+#custom-dock_nautilus.active,
+#custom-dock_zen.active,
+#custom-dock_chromium.active,
+#custom-dock_obsidian.active,
+#custom-dock_software.active {
+  color: @text;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+window.top_bar#waybar,
+window.bottom_bar#waybar,
+#workspaces,
+#mode,
+#submap,
+window.top_bar .modules-center,
+window.top_bar .modules-right,
+window.bottom_bar .modules-left,
+window.bottom_bar .modules-center,
+#group-system,
+#system,
+window.dock_bar#waybar {
+  border: none;
+}
+
+#custom-memclean, #custom-hardware_fetch, #custom-conky_toggle { margin-left: 16px; }
+
+#custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
+#custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }
+#custom-dock_nautilus { background-image: url("/home/osmarg/.local/share/icons/nautilus.png"); }
+#custom-dock_zen { background-image: url("/home/osmarg/.local/share/icons/zen-browser.png"); }
+#custom-dock_chromium { background-image: url("/home/osmarg/.local/share/icons/chromium-browser.svg"); }
+#custom-dock_obsidian { background-image: url("/home/osmarg/.local/share/icons/obsidian.png"); }
+#custom-dock_software { background-image: url("/home/osmarg/.local/share/icons/software.png"); }

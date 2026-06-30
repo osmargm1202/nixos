@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=JSignPdf
+Comment=Firmar documentos PDF con JSignPdf en Arch distrobox
+Exec=distrobox-enter arch -- jsignpdf
+Icon=application-pdf
+Terminal=false
+Categories=Office;
+Keywords=pdf;firma;signature;jsignpdf;distrobox;
+StartupNotify=true

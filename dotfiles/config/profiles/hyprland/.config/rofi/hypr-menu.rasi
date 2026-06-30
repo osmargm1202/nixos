@@ -1,0 +1,114 @@
+@import "orgm-current.rasi"
+
+// Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
+
+configuration {
+    font: "JetBrainsMono Nerd Font 12";
+    terminal: "kitty";
+    show-icons: true;
+    icon-theme: "Papirus";
+    drun-display-format: "{icon} {name}";
+}
+
+* {
+    width: 600px;
+}
+
+window {
+    location: center;
+    anchor: center;
+    width: @width;
+    background-color: @bg-col;
+    border: 2px;
+    border-color: @border-col;
+    border-radius: 15px;
+}
+
+mainbox {
+    background-color: transparent;
+}
+
+inputbar {
+    children: [prompt, entry];
+    background-color: transparent;
+    border-radius: 10px;
+    padding: 2px;
+    margin: 0px 5px 0px 0px;
+}
+
+prompt {
+    background-color: @border-col;
+    padding: 10px;
+    text-color: @prompt-fg;
+    border-radius: 10px;
+    margin: 5px 0px 0px 5px;
+}
+
+textbox-prompt-colon {
+    expand: false;
+    str: ":";
+}
+
+entry {
+    padding: 10px;
+    margin: 5px 0px 0px 5px;
+    text-color: @fg-col;
+    background-color: @surface-col;
+    border-radius: 10px;
+}
+
+listview {
+    border: 0px 0px 0px;
+    padding: 6px 0px 0px;
+    margin: 10px 5px 5px 5px;
+    columns: 1;
+    lines: 8;
+    background-color: transparent;
+    scrollbar: false;
+}
+
+element {
+    padding: 8px;
+    background-color: transparent;
+    border-radius: 10px;
+    text-color: @fg-col;
+}
+
+element-icon {
+    size: 32px;
+    padding: 0px 10px 0px 0px;
+    background-color: transparent;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: @fg-col;
+    vertical-align: 0.5;
+}
+
+element selected {
+    background-color: @selected-col;
+    text-color: @fg-col2;
+}
+
+element-text selected {
+    text-color: @fg-col2;
+    background-color: @selected-col;
+}
+
+element-icon selected {
+    background-color: @selected-col;
+}
+
+message {
+    background-color: @surface-col;
+    margin: 2px;
+    padding: 2px;
+    border-radius: 5px;
+}
+
+textbox {
+    padding: 6px;
+    text-color: @fg-col;
+    background-color: @surface-col;
+}

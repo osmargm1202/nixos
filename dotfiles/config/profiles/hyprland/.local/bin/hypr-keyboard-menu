@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' '󰌌 Toggle layout' '󰌌 US' '󰌌 Latam' '󰅖 Cancel' | hypr_rofi_dmenu 'Keyboard' || true)"
+case "$choice" in
+  *'Toggle') exec hyprctl switchxkblayout all next ;;
+  *'US') exec hyprctl switchxkblayout all 0 ;;
+  *'Latam') exec hyprctl switchxkblayout all 1 ;;
+  *) exec hypr-main-menu ;;
+esac

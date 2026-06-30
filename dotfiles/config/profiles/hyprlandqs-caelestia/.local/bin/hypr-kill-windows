@@ -1,0 +1,86 @@
+#!/bin/sh
+set -eu
+
+MIN_RSS_KB="${MIN_RSS_KB:-10240}"
+PROMPT="${PROMPT:-Kill window> }"
+CURRENT_UID="$(id -u)"
+
+notice() {
+  message="$1"
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "Kill windows" "$message" 2>/dev/null || true
+  fi
+  printf '%s\n' "$message" >&2
+}
+
+need() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    notice "Missing command: $1"
+    exit 1
+  fi
+}
+
+rss_kb() {
+  pid="$1"
+  [ -r "/proc/$pid/status" ] || { printf '0\n'; return; }
+  awk -v uid="$CURRENT_UID" '
+    /^Uid:/ { owned = ($2 == uid) }
+    /^VmRSS:/ { rss = $2 }
+    END { if (owned && rss != "") print rss + 0; else print 0 }
+  ' "/proc/$pid/status" 2>/dev/null || printf '0\n'
+}
+
+safe_text() {
+  printf '%s' "$1" | tr '\t\r\n' '   '
+}
+
+need fuzzel
+need hyprctl
+need jq
+
+tmp="$(mktemp)"
+labels="$(mktemp)"
+seen="$(mktemp)"
+trap 'rm -f "$tmp" "$labels" "$seen"' EXIT
+
+hyprctl clients -j 2>/dev/null \
+  | jq -r '.[] | select(.pid? and .pid > 0) | [(.pid | tostring), (.class // .initialClass // "unknown"), (.title // "untitled"), (.workspace.name // "")] | @tsv' \
+  | while IFS='	' read -r pid app title workspace; do
+      case "$pid" in ''|*[!0-9]*) continue ;; esac
+      if grep -qx "$pid" "$seen"; then
+        continue
+      fi
+      printf '%s\n' "$pid" >> "$seen"
+
+      rss="$(rss_kb "$pid")"
+      [ "$rss" -gt "$MIN_RSS_KB" ] || continue
+
+      app="$(safe_text "${app:-unknown}")"
+      title="$(safe_text "${title:-untitled}")"
+      workspace="$(safe_text "${workspace:-}")"
+      if [ -n "$workspace" ]; then
+        context="[$workspace] "
+      else
+        context=""
+      fi
+      mb="$(awk -v rss="$rss" 'BEGIN { printf "%.1f", rss / 1024 }')"
+      label="$(printf '%7s MB  PID %-7s  %s%s — %s' "$mb" "$pid" "$context" "$app" "$title")"
+      printf '%010d\t%s\t%s\n' "$rss" "$pid" "$label" >> "$tmp"
+    done
+
+if [ ! -s "$tmp" ]; then
+  notice "No Hyprland window process over 10 MB."
+  exit 0
+fi
+
+sort -rn -k1,1 "$tmp" | cut -f3- > "$labels"
+selection="$(fuzzel --dmenu --prompt "$PROMPT" --width 96 --lines 14 < "$labels" || true)"
+[ -n "$selection" ] || exit 0
+
+pid="$(awk -F '\t' -v label="$selection" '$3 == label { print $2; exit }' "$tmp")"
+case "$pid" in ''|*[!0-9]*) exit 1 ;; esac
+
+rss="$(rss_kb "$pid")"
+[ "$rss" -gt "$MIN_RSS_KB" ] || { notice "Process $pid is no longer an eligible user window."; exit 0; }
+
+kill -TERM -- "$pid" 2>/dev/null || notice "Could not terminate PID $pid."

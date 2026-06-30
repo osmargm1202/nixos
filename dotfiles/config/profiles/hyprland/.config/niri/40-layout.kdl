@@ -1,0 +1,53 @@
+layout {
+    gaps 15
+    center-focused-column "never"
+    background-color "transparent"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        off
+        width 1
+        active-color "#7fc8ff"
+    }
+
+    tab-indicator {
+        hide-when-single-tab
+        place-within-column
+        gap 5
+        width 8
+        length total-proportion=0.7
+        position "left"
+        gaps-between-tabs 2
+        corner-radius 8
+        active-gradient from="#80c8ff" to="#bbddff" angle=45
+        inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+        urgent-gradient from="#800" to="#a33" angle=45
+    }
+
+    border {
+        width 2
+        active-color "#2694cc"
+        //inactive-color "#6c7086"
+    }
+
+    shadow {
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#0007"
+    }
+
+    insert-hint {
+        color "#ffc87f80"
+    }
+
+    struts {
+    }
+}

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Kitty
+GenericName=Terminal entering kitty
+Comment=Terminal entering kitty
+Categories=Distrobox;System;Utility
+Exec=distrobox-enter  arch -- kitty
+Icon=kitty.svg
+Keywords=distrobox;
+NoDisplay=false
+Terminal=false
+TryExec=distrobox
+StartupWMClass=kitty
+Type=Application

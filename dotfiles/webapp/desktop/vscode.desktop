@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=VSCode
+Comment=Visual Studio Code Editor from Distrobox
+Exec=distrobox-enter arch -- code
+Icon=vscode
+Categories=Development;
+NoDisplay=false
+StartupWMClass=code
+StartupNotify=true
+Terminal=false

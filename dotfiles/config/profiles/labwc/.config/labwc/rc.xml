@@ -1,0 +1,566 @@
+<?xml version="1.0"?>
+<labwc_config>
+  <core>
+    <decoration>server</decoration>
+    <gap>0</gap>
+    <adaptiveSync>fullscreen</adaptiveSync>
+    <xwaylandPersistence>yes</xwaylandPersistence>
+    <primarySelection>yes</primarySelection>
+  </core>
+  <placement>
+    <policy>center</policy>
+    <cascadeOffset x="40" y="30"/>
+  </placement>
+  <focus>
+    <followMouse>no</followMouse>
+    <followMouseRequiresMovement>no</followMouseRequiresMovement>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+  <snapping>
+    <range>10</range>
+    <cornerRange>50</cornerRange>
+    <overlay>
+      <enabled>yes</enabled>
+      <delay>
+        <inner>500</inner>
+        <outer>500</outer>
+      </delay>
+    </overlay>
+    <topMaximize>yes</topMaximize>
+    <notifyClient>always</notifyClient>
+  </snapping>
+  <margin top="12" bottom="12" left="12" right="12"/>
+  <desktops number="10">
+    <popupTime>0</popupTime>
+    <prefix>Workspace</prefix>
+    <names>
+      <name>1</name>
+      <name>2</name>
+      <name>3</name>
+      <name>4</name>
+      <name>5</name>
+      <name>6</name>
+      <name>7</name>
+      <name>8</name>
+      <name>9</name>
+      <name>10</name>
+    </names>
+  </desktops>
+  <theme>
+    <name>OrgmMinimalDark</name>
+    <icon>Adwaita</icon>
+    <fallbackAppIcon>labwc</fallbackAppIcon>
+    <cornerRadius>12</cornerRadius>
+    <keepBorder>no</keepBorder>
+    <maximizedDecoration>titlebar</maximizedDecoration>
+    <dropShadows>yes</dropShadows>
+    <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="11" weight="medium"/>
+    <font place="InactiveWindow" name="JetBrainsMono Nerd Font" size="11"/>
+    <font place="MenuItem" name="JetBrainsMono Nerd Font" size="11"/>
+    <font place="OnScreenDisplay" name="JetBrainsMono Nerd Font" size="12" weight="medium"/>
+  </theme>
+  <windowSwitcher preview="yes" outlines="yes" order="focus">
+    <osd show="yes" style="thumbnail" output="focused" thumbnailLabelFormat="%n - %T"/>
+  </windowSwitcher>
+  <keyboard layoutScope="global">
+    <numlock>on</numlock>
+    <repeatDelay>350</repeatDelay>
+    <repeatRate>30</repeatRate>
+    <!-- Applications: mirrors niri 80-binds.kdl -->
+    <keybind key="W-slash">
+      <action name="Execute">
+        <command>kitty --hold -e distrobox-enter arch -- tmuxls</command>
+      </action>
+    </keybind>
+    <keybind key="W-Return">
+      <action name="Execute">
+        <command>kitty</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-Return">
+      <action name="Execute">
+        <command>kitty -e distrobox-enter arch</command>
+      </action>
+    </keybind>
+    <keybind key="W-e">
+      <action name="Execute">
+        <command>sh -lc 'if command -v nautilus &gt;/dev/null 2&gt;&amp;1; then nautilus; elif command -v flatpak &gt;/dev/null 2&gt;&amp;1 &amp;&amp; flatpak info org.gnome.Nautilus &gt;/dev/null 2&gt;&amp;1; then flatpak run org.gnome.Nautilus; elif command -v xdg-open &gt;/dev/null 2&gt;&amp;1; then xdg-open .; else echo "explorador no disponible"; fi'</command>
+      </action>
+    </keybind>
+    <keybind key="W-w">
+      <action name="Execute">
+        <command>flatpak run app.zen_browser.zen</command>
+      </action>
+    </keybind>
+    <keybind key="W-a">
+      <action name="Execute">
+        <command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-a">
+      <action name="Execute">
+        <command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai prev</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-r">
+      <action name="Execute">
+        <command>kitty -e distrobox-enter arch -- orgmrnc find</command>
+      </action>
+    </keybind>
+    <!-- Standalone stack: fuzzel, cliphist, swaync, DMS lock, playerctl, pamixer, brightnessctl. -->
+    <keybind key="W-v">
+      <action name="Execute">
+        <command>sh -lc 'cliphist list | fuzzel --dmenu --prompt "Clipboard&gt; " | cliphist decode | wl-copy'</command>
+      </action>
+    </keybind>
+    <keybind key="W-A-e">
+      <action name="Execute">
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) dms ipc call lock lock ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
+      </action>
+    </keybind>
+    <keybind key="W-m">
+      <action name="Execute">
+        <command>fuzzel</command>
+      </action>
+    </keybind>
+    <keybind key="W-space">
+      <action name="Execute">
+        <command>fuzzel</command>
+      </action>
+    </keybind>
+    <keybind key="W-d">
+      <action name="Execute">
+        <command>fuzzel</command>
+      </action>
+    </keybind>
+    <keybind key="W-C-comma">
+      <action name="Execute">
+        <command>wdisplays</command>
+      </action>
+    </keybind>
+    <keybind key="W-p">
+      <action name="Execute">
+        <command>wdisplays</command>
+      </action>
+    </keybind>
+    <keybind key="W-F10">
+      <action name="Execute">
+        <command>pavucontrol</command>
+      </action>
+    </keybind>
+    <keybind key="W-A-l">
+      <action name="Execute">
+        <command>dms ipc call lock lock</command>
+      </action>
+    </keybind>
+    <keybind key="W-n">
+      <action name="Execute">
+        <command>swaync-client -t -sw</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-n">
+      <action name="Execute">
+        <command>apostrophe</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-Escape">
+      <action name="Execute">
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) dms ipc call lock lock ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-m">
+      <action name="Execute">
+        <command>swaync-client -C</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-slash">
+      <action name="Execute">
+        <command>kitty --hold -e distrobox-enter arch -- tmuxnewz</command>
+      </action>
+    </keybind>
+    <keybind key="W-A-backslash">
+      <action name="Execute">
+        <command>kitty --hold -e distrobox-enter arch -- tmuxdel</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioRaiseVolume" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>pamixer -i 3</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioLowerVolume" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>pamixer -d 3</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioMute" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>pamixer -t</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioMicMute" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>pamixer --default-source -t</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioPlay" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>playerctl play-pause</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioStop" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>playerctl stop</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioPrev" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>playerctl previous</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioNext" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>playerctl next</command>
+      </action>
+    </keybind>
+    <keybind key="XF86MonBrightnessUp" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>brightnessctl set 5%+</command>
+      </action>
+    </keybind>
+    <keybind key="XF86MonBrightnessDown" allowWhenLocked="yes">
+      <action name="Execute">
+        <command>brightnessctl set 5%-</command>
+      </action>
+    </keybind>
+    <!-- Window/session controls. Labwc is stacking, so tiling-only niri actions map to closest labwc action. -->
+    <keybind key="W-Tab">
+      <action name="NextWindow"/>
+    </keybind>
+    <keybind key="W-q">
+      <action name="Close"/>
+    </keybind>
+    <keybind key="W-S-q">
+      <action name="Execute">
+        <command>sh -lc 'exec "$HOME/.local/bin/labwc-kill-windows"'</command>
+      </action>
+    </keybind>
+    <keybind key="W-Left">
+      <action name="SnapToEdge" direction="left"/>
+    </keybind>
+    <keybind key="W-Down">
+      <action name="SnapToEdge" direction="down"/>
+    </keybind>
+    <keybind key="W-Up">
+      <action name="SnapToEdge" direction="up"/>
+    </keybind>
+    <keybind key="W-Right">
+      <action name="SnapToEdge" direction="right"/>
+    </keybind>
+    <keybind key="W-h">
+      <action name="SnapToEdge" direction="left"/>
+    </keybind>
+    <keybind key="W-j">
+      <action name="SnapToEdge" direction="down"/>
+    </keybind>
+    <keybind key="W-k">
+      <action name="SnapToEdge" direction="up"/>
+    </keybind>
+    <keybind key="W-l">
+      <action name="SnapToEdge" direction="right"/>
+    </keybind>
+    <keybind key="W-C-Left">
+      <action name="MoveToEdge" direction="left"/>
+    </keybind>
+    <keybind key="W-C-Down">
+      <action name="MoveToEdge" direction="down"/>
+    </keybind>
+    <keybind key="W-C-Up">
+      <action name="MoveToEdge" direction="up"/>
+    </keybind>
+    <keybind key="W-C-Right">
+      <action name="MoveToEdge" direction="right"/>
+    </keybind>
+    <keybind key="W-C-h">
+      <action name="MoveToEdge" direction="left"/>
+    </keybind>
+    <keybind key="W-C-j">
+      <action name="MoveToEdge" direction="down"/>
+    </keybind>
+    <keybind key="W-C-k">
+      <action name="MoveToEdge" direction="up"/>
+    </keybind>
+    <keybind key="W-C-l">
+      <action name="MoveToEdge" direction="right"/>
+    </keybind>
+    <keybind key="W-Home">
+      <action name="GoToDesktop" to="1"/>
+    </keybind>
+    <keybind key="W-End">
+      <action name="GoToDesktop" to="10"/>
+    </keybind>
+    <keybind key="W-C-Home">
+      <action name="SendToDesktop" to="1" follow="no"/>
+    </keybind>
+    <keybind key="W-C-End">
+      <action name="SendToDesktop" to="10" follow="no"/>
+    </keybind>
+    <keybind key="W-S-Left">
+      <action name="GoToOutput" direction="left"/>
+    </keybind>
+    <keybind key="W-S-Down">
+      <action name="GoToOutput" direction="down"/>
+    </keybind>
+    <keybind key="W-S-Up">
+      <action name="GoToOutput" direction="up"/>
+    </keybind>
+    <keybind key="W-S-Right">
+      <action name="GoToOutput" direction="right"/>
+    </keybind>
+    <keybind key="W-S-h">
+      <action name="GoToOutput" direction="left"/>
+    </keybind>
+    <keybind key="W-S-j">
+      <action name="GoToOutput" direction="down"/>
+    </keybind>
+    <keybind key="W-S-k">
+      <action name="GoToOutput" direction="up"/>
+    </keybind>
+    <keybind key="W-S-l">
+      <action name="GoToOutput" direction="right"/>
+    </keybind>
+    <keybind key="W-C-S-Left">
+      <action name="SendToOutput" direction="left"/>
+    </keybind>
+    <keybind key="W-C-S-Down">
+      <action name="SendToOutput" direction="down"/>
+    </keybind>
+    <keybind key="W-C-S-Up">
+      <action name="SendToOutput" direction="up"/>
+    </keybind>
+    <keybind key="W-C-S-Right">
+      <action name="SendToOutput" direction="right"/>
+    </keybind>
+    <keybind key="W-C-S-h">
+      <action name="SendToOutput" direction="left"/>
+    </keybind>
+    <keybind key="W-C-S-j">
+      <action name="SendToOutput" direction="down"/>
+    </keybind>
+    <keybind key="W-C-S-k">
+      <action name="SendToOutput" direction="up"/>
+    </keybind>
+    <keybind key="W-C-S-l">
+      <action name="SendToOutput" direction="right"/>
+    </keybind>
+    <keybind key="W-Page_Down">
+      <action name="GoToDesktop" to="left"/>
+    </keybind>
+    <keybind key="W-Page_Up">
+      <action name="GoToDesktop" to="right"/>
+    </keybind>
+    <keybind key="W-u">
+      <action name="GoToDesktop" to="left"/>
+    </keybind>
+    <keybind key="W-i">
+      <action name="GoToDesktop" to="right"/>
+    </keybind>
+    <keybind key="W-C-Page_Down">
+      <action name="SendToDesktop" to="left" follow="yes"/>
+    </keybind>
+    <keybind key="W-C-Page_Up">
+      <action name="SendToDesktop" to="right" follow="yes"/>
+    </keybind>
+    <keybind key="W-C-u">
+      <action name="SendToDesktop" to="left" follow="yes"/>
+    </keybind>
+    <keybind key="W-C-i">
+      <action name="SendToDesktop" to="right" follow="yes"/>
+    </keybind>
+    <keybind key="W-S-Page_Down">
+      <action name="SendToDesktop" to="left" follow="no"/>
+    </keybind>
+    <keybind key="W-S-Page_Up">
+      <action name="SendToDesktop" to="right" follow="no"/>
+    </keybind>
+    <keybind key="W-S-u">
+      <action name="SendToDesktop" to="left" follow="no"/>
+    </keybind>
+    <keybind key="W-S-i">
+      <action name="SendToDesktop" to="right" follow="no"/>
+    </keybind>
+    <keybind key="W-1">
+      <action name="GoToDesktop" to="1"/>
+    </keybind>
+    <keybind key="W-2">
+      <action name="GoToDesktop" to="2"/>
+    </keybind>
+    <keybind key="W-3">
+      <action name="GoToDesktop" to="3"/>
+    </keybind>
+    <keybind key="W-4">
+      <action name="GoToDesktop" to="4"/>
+    </keybind>
+    <keybind key="W-5">
+      <action name="GoToDesktop" to="5"/>
+    </keybind>
+    <keybind key="W-6">
+      <action name="GoToDesktop" to="6"/>
+    </keybind>
+    <keybind key="W-7">
+      <action name="GoToDesktop" to="7"/>
+    </keybind>
+    <keybind key="W-8">
+      <action name="GoToDesktop" to="8"/>
+    </keybind>
+    <keybind key="W-9">
+      <action name="GoToDesktop" to="9"/>
+    </keybind>
+    <keybind key="W-0">
+      <action name="GoToDesktop" to="10"/>
+    </keybind>
+    <keybind key="W-S-1">
+      <action name="SendToDesktop" to="1" follow="no"/>
+    </keybind>
+    <keybind key="W-S-2">
+      <action name="SendToDesktop" to="2" follow="no"/>
+    </keybind>
+    <keybind key="W-S-3">
+      <action name="SendToDesktop" to="3" follow="no"/>
+    </keybind>
+    <keybind key="W-S-4">
+      <action name="SendToDesktop" to="4" follow="no"/>
+    </keybind>
+    <keybind key="W-S-5">
+      <action name="SendToDesktop" to="5" follow="no"/>
+    </keybind>
+    <keybind key="W-S-6">
+      <action name="SendToDesktop" to="6" follow="no"/>
+    </keybind>
+    <keybind key="W-S-7">
+      <action name="SendToDesktop" to="7" follow="no"/>
+    </keybind>
+    <keybind key="W-S-8">
+      <action name="SendToDesktop" to="8" follow="no"/>
+    </keybind>
+    <keybind key="W-S-9">
+      <action name="SendToDesktop" to="9" follow="no"/>
+    </keybind>
+    <keybind key="W-S-0">
+      <action name="SendToDesktop" to="10" follow="no"/>
+    </keybind>
+    <keybind key="W-r">
+      <action name="ToggleMaximize" direction="horizontal"/>
+    </keybind>
+    <keybind key="W-C-S-r">
+      <action name="ToggleMaximize" direction="vertical"/>
+    </keybind>
+    <keybind key="W-C-r">
+      <action name="UnMaximize"/>
+    </keybind>
+    <keybind key="W-f">
+      <action name="ToggleMaximize"/>
+    </keybind>
+    <keybind key="W-S-f">
+      <action name="ToggleFullscreen"/>
+    </keybind>
+    <keybind key="W-C-f">
+      <action name="Maximize" direction="horizontal"/>
+    </keybind>
+    <keybind key="W-c">
+      <action name="Reposition" policy="center"/>
+    </keybind>
+    <keybind key="W-C-c">
+      <action name="ShowDesktop"/>
+    </keybind>
+    <keybind key="W-minus">
+      <action name="ResizeRelative" left="-5%" right="-5%"/>
+    </keybind>
+    <keybind key="W-equal">
+      <action name="ResizeRelative" left="5%" right="5%"/>
+    </keybind>
+    <keybind key="W-S-minus">
+      <action name="ResizeRelative" top="-5%" bottom="-5%"/>
+    </keybind>
+    <keybind key="W-S-equal">
+      <action name="ResizeRelative" top="5%" bottom="5%"/>
+    </keybind>
+    <keybind key="W-S-space">
+      <action name="ToggleAlwaysOnTop"/>
+    </keybind>
+    <keybind key="W-C-S-space">
+      <action name="ToggleDecorations"/>
+    </keybind>
+    <keybind key="W-t">
+      <action name="ToggleDecorations"/>
+    </keybind>
+    <keybind key="Print">
+      <action name="Execute">
+        <command>sh -lc 'grim -g "$(slurp)" - | swappy -f -'</command>
+      </action>
+    </keybind>
+    <keybind key="C-Print">
+      <action name="Execute">
+        <command>sh -lc 'grim - | swappy -f -'</command>
+      </action>
+    </keybind>
+    <keybind key="A-Print">
+      <action name="Execute">
+        <command>sh -lc 'grim -g "$(slurp)" - | swappy -f -'</command>
+      </action>
+    </keybind>
+    <keybind key="W-S-e">
+      <action name="Exit"/>
+    </keybind>
+    <keybind key="C-A-Delete">
+      <action name="Exit"/>
+    </keybind>
+    <keybind key="W-S-p">
+      <action name="Execute">
+        <command>sh -lc 'wlopm --off "*"'</command>
+      </action>
+    </keybind>
+    <keybind key="W-C-S-p">
+      <action name="Execute">
+        <command>sh -lc 'wlopm --on "*"'</command>
+      </action>
+    </keybind>
+  </keyboard>
+  <mouse>
+    <default/>
+    <context name="Frame">
+      <mousebind button="W-Left" action="Drag">
+        <action name="Move"/>
+      </mousebind>
+      <mousebind button="W-Right" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+      <mousebind button="W-Middle" action="Click">
+        <action name="ToggleMaximize"/>
+      </mousebind>
+    </context>
+    <context name="Desktop">
+      <mousebind button="Right" action="Click">
+        <action name="ShowMenu" menu="root-menu"/>
+      </mousebind>
+      <mousebind direction="W-Up" action="Scroll">
+        <action name="GoToDesktop" to="right"/>
+      </mousebind>
+      <mousebind direction="W-Down" action="Scroll">
+        <action name="GoToDesktop" to="left"/>
+      </mousebind>
+    </context>
+  </mouse>
+  <windowRules>
+    <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes"/>
+    <windowRule identifier="*" serverDecoration="no"/>
+  </windowRules>
+  <menu>
+    <showIcons>yes</showIcons>
+  </menu>
+  <libinput>
+    <device>
+      <naturalScroll>no</naturalScroll>
+    </device>
+  </libinput>
+</labwc_config>

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' \
+  '󰀻 App launcher' \
+  '󰣆 Web App Maker' \
+  '󰖟 Zen new window' \
+  '󰠮 Obsidian' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'Apps' || true)"
+
+case "$choice" in
+  *'App launcher') hypr_rofi_drun ;;
+  *'Web App Maker') exec hypr-webapp-maker ;;
+  *'Zen new window') exec hypr-zen-new-window ;;
+  *'Obsidian') exec hypr-obsidian-open-or-focus ;;
+  *) exec hypr-main-menu ;;
+esac

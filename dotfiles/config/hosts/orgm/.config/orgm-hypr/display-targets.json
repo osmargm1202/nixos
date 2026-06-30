@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "waybar": {
+    "mode": "primary",
+    "selected": []
+  },
+  "dock": {
+    "monitor": "primary"
+  },
+  "monitors": {
+    "LG Electronics LG ULTRAGEAR 109MXYG4W010": {
+      "label": "LG Electronics LG ULTRAGEAR 109MXYG4W010",
+      "primary": true
+    }
+  }
+}

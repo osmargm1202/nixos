@@ -1,0 +1,8 @@
+prefer-no-csd
+
+cursor {
+    xcursor-theme "Bibata-Modern-Ice"
+    xcursor-size 20
+    hide-when-typing
+    hide-after-inactive-ms 5000
+}

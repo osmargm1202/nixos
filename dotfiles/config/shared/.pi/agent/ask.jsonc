@@ -1,0 +1,22 @@
+{
+  // YOLO by default: commands not matched here run without asking.
+  "bash": {
+    "confirm": [
+      {
+        "name": "dangerous delete",
+        "match": "\\brm\\s+(-rf?|--recursive)\\b",
+        "message": "Este comando puede borrar archivos. ¿Permitir?"
+      },
+      {
+        "name": "sudo",
+        "match": "\\bsudo\\b",
+        "message": "Este comando usa sudo. ¿Permitir?"
+      },
+      {
+        "name": "permission changes",
+        "match": "\\b(chmod|chown)\\b",
+        "message": "Este comando cambia permisos o propietarios. ¿Permitir?"
+      }
+    ]
+  }
+}

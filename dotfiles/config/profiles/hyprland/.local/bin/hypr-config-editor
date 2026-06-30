@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+repo="${HYPR_CONFIG_EDITOR_REPO:-$HOME/Hobby/dotfiles}"
+hypr_root="${HYPR_CONFIG_EDITOR_ROOT:-$repo/config/shared/.config/hypr}"
+sync_prefix="${HYPR_CONFIG_EDITOR_SYNC_PREFIX:-.config/hypr}"
+
+notify() {
+  notify-send "Hypr config" "$1" 2>/dev/null || true
+}
+
+sync_file() {
+  local rel="$1"
+  local sync_path="$sync_prefix/$rel"
+
+  if command -v hypr-orgm-dot >/dev/null 2>&1; then
+    hypr-orgm-dot sync "$sync_path"
+  elif command -v orgm-dot >/dev/null 2>&1; then
+    orgm-dot sync "$sync_path"
+  else
+    notify "No encontré orgm-dot para sincronizar $sync_path"
+    return 1
+  fi
+
+  notify "Sincronizado: $sync_path"
+}
+
+if [ ! -d "$hypr_root" ]; then
+  notify "No existe $hypr_root"
+  exit 1
+fi
+
+selected="$(
+  cd "$hypr_root"
+  find . -type f -name '*.lua' \
+    -printf '%P\n' | sort | hypr_rofi_dmenu 'Hypr Lua config' 18 760px
+)" || exit 0
+
+[ -n "$selected" ] || exit 0
+
+case "$selected" in
+  /*|*'..'*|'')
+    notify "Selección inválida: $selected"
+    exit 1
+    ;;
+esac
+
+file="$hypr_root/$selected"
+if [ ! -f "$file" ]; then
+  notify "No existe $file"
+  exit 1
+fi
+
+action="$(printf '%s\n' 'Editar con nvim' 'Abrir con app por defecto' 'Cancelar' | hypr_rofi_dmenu 'Abrir archivo' 3 520px)" || exit 0
+
+case "$action" in
+  *'nvim')
+    kitty --class hypr-config-editor -e fish -lc 'nvim "$argv[1]"' -- "$file"
+    sync_file "$selected"
+    ;;
+  *'defecto')
+    xdg-open "$file"
+    sync_file "$selected"
+    ;;
+  *)
+    exit 0
+    ;;
+esac

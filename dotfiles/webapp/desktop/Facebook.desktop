@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Facebook
+Comment=Facebook Web Application
+Exec=chromium --app="https://Facebook.com" --new-window
+Icon=Facebook
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=chrome-facebook.com__-Default
+StartupNotify=true
+Terminal=false

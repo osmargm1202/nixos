@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+  <menu id="root-menu" label="Orgm labwc">
+    <separator label="Apps" />
+    <item label="Terminal · kitty" icon="utilities-terminal">
+      <action name="Execute"><command>kitty</command></action>
+    </item>
+    <item label="Arch terminal · distrobox" icon="utilities-terminal">
+      <action name="Execute"><command>kitty -e distrobox-enter arch</command></action>
+    </item>
+    <item label="Chat · orgmai" icon="utilities-terminal">
+      <action name="Execute"><command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command></action>
+    </item>
+    <item label="Files · Nautilus" icon="org.gnome.Nautilus">
+      <action name="Execute"><command>nautilus</command></action>
+    </item>
+    <item label="Browser · Zen" icon="web-browser">
+      <action name="Execute"><command>flatpak run app.zen_browser.zen</command></action>
+    </item>
+    <item label="Text Editor" icon="org.gnome.TextEditor">
+      <action name="Execute"><command>gnome-text-editor</command></action>
+    </item>
+    <item label="Calculator" icon="org.gnome.Calculator">
+      <action name="Execute"><command>gnome-calculator</command></action>
+    </item>
+    <item label="PDF · Evince" icon="org.gnome.Evince">
+      <action name="Execute"><command>evince</command></action>
+    </item>
+
+    <separator label="Desktop" />
+    <item label="Launcher · fuzzel" icon="system-search">
+      <action name="Execute"><command>fuzzel</command></action>
+    </item>
+    <item label="Clipboard · cliphist" icon="edit-paste">
+      <action name="Execute"><command>sh -lc 'cliphist list | fuzzel --dmenu --prompt "Clipboard&gt; " | cliphist decode | wl-copy'</command></action>
+    </item>
+    <item label="Notifications · swaync" icon="preferences-system-notifications">
+      <action name="Execute"><command>swaync-client -t -sw</command></action>
+    </item>
+    <item label="Displays · wdisplays" icon="video-display">
+      <action name="Execute"><command>wdisplays</command></action>
+    </item>
+    <item label="Audio · pavucontrol" icon="multimedia-volume-control">
+      <action name="Execute"><command>pavucontrol</command></action>
+    </item>
+    <item label="Bluetooth" icon="bluetooth">
+      <action name="Execute"><command>blueman-manager</command></action>
+    </item>
+    <item label="Network" icon="network-workgroup">
+      <action name="Execute"><command>nm-connection-editor</command></action>
+    </item>
+
+    <separator label="Labwc" />
+    <item label="Reconfigure" icon="view-refresh">
+      <action name="Reconfigure" />
+    </item>
+    <item label="Lock" icon="system-lock-screen">
+      <action name="Execute"><command>dms ipc call lock lock</command></action>
+    </item>
+    <item label="Exit session" icon="system-log-out">
+      <action name="Exit" />
+    </item>
+  </menu>
+</openbox_menu>

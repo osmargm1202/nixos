@@ -1,0 +1,300 @@
+[
+  {
+    "name": "top_bar",
+    "layer": "top",
+    "position": "top",
+    "height": 33,
+    "spacing": 5,
+    "margin-top": 0,
+    "margin-left": 0,
+    "margin-right": 0,
+    "modules-left": ["custom/menu", "sway/workspaces", "group/system", "sway/mode"],
+    "modules-center": ["custom/day_month", "custom/time", "custom/date"],
+    "modules-right": ["bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+
+    "custom/menu": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Abrir menú",
+      "on-click": "fuzzel"
+    },
+
+    "sway/workspaces": {
+      "disable-scroll": false,
+      "all-outputs": true,
+      "format": "{name}",
+      "format-icons": {
+        "1": "󰲠", "2": "󰲢", "3": "󰲤", "4": "󰲦", "5": "󰲨",
+        "6": "󰲪", "7": "󰲬", "8": "󰲮", "9": "󰲰", "10": "󰿬",
+        "default": ""
+      },
+      "persistent-workspaces": {
+        "1": [], "2": [], "3": [], "4": [], "5": [],
+        "6": [], "7": [], "8": [], "9": [], "10": []
+      }
+    },
+
+    "sway/mode": { "format": "<span color='#a6da95'>Mode:</span> {}", "tooltip": false },
+    "custom/day_month": { "exec": "waybar-day-month-es", "interval": 60, "tooltip": false },
+    "custom/time": { "exec": "waybar-time-ampm", "interval": 1, "tooltip": false },
+    "custom/date": { "exec": "waybar-date-es", "interval": 60, "tooltip": false },
+
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/sway-random-wallpaper next"
+    },
+
+    "custom/usb_devices": {
+      "exec": "hypr-usb-menu status",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "hypr-usb-menu open",
+      "on-click-right": "hypr-usb-menu nickname"
+    },
+
+    "custom/memclean": {
+      "exec": "memclean-dev status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "memclean-dev clean",
+      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
+      "on-click-middle": "kitty -e btop"
+    },
+
+    "custom/nixclean": {
+      "format": "󰃢",
+      "tooltip": true,
+      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
+      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
+    },
+
+    "bluetooth": {
+      "format": "󰂯", "format-disabled": "󰂲", "format-connected": "󰂱 {device_alias}",
+      "format-connected-battery": "󰂱 {device_alias} (󰥉 {device_battery_percentage}%)",
+      "tooltip-format": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected",
+      "tooltip-format-disabled": "bluetooth off",
+      "tooltip-format-connected": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected\n\n{device_enumerate}",
+      "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+      "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t({device_battery_percentage}%)",
+      "max-length": 35,
+      "on-click": "blueman-manager"
+    },
+
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e btop" },
+    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+
+    "group/system": {
+      "orientation": "horizontal",
+      "modules": ["backlight", "battery", "pulseaudio", "pulseaudio/slider", "pulseaudio#microphone", "pulseaudio/slider#microphone"]
+    },
+    "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
+    "pulseaudio": { "format": "{icon}", "format-muted": "󰝟", "format-icons": { "default": ["", "", ""] }, "on-click": "pamixer -t", "on-click-right": "pavucontrol", "max-volume": 150 },
+    "pulseaudio/slider": { "min": 0, "max": 150, "orientation": "horizontal" },
+    "pulseaudio#microphone": { "target": "source", "format": "{format_source}", "format-source": "󰍬", "format-source-muted": "󰍭", "on-click": "pamixer --default-source -t", "on-click-right": "pavucontrol", "max-volume": 150 },
+    "pulseaudio/slider#microphone": { "target": "source", "min": 0, "max": 150, "orientation": "horizontal" },
+    "battery": {
+      "states": { "warning": 30, "critical": 15 },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    },
+
+    "network": {
+      "format": "󰤭",
+      "format-wifi": "{icon} ({signalStrength}%) {essid}",
+      "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+      "format-ethernet": "󰈀 {ipaddr}/{cidr}",
+      "format-disconnected": "󰤫 Disconnected",
+      "tooltip-format-wifi": "SSID: {essid} ({signalStrength}%)\nInterface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-ethernet": "Interface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-disconnected": "<span color='#ed8796'>disconnected</span>",
+      "max-length": 35,
+      "on-click": "nm-connection-editor"
+    },
+
+    "privacy": {
+      "icon-spacing": 5, "icon-size": 16, "transition-duration": 250,
+      "modules": [{ "type": "audio-in" }, { "type": "screenshare" }]
+    },
+    "tray": { "icon-size": 21, "spacing": 10 },
+    "custom/logout_menu": { "format": "⏻", "tooltip": false, "on-click": "fish -c wlogout_uniqe" }
+  },
+  {
+    "name": "bottom_bar",
+    "layer": "top",
+    "position": "bottom",
+    "height": 36,
+    "spacing": 5,
+    "margin-bottom": 0,
+    "margin-left": 0,
+    "margin-right": 0,
+    "modules-left": ["custom/orgm_logo", "custom/user", "sway/window"],
+    "modules-center": ["idle_inhibitor", "mpris"],
+    "modules-right": ["group/usage", "custom/wallpaper", "custom/usb_devices", "custom/memclean", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
+
+    "custom/orgm_logo": { "format": " ", "tooltip": true, "tooltip-format": "Abrir fuzzel", "on-click": "fuzzel" },
+    "custom/user": { "format": "  osmarg", "tooltip": false },
+    "sway/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
+    "idle_inhibitor": { "format": "{icon}", "format-icons": { "activated": "󰅶", "deactivated": "󰾪" } },
+    "mpris": {
+      "format": "{player_icon} {dynamic}", "format-paused": "{status_icon} {dynamic}",
+      "player-icons": { "default": "󰎈" }, "status-icons": { "paused": "󰏤" },
+      "max-length": 45, "on-click": "playerctl play-pause", "on-click-right": "playerctl next", "on-click-middle": "playerctl previous"
+    },
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e btop" },
+    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+    "group/usage": {
+      "orientation": "horizontal",
+      "modules": ["cpu", "memory", "temperature", "disk#ssd", "custom/swap"]
+    },
+    "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
+    "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/sway-random-wallpaper next"
+    },
+
+    "custom/usb_devices": {
+      "exec": "hypr-usb-menu status",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "hypr-usb-menu open",
+      "on-click-right": "hypr-usb-menu nickname"
+    },
+
+    "custom/memclean": {
+      "exec": "memclean-dev status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "memclean-dev clean",
+      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
+      "on-click-middle": "kitty -e btop"
+    },
+
+    "custom/nixclean": {
+      "format": "󰃢",
+      "tooltip": true,
+      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
+      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
+    },
+
+    "custom/kbd_layout": {
+      "exec": "~/.config/waybar/kbd-layout.sh",
+      "interval": 1,
+      "tooltip": false,
+      "on-click": "~/.local/bin/kbd-layout-next"
+    },
+    "custom/keybindings_help": {
+      "format": "?",
+      "tooltip": true,
+      "tooltip-format": "Atajos Sway (Win+/)",
+      "on-click": "~/.local/bin/sway-keybindings-help"
+    },
+    "battery": {
+      "states": { "warning": 30, "critical": 15 },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    }
+  },
+  {
+    "name": "dock_bar",
+    "layer": "top",
+    "position": "right",
+    "width": 72,
+    "spacing": 4,
+    "margin-top": 72,
+    "margin-bottom": 72,
+    "margin-right": 10,
+    "modules-center": [
+      "custom/dock_windows",
+      "custom/dock_kitty",
+      "custom/dock_nautilus",
+      "custom/dock_zen",
+      "custom/dock_chromium",
+      "custom/dock_obsidian",
+      "custom/dock_software"
+    ],
+
+    "custom/dock_windows": {
+      "exec": "~/.local/bin/sway-app-dock status windows",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click windows"
+    },
+    "custom/dock_kitty": {
+      "exec": "~/.local/bin/sway-app-dock status kitty",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click kitty"
+    },
+    "custom/dock_nautilus": {
+      "exec": "~/.local/bin/sway-app-dock status nautilus",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click nautilus"
+    },
+    "custom/dock_zen": {
+      "exec": "~/.local/bin/sway-app-dock status zen",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click zen"
+    },
+    "custom/dock_chromium": {
+      "exec": "~/.local/bin/sway-app-dock status chromium",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click chromium"
+    },
+    "custom/dock_obsidian": {
+      "exec": "~/.local/bin/sway-app-dock status obsidian",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click obsidian"
+    },
+    "custom/dock_software": {
+      "exec": "~/.local/bin/sway-app-dock status software",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click software"
+    }
+  }
+]

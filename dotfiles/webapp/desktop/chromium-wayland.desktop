@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Chromium (Wayland)
+Exec=chromium --ozone-platform=wayland --enable-wayland-ime %U
+Icon=chromium
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/x-moznews;x-scheme-handler/http;x-scheme-handler/https;

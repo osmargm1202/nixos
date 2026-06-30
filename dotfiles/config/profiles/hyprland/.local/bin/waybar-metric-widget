@@ -1,0 +1,370 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+metric="${1:-}"
+
+case "$metric" in
+  cpu|gpu|ram|ssd|swap)
+    ;;
+  *)
+    echo "Usage: waybar-metric-widget <cpu|gpu|ram|ssd|swap>" >&2
+    exit 2
+    ;;
+esac
+
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+cache_base="${XDG_CACHE_HOME:-$HOME/.cache}"
+cache_root="${WAYBAR_METRIC_CACHE_DIR:-$runtime_dir}/waybar-metric-widget"
+[ -n "${WAYBAR_METRIC_CACHE_DIR:-}" ] || cache_root="$cache_base/waybar-metric-widget"
+proc_stat_file="${WAYBAR_METRIC_PROC_STAT_PATH:-/proc/stat}"
+meminfo_file="${WAYBAR_METRIC_MEMINFO_PATH:-/proc/meminfo}"
+mkdir -p "$cache_root"
+
+metric_classes=()
+
+json_escape() {
+  local input="$1"
+  input="${input//\"/\\\"}"
+  input="${input//$'\n'/\\n}"
+  input="${input//$'\r'/\\r}"
+  input="${input//$'\t'/\\t}"
+  printf '%s' "$input"
+}
+
+metric_classes_json() {
+  local class_json="["
+  local separator=""
+  local cls
+
+  for cls in "${metric_classes[@]}"; do
+    class_json+="${separator}\"$cls\""
+    separator=","
+  done
+
+  class_json+=']'
+  printf '%s' "$class_json"
+}
+
+emit_metric_payload() {
+  local text="$1"
+  local tooltip="$2"
+  local percentage="$3"
+
+  printf '{"text":"%s","tooltip":"%s","class":%s,"percentage":%s}\n' \
+    "$(json_escape "$text")" \
+    "$(json_escape "$tooltip")" \
+    "$(metric_classes_json)" \
+    "$(printf '%s' "$percentage")"
+}
+
+gib_to_float() {
+  awk -v b="$1" 'BEGIN {
+    if (b < 0) b = 0;
+    if (b > 0) printf "%.1f", b / (1024 * 1024 * 1024);
+    else printf "0.0";
+  }'
+}
+
+kib_to_gib() {
+  awk -v kb="$1" 'BEGIN {
+    if (kb < 0) kb = 0;
+    if (kb > 0) printf "%.1f", (kb * 1024) / (1024 * 1024 * 1024);
+    else printf "0.0";
+  }'
+}
+
+ring_for_pct() {
+  local pct="$1"
+  case "$pct" in
+    0|[1-9]|1[0-9]) printf '◯' ;;
+    2[0-1]|2[0-9]) printf '◔' ;;
+    3[0-1]|3[0-9]) printf '◔' ;;
+    4[0-1]|4[0-9]) printf '◑' ;;
+    5[0-1]|5[0-9]) printf '◑' ;;
+    6[0-1]|6[0-9]) printf '◕' ;;
+    7[0-1]|7[0-9]) printf '◕' ;;
+    8[0-1]|8[0-9]) printf '◉' ;;
+    9[0-1]|100) printf '●' ;;
+    *) printf '◯' ;;
+  esac
+}
+
+cpu_temperature_c() {
+  local zone temp label
+  for zone in /sys/class/thermal/thermal_zone*/temp; do
+    [ -r "$zone" ] || continue
+    label="$(cat "${zone%/temp}/type" 2>/dev/null || true)"
+    if printf '%s' "$label" | tr '[:upper:]' '[:lower:]' | grep -Eq 'cpu|package|core|x86_pkg_temp'; then
+      temp="$(cat "$zone" 2>/dev/null || true)"
+      if [ -n "$temp" ]; then
+        if [ "$temp" -gt 1000 ] 2>/dev/null; then temp=$((temp / 1000)); fi
+        printf '%s' "$temp"
+        return 0
+      fi
+    fi
+  done
+
+  for zone in /sys/class/thermal/thermal_zone*/temp; do
+    [ -r "$zone" ] || continue
+    temp="$(cat "$zone" 2>/dev/null || true)"
+    if [ -n "$temp" ]; then
+      if [ "$temp" -gt 1000 ] 2>/dev/null; then temp=$((temp / 1000)); fi
+      printf '%s' "$temp"
+      return 0
+    fi
+  done
+
+  if command -v sensors >/dev/null 2>&1; then
+    temp="$(sensors -u 2>/dev/null | awk '/_input:/{print $2; if (++n==1) exit}')"
+    if [ -n "$temp" ]; then
+      if [ "$temp" -gt 1000 ] 2>/dev/null; then temp=$((temp / 1000)); fi
+      printf '%s' "$temp"
+      return 0
+    fi
+  fi
+
+  printf '--'
+}
+
+gpu_metrics() {
+  local pct temp
+  pct=0 temp="--"
+
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    local nv_out
+    if nv_out="$(nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | awk 'NF {print; exit}')"; then
+      pct="$(printf '%s' "$nv_out" | awk -F, '{print $1}' | tr -dc '0-9.')"
+      temp="$(printf '%s' "$nv_out" | awk -F, '{print $2}' | tr -dc '0-9.')"
+    fi
+  fi
+
+  if [ "$pct" = "" ] || [ "$pct" = "N/A" ]; then
+    pct=""
+    for path in /sys/class/drm/card*/device/gpu_busy_percent; do
+      [ -r "$path" ] || continue
+      pct="$(cat "$path" 2>/dev/null || true)"
+      [ -n "$pct" ] && break
+    done
+  fi
+
+  if [ "$temp" = "--" ]; then
+    for card in /sys/class/drm/card*/device; do
+      [ -d "$card" ] || continue
+      for t in "$card"/hwmon/hwmon*/temp*_input; do
+        [ -r "$t" ] || continue
+        temp="$(cat "$t" 2>/dev/null || true)"
+        [ -n "$temp" ] && break 2
+      done
+    done
+  fi
+
+  if [ "$pct" = "" ] || [ "$pct" = "N/A" ]; then
+    pct=0
+  fi
+  if [ "$pct" -gt 100 ] 2>/dev/null; then pct=100; fi
+  if [ "$pct" -lt 0 ] 2>/dev/null; then pct=0; fi
+  if [ "$temp" != "--" ] && [ "$temp" -gt 1000 ] 2>/dev/null; then temp=$((temp / 1000)); fi
+
+  printf '%s %s' "$pct" "$temp"
+}
+
+read_cpu_sample() {
+  awk '/^cpu / { print $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 }' "$proc_stat_file"
+}
+
+cpu_pct() {
+  local prev_total prev_idle
+  local state_file="$cache_root/cpu.stat"
+  local sample
+  local user nice system iowait irq softirq steal guest guest_nice idle
+  sample="$(read_cpu_sample)"
+  read -r user nice system idle iowait irq softirq steal guest guest_nice <<<"$sample"
+  user="${user:-0}"
+  nice="${nice:-0}"
+  system="${system:-0}"
+  idle="${idle:-0}"
+  iowait="${iowait:-0}"
+  irq="${irq:-0}"
+  softirq="${softirq:-0}"
+  steal="${steal:-0}"
+  guest="${guest:-0}"
+  guest_nice="${guest_nice:-0}"
+
+  total=$((user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice))
+  idle=$((idle + iowait))
+
+  if [ -f "$state_file" ]; then
+    read -r _ prev_total prev_idle <"$state_file" || true
+  fi
+
+  local usage=0
+  if [ -n "${prev_total:-}" ] && [ -n "${prev_idle:-}" ]; then
+    local d_total=$((total - prev_total))
+    local d_idle=$((idle - prev_idle))
+    if [ "$d_total" -gt 0 ]; then
+      usage=$(awk -v du=$((d_total - d_idle)) -v dt="$d_total" 'BEGIN { if (dt <= 0) print 0; else printf "%.0f", (du * 100) / dt }')
+    fi
+  fi
+
+  printf '%s %s %s' "$usage" "$total" "$idle" >"$state_file"
+  printf '%s' "$usage"
+}
+
+metric_cpu_pct() {
+  local cpu_usage temp usage_text ring secondary text tooltip
+  metric_name="CPU"
+  cpu_usage="$(cpu_pct)"
+  temp="$(cpu_temperature_c)"
+  usage_text="$cpu_usage"
+  classify_metric cpu "$cpu_usage" "$temp"
+  ring="$(ring_for_pct "$usage_text")"
+  if [ "$temp" = "--" ]; then
+    secondary="--"
+  else
+    secondary="${temp}°C"
+  fi
+  text="<span font='JetBrainsMono Nerd Font' size='12000'>${ring}</span> ${cpu_usage}% ${metric_name}\n${secondary}"
+  tooltip="CPU: ${cpu_usage}% usage\nTemp: ${temp}°C"
+  emit_metric_payload "$text" "$tooltip" "$cpu_usage"
+}
+
+metric_gpu_pct() {
+  local gpu_pct gpu_temp temp_display temp_line text tooltip
+  read -r gpu_pct gpu_temp <<<"$(gpu_metrics)"
+  metric_name="GPU"
+  [ -z "$gpu_pct" ] && gpu_pct=0
+  classify_metric gpu "$gpu_pct" "$gpu_temp"
+  ring="$(ring_for_pct "$gpu_pct")"
+  temp_display="${gpu_temp}"
+  if [ -n "$temp_display" ] && [ "$temp_display" != "--" ]; then
+    temp_line="${temp_display}°C"
+  else
+    temp_line="--"
+  fi
+  text="<span font='JetBrainsMono Nerd Font' size='12000'>${ring}</span> ${gpu_pct}% ${metric_name}\n${temp_line}"
+  tooltip="GPU: ${gpu_pct}%\nTemp: ${temp_display}"
+  emit_metric_payload "$text" "$tooltip" "$gpu_pct"
+}
+
+metric_ram_pct() {
+  local used total usage text tooltip used_g total_g
+  read -r used total < <(free -b | awk '/^Mem:/ {print $3, $2}')
+  [ -z "$used" ] && used=0
+  [ -z "$total" ] && total=0
+  [ "$total" -eq 0 ] && usage=0 || usage=$(awk -v u="$used" -v t="$total" 'BEGIN { if (t<=0) print 0; else printf "%.0f", (u*100)/t }')
+  used_g="$(gib_to_float "$used")"
+  total_g="$(gib_to_float "$total")"
+  metric_name="RAM"
+  classify_metric ram "$usage"
+  ring="$(ring_for_pct "$usage")"
+  text="<span font='JetBrainsMono Nerd Font' size='12000'>${ring}</span> ${usage}% ${metric_name}\n${used_g} / ${total_g} G"
+  tooltip="RAM: ${used_g}G used / ${total_g}G total"
+  emit_metric_payload "$text" "$tooltip" "$usage"
+}
+
+metric_ssd_pct() {
+  local used total usage text tooltip used_g total_g
+  read -r used total < <(df -B1 / | awk 'NR==2 {print $3, $2}')
+  [ -z "$used" ] && used=0
+  [ -z "$total" ] && total=0
+  [ "$total" -eq 0 ] && usage=0 || usage=$(awk -v u="$used" -v t="$total" 'BEGIN { if (t<=0) print 0; else printf "%.0f", (u*100)/t }')
+  used_g="$(gib_to_float "$used")"
+  total_g="$(gib_to_float "$total")"
+  metric_name="SSD"
+  classify_metric ssd "$usage"
+  ring="$(ring_for_pct "$usage")"
+  text="<span font='JetBrainsMono Nerd Font' size='12000'>${ring}</span> ${usage}% ${metric_name}\n${used_g} / ${total_g} G"
+  tooltip="SSD used: ${used_g}G / ${total_g}G"
+  emit_metric_payload "$text" "$tooltip" "$usage"
+}
+
+metric_swap_pct() {
+  local total free used usage text tooltip used_g total_g
+  read -r total free < <(awk '/^SwapTotal:/ {t=$2} /^SwapFree:/ {f=$2} END {print t" "f}' "$meminfo_file")
+  [ -z "$total" ] && total=0
+  [ -z "$free" ] && free=0
+
+  if ! [[ "$total" =~ ^[0-9]+$ ]]; then
+    total=0
+  fi
+  if ! [[ "$free" =~ ^[0-9]+$ ]]; then
+    free=0
+  fi
+
+  metric_name="SWAP"
+  if [ "$total" -le 0 ]; then
+    total=0
+    free=0
+    used=0
+    usage=0
+    classify_metric swap "$usage"
+  else
+    used=$((total - free))
+    [ "$used" -lt 0 ] && used=0
+    usage=$(awk -v u="$used" -v t="$total" 'BEGIN { if (t<=0) print 0; else printf "%.0f", (u*100)/t }')
+    [ "$usage" -gt 100 ] && usage=100
+    [ "$usage" -lt 0 ] && usage=0
+    classify_metric swap "$usage"
+  fi
+
+  used_g="$(kib_to_gib "$used")"
+  total_g="$(kib_to_gib "$total")"
+  ring="$(ring_for_pct "$usage")"
+  text="<span font='JetBrainsMono Nerd Font' size='12000'>${ring}</span> ${usage}% ${metric_name}\n${used_g} / ${total_g} G"
+  tooltip="SWAP used: ${used_g}G / ${total_g}G"
+  emit_metric_payload "$text" "$tooltip" "$usage"
+}
+
+classify_metric() {
+  local metric="$1"
+  local p="$2"
+  local temp="${3:-}"
+
+  metric_classes=("metric-widget" "metric-$metric")
+
+  if [ "$temp" != "--" ] && [ -n "$temp" ]; then
+    if [ "$temp" -ge 90 ]; then
+      metric_classes+=(metric-critical)
+      return
+    elif [ "$temp" -ge 80 ]; then
+      metric_classes+=(metric-warn)
+      return
+    fi
+  fi
+
+  case "$metric" in
+    cpu|gpu|ram)
+      if [ "$p" -ge 90 ]; then
+        metric_classes+=(metric-critical)
+      elif [ "$p" -ge 80 ]; then
+        metric_classes+=(metric-warn)
+      fi
+      ;;
+    ssd|swap)
+      if [ "$p" -ge 95 ]; then
+        metric_classes+=(metric-critical)
+      elif [ "$p" -ge 85 ]; then
+        metric_classes+=(metric-warn)
+      fi
+      ;;
+  esac
+}
+
+case "$metric" in
+  cpu)
+    metric_name="CPU"
+    metric_cpu_pct
+    ;;
+  gpu)
+    metric_gpu_pct
+    ;;
+  ram)
+    metric_ram_pct
+    ;;
+  ssd)
+    metric_ssd_pct
+    ;;
+  swap)
+    metric_swap_pct
+    ;;
+esac

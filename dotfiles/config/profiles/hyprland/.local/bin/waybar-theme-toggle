@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+orgm_theme_cmd() {
+  if [ -x "$HOME/go/bin/orgm-themes" ]; then
+    printf '%s\n' "$HOME/go/bin/orgm-themes"
+  elif [ -x "$HOME/.local/bin/orgm-themes" ]; then
+    printf '%s\n' "$HOME/.local/bin/orgm-themes"
+  else
+    command -v orgm-themes
+  fi
+}
+
+current_theme() {
+  local cmd
+  if cmd="$(orgm_theme_cmd)"; then
+    "$cmd" current 2>/dev/null || printf 'orgm-dark\n'
+  else
+    printf 'orgm-dark\n'
+  fi
+}
+
+status() {
+  local theme icon next class tooltip
+  theme="$(current_theme)"
+  if [ "$theme" = "orgm-light" ]; then
+    icon="󰖔"
+    next="orgm-dark"
+    class="light"
+  else
+    icon="󰖨"
+    next="orgm-light"
+    class="dark"
+  fi
+  tooltip="Theme: $theme · click for $next"
+  printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$icon" "$tooltip" "$class"
+}
+
+case "${1:-status}" in
+  status) status ;;
+  toggle) cmd="$(orgm_theme_cmd)" || { echo "waybar-theme-toggle: orgm-themes not found" >&2; exit 1; }; "$cmd" toggle >/dev/null; status ;;
+  *) echo "usage: waybar-theme-toggle [status|toggle]" >&2; exit 2 ;;
+esac

@@ -1,0 +1,74 @@
+# OrgmMinimalDark - labwc native theme
+# Focus: dark titlebars, bigger buttons, dark menus, polished Alt-Tab OSD.
+
+border.width: 2
+
+window.titlebar.padding.width: 8
+window.titlebar.padding.height: 4
+window.active.border.color: #475569
+window.inactive.border.color: #1f2937
+window.active.indicator.toggled-keybind.color: #38bdf8
+
+window.active.title.bg: Solid
+window.active.title.bg.color: #111827
+window.inactive.title.bg: Solid
+window.inactive.title.bg.color: #0b1220
+window.active.label.text.color: #e5e7eb
+window.inactive.label.text.color: #94a3b8
+window.label.text.justify: Center
+
+window.button.width: 32
+window.button.height: 32
+window.button.spacing: 4
+window.button.hover.bg.corner-radius: 16
+window.active.button.unpressed.image.color: #cbd5e1
+window.inactive.button.unpressed.image.color: #64748b
+window.active.button.hover.image.color: #ffffff
+window.inactive.button.hover.image.color: #94a3b8
+window.active.button.pressed.image.color: #38bdf8
+window.inactive.button.pressed.image.color: #38bdf8
+window.active.button.close.hover.image.color: #f87171
+window.active.button.close.pressed.image.color: #ef4444
+
+window.active.shadow.size: 36
+window.inactive.shadow.size: 24
+window.active.shadow.color: #00000080
+window.inactive.shadow.color: #00000055
+
+menu.width.min: 240
+menu.width.max: 360
+menu.border.width: 2
+menu.border.color: #334155
+menu.items.padding.x: 12
+menu.items.padding.y: 8
+menu.items.bg.color: #0f172a
+menu.items.text.color: #e5e7eb
+menu.items.active.bg.color: #1e293b
+menu.items.active.text.color: #f8fafc
+menu.separator.width: 1
+menu.separator.padding.width: 10
+menu.separator.padding.height: 6
+menu.separator.color: #334155
+menu.title.bg.color: #111827
+menu.title.text.justify: Left
+menu.title.text.color: #93c5fd
+
+osd.bg.color: #0f172ae6
+osd.border.color: #38bdf8
+osd.border.width: 2
+osd.label.text.color: #e5e7eb
+
+osd.window-switcher.style-thumbnail.width.max: 82%
+osd.window-switcher.style-thumbnail.padding: 14
+osd.window-switcher.style-thumbnail.item.width: 320
+osd.window-switcher.style-thumbnail.item.height: 230
+osd.window-switcher.style-thumbnail.item.padding: 8
+osd.window-switcher.style-thumbnail.item.active.border.width: 3
+osd.window-switcher.style-thumbnail.item.active.border.color: #60a5fa
+osd.window-switcher.style-thumbnail.item.active.bg.color: #1e293bcc
+osd.window-switcher.style-thumbnail.item.icon.size: 64
+osd.window-switcher.preview.border.width: 3
+osd.window-switcher.preview.border.color: #0f172a,#60a5fa,#0f172a
+
+osd.workspace-switcher.boxes.width: 0
+osd.workspace-switcher.boxes.height: 0

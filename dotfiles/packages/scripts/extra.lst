@@ -1,0 +1,3 @@
+curl -fsSL custom.or-gm.com/orgmai.sh | sh          # orgmai para chat con IA Claude Sonnet, Haiku
+curl -fsSL custom.or-gm.com/orgmweb.sh | sh          # Creador de aplicaciones Web
+curl -fsSL custom.or-gm.com/orgmprop.sh | sh          # Creador de propuestas de proyectos

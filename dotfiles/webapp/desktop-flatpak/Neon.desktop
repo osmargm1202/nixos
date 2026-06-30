@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Neon
+Comment=Neon Postgresql Database App
+Exec=flatpak run org.chromium.Chromium --app="https://console.neon.tech/" --new-window
+Icon=Neon
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=chrome-console.neon.tech__-Default
+StartupNotify=true
+Terminal=false
+
+

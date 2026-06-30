@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dota 2
+Exec=steam steam://rungameid/570
+Icon=/home/osmarg/.local/share/icons/dota2.png
+StartupWMClass=Dota 2
+Terminal=false
+Categories=Game;

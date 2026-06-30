@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' '󰂯 Bluetooth GUI' '󰋋 Reconnect device' '󰂯 bluetui' '󰅖 Cancel' | hypr_rofi_dmenu 'Bluetooth' || true)"
+case "$choice" in
+  *'GUI') exec blueman-manager ;;
+  *'Reconnect') exec "$HOME/.local/bin/hypr-bluetooth-reconnect" ;;
+  *'bluetui') exec kitty -e bluetui ;;
+  *) exec hypr-devices-menu ;;
+esac

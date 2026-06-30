@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+if [ -r "$lib" ]; then
+  # shellcheck disable=SC1090
+  . "$lib"
+fi
+
+rofi_menu() {
+  if declare -F hypr_rofi_dmenu >/dev/null 2>&1; then
+    hypr_rofi_dmenu "Transitions" 8
+  else
+    rofi -dmenu -i -p "Transitions"
+  fi
+}
+
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+env_file="$config_home/rofi/hypr-menu.env"
+
+choice="$(printf '%s\n' \
+  'fade - Current soft fade' \
+  'slide - Horizontal slide' \
+  'slidevert - Vertical slide' \
+  'slidefade - Slide fade 20%' \
+  'slidefadevert - Vertical slide fade 20%' \
+  'hyde - HyDE wind' \
+  'limefrenzy - HyDE vertical slide' \
+  'off - Disable workspace animation' | rofi_menu || true)"
+
+[ -n "$choice" ] || exit 0
+preset="${choice%% - *}"
+case "$preset" in
+  fade|slide|slidevert|slidefade|slidefadevert|hyde|limefrenzy|off) ;;
+  *) exec hypr-tweaks-menu ;;
+esac
+
+mkdir -p "$(dirname "$env_file")"
+if [ -f "$env_file" ] && grep -q '^HYPR_WORKSPACE_ANIMATION=' "$env_file"; then
+  tmp="$(mktemp)"
+  awk -v preset="$preset" '
+    BEGIN { done = 0 }
+    /^HYPR_WORKSPACE_ANIMATION=/ {
+      if (!done) {
+        print "HYPR_WORKSPACE_ANIMATION=" preset
+        done = 1
+      }
+      next
+    }
+    { print }
+    END {
+      if (!done) print "HYPR_WORKSPACE_ANIMATION=" preset
+    }
+  ' "$env_file" >"$tmp"
+  mv "$tmp" "$env_file"
+else
+  printf '%s\n' "HYPR_WORKSPACE_ANIMATION=$preset" >>"$env_file"
+fi
+
+hyprctl setenv HYPR_WORKSPACE_ANIMATION "$preset"
+hyprctl reload
+notify-send "Hyprland transitions" "Workspace animation: $preset" 2>/dev/null || true

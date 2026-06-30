@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' '󰖩 NetworkManager GUI' '󰖩 nmtui' '󰅖 Cancel' | hypr_rofi_dmenu 'WiFi' || true)"
+case "$choice" in
+  *'GUI') exec nm-connection-editor ;;
+  *'nmtui') exec kitty -e nmtui ;;
+  *) exec hypr-devices-menu ;;
+esac

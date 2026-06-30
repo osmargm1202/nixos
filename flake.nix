@@ -48,11 +48,6 @@
       url = "github:osmargm1202/ltmnight-sddm-theme";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # flake.lock intentionally not updated in this branch; update after dotfiles helper branch lands.
-    dotfiles-orgm-source = {
-      url = "github:osmargm1202/dotfiles";
-      flake = false;
-    };
   };
 
   outputs =
@@ -65,7 +60,7 @@
       # Separate pkgs instance with allowUnfree for devShells (nix develop does not
       # inherit nixpkgs.config from NixOS modules — needs explicit config here).
       pkgsDev = import nixpkgs { inherit system; config.allowUnfree = true; };
-      dotfilesOrgmSource = inputs.dotfiles-orgm-source;
+      dotfilesOrgmSource = ./dotfiles;
       orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;

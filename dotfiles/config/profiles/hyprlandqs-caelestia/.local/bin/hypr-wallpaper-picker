@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP="$HOME/.config/hypr/wallpaper-picker/wallpaper_picker.py"
+THEME="${HYPR_WALLPAPER_PICKER_THEME:-auto}"
+GTK_IMPORT_CHECK='import gi; gi.require_version("Gtk", "4.0"); from gi.repository import Gtk'
+
+run_with_system_python() {
+    command -v python3 >/dev/null 2>&1 && python3 -c "$GTK_IMPORT_CHECK" >/dev/null 2>&1
+}
+
+shell_quote() {
+    printf '%q' "$1"
+}
+
+build_python_command() {
+    local cmd="python3"
+    local arg
+    for arg in "$APP" --theme "$THEME" "$@"; do
+        cmd+=" $(shell_quote "$arg")"
+    done
+    printf '%s' "$cmd"
+}
+
+if run_with_system_python; then
+    exec python3 "$APP" --theme "$THEME" "$@"
+fi
+
+if command -v nix-shell >/dev/null 2>&1; then
+    exec nix-shell \
+        -p 'python3.withPackages (ps: [ ps.pygobject3 ])' gtk4 gobject-introspection \
+        --run "$(build_python_command "$@")"
+fi
+
+if command -v nix >/dev/null 2>&1; then
+    exec nix shell --impure \
+        --expr 'with import <nixpkgs> {}; [ (python3.withPackages (ps: [ ps.pygobject3 ])) gtk4 gobject-introspection ]' \
+        -c python3 "$APP" --theme "$THEME" "$@"
+fi
+
+cat >&2 <<'EOF'
+hypr-wallpaper-picker needs Python GTK4 PyGObject (`gi`) but current python3 cannot import it.
+
+Install hints:
+  Arch:  sudo pacman -S python-gobject gtk4
+  NixOS: add python3Packages.pygobject3 and gtk4 to your environment, or install/use nix-shell fallback.
+EOF
+exit 127

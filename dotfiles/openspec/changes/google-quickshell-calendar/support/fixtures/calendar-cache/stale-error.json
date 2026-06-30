@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-24T08:00:00Z",
+  "lastSuccessAt": "2026-05-23T18:30:00Z",
+  "timezone": "America/Santo_Domingo",
+  "source": { "backend": "gcalcli", "command": "fixture", "rangeStart": "2026-05-01", "rangeEnd": "2026-05-31" },
+  "status": {
+    "state": "network_error",
+    "stale": true,
+    "message": "Network timeout while refreshing calendar",
+    "lastErrorAt": "2026-05-24T08:00:00Z",
+    "lastErrorKind": "network_error",
+    "lastError": "timeout"
+  },
+  "events": [
+    {
+      "id": "evt-stale",
+      "stableKey": "primary:evt-stale:2026-05-25T14:00:00-04:00",
+      "calendarId": "primary",
+      "calendarName": "Work",
+      "title": "Cached planning call",
+      "description": "",
+      "location": "",
+      "start": "2026-05-25T14:00:00-04:00",
+      "end": "2026-05-25T15:00:00-04:00",
+      "startDate": "2026-05-25",
+      "endDate": "2026-05-25",
+      "allDay": false,
+      "htmlLink": "",
+      "status": "confirmed",
+      "attendeesCount": 3,
+      "reminderEligible": true
+    }
+  ]
+}

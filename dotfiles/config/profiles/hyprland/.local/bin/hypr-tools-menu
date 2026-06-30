@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' \
+  '󰆍 Terminal' \
+  '󰆍 Terminal Arch' \
+  '󰉋 Files' \
+  '󰍉 Search files' \
+  ' Clipboard' \
+  ' Hypr config' \
+  '󰃭 Calculator' \
+  '󰣆 Web App Maker' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
+
+case "$choice" in
+  *'Terminal Arch') exec kitty -e distrobox-enter arch ;;
+  *'Terminal') exec kitty ;;
+  *'Files') exec nautilus ;;
+  *'Search files') exec hypr-rofi-open-file ;;
+  *'Clipboard') exec hypr-rofi-clipboard ;;
+  *'Hypr config') exec hypr-config-editor ;;
+  *'Calculator') exec hypr-rofi-calc ;;
+  *'Web App Maker') exec hypr-webapp-maker ;;
+  *) exec hypr-main-menu ;;
+esac

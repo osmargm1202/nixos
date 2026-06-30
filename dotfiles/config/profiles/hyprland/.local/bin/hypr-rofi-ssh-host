@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+state_dir="$state_home/hypr-rofi-ssh-host"
+users_file="$state_dir/users.tsv"
+add_user_label="➕ Agregar usuario"
+delete_known_host_label="🗑 Eliminar known host"
+delete_users_label="🗑 Eliminar usuarios de known host"
+delete_all_users_label="🗑 Todos los usuarios"
+
+ssh_config_hosts() {
+  [ -f "$HOME/.ssh/config" ] || return 0
+  awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?]/) print $i }' "$HOME/.ssh/config" 2>/dev/null || true
+}
+
+known_hosts() {
+  awk -F'[ ,]' '{print $1}' "$HOME/.ssh/known_hosts" 2>/dev/null \
+    | grep -v '^|' \
+    | grep -v '^$' \
+    | sed 's/^\[//; s/\].*$//' || true
+}
+
+saved_hosts() {
+  [ -f "$users_file" ] || return 0
+  awk -F'\t' '$1 != "" { print $1 }' "$users_file" 2>/dev/null || true
+}
+
+all_hosts() {
+  printf '%s\n%s\n%s\n' "$(ssh_config_hosts)" "$(known_hosts)" "$(saved_hosts)" | sort -u | sed '/^$/d'
+}
+
+config_user_for_host() {
+  local host="$1"
+  [ -f "$HOME/.ssh/config" ] || return 0
+  awk -v want="$host" '
+    function lower(s) { return tolower(s) }
+    lower($1) == "host" {
+      active = 0
+      for (i = 2; i <= NF; i++) if ($i == want) active = 1
+      next
+    }
+    active && lower($1) == "user" { print $2; exit }
+  ' "$HOME/.ssh/config" 2>/dev/null || true
+}
+
+saved_users_for_host() {
+  local host="$1"
+  [ -f "$users_file" ] || return 0
+  awk -F'\t' -v host="$host" '$1 == host && $2 != "" { print $2 }' "$users_file" 2>/dev/null || true
+}
+
+user_choices_for_host() {
+  local host="$1"
+  {
+    saved_users_for_host "$host"
+    config_user_for_host "$host"
+  } | sed '/^$/d' | sort -u
+  printf '%s\n' "$add_user_label"
+}
+
+save_user_for_host() {
+  local host="$1"
+  local user="$2"
+  [ -n "$host" ] && [ -n "$user" ] || return 0
+  mkdir -p "$state_dir"
+  touch "$users_file"
+  if ! awk -F'\t' -v host="$host" -v user="$user" '$1 == host && $2 == user { found = 1 } END { exit found ? 0 : 1 }' "$users_file"; then
+    printf '%s\t%s\n' "$host" "$user" >>"$users_file"
+  fi
+}
+
+remove_user_for_host() {
+  local host="$1"
+  local user="$2"
+  [ -f "$users_file" ] || return 0
+  local tmp
+  tmp="$(mktemp)"
+  awk -F'\t' -v OFS='\t' -v host="$host" -v user="$user" '!(($1 == host) && ($2 == user))' "$users_file" >"$tmp"
+  mv "$tmp" "$users_file"
+}
+
+remove_users_for_host() {
+  local host="$1"
+  [ -f "$users_file" ] || return 0
+  local tmp
+  tmp="$(mktemp)"
+  awk -F'\t' -v OFS='\t' -v host="$host" '$1 != host' "$users_file" >"$tmp"
+  mv "$tmp" "$users_file"
+}
+
+select_host() {
+  local prompt="$1"
+  all_hosts | hypr_rofi_dmenu "$prompt" "${HYPR_ROFI_SSH_LINES:-14}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true
+}
+
+delete_known_host() {
+  local host confirm
+  host="$(select_host 'Eliminar known host')"
+  [ -n "${host:-}" ] || exit 0
+  confirm="$(printf 'Sí, eliminar %s\nCancelar\n' "$host" | hypr_rofi_dmenu "Confirmar: $host" 2 "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+  [ "$confirm" = "Sí, eliminar $host" ] || exit 0
+  if command -v ssh-keygen >/dev/null 2>&1; then
+    ssh-keygen -R "$host" >/dev/null 2>&1 || true
+  fi
+  remove_users_for_host "$host"
+  exit 0
+}
+
+delete_users_for_known_host() {
+  local host user
+  host="$(select_host 'Host para borrar usuarios')"
+  [ -n "${host:-}" ] || exit 0
+  user="$( { saved_users_for_host "$host"; printf '%s\n' "$delete_all_users_label"; } | sed '/^$/d' | hypr_rofi_dmenu "Borrar usuario: $host" "${HYPR_ROFI_SSH_USER_LINES:-8}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+  [ -n "${user:-}" ] || exit 0
+  if [ "$user" = "$delete_all_users_label" ]; then
+    remove_users_for_host "$host"
+  else
+    remove_user_for_host "$host" "$user"
+  fi
+  exit 0
+}
+
+hosts="$(all_hosts)"
+selection="$( { printf '%s\n' "$hosts"; printf '%s\n%s\n' "$delete_known_host_label" "$delete_users_label"; } | sed '/^$/d' | hypr_rofi_dmenu 'SSH host' "${HYPR_ROFI_SSH_LINES:-14}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+[ -n "${selection:-}" ] || exit 0
+
+case "$selection" in
+  "$delete_known_host_label") delete_known_host ;;
+  "$delete_users_label") delete_users_for_known_host ;;
+esac
+
+user="$(user_choices_for_host "$selection" | hypr_rofi_dmenu "SSH user: $selection" "${HYPR_ROFI_SSH_USER_LINES:-8}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+[ -n "${user:-}" ] || exit 0
+
+if [ "$user" = "$add_user_label" ]; then
+  user="$(printf '\n' | hypr_rofi_dmenu "Nuevo usuario: $selection" "${HYPR_ROFI_SSH_USER_LINES:-8}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+  [ -n "${user:-}" ] || exit 0
+fi
+
+save_user_for_host "$selection" "$user"
+exec kitty -e ssh "$user@$selection"

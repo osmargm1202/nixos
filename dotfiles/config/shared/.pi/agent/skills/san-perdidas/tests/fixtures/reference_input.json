@@ -1,0 +1,107 @@
+{
+  "proyecto": {
+    "id": "nave-demo",
+    "nombre": "NAVE DEMO - SISTEMA HIDRÁULICO",
+    "cliente": "CLIENTE SRL",
+    "empresa": "ORGM",
+    "ingeniero": "Ing. Osmar Garcia",
+    "codia": "CODIA-36467",
+    "codigo": "36467",
+    "ubicacion": "Santo Domingo, República Dominicana",
+    "fecha": "2026-04-29",
+    "logo_cliente_url": "https://r2.or-gm.com/bohc.png",
+    "logo_empresa_url": "https://r2.or-gm.com/orgm.png"
+  },
+  "workspace": {
+    "usar_pwd": true,
+    "modo": "new",
+    "project_id": "nave-demo",
+    "salida": "proyectos/[id]/"
+  },
+  "criterios": {
+    "metodo_perdidas": "hazen_williams_k",
+    "nodo_cisterna": "N1",
+    "nodos_criticos": ["N6", "N8"],
+    "tratar_red_como_arbol": true,
+    "material_default": "PPR",
+    "c_hazen_default": 150,
+    "seleccionar_diametro_si_falta": true,
+    "diametros_comerciales_mm": [19, 25, 32, 40, 50, 63, 75, 90],
+    "velocidad_min_m_s": 0.6,
+    "velocidad_max_m_s": 2.5,
+    "presion_punto_critico_mca": 10,
+    "usar_presion_fluxometro": false,
+    "margen_seguridad_tipo": "porcentaje_sobre_perdidas",
+    "margen_seguridad_porcentaje": 0.15,
+    "margen_seguridad_mca": 0,
+    "eficiencia_bomba": 0.65,
+    "peso_especifico_agua_n_m3": 9800,
+    "catalogo_accesorios": {
+      "codo_90": {"k": 0.9, "descripcion": "Codo 90° estándar"},
+      "tee_paso": {"k": 0.6, "descripcion": "Tee en paso"},
+      "tee_derivacion": {"k": 1.8, "descripcion": "Tee en derivación"},
+      "valvula_check": {"k": 2.0, "descripcion": "Válvula check"},
+      "valvula_compuerta_abierta": {"k": 0.2, "descripcion": "Válvula de compuerta abierta"}
+    }
+  },
+  "nodos": [
+    {"id": "N1", "descripcion": "Cisterna principal", "altura_m": -2.0, "tipo": "cisterna"},
+    {"id": "N2", "descripcion": "Descarga bomba / distribución principal", "altura_m": 0.0, "tipo": "distribucion"},
+    {"id": "N3", "descripcion": "Ramal principal nivel 1", "altura_m": 0.0, "tipo": "distribucion"},
+    {"id": "N4", "descripcion": "Derivación local 1", "altura_m": 0.0, "tipo": "distribucion"},
+    {"id": "N5", "descripcion": "Punto de consumo local 1", "altura_m": 0.0, "tipo": "consumo", "grupos_aparatos": [
+      {"grupo": "g_010", "cantidad": 2, "factor_simultaneidad": 0.8},
+      {"grupo": "g_020", "cantidad": 3, "factor_simultaneidad": 0.8}
+    ]},
+    {"id": "N6", "descripcion": "Punto crítico alto local 1", "altura_m": 8.0, "tipo": "critico", "demanda_lps": 0.35},
+    {"id": "N7", "descripcion": "Derivación local 2", "altura_m": 0.0, "tipo": "distribucion"},
+    {"id": "N8", "descripcion": "Punto crítico local 2", "altura_m": 5.0, "tipo": "critico", "grupos_aparatos": [
+      {"grupo": "g_010", "cantidad": 3, "factor_simultaneidad": 0.8},
+      {"grupo": "g_020", "cantidad": 4, "factor_simultaneidad": 0.8}
+    ]}
+  ],
+  "tramos": [
+    {"id": "T1", "desde": "N1", "hasta": "N2", "descripcion": "Impulsión cisterna a distribución", "longitud_m": 5.0, "material": "PPR", "diametro_mm": 63, "accesorios": [
+      {"tipo": "entrada_tanque", "cantidad": 1},
+      {"tipo": "valvula_check", "cantidad": 1},
+      {"tipo": "valvula_compuerta_abierta", "cantidad": 2},
+      {"tipo": "codo_90", "cantidad": 2}
+    ]},
+    {"id": "T2", "desde": "N2", "hasta": "N3", "descripcion": "Distribución principal", "longitud_m": 35.0, "material": "PPR", "diametro_mm": 63, "accesorios": [
+      {"tipo": "codo_90", "cantidad": 4},
+      {"tipo": "tee_paso", "cantidad": 1}
+    ]},
+    {"id": "T3", "desde": "N3", "hasta": "N4", "descripcion": "Derivación local 1", "longitud_m": 7.0, "material": "PPR", "diametro_mm": 40, "accesorios": [
+      {"tipo": "tee_derivacion", "cantidad": 1},
+      {"tipo": "codo_90", "cantidad": 2}
+    ]},
+    {"id": "T4", "desde": "N4", "hasta": "N5", "descripcion": "Alimentación consumo local 1", "longitud_m": 6.0, "material": "PPR", "diametro_mm": 25, "accesorios": [
+      {"tipo": "codo_90", "cantidad": 3},
+      {"tipo": "valvula_compuerta_abierta", "cantidad": 1}
+    ]},
+    {"id": "T5", "desde": "N4", "hasta": "N6", "descripcion": "Subida a punto crítico alto", "longitud_m": 12.0, "material": "PPR", "diametro_mm": 32, "accesorios": [
+      {"tipo": "codo_90", "cantidad": 4},
+      {"tipo": "valvula_compuerta_abierta", "cantidad": 1}
+    ]},
+    {"id": "T6", "desde": "N3", "hasta": "N7", "descripcion": "Derivación local 2", "longitud_m": 9.0, "material": "PPR", "diametro_mm": 40, "accesorios": [
+      {"tipo": "tee_derivacion", "cantidad": 1},
+      {"tipo": "codo_90", "cantidad": 2}
+    ]},
+    {"id": "T7", "desde": "N7", "hasta": "N8", "descripcion": "Alimentación punto crítico local 2", "longitud_m": 10.0, "material": "PPR", "diametro_mm": 32, "accesorios": [
+      {"tipo": "codo_90", "cantidad": 3},
+      {"tipo": "valvula_compuerta_abierta", "cantidad": 1}
+    ]}
+  ],
+  "catalogo_bombas": [
+    {"capacidad": "0.5 HP", "hp": 0.5},
+    {"capacidad": "0.75 HP", "hp": 0.75},
+    {"capacidad": "1 HP", "hp": 1.0},
+    {"capacidad": "1.5 HP", "hp": 1.5},
+    {"capacidad": "2 HP", "hp": 2.0},
+    {"capacidad": "3 HP", "hp": 3.0},
+    {"capacidad": "4 HP", "hp": 4.0},
+    {"capacidad": "5 HP", "hp": 5.0},
+    {"capacidad": "7.5 HP", "hp": 7.5},
+    {"capacidad": "10 HP", "hp": 10.0}
+  ]
+}

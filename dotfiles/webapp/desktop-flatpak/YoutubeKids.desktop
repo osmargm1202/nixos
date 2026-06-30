@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=YoutubeKids
+Comment=YoutubeKids Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://youtubekids.com" --new-window
+Icon=YoutubeKids
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=chrome-youtubekids.com__-Default
+StartupNotify=true
+Terminal=false
+
+

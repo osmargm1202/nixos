@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Gmail
+Comment=Gmail Web Application
+Exec=chromium --app="https://gmail.com" --new-window
+Icon=Gmail
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=chrome-gmail.com__-Default
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cloud ORGM
+Comment=Cloud ORGM Web Application
+Exec=chromium --app="https://cloud.or-gm.com/" --new-window
+Icon=Cloud ORGM
+Categories=Office;
+NoDisplay=false
+StartupWMClass=chrome-cloud.or-gm.com__-Default
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,1 @@
+../../../../../Hobby/dotfiles/config/pi/.pi/agent/skills/imagegen/scripts/remove_chroma_key.py

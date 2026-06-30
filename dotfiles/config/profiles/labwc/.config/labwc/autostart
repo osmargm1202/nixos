@@ -1,0 +1,51 @@
+#!/usr/bin/env sh
+
+# Export labwc session env to dbus/systemd so portals and GTK apps see wlroots.
+systemctl --user import-environment \
+  WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
+  ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
+  XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
+
+dbus-update-activation-environment --systemd \
+  WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
+  ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
+  XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
+
+systemctl --user start graphical-session.target 2>/dev/null || true
+
+# DMS maneja panel, dock y wallpapers.
+pgrep -u "$USER" -x dms >/dev/null 2>&1 || dms run -d >/dev/null 2>&1 &
+
+# Notificaciones / centro de control.
+pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &
+
+# Red / Bluetooth.
+pgrep -u "$USER" -x nm-applet >/dev/null 2>&1 || nm-applet --indicator >/dev/null 2>&1 &
+pgrep -u "$USER" -x blueman-applet >/dev/null 2>&1 || blueman-applet >/dev/null 2>&1 &
+
+# Polkit gráfico.
+pgrep -u "$USER" -f polkit-gnome-authentication-agent-1 >/dev/null 2>&1 || \
+  polkit-gnome-authentication-agent-1 >/dev/null 2>&1 &
+
+# Screen idle management for labwc/wlroots.
+pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
+  swayidle -w \
+    timeout 300 'wlopm --off "*"' resume 'wlopm --on "*"' \
+    timeout 600 'dms ipc call lock lock' \
+    timeout 900 'systemctl suspend' \
+    before-sleep 'dms ipc call lock lock' >/dev/null 2>&1 &
+
+pgrep -u "$USER" -x nextcloud >/dev/null 2>&1 || nextcloud --background >/dev/null 2>&1 &
+
+# Discord espera a DMS para aparecer en systray.
+pgrep -u "$USER" -f 'com.discordapp.Discord' >/dev/null 2>&1 || \
+  (until pgrep -u "$USER" -x dms >/dev/null 2>&1; do sleep 1; done; \
+   flatpak run com.discordapp.Discord --start-minimized >/dev/null 2>&1) &
+
+# Portapapeles.
+pgrep -u "$USER" -f 'wl-paste.*text.*cliphist store' >/dev/null 2>&1 || \
+  wl-paste --type text --watch cliphist store >/dev/null 2>&1 &
+pgrep -u "$USER" -f 'wl-paste.*image.*cliphist store' >/dev/null 2>&1 || \
+  wl-paste --type image --watch cliphist store >/dev/null 2>&1 &

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choices=()
+command -v btop >/dev/null 2>&1 && choices+=("󰨇 btop")
+command -v htop >/dev/null 2>&1 && choices+=("󰨇 htop")
+command -v dgop >/dev/null 2>&1 && choices+=("󰨇 dgop")
+command -v gnome-system-monitor >/dev/null 2>&1 && choices+=("󰍛 GNOME System Monitor")
+choices+=(
+  "󰍛 Memclean dev"
+  "󰍛 Memclean dry-run"
+  "󰃢 Nixclean"
+  "󰌢 Hardware fastfetch"
+  "󰚩 Pi update"
+  "󰚩 Pi status refresh"
+  "󱐌 Power profile"
+  "󰅖 Cancel"
+)
+choice="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu 'Performance / Cleanup' || true)"
+
+case "$choice" in
+  *'btop') exec kitty -e btop ;;
+  *'htop') exec kitty -e htop ;;
+  *'dgop') exec kitty -e dgop ;;
+  *'GNOME') exec gnome-system-monitor ;;
+  *'Memclean dev') exec memclean-dev clean ;;
+  *'Memclean dry-run') exec kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P "enter..."' ;;
+  *'Nixclean') exec kitty --class nixclean -e fish -lc 'nixclean; read -P "enter..."' ;;
+  *'Hardware fastfetch') exec kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i' ;;
+  *'Pi update') exec kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i' ;;
+  *'Pi status refresh') exec waybar-pi-status refresh ;;
+  *'Power profile') exec waybar-power-profile pick ;;
+  *) exec hypr-main-menu ;;
+esac

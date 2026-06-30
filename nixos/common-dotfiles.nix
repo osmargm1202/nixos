@@ -8,9 +8,10 @@
 }:
 
 let
-  dotfilesRepo = "https://github.com/osmargm1202/dotfiles.git";
+  dotfilesRepo = "https://github.com/osmargm1202/nixos.git";
   dotfilesBranch = "master";
-  dotfilesPath = "/home/${userName}/Hobby/dotfiles";
+  dotfilesRepoPath = "/home/${userName}/Hobby/nixos";
+  dotfilesPath = "/home/${userName}/Hobby/nixos/dotfiles";
   dotfilesParent = "/home/${userName}/Hobby";
   hostName = config.networking.hostName;
 
@@ -613,19 +614,19 @@ in
         runuser -u ${userName} -- "$@"
       }
 
-      if [ ! -e "${dotfilesPath}/.git" ]; then
-        if [ -e "${dotfilesPath}" ]; then
-          echo "${dotfilesPath} exists but is not a git repository" >&2
+      if [ ! -e "${dotfilesRepoPath}/.git" ]; then
+        if [ -e "${dotfilesRepoPath}" ]; then
+          echo "${dotfilesRepoPath} exists but is not a git repository" >&2
           exit 1
         fi
-        as_user git clone --branch "${dotfilesBranch}" "${dotfilesRepo}" "${dotfilesPath}"
+        as_user git clone --branch "${dotfilesBranch}" "${dotfilesRepo}" "${dotfilesRepoPath}"
       else
-        as_user git -C "${dotfilesPath}" fetch origin "${dotfilesBranch}"
-        as_user git -C "${dotfilesPath}" checkout "${dotfilesBranch}"
-        as_user git -C "${dotfilesPath}" pull --ff-only origin "${dotfilesBranch}"
+        as_user git -C "${dotfilesRepoPath}" fetch origin "${dotfilesBranch}"
+        as_user git -C "${dotfilesRepoPath}" checkout "${dotfilesBranch}"
+        as_user git -C "${dotfilesRepoPath}" pull --ff-only origin "${dotfilesBranch}" || true
       fi
 
-      chown -R ${userName}:users "${dotfilesPath}"
+      chown -R ${userName}:users "${dotfilesRepoPath}"
     '';
   };
 

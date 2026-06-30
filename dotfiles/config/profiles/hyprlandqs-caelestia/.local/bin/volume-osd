@@ -1,0 +1,13 @@
+#!/bin/sh
+# Caelestia detects audio changes via PipeWire and shows its own OSD.
+# This script only changes the volume — no notify-send needed.
+
+step="3"
+limit="150"
+
+case "${1:-}" in
+  up)   pamixer --allow-boost --set-limit "$limit" -i "$step" ;;
+  down) pamixer --allow-boost --set-limit "$limit" -d "$step" ;;
+  mute) pamixer -t ;;
+  *)    echo "usage: volume-osd up|down|mute" >&2; exit 2 ;;
+esac

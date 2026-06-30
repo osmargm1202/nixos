@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cursor
+Comment=Cursor Code Editor from Distrobox
+Exec=distrobox-enter arch -- cursor
+Icon=Cursor
+Categories=Development;
+NoDisplay=false
+StartupWMClass=Cursor
+StartupNotify=true
+Terminal=false

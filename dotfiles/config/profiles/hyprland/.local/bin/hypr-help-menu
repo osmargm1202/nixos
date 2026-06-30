@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' \
+  '󰌌 Keybindings help' \
+  '󰌌 Keyhelper toggle' \
+  '󰌌 Keyhelper init' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'Help' || true)"
+
+case "$choice" in
+  *'Keybindings help') exec hypr-keybindings-help ;;
+  *'Keyhelper toggle') exec hypr-keyhelper toggle ;;
+  *'Keyhelper init') exec hypr-keyhelper init ;;
+  *) exec hypr-main-menu ;;
+esac

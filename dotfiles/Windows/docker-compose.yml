@@ -1,0 +1,36 @@
+services:
+  windows:
+    image: orgmcr.or-gm.com/osmargm1202/windows11:latest #dockurr/windows
+    container_name: windows
+    environment:
+      VERSION: "11"
+      RAM_SIZE: "4G"
+      CPU_CORES: "6"
+      DISK_SIZE: "64G"
+      GPU: "Y"
+      USERNAME: "osmarg"
+      PASSWORD: "hacker12"
+      LANGUAGE: "English"
+      REGION: "es-DO"
+      KEYBOARD: "es-US"
+      HOME: "/home/osmarg"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+      - /dev/dri
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8006:8006
+      - 3389:3389/tcp
+      - 3389:3389/udp
+    volumes:
+      - ./windows:/storage
+      - /home/osmarg:/shared
+      - ./oem:/oem
+    restart: always
+    gpus: all
+    stop_grace_period: 2m
+    
+volumes:
+  windows:

@@ -1,0 +1,128 @@
+config/shared/.local/bin/hypr-webapp-remover:2:exec orgm-hypr webapp remove --interactive "$@"
+config/shared/.local/bin/fuzzel-calc:2:exec orgm-hypr calc fuzzel "$@"
+config/shared/.local/bin/hypr-zen-new-window:2:exec orgm-hypr zen open-new-window "$@"
+config/shared/.local/bin/hypr-tools-menu:2:exec orgm-hypr menu tools "$@"
+config/shared/.local/bin/waybar-date-es:2:exec orgm-hypr waybar date --format date-es "$@"
+config/shared/.local/bin/mic-volume-osd:2:exec orgm-hypr osd mic "$@"
+config/shared/.local/bin/waybar-watch:2:exec orgm-hypr waybar watch "$@"
+config/shared/.local/bin/hypr-bluetooth-menu:2:exec orgm-hypr menu bluetooth "$@"
+config/shared/.local/bin/waybar-swap-usage:2:exec orgm-hypr waybar swap-usage "$@"
+config/shared/.local/bin/fuzzel-ssh-host:2:exec orgm-hypr ssh host --launcher fuzzel "$@"
+config/shared/.local/bin/hypr-system-menu:2:exec orgm-hypr menu system "$@"
+config/shared/.local/bin/hypr-focus-notification-app:2:exec orgm-hypr notify focus-app "$@"
+config/shared/.local/bin/hypr-keyboard-menu:2:exec orgm-hypr menu keyboard "$@"
+config/shared/.local/bin/hypr-webapp-maker:2:exec orgm-hypr webapp create --interactive "$@"
+config/shared/.local/bin/hypr-current-wallpaper:2:exec orgm-hypr wallpaper current "$@"
+config/shared/.local/bin/hypr-kill-windows:2:exec orgm-hypr windows kill-menu "$@"
+config/shared/.local/bin/hypr-fuzzel:2:exec orgm-hypr launcher apps "$@"
+config/shared/.local/bin/brightness-osd:2:exec orgm-hypr osd brightness "$@"
+config/shared/.local/bin/waybar-time-ampm:2:exec orgm-hypr waybar date --format time-ampm "$@"
+config/shared/.local/bin/hypr-wifi-menu:2:exec orgm-hypr menu wifi "$@"
+config/shared/.local/bin/hypr-power-menu:2:exec orgm-hypr menu power "$@"
+config/shared/.local/bin/hypr-lock:2:exec orgm-hypr session lock --force "$@"
+config/shared/.local/bin/waybar-day-month-es:2:exec orgm-hypr waybar date --format day-month-es "$@"
+config/shared/.local/bin/volume-osd:2:exec orgm-hypr osd volume "$@"
+config/shared/.local/bin/hypr-smart-run:2:exec orgm-hypr smart-run run "$@"
+config/shared/.local/bin/hypr-performance-menu:2:exec orgm-hypr menu performance "$@"
+config/shared/.local/bin/fuzzel-tmux-arch:2:exec orgm-hypr tmux arch --launcher fuzzel "$@"
+config/shared/.local/bin/hypr-keybindings-help:2:exec orgm-hypr menu keybindings "$@"
+config/shared/.local/bin/fuzzel-open-file:2:exec orgm-hypr file open --launcher fuzzel "$@"
+config/shared/.local/bin/hypr-main-menu:2:exec orgm-hypr menu main "$@"
+config/shared/.local/bin/fuzzel-open-file-terminal:2:exec orgm-hypr file open-terminal --launcher fuzzel "$@"
+config/shared/.local/bin/fuzzel-hypr-window:2:exec orgm-hypr windows switch --launcher fuzzel "$@"
+config/shared/.local/bin/hypr-nwg-dock:2:exec orgm-hypr dock start "$@"
+config/shared/.local/bin/hypr-workspace-button:2:exec orgm-hypr waybar workspace "$@"
+config/shared/.local/bin/fuzzel-open-file-dir:2:exec orgm-hypr file open-dir --launcher fuzzel "$@"
+config/shared/.config/waybar-hypr/config:50:      "on-click": "orgm-hypr menu main"
+config/shared/.config/waybar-hypr/config:53:      "exec": "orgm-hypr waybar workspace status 1",
+config/shared/.config/waybar-hypr/config:58:      "on-click": "orgm-hypr waybar workspace click 1"
+config/shared/.config/waybar-hypr/config:61:      "exec": "orgm-hypr waybar workspace status 2",
+config/shared/.config/waybar-hypr/config:66:      "on-click": "orgm-hypr waybar workspace click 2"
+config/shared/.config/waybar-hypr/config:69:      "exec": "orgm-hypr waybar workspace status 3",
+config/shared/.config/waybar-hypr/config:74:      "on-click": "orgm-hypr waybar workspace click 3"
+config/shared/.config/waybar-hypr/config:77:      "exec": "orgm-hypr waybar workspace status 4",
+config/shared/.config/waybar-hypr/config:82:      "on-click": "orgm-hypr waybar workspace click 4"
+config/shared/.config/waybar-hypr/config:85:      "exec": "orgm-hypr waybar workspace status 5",
+config/shared/.config/waybar-hypr/config:90:      "on-click": "orgm-hypr waybar workspace click 5"
+config/shared/.config/waybar-hypr/config:93:      "exec": "orgm-hypr waybar workspace status 6",
+config/shared/.config/waybar-hypr/config:98:      "on-click": "orgm-hypr waybar workspace click 6"
+config/shared/.config/waybar-hypr/config:101:      "exec": "orgm-hypr waybar workspace status 7",
+config/shared/.config/waybar-hypr/config:106:      "on-click": "orgm-hypr waybar workspace click 7"
+config/shared/.config/waybar-hypr/config:109:      "exec": "orgm-hypr waybar workspace status 8",
+config/shared/.config/waybar-hypr/config:114:      "on-click": "orgm-hypr waybar workspace click 8"
+config/shared/.config/waybar-hypr/config:117:      "exec": "orgm-hypr waybar workspace status 9",
+config/shared/.config/waybar-hypr/config:122:      "on-click": "orgm-hypr waybar workspace click 9"
+config/shared/.config/waybar-hypr/config:125:      "exec": "orgm-hypr waybar workspace status 10",
+config/shared/.config/waybar-hypr/config:130:      "on-click": "orgm-hypr waybar workspace click 10"
+config/shared/.config/waybar-hypr/config:137:      "exec": "orgm-hypr waybar date --format day-month-es",
+config/shared/.config/waybar-hypr/config:140:      "on-click": "orgm-hypr calendar toggle-ui"
+config/shared/.config/waybar-hypr/config:143:      "exec": "orgm-hypr waybar date --format time-ampm",
+config/shared/.config/waybar-hypr/config:146:      "on-click": "orgm-hypr calendar toggle-ui"
+config/shared/.config/waybar-hypr/config:149:      "exec": "orgm-hypr waybar date --format date-es",
+config/shared/.config/waybar-hypr/config:152:      "on-click": "orgm-hypr calendar toggle-ui"
+config/shared/.config/waybar-hypr/config:158:      "on-click": "orgm-hypr wallpaper pick"
+config/shared/.config/waybar-hypr/config:195:      "exec": "orgm-hypr waybar swap-usage",
+config/shared/.config/waybar-hypr/config:289:      "on-click": "orgm-hypr menu power"
+config/shared/.config/waybar-hypr/config:319:      "on-click": "orgm-hypr menu main"
+config/shared/.config/waybar-hypr/config:373:      "exec": "orgm-hypr waybar swap-usage",
+config/shared/.config/waybar-hypr/config:418:      "on-click": "orgm-hypr helper toggle",
+config/shared/.config/waybar-hypr/config:419:      "on-click-right": "orgm-hypr helper init"
+config/shared/.config/waybar/config:39:    "custom/day_month": { "exec": "orgm-hypr waybar date --format day-month-es", "interval": 60, "tooltip": false },
+config/shared/.config/waybar/config:40:    "custom/time": { "exec": "orgm-hypr waybar date --format time-ampm", "interval": 1, "tooltip": false },
+config/shared/.config/waybar/config:41:    "custom/date": { "exec": "orgm-hypr waybar date --format date-es", "interval": 60, "tooltip": false },
+config/shared/.config/waybar/config:66:    "custom/swap": { "exec": "orgm-hypr waybar swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+config/shared/.config/waybar/config:130:    "custom/swap": { "exec": "orgm-hypr waybar swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+config/shared/.config/waybar-hypr/style.css:109:  background-image: url("orgm-hypr.png");
+config/shared/.config/rofi/hypr-menu.rasi:1:// Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
+config/shared/.config/hypr/lua/README.md:28:- Long-running or interactive work should call `orgm-hypr` subcommands when
+config/shared/.config/hypr/lua/README.md:30:- Repo-owned Hyprland callers should prefer canonical `orgm-hypr <function>`
+config/shared/.config/hypr/lua/README.md:31:  or `orgm-hypr <function> <subfunction>` command names.
+config/shared/.config/sway/config:69:exec sh -lc 'orgm-hypr waybar watch ~/.config/waybar'
+config/shared/.config/hypr/lua/autostart.lua:2:  "orgm-hypr session import-env",
+config/shared/.config/hypr/lua/autostart.lua:4:  "orgm-hypr waybar watch ~/.config/waybar-hypr",
+config/shared/.config/hypr/lua/autostart.lua:10:  "orgm-hypr wallpaper restore",
+config/shared/.config/hypr/lua/autostart.lua:11:  "orgm-hypr wallpaper picker-daemon",
+config/shared/.config/hypr/lua/autostart.lua:12:  "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar && orgm-hypr calendar daemon >>${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar/helper.log 2>&1'",
+config/shared/.config/hypr/lua/autostart.lua:14:  "orgm-hypr session start-containers arch windows",
+config/shared/.config/hypr/lua/autostart.lua:15:  "orgm-hypr session start-discord",
+config/shared/.config/hypr/lua/autostart.lua:19:  "sh -lc 'orgm-hypr dock start 2>/tmp/hypr-nwg-dock.log'",
+config/shared/.config/hypr/lua/programs.lua:4:  menu = "orgm-hypr launcher apps",
+config/shared/.config/hypr/lua/programs.lua:5:  control_center = "orgm-hypr menu main",
+config/shared/.config/hypr/lua/programs.lua:6:  smart_run = "orgm-hypr smart-run run",
+config/shared/.config/hypr/lua/programs.lua:7:  lock = "orgm-hypr session lock --force",
+config/shared/.config/hypr/lua/programs.lua:8:  power_menu = "orgm-hypr menu power",
+config/shared/.config/hypr/lua/programs.lua:11:  piPrompt = "orgm-hypr pi prompt --launcher fuzzel",
+config/shared/.config/swaync/config.json:27:      "exec": "orgm-hypr notify focus-app",
+config/shared/.config/hypr/lua/keybindings.lua:15:  hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("orgm-hypr helper toggle"))
+config/shared/.config/hypr/lua/keybindings.lua:20:  hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("orgm-hypr obsidian open-or-focus"))
+config/shared/.config/hypr/lua/keybindings.lua:21:  hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("orgm-hypr zen open-new-window"))
+config/shared/.config/hypr/lua/keybindings.lua:22:  hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(program("smart_run", "orgm-hypr smart-run run")))
+config/shared/.config/hypr/lua/keybindings.lua:29:  hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(program("control_center", "orgm-hypr menu main")))
+config/shared/.config/hypr/lua/keybindings.lua:31:  hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("orgm-hypr file open --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:32:  hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("orgm-hypr file open-dir --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:33:  hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("orgm-hypr file open-terminal --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:34:  hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("orgm-hypr windows switch --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:35:  hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("orgm-hypr tmux arch --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:36:  hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("orgm-hypr calc fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:37:  hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("orgm-hypr ssh host --launcher fuzzel"))
+config/shared/.config/hypr/lua/keybindings.lua:44:  hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("orgm-hypr wallpaper pick"))
+config/shared/.config/hypr/lua/keybindings.lua:45:  hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("orgm-hypr calendar toggle-ui"))
+config/shared/.config/hypr/lua/keybindings.lua:56:  hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("orgm-hypr osd volume up"), { repeating = true, locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:57:  hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("orgm-hypr osd volume down"), { repeating = true, locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:58:  hl.bind("XF86AudioMute", hl.dsp.exec_cmd("orgm-hypr osd volume mute"), { locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:59:  hl.bind("CTRL + XF86AudioRaiseVolume", hl.dsp.exec_cmd("orgm-hypr osd mic up"), { repeating = true })
+config/shared/.config/hypr/lua/keybindings.lua:60:  hl.bind("CTRL + XF86AudioLowerVolume", hl.dsp.exec_cmd("orgm-hypr osd mic down"), { repeating = true })
+config/shared/.config/hypr/lua/keybindings.lua:61:  hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("orgm-hypr osd mic mute"), { locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:66:  hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("orgm-hypr osd brightness up"), { repeating = true, locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:67:  hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("orgm-hypr osd brightness down"), { repeating = true, locked = true })
+config/shared/.config/hypr/lua/keybindings.lua:77:  hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("orgm-hypr windows kill-menu"))
+config/shared/.config/hypr/scripts/walker-window-switch.sh:2:exec orgm-hypr windows switch --launcher walker "$@"
+config/shared/.config/hypr/scripts/pi-walker-prompt.sh:2:exec orgm-hypr pi prompt --launcher walker "$@"
+config/shared/.config/fish/functions/orgm-hypr.fish:1:function orgm-hypr --description 'Run orgm-hypr on host from distrobox, or directly on host'
+config/shared/.config/fish/functions/orgm-hypr.fish:4:            command distrobox-host-exec orgm-hypr $argv
+config/shared/.config/fish/functions/orgm-hypr.fish:9:    command orgm-hypr $argv
+config/shared/.config/quickshell/wallpaper-picker/shell.qml:13:  property var data: ({ mode: "combined", initialMode: "static", script: "orgm-hypr", scriptArgs: ["wallpaper"], tabs: ({ static: { title: "Normal wallpapers", applyCommand: "set-static", randomCommand: "random-static", current: "", items: [] }, video: { title: "Live wallpapers", applyCommand: "set-video", randomCommand: "random-video", current: "", items: [] } }) })
+config/shared/.config/quickshell/wallpaper-picker/shell.qml:95:        parsed.script = parsed.script || "orgm-hypr"
+config/shared/.config/quickshell/wallpaper-picker/shell.qml:119:    const script = root.data.script || "orgm-hypr"
+config/shared/.config/quickshell/wallpaper-picker/shell.qml:120:    const scriptArgs = root.data.scriptArgs || (script === "orgm-hypr" ? ["wallpaper"] : [])
+config/shared/.config/quickshell/calendar/shell.qml:53:    actionProc.command = ["orgm-hypr", "calendar"].concat(args)

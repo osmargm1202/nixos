@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-24T12:00:00Z",
+  "lastSuccessAt": "2026-05-24T12:00:00Z",
+  "timezone": "America/Santo_Domingo",
+  "source": { "backend": "gcalcli", "command": "fixture", "rangeStart": "2026-05-01", "rangeEnd": "2026-05-31" },
+  "status": { "state": "empty", "stale": false, "message": "No events returned", "lastErrorAt": null, "lastErrorKind": null, "lastError": null },
+  "events": []
+}

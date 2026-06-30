@@ -1,0 +1,320 @@
+{
+  "project": {
+    "id": "demo-san-perdidas",
+    "mode": "nuevo",
+    "titulo_memoria": "Memoria de Cálculo - Sistema Hidráulico y Pérdidas",
+    "nombre": "Proyecto Demo - Sistema Hidráulico",
+    "cliente": "Cliente Demo",
+    "empresa": "ORGM",
+    "ubicacion": "República Dominicana",
+    "fecha": "auto",
+    "tipo_proyecto": "Sistema de distribución hidráulica de agua potable",
+    "normativa": "MOPC / R-008 - República Dominicana",
+    "ingeniero": {
+      "nombre": "Ing. Osmar García",
+      "codia": "CODIA-36467",
+      "firma_url": ""
+    },
+    "logos": []
+  },
+  "criterios": {
+    "metodo_perdidas": "hazen_williams_le",
+    "metodo_accesorios": "longitud_equivalente",
+    "nodo_cisterna": null,
+    "nodos_criticos": [],
+    "material_default": "ppr",
+    "coeficiente_hazen_default": 150,
+    "velocidad_min_m_s": 0.6,
+    "velocidad_max_m_s": 2.5,
+    "presion_critica_default_mca": 5.7,
+    "presion_punto_critico_fluxometro_mca": 10.55,
+    "usar_presion_fluxometro": false,
+    "factor_simultaneidad_global": 1.0,
+    "mostrar_simultaneidad": true,
+    "margen_seguridad_tipo": "porcentaje_sobre_adt_sin_margen",
+    "margen_seguridad_porcentaje": 0.15,
+    "margen_seguridad_mca": null,
+    "margen_seleccion_bomba_porcentaje": 0.2,
+    "criterio_presion_minima": "tabla_4",
+    "presion_aparato_tanque_mca": 7.03,
+    "verificar_presion_maxima": true,
+    "presion_maxima_red_mca": 42.2,
+    "eficiencia_bomba": 0.65,
+    "peso_especifico_agua_n_m3": 9800,
+    "diametro_modo": "hidraulico",
+    "ppr_serie_default": "SDR11",
+    "diametros_mm": [
+      13,
+      19,
+      20,
+      25,
+      32,
+      40,
+      50,
+      63,
+      75,
+      90,
+      110,
+      125,
+      150
+    ],
+    "bombas_hp": [
+      0.5,
+      0.75,
+      1,
+      1.5,
+      2,
+      3,
+      4,
+      5,
+      7.5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      40,
+      50
+    ],
+    "evaluar_npsh": false,
+    "nodo_bomba": null,
+    "presion_atmosferica_mca": 10.33,
+    "presion_vapor_mca": 0.32,
+    "npsh_requerido_m": null,
+    "margen_npsh_m": 1.0,
+    "npsh": {
+      "nivel_minimo_agua_m": null,
+      "eje_bomba_m": null,
+      "temperatura_agua_c": 25,
+      "altitud_m": 0,
+      "presion_tanque_mca": 0,
+      "npsh_requerido_m": null,
+      "margen_npsh_m": 1.0
+    },
+    "catalogos": {
+      "materiales_hazen": {
+        "ppr": 150,
+        "pvc": 150,
+        "cpvc": 150,
+        "hdpe": 150,
+        "cobre": 140,
+        "acero_galv": 120,
+        "hierro_fundido": 100
+      },
+      "accesorios_le_d": {
+        "codo_45": 16,
+        "codo_90": 30,
+        "tee_paso": 20,
+        "tee_derivacion": 60,
+        "valvula_compuerta_abierta": 8,
+        "valvula_check": 100,
+        "valvula_bola_abierta": 3,
+        "entrada_tanque": 25,
+        "salida_tanque": 20,
+        "filtro_succion": 100,
+        "valvula_pie": 150,
+        "colador": 75,
+        "check_succion": 100
+      },
+      "accesorios_k": {
+        "codo_90": {
+          "k": 0.9,
+          "descripcion": "Codo 90° estándar"
+        },
+        "tee_paso": {
+          "k": 0.6,
+          "descripcion": "Tee en paso"
+        },
+        "tee_derivacion": {
+          "k": 1.8,
+          "descripcion": "Tee en derivación"
+        },
+        "valvula_check": {
+          "k": 2.0,
+          "descripcion": "Válvula check"
+        },
+        "valvula_compuerta_abierta": {
+          "k": 0.2,
+          "descripcion": "Válvula de compuerta abierta"
+        },
+        "filtro_succion": {
+          "k": 2.0,
+          "descripcion": "Filtro de succión limpio"
+        },
+        "valvula_pie": {
+          "k": 2.5,
+          "descripcion": "Válvula de pie con colador"
+        },
+        "colador": {
+          "k": 1.5,
+          "descripcion": "Colador de succión limpio"
+        },
+        "check_succion": {
+          "k": 2.0,
+          "descripcion": "Check en succión"
+        }
+      },
+      "ppr_sdr": {
+        "SDR11": {
+          "20": 16.36,
+          "25": 20.45,
+          "32": 26.18,
+          "40": 32.72,
+          "50": 40.9,
+          "63": 51.54
+        }
+      }
+    }
+  },
+  "tanque_hidroneumatico": {
+    "calcular": false,
+    "metodo": "referencia_mdc",
+    "factor_extraccion": 0.38,
+    "catalogo": [
+      {"modelo": "WM-6 / WM0300", "gal": 300, "litros": 1136}
+    ]
+  },
+  "nodos": [
+    {
+      "id": "CIS",
+      "nombre": "Cisterna principal",
+      "tipo": "cisterna",
+      "elevacion_m": -2.0
+    },
+    {
+      "id": "D01",
+      "nombre": "Distribución principal / nodo bomba ejemplo",
+      "tipo": "distribucion",
+      "elevacion_m": 0.0
+    },
+    {
+      "id": "PC01",
+      "nombre": "Punto crítico estándar",
+      "tipo": "critico",
+      "elevacion_m": 8.0,
+      "presion_min_mca": null,
+      "demanda_lps": 1.0,
+      "factor_simultaneidad": 0.85
+    },
+    {
+      "id": "FL01",
+      "nombre": "Fluxómetro opcional",
+      "tipo": "critico",
+      "tipo_equipo": "fluxometro",
+      "elevacion_m": 6.0,
+      "demanda_lps": 0.4
+    },
+    {
+      "id": "EQ01",
+      "nombre": "Equipo especial con presión propia",
+      "tipo": "critico",
+      "equipo_presion_mca": 22.0,
+      "elevacion_m": 4.0,
+      "demanda_lps": 0.2
+    }
+  ],
+  "tramos": [
+    {
+      "id": "T01",
+      "nombre": "Succión cisterna a distribución",
+      "desde": "CIS",
+      "hasta": "D01",
+      "longitud_m": 40,
+      "material": "ppr",
+      "tipo_tramo": "succion",
+      "diametro_mm": 40,
+      "ppr_serie": "SDR11",
+      "accesorios": {
+        "filtro_succion": 1,
+        "valvula_pie": 1,
+        "codo_90": 2,
+        "colador": 1,
+        "check_succion": 1
+      }
+    },
+    {
+      "id": "T02",
+      "nombre": "Ramal al punto crítico",
+      "desde": "D01",
+      "hasta": "PC01",
+      "longitud_m": 12,
+      "material": "ppr",
+      "diametro_mm": null,
+      "accesorios": [
+        {
+          "tipo": "codo_90",
+          "cantidad": 2
+        },
+        {
+          "tipo": "tee_derivacion",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "nombre": "Ramal a fluxómetro",
+      "desde": "D01",
+      "hasta": "FL01",
+      "longitud_m": 10,
+      "material": "ppr",
+      "diametro_mm": null,
+      "accesorios": [
+        {
+          "tipo": "codo_90",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "nombre": "Ramal a equipo especial",
+      "desde": "D01",
+      "hasta": "EQ01",
+      "longitud_m": 8,
+      "material": "ppr",
+      "diametro_mm": null,
+      "accesorios": [
+        {
+          "tipo": "equipo_especial",
+          "cantidad": 1,
+          "perdida_m": 2.5
+        }
+      ]
+    }
+  ],
+  "catalogo_bombas": [
+    {
+      "capacidad": "0.5 HP",
+      "hp": 0.5
+    },
+    {
+      "capacidad": "0.75 HP",
+      "hp": 0.75
+    },
+    {
+      "capacidad": "1 HP",
+      "hp": 1.0
+    },
+    {
+      "capacidad": "1.5 HP",
+      "hp": 1.5
+    },
+    {
+      "capacidad": "2 HP",
+      "hp": 2.0
+    },
+    {
+      "capacidad": "3 HP",
+      "hp": 3.0
+    },
+    {
+      "capacidad": "5 HP",
+      "hp": 5.0
+    },
+    {
+      "capacidad": "10 HP",
+      "hp": 10.0
+    }
+  ]
+}

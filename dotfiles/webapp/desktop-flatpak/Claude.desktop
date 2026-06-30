@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Claude
+Comment=Claude Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://claude.ai" --new-window
+Icon=Claude
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-claude.ai__-Default
+StartupNotify=true
+Terminal=false
+
+

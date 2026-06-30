@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Cloud Console
+Comment=Google Cloud Console Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://console.cloud.google.com" --new-window
+Icon=Google Cloud Console
+Categories=Utility;
+NoDisplay=false
+StartupWMClass=chrome-console.cloud.google.com__-Default
+StartupNotify=true
+Terminal=false
+
+

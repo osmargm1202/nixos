@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Rollbar
+Comment=Rollbar Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://app.rollbar.com/" --new-window
+Icon=Rollbar
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-app.rollbar.com__-Default
+StartupNotify=true
+Terminal=false
+
+

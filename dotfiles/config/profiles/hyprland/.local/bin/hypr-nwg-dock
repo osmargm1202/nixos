@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v nwg-dock-hyprland >/dev/null 2>&1; then
+  notify-send "Hyprland dock" "nwg-dock-hyprland is not installed yet" 2>/dev/null || true
+  exit 1
+fi
+
+# Auto-detect active Hyprland instance — fixes stale HYPRLAND_INSTANCE_SIGNATURE.
+# hyprctl exits 0 even on dead sockets, so check socket file existence instead.
+_resolve_hyprland_instance() {
+  local hypr_dir="/run/user/$(id -u)/hypr"
+  [ -d "$hypr_dir" ] || return 0
+  _sig_alive() {
+    local n
+    n=$(HYPRLAND_INSTANCE_SIGNATURE="$1" hyprctl -j monitors 2>/dev/null | jq 'length' 2>/dev/null)
+    [ "${n:-0}" -gt 0 ]
+  }
+  [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && _sig_alive "$HYPRLAND_INSTANCE_SIGNATURE" && return 0
+  local sig
+  for sig in $(ls -t "$hypr_dir" 2>/dev/null); do
+    if _sig_alive "$sig"; then
+      export HYPRLAND_INSTANCE_SIGNATURE="$sig"
+      return 0
+    fi
+  done
+}
+_resolve_hyprland_instance
+
+restart=0
+if [ "${1:-}" = "reload" ] || [ "${1:-}" = "restart" ]; then
+  restart=1
+  pkill -f '^nwg-dock-hyprland( |$)' 2>/dev/null || true
+  sleep 0.2
+fi
+
+if pgrep -f '^nwg-dock-hyprland( |$)' >/dev/null 2>&1; then
+  [ "$restart" -eq 1 ] && exit 0
+  exit 0
+fi
+
+dock_output_args=()
+if command -v hypr-display-targets >/dev/null 2>&1; then
+  dock_env="$(hypr-display-targets dock-env 2>/dev/null || true)"
+  if [ -n "${dock_env:-}" ]; then
+    read -r dock_flag dock_output <<<"$dock_env"
+    if [ "$dock_flag" = "-o" ] && [ -n "${dock_output:-}" ]; then
+      dock_output_args=(-o "$dock_output")
+    fi
+  fi
+fi
+
+exec nwg-dock-hyprland \
+  "${dock_output_args[@]}" \
+  -d \
+  -hd 0 \
+  -hl top \
+  -p bottom \
+  -a center \
+  -i "${HYPR_NWG_DOCK_ICON_SIZE:-56}" \
+  -g "Claude Code URL Handler" \
+  -mb "${HYPR_NWG_DOCK_MARGIN_BOTTOM:-0}" \
+  -lp "${HYPR_NWG_DOCK_LAUNCHER_POSITION:-start}" \
+  -ico "${HYPR_NWG_DOCK_LAUNCHER_ICON:-$HOME/.local/share/icons/nixos.svg}" \
+  -c "${HYPR_NWG_DOCK_LAUNCHER_COMMAND:-$HOME/.local/bin/hypr-app-launcher}"

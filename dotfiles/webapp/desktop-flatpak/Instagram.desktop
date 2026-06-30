@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Instagram
+Comment=Instagram Web Application
+Exec=flatpak run org.chromium.Chromium --app="https://instagram.com" --new-window
+Icon=Instagram
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=chrome-instagram.com__-Default
+StartupNotify=true
+Terminal=false
+
+

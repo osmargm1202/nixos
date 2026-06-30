@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+interval="${HYPR_BATTERY_ALERT_INTERVAL:-60}"
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/state"
+
+battery_path() {
+  for path in /sys/class/power_supply/BAT*; do
+    [ -d "$path" ] || continue
+    [ -r "$path/capacity" ] || continue
+    [ -r "$path/status" ] || continue
+    printf '%s\n' "$path"
+    return 0
+  done
+  return 1
+}
+
+read_snapshot() {
+  local path
+  path="$(battery_path)" || return 1
+  capacity="$(cat "$path/capacity")"
+  status="$(cat "$path/status")"
+}
+
+sent_already() {
+  local threshold="$1"
+  [ -f "$state_file" ] || return 1
+  grep -qx "$threshold" "$state_file"
+}
+
+mark_sent() {
+  local threshold="$1"
+  mkdir -p "$(dirname "$state_file")"
+  touch "$state_file"
+  sent_already "$threshold" || printf '%s\n' "$threshold" >>"$state_file"
+}
+
+reset_sent() {
+  rm -f "$state_file"
+}
+
+notify_alert() {
+  local urgency="$1"
+  local title="$2"
+  local body="$3"
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a orgm-battery -u "$urgency" \
+    -h string:x-canonical-private-synchronous:orgm-battery \
+    "$title" "$body" >/dev/null 2>&1 || true
+}
+
+check_once() {
+  capacity="${HYPR_BATTERY_ALERT_CAPACITY:-${capacity:-}}"
+  status="${HYPR_BATTERY_ALERT_STATUS:-${status:-}}"
+
+  if [ -z "${capacity:-}" ] || [ -z "${status:-}" ]; then
+    read_snapshot || return 0
+  fi
+
+  case "$status" in
+    Discharging) ;;
+    *) reset_sent; return 0 ;;
+  esac
+
+  if [ "$capacity" -le 10 ]; then
+    if ! sent_already 10; then
+      notify_alert critical "✖ BATERÍA CRÍTICA" "🔴 󰂃 ${capacity}%"
+      mark_sent 10
+    fi
+  elif [ "$capacity" -le 20 ]; then
+    if ! sent_already 20; then
+      notify_alert normal "Batería baja" "󰁻 ${capacity}%"
+      mark_sent 20
+    fi
+  elif [ "$capacity" -le 50 ]; then
+    if ! sent_already 50; then
+      notify_alert normal "Batería al 50%" "󰁾 ${capacity}%"
+      mark_sent 50
+    fi
+  fi
+}
+
+case "${1:-daemon}" in
+  once)
+    check_once
+    ;;
+  daemon)
+    while :; do
+      check_once || true
+      sleep "$interval"
+    done
+    ;;
+  reset)
+    reset_sent
+    ;;
+  *)
+    echo "Usage: ${0##*/} [once|daemon|reset]" >&2
+    exit 2
+    ;;
+esac

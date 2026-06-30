@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Shared Rofi helpers for Hyprland menus. Source this file; do not execute it.
+
+hypr_rofi_load_env() {
+  HYPR_ROFI_THEME="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+  HYPR_ROFI_ENV="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+
+  if [ -f "$HYPR_ROFI_ENV" ]; then
+    # shellcheck disable=SC1090
+    . "$HYPR_ROFI_ENV"
+  fi
+
+  HYPR_ROFI_SCALE="${HYPR_ROFI_SCALE:-1.00}"
+  HYPR_ROFI_WIDTH="${HYPR_ROFI_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 600 * s }')}"
+  HYPR_ROFI_LINES="${HYPR_ROFI_LINES:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 13 * s }')}"
+  HYPR_ROFI_FONT_SIZE="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 12 * s }')}"
+  HYPR_ROFI_ICON_SIZE="${HYPR_ROFI_ICON_SIZE:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 32 * s }')}"
+  HYPR_ROFI_ELEMENT_PADDING="${HYPR_ROFI_ELEMENT_PADDING:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 8 * s }')}"
+}
+
+hypr_rofi_need() {
+  if ! command -v rofi >/dev/null 2>&1; then
+    notify-send "Rofi" "rofi no está instalado." 2>/dev/null || true
+    return 1
+  fi
+}
+
+hypr_rofi_theme_str() {
+  local lines="${1:-$HYPR_ROFI_LINES}"
+  local width="${2:-$HYPR_ROFI_WIDTH}"
+  cat <<EOF
+configuration {
+  font: "JetBrainsMono Nerd Font ${HYPR_ROFI_FONT_SIZE}";
+  hover-select: true;
+  me-select-entry: "";
+  me-accept-entry: "MousePrimary";
+}
+window { width: ${width}; }
+listview { lines: ${lines}; }
+element { padding: ${HYPR_ROFI_ELEMENT_PADDING}; cursor: pointer; }
+element-icon { size: ${HYPR_ROFI_ICON_SIZE}; }
+EOF
+}
+
+hypr_rofi_dmenu() {
+  local prompt="$1"
+  local lines="${2:-$HYPR_ROFI_LINES}"
+  local width="${3:-$HYPR_ROFI_WIDTH}"
+  hypr_rofi_need || return 1
+  rofi -dmenu -i -show-icons -p "$prompt" -theme "$HYPR_ROFI_THEME" -theme-str "$(hypr_rofi_theme_str "$lines" "$width")"
+}
+
+hypr_rofi_markup_dmenu() {
+  local prompt="$1"
+  local lines="${2:-$HYPR_ROFI_LINES}"
+  local width="${3:-$HYPR_ROFI_WIDTH}"
+  hypr_rofi_need || return 1
+  rofi -dmenu -i -markup-rows -p "$prompt" -theme "$HYPR_ROFI_THEME" -theme-str "$(hypr_rofi_theme_str "$lines" "$width")"
+}
+
+hypr_rofi_drun() {
+  hypr_rofi_need || return 1
+  rofi -show drun -theme "$HYPR_ROFI_THEME" -theme-str "$(hypr_rofi_theme_str)"
+}
+
+hypr_rofi_load_env

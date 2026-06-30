@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+dir="$state_home/orgm-helper"
+cache="$dir/keybindings.json"
+request="$dir/keyhelper-request.json"
+shell_path="$config_home/quickshell/modules/keyhelper/shell.qml"
+mkdir -p "$dir"
+
+write_cache() {
+  cat >"$cache" <<'JSON'
+{
+  "schemaVersion": 1,
+  "defaultCategory": "launchers",
+  "categories": [
+    {"id":"launchers","title":"Launchers","icon":"󰀻","entries":[
+      {"key":"Win+/","description":"Atajos Hyprland","command":"hypr-keyhelper toggle"},
+      {"key":"Win+Enter","description":"Terminal","command":"kitty"},
+      {"key":"Win+Space","description":"Apps con rofi","command":"hypr-app-launcher"},
+      {"key":"Win+Alt+Space","description":"Menú principal","command":"hypr-main-menu"},
+      {"key":"Win+A","description":"Buscar / smart run","command":"hypr-smart-run"},
+      {"key":"Win+E","description":"Explorador de archivos","command":"nautilus"}
+    ]},
+    {"id":"tools","title":"Tools","icon":"󰒓","entries":[
+      {"key":"Win+M","description":"Buscar archivo","command":"hypr-rofi-open-file"},
+      {"key":"Win+Esc","description":"Cambiar ventana","command":"hypr-rofi-window"},
+      {"key":"Win+C","description":"Calculadora","command":"hypr-rofi-calc"},
+      {"key":"Win+D","description":"SSH host","command":"hypr-rofi-ssh-host"}
+    ]},
+    {"id":"system","title":"Sistema","icon":"󰒓","entries":[
+      {"key":"Win+P","description":"Pantallas","command":"nwg-displays"},
+      {"key":"Win+Shift+W","description":"Elegir wallpaper","command":"orgm-wallpaper pick"},
+      {"key":"Win+Shift+C","description":"Calendario","command":"orgm-hypr calendar toggle-ui"},
+      {"key":"Win+Alt+E","description":"Power menu","command":"hypr-power-menu"}
+    ]}
+  ]
+}
+JSON
+}
+
+show_request() {
+  cat >"$request" <<JSON
+{"action":"toggle","cachePath":"$cache","nonce":"$(date +%s%N)"}
+JSON
+}
+
+case "${1:-toggle}" in
+  init)
+    write_cache
+    ;;
+  toggle)
+    write_cache
+    show_request
+    if ! pgrep -f 'quickshell.*keyhelper[/]shell[.]qml' >/dev/null 2>&1; then
+      ORGM_HELPER_CACHE="$cache" ORGM_HELPER_REQUEST="$request" ORGM_HELPER_SHOW=1 quickshell -p "$shell_path" >/tmp/orgm-keyhelper.log 2>&1 &
+    fi
+    ;;
+  *)
+    echo "usage: hypr-keyhelper [init|toggle]" >&2
+    exit 2
+    ;;
+esac

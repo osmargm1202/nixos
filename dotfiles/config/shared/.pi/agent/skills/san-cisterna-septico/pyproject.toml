@@ -1,0 +1,6 @@
+[project]
+name = "san-cisterna-septico"
+version = "0.2.0"
+description = "Memoria de cálculo sanitaria para cisternas y cámaras sépticas."
+requires-python = ">=3.10"
+dependencies = []

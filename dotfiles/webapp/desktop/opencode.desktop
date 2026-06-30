@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OpenCode
+Comment=OpenCode Web Application
+Exec=chromium --app="http://127.0.0.1:39839/" --new-window
+Icon=opencode
+Categories=Development;
+NoDisplay=false
+StartupWMClass=OpenCode
+StartupNotify=true
+Terminal=false

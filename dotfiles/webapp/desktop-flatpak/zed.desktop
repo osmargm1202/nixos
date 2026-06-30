@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Zed
+Comment=Zed - AI-powered code editor
+Exec=distrobox-enter arch -- zeditor
+Icon=zed.png
+Type=Application
+Categories=Development;TextEditor;IDE;
+StartupWMClass=dev.zed.Zed
+Terminal=false
+MimeType=text/plain;text/css;text/html;text/javascript;application/json;application/xml;

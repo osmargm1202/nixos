@@ -1,0 +1,74 @@
+{
+  "proyecto": {
+    "id": "almacen-demo",
+    "nombre": "ALMACÉN DEMO",
+    "cliente": "CLIENTE SRL",
+    "empresa": "ORGM",
+    "ingeniero": "Ing. Osmar Garcia",
+    "codia": "CODIA-36467",
+    "codigo": "36467",
+    "ubicacion": "Santo Domingo, República Dominicana",
+    "fecha": "2026-04-28",
+    "logo_cliente_url": "https://r2.or-gm.com/bohc.png",
+    "logo_empresa_url": "https://r2.or-gm.com/orgm.png",
+    "tipo_proyecto": "Sistema de abastecimiento, cisterna y séptico"
+  },
+  "workspace": {
+    "usar_pwd": true,
+    "modo": "new",
+    "project_id": "almacen-demo"
+  },
+  "criterios": {
+    "coeficiente_variacion_diaria_kd": 1.5,
+    "coeficiente_variacion_horaria_kh": 2.0,
+    "dias_reserva_cisterna": 2,
+    "base_calculo_cisterna": "qmd",
+    "factor_aguas_residuales": 0.8,
+    "tiempo_retencion_septico_dias": 1.5,
+    "lodos_l_hab_anio": 40,
+    "periodo_limpieza_anios": 2,
+    "metodo_septico": "max_formula_tabla_r008"
+  },
+  "suministros": [
+    {
+      "id": "ALM-01",
+      "nombre": "Almacén y oficinas",
+      "tipo": "almacen",
+      "consumos": [
+        {"concepto": "Habitantes", "cantidad": 1, "unidad": "hab", "dotacion_key": "viviendas_250"},
+        {"concepto": "Población flotante", "cantidad": 20, "unidad": "personas", "dotacion_key": "poblacion_flotante_90"},
+        {"concepto": "Parqueo", "cantidad": 272, "unidad": "m2", "dotacion_key": "parqueo_cubierto"},
+        {"concepto": "Oficinas administrativas", "cantidad": 20, "unidad": "personas", "dotacion_key": "oficinas_persona_50"},
+        {"concepto": "Comedor cafetería", "cantidad": 4, "unidad": "puestos", "dotacion_key": "comedor_puesto_15"},
+        {"concepto": "Área carga y descarga", "cantidad": 20, "unidad": "personas", "dotacion_key": "oficinas_persona_50"},
+        {"concepto": "Limpieza y mantenimiento", "cantidad": 1110, "unidad": "m2", "dotacion_key": "limpieza_mantenimiento_1_25"}
+      ]
+    }
+  ],
+  "cisternas": [
+    {
+      "id": "CIS-01",
+      "nombre": "Cisterna general",
+      "suministros": ["ALM-01"],
+      "dias_reserva": 2,
+      "base_calculo": "qmax_diario",
+      "factor_seguridad": 1.0,
+      "tiempo_llenado_h": 8,
+      "dimensiones_propuestas": {"largo_m": 3.70, "ancho_m": 2.50, "alto_m": 2.00}
+    }
+  ],
+  "septicos": [
+    {
+      "id": "SEP-01",
+      "nombre": "Séptico general",
+      "suministros": ["ALM-01"],
+      "metodo": "formula",
+      "factor_aguas_residuales": 0.8,
+      "dotacion_aguas_residuales_l_hab_dia": 200,
+      "tiempo_retencion_dias": 1.5,
+      "lodos_l_hab_anio": 40,
+      "periodo_limpieza_anios": 2,
+      "dimensiones_propuestas": {"largo_m": 4.80, "ancho_m": 1.70, "profundidad_util_m": 1.60}
+    }
+  ]
+}

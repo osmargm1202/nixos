@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+power_width="${HYPR_ROFI_POWER_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 360 * s }')}"
+choice="$(printf '%s\n' '󰌾 Lock' '󰤄 Suspend' '󰒲 Hibernate' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' | hypr_rofi_dmenu 'Power' 7 "$power_width" || true)"
+
+case "$choice" in
+  *'Lock') exec "$HOME/.local/bin/hypr-lock" ;;
+  *'Suspend') systemctl suspend ;;
+  *'Hibernate') systemctl hibernate ;;
+  *'Logout') hyprctl dispatch exit ;;
+  *'Reboot') systemctl reboot ;;
+  *'Power off') systemctl poweroff ;;
+  *) exec hypr-main-menu ;;
+esac

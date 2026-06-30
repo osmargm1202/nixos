@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' \
+  '󰔎 Theme chooser' \
+  '󰔎 Theme toggle' \
+  '󰸉 Wallpaper next' \
+  '󰸉 Wallpaper picker' \
+  '󰹹 Transitions' \
+  '󰌌 Keyboard layout next' \
+  '󰍛 Free memory' \
+  '󰒓 Hypr config editor' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
+
+case "$choice" in
+  *'Theme chooser') exec hypr-theme-chooser ;;
+  *'Theme toggle') exec waybar-theme-toggle toggle ;;
+  *'Wallpaper next') exec orgm-wallpaper random-static ;;
+  *'Wallpaper picker') exec orgm-wallpaper pick ;;
+  *'Transitions') exec hypr-transition-menu ;;
+  *'Keyboard layout next') exec kbd-layout-next ;;
+  *'Free memory') exec memclean-dev clean ;;
+  *'Hypr config editor') exec hypr-config-editor ;;
+  *) exec hypr-main-menu ;;
+esac

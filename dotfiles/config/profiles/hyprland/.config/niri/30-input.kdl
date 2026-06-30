@@ -1,0 +1,29 @@
+input {
+    keyboard {
+        track-layout "global"
+        repeat-delay 350
+        repeat-rate 30
+        numlock
+        xkb {
+            layout "us,latam"
+            variant "altgr-intl,"
+            options "grp:ctrl_space_toggle"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+        accel-profile "flat"
+        scroll-method "two-finger"
+    }
+
+    mouse {
+        accel-profile "adaptive"
+        accel-speed -0.1
+        middle-emulation
+    }
+
+    warp-mouse-to-focus
+    focus-follows-mouse max-scroll-amount="50%"
+}

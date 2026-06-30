@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ORGMOS
+Comment=Sistema de configuración ORGMOS
+Exec=orgmos menu
+Terminal=true
+Type=Application
+Icon=orgmos
+Categories=System;Utility;
+Keywords=config;setup;system;

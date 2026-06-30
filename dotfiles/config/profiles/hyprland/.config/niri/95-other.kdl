@@ -1,0 +1,9 @@
+hotkey-overlay {
+    skip-at-startup
+}
+
+screenshot-path "~/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+switch-events {
+    lid-close { spawn "dms" "ipc" "call" "lock" "lock"; }
+}

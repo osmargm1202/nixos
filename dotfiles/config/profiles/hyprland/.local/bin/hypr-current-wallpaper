@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+state_dir="${XDG_RUNTIME_DIR:-/tmp}"
+current_file="${state_dir}/hypr-random-wallpaper.current"
+out="${state_dir}/hypr-current-wallpaper"
+fallback="${HOME}/.config/wallpapers/xnm1-background.png"
+
+wallpaper=""
+if [ -f "$current_file" ]; then
+  wallpaper=$(cat "$current_file" 2>/dev/null || true)
+fi
+
+if [ -z "$wallpaper" ] || [ ! -f "$wallpaper" ]; then
+  wallpaper="$fallback"
+fi
+
+ln -sfn "$wallpaper" "$out"
+printf '%s\n' "$out"

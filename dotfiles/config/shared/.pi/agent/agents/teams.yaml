@@ -1,0 +1,29 @@
+pi-orchestrator:
+  - ext-expert
+  - theme-expert
+  - skill-expert
+  - config-expert
+  - tui-expert
+  - prompt-expert
+  - agent-expert
+  - cli-expert
+  - keybinding-expert
+  - coding-expert
+
+sdd-orchestrator:
+  - sdd-init
+  - sdd-onboard
+  - sdd-explore
+  - sdd-proposal
+  - sdd-spec
+  - sdd-design
+  - sdd-tasks
+  - sdd-apply
+  - sdd-verify
+  - sdd-archive
+  - tdd-brainstormer
+  - tdd-planner
+  - tdd-implementer
+  - tdd-reviewer
+  - tdd-verifier
+  - tdd-worktree-manager

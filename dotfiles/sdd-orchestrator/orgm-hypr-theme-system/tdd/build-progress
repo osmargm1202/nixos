@@ -1,0 +1,30 @@
+{
+  "path": "sdd-orchestrator/orgm-hypr-theme-system/tdd/build-progress",
+  "group": "Final review blocker: backup/rollback metadata for non-cache writes",
+  "status": "completed_with_nix_unavailable",
+  "files_changed": [
+    "cmd/orgm-hypr/main.go",
+    "cmd/orgm-hypr/main_test.go",
+    "internal/theme/manifest.go",
+    "internal/theme/writer.go",
+    "internal/theme/writer_test.go",
+    "sdd-orchestrator/orgm-hypr-theme-system/tdd/build-progress"
+  ],
+  "tdd_applicability_reason": null,
+  "verification": [
+    "Safety net: go test ./internal/theme ./cmd/orgm-hypr passed before backup/manifest edits",
+    "RED writer: go test ./internal/theme -run 'TestAtomicWriter' failed with assignment mismatch because AtomicWriter.Write did not return WriteResult",
+    "RED apply manifest: go test ./cmd/orgm-hypr -run 'TestRunWithIOThemeApply' failed because last-apply.json was missing after non-dry apply",
+    "GREEN writer: go test ./internal/theme -run 'TestAtomicWriter' passed after WriteResult and deterministic .bak backup support",
+    "GREEN apply manifest: go test ./cmd/orgm-hypr -run 'TestRunWithIOThemeApply' passed after saving last-apply manifest with backup paths",
+    "Focused final: go test ./internal/theme ./cmd/orgm-hypr passed",
+    "Required final: go test ./... passed",
+    "Required final: bash tests/orgm-hypr.bats.sh passed",
+    "Required final: nix flake check failed: /bin/bash: line 1: nix: command not found"
+  ],
+  "risks": [
+    "Backup path is deterministic <path>.bak and overwritten on subsequent applies; no rollback command implemented yet by scope",
+    "Manifest writes are generated JSON under XDG state and guarded by generated marker on later overwrites",
+    "Repository had pre-existing unrelated modified live config and hypr-lua migration files; this task did not edit them"
+  ]
+}

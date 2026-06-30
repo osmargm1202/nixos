@@ -1,0 +1,36 @@
+{
+  "project": {
+    "id": "demo-san-perdidas",
+    "mode": "nuevo",
+    "titulo_memoria": "Memoria de Cálculo - Sistema Hidráulico y Pérdidas",
+    "nombre": "Demo San Pérdidas",
+    "cliente": "Cliente Demo",
+    "empresa": "ORGM",
+    "ubicacion": "República Dominicana",
+    "fecha": "auto",
+    "tipo_proyecto": "Sistema de distribución hidráulica",
+    "normativa": "MOPC / R-008 - República Dominicana",
+    "ingeniero": {
+      "nombre": "Ing. Osmar García",
+      "codia": "CODIA-36467"
+    },
+    "logos": []
+  },
+  "criterios": {
+    "material_default": "ppr",
+    "presion_critica_default_mca": 5.7,
+    "margen_seguridad_porcentaje": 0.15,
+    "eficiencia_bomba": 0.65
+  },
+  "nodos": [
+    {"id": "CIS", "nombre": "Cisterna", "tipo": "cisterna", "elevacion_m": -2.0},
+    {"id": "D01", "nombre": "Distribución", "tipo": "distribucion", "elevacion_m": 0.0},
+    {"id": "P01", "nombre": "Baños nivel superior", "tipo": "critico", "elevacion_m": 8.0, "demanda_lps": 0.8},
+    {"id": "P02", "nombre": "Servicio exterior", "tipo": "critico", "elevacion_m": 1.0, "demanda_lps": 0.4}
+  ],
+  "tramos": [
+    {"id": "T01", "nombre": "Cisterna a distribución", "desde": "CIS", "hasta": "D01", "longitud_m": 35, "material": "ppr", "accesorios": {"codo_90": 2, "valvula_check": 1}},
+    {"id": "T02", "nombre": "Ramal nivel superior", "desde": "D01", "hasta": "P01", "longitud_m": 16, "material": "ppr", "accesorios": {"codo_90": 4, "tee_derivacion": 1}},
+    {"id": "T03", "nombre": "Ramal exterior", "desde": "D01", "hasta": "P02", "longitud_m": 12, "material": "ppr", "accesorios": {"codo_90": 2, "valvula_bola": 1}}
+  ]
+}

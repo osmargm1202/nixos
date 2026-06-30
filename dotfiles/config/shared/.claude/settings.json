@@ -1,0 +1,143 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /tmp && rm -rf _impresion 2>/dev/null; gh repo clone osmargm1202/impresion /tmp/_impresion -- --depth 1 2>&1 | tail -1; echo \"=== impresion tree ===\" && find /tmp/_impresion -maxdepth 2 -not -path '*/.git/*' | head -60)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/home/osmarg/.claude/hooks/context-mode-cache-heal.mjs\""
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "claude-mem@thedotmack": true,
+    "context-mode@context-mode": true,
+    "superpowers@superpowers-dev": true,
+    "caveman@caveman": true,
+    "claude-awareness@osmargm1202": true,
+    "claude-notify@osmargm1202-notify": true,
+    "claude-banner@osmargm1202-banner": true,
+    "warp@claude-code-warp": true
+  },
+  "extraKnownMarketplaces": {
+    "superpowers-dev": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    },
+    "osmargm1202": {
+      "source": {
+        "source": "github",
+        "repo": "osmargm1202/claude-awareness"
+      }
+    },
+    "osmargm1202-notify": {
+      "source": {
+        "source": "github",
+        "repo": "osmargm1202/claude-notify"
+      }
+    },
+    "osmargm1202-banner": {
+      "source": {
+        "source": "github",
+        "repo": "osmargm1202/claude-banner"
+      }
+    },
+    "claude-code-warp": {
+      "source": {
+        "source": "github",
+        "repo": "warpdotdev/claude-code-warp"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "preferredNotifChannel": "kitty",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": false,
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--executablePath",
+        "/run/current-system/sw/bin/chromium",
+        "--chrome-arg=--no-sandbox",
+        "--chrome-arg=--disable-setuid-sandbox"
+      ]
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "obsidian-mcp",
+        "/home/osmarg/Nextcloud/Documentos/obsidian-vault"
+      ]
+    },
+    "engram": {
+      "command": "/home/osmarg/go/bin/engram",
+      "args": [
+        "mcp",
+        "--tools=agent"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp"
+    },
+    "stitch": {
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${STITCH_API_KEY}"
+      }
+    },
+    "context-mode": {
+      "command": "context-mode"
+    },
+    "codebase-memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "codebase-memory-mcp@latest"
+      ]
+    },
+    "insforge": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@insforge/mcp@latest"
+      ],
+      "env": {
+        "API_KEY": "${INSFORGE_API_KEY}",
+        "API_BASE_URL": "${INSFORGE_API_BASE_URL}"
+      }
+    }
+  },
+  "tui": "fullscreen"
+}

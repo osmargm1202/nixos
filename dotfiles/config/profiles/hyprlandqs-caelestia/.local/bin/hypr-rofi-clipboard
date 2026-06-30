@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+selection="$(cliphist list | hypr_rofi_dmenu 'Clipboard' "${HYPR_ROFI_CLIPBOARD_LINES:-16}" "${HYPR_ROFI_CLIPBOARD_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+[ -n "${selection:-}" ] || exit 0
+printf '%s' "$selection" | cliphist decode | wl-copy

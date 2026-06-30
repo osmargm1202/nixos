@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Best-effort SwayNC action helper. Never fail loudly: SwayNC shows script
+# failure notifications when this exits non-zero.
+set -uo pipefail
+
+normalize() {
+  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/\.desktop$//; s/[^a-z0-9]+/[^a-z0-9]*/g; s/^\[\^a-z0-9\]\*//; s/\[\^a-z0-9\]\*$//'
+}
+
+is_positive_integer() {
+  [[ "${1:-}" =~ ^[1-9][0-9]*$ ]]
+}
+
+clients_json() {
+  command -v hyprctl >/dev/null 2>&1 || return 1
+  hyprctl -j clients 2>/dev/null || return 1
+}
+
+focus_pid() {
+  local pid="$1"
+  local clients address
+  clients="$(clients_json)" || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+  address="$(printf '%s' "$clients" | jq -r --arg pid "$pid" '
+    .[]
+    | select((.pid // "" | tostring) == $pid)
+    | .address
+  ' 2>/dev/null | head -n 1)" || return 1
+  [ -n "$address" ] || return 1
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1 || return 1
+}
+
+focus_match() {
+  local pattern="$1"
+  [ -n "$pattern" ] || return 1
+  local clients address
+  clients="$(clients_json)" || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+  address="$(printf '%s' "$clients" | jq -r --arg p "$pattern" '
+    .[]
+    | select((.class // "" | ascii_downcase | test($p))
+        or (.initialClass // "" | ascii_downcase | test($p))
+        or (.title // "" | ascii_downcase | test($p))
+        or (.initialTitle // "" | ascii_downcase | test($p)))
+    | .address
+  ' 2>/dev/null | head -n 1)" || return 1
+  [ -n "$address" ] || return 1
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1 || return 1
+}
+
+main() {
+  local focus_pid_hint value pattern
+  for focus_pid_hint in "${SWAYNC_PID:-}" "${SWAYNC_APP_PID:-}" "${SWAYNC_HINT_PID:-}" "${SWAYNC_HINT_PI_FOCUS_PID:-}" "${SWAYNC_NOTIFICATION_PID:-}"; do
+    if is_positive_integer "$focus_pid_hint" && focus_pid "$focus_pid_hint"; then
+      return 0
+    fi
+  done
+
+  for value in "${SWAYNC_DESKTOP_ENTRY:-}" "${SWAYNC_APP_NAME:-}" "${SWAYNC_SUMMARY:-}"; do
+    pattern="$(normalize "$value")"
+    if focus_match "$pattern"; then
+      return 0
+    fi
+  done
+
+  return 0
+}
+
+main "$@" || true
+exit 0

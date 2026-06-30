@@ -1,0 +1,102 @@
+#!/bin/sh
+set -eu
+
+PATH="$HOME/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH"
+export PATH
+
+config_dir="${1:-${WAYBAR_CONFIG_DIR:-$HOME/.config/waybar}}"
+profile="$(basename "$config_dir")"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/waybar"
+log="$state_dir/${profile}.log"
+pid_file="$state_dir/${profile}.watch.pid"
+lock_dir="$state_dir/${profile}.watch.lock"
+mkdir -p "$state_dir"
+
+kill_pid() {
+  old="$1"
+  if [ -n "${old:-}" ] && [ "$old" != "$$" ] && kill -0 "$old" 2>/dev/null; then
+    kill "$old" 2>/dev/null || true
+    sleep 0.2
+    kill -KILL "$old" 2>/dev/null || true
+  fi
+}
+
+# One watcher only per profile. Lock prevents orgm-themes + existing watcher races.
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  old="$(cat "$pid_file" 2>/dev/null || true)"
+  if [ -n "${old:-}" ] && kill -0 "$old" 2>/dev/null; then
+    kill_pid "$old"
+  fi
+  rm -rf "$lock_dir"
+  mkdir "$lock_dir" 2>/dev/null || exit 0
+fi
+
+# From this point onward, always remove the lock on normal termination.
+trap 'rm -f "$pid_file"; rm -rf "$lock_dir"' INT TERM EXIT
+
+printf '%s\n' "$$" >"$pid_file"
+
+# If an older race left another watcher for this profile alive, stop it now.
+# Keep this after pid_file ownership so the surviving process is explicit.
+for pid in $(pgrep -f "(^|/| )waybar-watch ${config_dir}$" 2>/dev/null || true); do
+  [ "$pid" = "$$" ] && continue
+  kill_pid "$pid"
+done
+
+waybar_pid=""
+generated_config="${config_dir}/config"
+
+cleanup() {
+  [ -n "${waybar_pid:-}" ] && kill "$waybar_pid" 2>/dev/null || true
+  rm -f "$pid_file"
+  rm -rf "$lock_dir"
+}
+trap cleanup INT TERM EXIT
+
+signature() {
+  find "$config_dir" -maxdepth 1 -type f \( -name 'config' -o -name '*.css' \) \
+    -exec stat -c '%n:%Y:%s' {} \; 2>/dev/null | sort | cksum | awk '{print $1 ":" $2}'
+}
+
+stop_waybar() {
+  if [ -n "${waybar_pid:-}" ] && kill -0 "$waybar_pid" 2>/dev/null; then
+    kill "$waybar_pid" 2>/dev/null || true
+    sleep 0.2
+    kill -KILL "$waybar_pid" 2>/dev/null || true
+    wait "$waybar_pid" 2>/dev/null || true
+  fi
+  waybar_pid=""
+}
+
+start_waybar() {
+  generated_config="${config_dir}/config"
+  if command -v hypr-display-targets >/dev/null 2>&1; then
+    generated_config="$(hypr-display-targets waybar-config "$config_dir" 2>>"$log" || printf '%s/config\n' "$config_dir")"
+  fi
+  waybar -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
+  waybar_pid="$!"
+}
+
+# Replace any orphan Waybar from older watcher versions before taking ownership.
+pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
+current_sig="$(signature)"
+start_waybar
+
+while true; do
+  sleep 1
+
+  if ! kill -0 "$waybar_pid" 2>/dev/null; then
+    wait "$waybar_pid" 2>/dev/null || true
+    current_sig="$(signature)"
+    start_waybar
+    continue
+  fi
+
+  next_sig="$(signature)"
+  if [ "$next_sig" != "$current_sig" ]; then
+    printf '%s waybar config changed; restarting\n' "$(date -Is)" >>"$log"
+    stop_waybar
+    current_sig="$next_sig"
+    start_waybar
+  fi
+done

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+step="3"
+limit="150"
+
+case "${1:-}" in
+  up) pamixer --allow-boost --set-limit "$limit" -i "$step" ;;
+  down) pamixer --allow-boost --set-limit "$limit" -d "$step" ;;
+  mute) pamixer -t ;;
+  *) echo "usage: volume-osd up|down|mute" >&2; exit 2 ;;
+esac
+
+vol=$(pamixer --get-volume 2>/dev/null || echo 0)
+muted=$(pamixer --get-mute 2>/dev/null || echo false)
+if [ "$muted" = "true" ]; then
+  icon="󰝟"
+  title="Volume muted"
+else
+  icon=""
+  title="Volume ${vol}%"
+fi
+
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send -a "osd-volume" \
+    -h string:x-canonical-private-synchronous:osd-volume \
+    -h int:value:"$vol" \
+    -t 900 \
+    "$icon $title" "" >/dev/null 2>&1 || true
+fi

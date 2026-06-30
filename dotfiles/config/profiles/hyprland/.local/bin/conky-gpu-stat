@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Returns nvidia-smi query or fallback. Handles NVML errors silently.
+FIELD=${1:-util}
+
+_smi() {
+    # Filter: only pass through if output is a valid number or known format
+    local out
+    out=$(nvidia-smi "$@" 2>&1)
+    # If output looks like an error (contains letters mixed with the value), return empty
+    echo "$out"
+}
+
+case "$FIELD" in
+    util)
+        val=$(_smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | tr -d ' \n')
+        if echo "$val" | grep -qE '^[0-9]+$'; then echo "$val"; else echo 0; fi
+        ;;
+    temp)
+        val=$(_smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | tr -d ' \n')
+        if echo "$val" | grep -qE '^[0-9]+$'; then echo "$val"; else echo "N/A"; fi
+        ;;
+    clock)
+        val=$(_smi --query-gpu=clocks.current.graphics --format=csv,noheader | tr -d '\n')
+        if echo "$val" | grep -qE '^[0-9]'; then echo "$val"; else echo "N/A"; fi
+        ;;
+    *)  echo 0 ;;
+esac

@@ -1,0 +1,14 @@
+{
+  "defaultPrimaryAgent": "sdd-orchestrator",
+  "flows": {
+    "pi": "normal",
+    "pi-orchestrator": "pi-orchestrator",
+    "sdd-orchestrator": "sdd-tdd"
+  },
+  "git": {
+    "autoInit": true,
+    "autoCommitCompletedWork": false,
+    "preferWorktreesForLongWork": true,
+    "ignoreRoots": ["~", "~/Nextcloud", "~/Nextcloud/**"]
+  }
+}

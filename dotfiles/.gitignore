@@ -1,0 +1,51 @@
+.worktrees/
+.gstack/
+/result
+config/codex/.codex/
+
+# Python bytecode/cache artifacts
+__pycache__/
+*.py[cod]
+
+# plaintext secrets; only *.age encrypted files belong in git
+config/**/.config/fish/private-env.fish
+config/**/.config/fish/private-env.fish.tmp
+config/**/.config/fish/*.decrypted
+
+# Legacy stow/runtime leftovers kept local after chezmoi migration.
+config/dms/
+config/pi/
+config/tmux/.tmux/plugins/
+
+# Local Pi runtime state
+.atl/
+.pi-lens/
+.pi-cache/
+
+# Superpowers visual brainstorming artifacts
+.superpowers/
+
+# orgm-themes compiled binary (built from cmd/orgm-themes)
+orgm-themes
+
+# orgm-themes generated files — managed at runtime, not in git
+config/shared/.config/waybar/orgm-current.css
+config/shared/.config/waybar-hypr/orgm-current.css
+config/shared/.config/nwg-dock-hyprland/orgm-current.css
+config/shared/.config/swaync/orgm-current.css
+config/shared/.config/rofi/orgm-current.rasi
+config/shared/.config/kitty/current-theme.conf
+config/shared/.config/gtk-4.0/gtk.css
+config/shared/.config/gtk-4.0/gtk-dark.css
+config/shared/.config/gtk-4.0/settings.ini
+config/shared/.config/qt5ct/qt5ct.conf
+config/shared/.config/qt5ct/colors/orgm-current.colors
+config/shared/.config/qt6ct/qt6ct.conf
+config/shared/.config/qt6ct/colors/orgm-current.colors
+config/shared/.config/Kvantum/kvantum.kvconfig
+config/shared/.config/kdeglobals
+config/shared/.config/hypr/scheme/current.conf
+config/shared/.config/quickshell/theme/theme.json
+config/shared/.config/quickshell/theme/current.json
+config/shared/.config/orgm-hypr/display-targets.json
+config/shared/.config/Kvantum/catppuccin-macchiato-teal-standard#

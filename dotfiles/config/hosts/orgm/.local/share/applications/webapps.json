@@ -1,0 +1,178 @@
+[
+  {
+    "name": "Gmail",
+    "url": "https://gmail.com",
+    "description": "Gmail Web Application",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-27T00:14:21Z",
+    "icon": "Gmail.png"
+  },
+  {
+    "name": "Google AI Studio",
+    "url": "https://aistudio.google.com/",
+    "description": "Google AI Studio Web Application",
+    "categories": "Development;",
+    "created": "2025-09-27T00:23:41Z",
+    "icon": "Google AI Studio.png"
+  },
+  {
+    "name": "Google Cloud Console",
+    "url": "https://console.cloud.google.com",
+    "description": "Google Cloud Console Web Application",
+    "categories": "Utility;",
+    "created": "2025-09-26T23:34:22Z",
+    "icon": "Google Cloud Console.png"
+  },
+  {
+    "name": "Neon",
+    "url": "https://console.neon.tech/",
+    "description": "Neon Postgresql Database App",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-26T23:06:20Z",
+    "icon": "Neon.png"
+  },
+  {
+    "name": "Netflix",
+    "url": "https://netflix.com",
+    "description": "Netflix Web Application",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-26T23:17:39Z",
+    "icon": "Netflix.png"
+  },
+  {
+    "name": "Rollbar",
+    "url": "https://app.rollbar.com/",
+    "description": "Rollbar Web Application",
+    "categories": "Development;",
+    "created": "2025-09-26T23:55:28Z",
+    "icon": "Rollbar.png"
+  },
+  {
+    "name": "Whatsapp",
+    "url": "https://web.whatsapp.com/",
+    "description": "Whatsapp Web Application",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-27T00:13:17Z",
+    "icon": "Whatsapp.png"
+  },
+  {
+    "name": "Youtube",
+    "url": "https://youtube.com",
+    "description": "Youtube Web Application",
+    "categories": "AudioVideo;",
+    "created": "2025-09-27T01:55:21Z",
+    "icon": "Youtube.png"
+  },
+  {
+    "name": "Poki",
+    "url": "https://poki.com",
+    "description": "Poki Game App",
+    "categories": "Game;",
+    "created": "2025-09-27T05:41:20Z",
+    "icon": "Poki.png"
+  },
+  {
+    "name": "Excalid Draw Diagramas",
+    "url": "https://excalidraw.com/",
+    "description": "Excalid Draw Web App",
+    "categories": "Office;",
+    "created": "2025-09-27T06:05:12Z",
+    "icon": "Excalid Draw Diagramas.png"
+  },
+  {
+    "name": "Github",
+    "url": "https://github.com/osmargm1202",
+    "description": "osmargm1202 Gitub App",
+    "categories": "Development;",
+    "created": "2025-09-27T07:14:49Z",
+    "icon": "Github.png"
+  },
+  {
+    "name": "YoutubeKids",
+    "url": "https://youtubekids.com",
+    "description": "YoutubeKids Web Application",
+    "categories": "AudioVideo;",
+    "created": "2025-09-29T21:52:43Z",
+    "icon": "YoutubeKids.png"
+  },
+  {
+    "name": "Chatgpt",
+    "url": "https://chatgpt.com",
+    "description": "Chatgpt Web Application",
+    "categories": "Development;",
+    "created": "2025-09-29T22:50:35Z",
+    "icon": "Chatgpt.png"
+  },
+  {
+    "name": "ChatAI",
+    "url": "https://chat.or-gm.com",
+    "description": "ORGM OpenWebUI",
+    "categories": "Development;",
+    "created": "2025-09-29T22:51:05Z",
+    "icon": "WebUi.png"
+  },
+  {
+    "name": "Banco Popular",
+    "url": "https://ib.bpd.com.do",
+    "description": "Internet Banking Banco Popular",
+    "categories": "Office;",
+    "created": "2025-09-29T22:57:31Z",
+    "icon": "Banco Popular.png"
+  },
+  {
+    "name": "UberEats",
+    "url": "https://www.ubereats.com/",
+    "description": "UberEats Web Application",
+    "categories": "Utility;",
+    "created": "2025-09-29T23:16:44Z",
+    "icon": "UberEats.png"
+  },
+  {
+    "name": "Outlook - Hotmail",
+    "url": "https://outlook.office.com/",
+    "description": "Outlook - Hotmail Web Application",
+    "categories": "Office;",
+    "created": "2025-09-29T23:23:41Z",
+    "icon": "Outlook - Hotmail.png"
+  },
+  {
+    "name": "Microsoft Teams",
+    "url": "https://teams.microsoft.com/",
+    "description": "Microsoft Teams Web Application",
+    "categories": "Office;",
+    "created": "2025-09-29T23:42:06Z",
+    "icon": "Microsoft Teams.png"
+  },
+  {
+    "name": "Claude",
+    "url": "https://claude.ai",
+    "description": "Claude Web Application",
+    "categories": "Development;",
+    "created": "2025-09-30T00:50:41Z",
+    "icon": "Claude.png"
+  },
+  {
+    "name": "Facebook",
+    "url": "https://Facebook.com",
+    "description": "Facebook Web Application",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-30T23:29:34Z",
+    "icon": "Facebook.png"
+  },
+  {
+    "name": "Instagram",
+    "url": "https://instagram.com",
+    "description": "Instagram Web Application",
+    "categories": "Network;WebBrowser;",
+    "created": "2025-09-30T23:54:29Z",
+    "icon": "Instagram.png"
+  },
+  {
+    "name": "Windows Docker",
+    "url": "http://localhost:8006:",
+    "description": "Windows VM",
+    "categories": "Development;",
+    "created": "2025-10-08T10:39:44Z",
+    "icon": "Windows Docker.png"
+  }
+]

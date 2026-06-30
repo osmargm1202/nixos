@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Poki
+Comment=Poki Game App
+Exec=flatpak run org.chromium.Chromium --app="https://poki.com" --new-window
+Icon=Poki
+Categories=Game;
+NoDisplay=false
+StartupWMClass=chrome-poki.com__-Default
+StartupNotify=true
+Terminal=false
+
+

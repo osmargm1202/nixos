@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Windows Docker
+Comment=Windows VM
+Exec=chromium --app="http://127.0.0.1:8006" --new-window
+Icon=Windows
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-127.0.0.1_8006__-Default
+StartupNotify=true
+Terminal=false

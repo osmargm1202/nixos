@@ -1,0 +1,298 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+NAMES_DIR="$CONFIG_HOME/orgm-hypr"
+NAMES_FILE="$NAMES_DIR/usb-names.tsv"
+SYS_ROOT="${HYPR_SYS_ROOT:-/sys}"
+USB_SYS_ROOT="${HYPR_USB_SYS_ROOT:-$SYS_ROOT/bus/usb/devices}"
+REBIND_DELAY="${HYPR_USB_REBIND_DELAY:-2}"
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+lib="${HYPR_ROFI_LIB:-$script_dir/hypr-rofi-lib}"
+if [ -r "$lib" ]; then
+  # shellcheck disable=SC1090
+  . "$lib"
+fi
+
+rofi_menu() {
+  local prompt="$1"
+  local lines="${2:-10}"
+  if declare -F hypr_rofi_dmenu >/dev/null 2>&1; then
+    hypr_rofi_dmenu "$prompt" "$lines"
+  else
+    rofi -dmenu -i -p "$prompt"
+  fi
+}
+
+rofi_name_prompt() {
+  if [ "${ROFI_MODE:-}" = "nickname-device" ]; then
+    ROFI_MODE=nickname-value rofi_menu "Nombre USB" 1
+  else
+    rofi_menu "Nombre USB" 1
+  fi
+}
+
+json_escape() {
+  jq -Rs .
+}
+
+read_name() {
+  local key="$1"
+  [ -f "$NAMES_FILE" ] || return 0
+  awk -F '\t' -v key="$key" '$1 == key { print $2; found=1; exit } END { exit found ? 0 : 1 }' "$NAMES_FILE" 2>/dev/null || true
+}
+
+save_name() {
+  local key="$1"
+  local name="$2"
+  mkdir -p "$NAMES_DIR"
+  local tmp
+  tmp="$(mktemp "$NAMES_DIR/usb-names.XXXXXX")"
+  if [ -f "$NAMES_FILE" ]; then
+    awk -F '\t' -v key="$key" '$1 != key' "$NAMES_FILE" >"$tmp"
+  fi
+  printf '%s\t%s\n' "$key" "$name" >>"$tmp"
+  mv "$tmp" "$NAMES_FILE"
+}
+
+storage_tsv() {
+  command -v lsblk >/dev/null 2>&1 || return 0
+  lsblk -J -o NAME,PATH,RM,TRAN,HOTPLUG,FSTYPE,LABEL,MOUNTPOINTS,MOUNTPOINT,MODEL 2>/dev/null |
+    jq -r '
+      def walkdevs:
+        .[]? as $dev | $dev, (($dev.children // []) | walkdevs);
+      (.blockdevices // [] | walkdevs)
+      | select((.tran == "usb") or (.rm == true) or (.hotplug == true))
+      | select((.path // .name // "") != "")
+      | [
+          (.label // .model // .name // "USB"),
+          (.path // ("/dev/" + (.name // ""))),
+          ((.mountpoints // [(.mountpoint // "")] | map(select(. != null and . != "")) | first) // ""),
+          (.model // "")
+        ]
+      | @tsv
+    ' 2>/dev/null || true
+}
+
+storage_bus_ids() {
+  command -v lsblk >/dev/null 2>&1 || return 0
+  lsblk -J -o NAME,PATH,RM,TRAN,HOTPLUG,FSTYPE,LABEL,MOUNTPOINTS,MOUNTPOINT,MODEL 2>/dev/null |
+    jq -r '
+      def walkdevs:
+        .[]? as $dev | $dev, (($dev.children // []) | walkdevs);
+      (.blockdevices // [] | walkdevs)
+      | select((.tran == "usb") or (.rm == true) or (.hotplug == true))
+      | select((.name // "") != "")
+      | .name
+    ' 2>/dev/null |
+    while IFS= read -r name; do
+      [ -n "$name" ] || continue
+      readlink -f "$SYS_ROOT/block/$name/device" 2>/dev/null || true
+    done |
+    awk -F / '{ for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+-[0-9][0-9.]*$/) { print $i; next } }' |
+    awk '!seen[$0]++'
+}
+
+storage_words() {
+  storage_tsv | awk -F '\t' '{ if ($1 != "") print tolower($1); if ($4 != "") print tolower($4) }' | awk 'length($0) >= 3'
+}
+
+is_storage_like() {
+  local text="${1,,}"
+  local word
+  while IFS= read -r word; do
+    [ -n "$word" ] || continue
+    if [[ "$text" == *"$word"* ]]; then
+      return 0
+    fi
+  done < <(storage_words)
+  return 1
+}
+
+usb_devices_tsv() {
+  [ -d "$USB_SYS_ROOT" ] || return 0
+  local dev bus vendor product manufacturer product_name key label nick combined storage_buses
+  storage_buses="$(storage_bus_ids)"
+  for dev in "$USB_SYS_ROOT"/*; do
+    [ -d "$dev" ] || continue
+    bus="$(basename "$dev")"
+    [[ "$bus" == *-* ]] || continue
+    [ -r "$dev/idVendor" ] && [ -r "$dev/idProduct" ] || continue
+    vendor="$(tr -d '[:space:]' <"$dev/idVendor")"
+    product="$(tr -d '[:space:]' <"$dev/idProduct")"
+    manufacturer="$(cat "$dev/manufacturer" 2>/dev/null || true)"
+    product_name="$(cat "$dev/product" 2>/dev/null || true)"
+    key="${vendor}:${product}"
+    combined="$manufacturer $product_name $key"
+    if grep -Fxq "$bus" <<<"$storage_buses"; then
+      continue
+    fi
+    if is_storage_like "$combined"; then
+      continue
+    fi
+    nick="$(read_name "$key")"
+    label="${nick:-${product_name:-${manufacturer:-USB device}}}"
+    printf '%s\t%s\t%s\t%s\n' "$label" "$bus" "$key" "$combined"
+  done
+}
+
+selected_bus_from_row() {
+  grep -oE '[0-9]+-[0-9][0-9.]*' <<<"$1" | head -n1
+}
+
+selected_key_from_row() {
+  grep -oE '[[:xdigit:]]{4}:[[:xdigit:]]{4}' <<<"$1" | head -n1 | tr '[:upper:]' '[:lower:]'
+}
+
+storage_rows() {
+  storage_tsv | awk -F '\t' '{ printf "%s  %s  storage\n", $1, $2 }'
+}
+
+usb_rows() {
+  usb_devices_tsv | awk -F '\t' '{ printf "%s  %s  %s\n", $1, $2, $3 }'
+}
+
+is_headset_like() {
+  local text="${1,,}"
+  [[ "$text" =~ (headset|headphone|surround|audio|sound|speaker|microphone|hs55) ]]
+}
+
+headset_tsv() {
+  usb_devices_tsv | while IFS=$'\t' read -r label bus key combined; do
+    if is_headset_like "$label $combined"; then
+      printf '%s\t%s\t%s\t%s\n' "$label" "$bus" "$key" "$combined"
+    fi
+  done
+}
+
+headset_rows() {
+  headset_tsv | awk -F '\t' '{ printf "%s  %s  %s\n", $1, $2, $3 }'
+}
+
+status_cmd() {
+  local storage_count usb_count total text tooltip rows
+  storage_count="$(storage_tsv | awk 'END { print NR + 0 }')"
+  usb_count="$(usb_devices_tsv | awk 'END { print NR + 0 }')"
+  total=$((storage_count + usb_count))
+  if [ "$total" -gt 0 ]; then
+    text="󰕓 $total"
+  else
+    text=""
+  fi
+  rows="$( { storage_tsv | awk -F '\t' '{ printf "Storage: %s %s %s\n", $1, $2, $3 }'; usb_devices_tsv | awk -F '\t' '{ printf "USB: %s %s %s\n", $1, $2, $3 }'; } | sed '/^$/d' )"
+  tooltip="${rows:-Sin dispositivos USB visibles}"
+  jq -cn --arg text "$text" --arg tooltip "$tooltip" '{text:$text, tooltip:$tooltip, class:"usb"}'
+}
+
+open_cmd() {
+  local rows choice path mount output
+  rows="$(storage_tsv | awk -F '\t' '{ printf "%s  %s  storage\n", $1, $2 }')"
+  [ -n "$rows" ] || { notify-send "USB" "No hay almacenamiento USB visible" 2>/dev/null || true; return 0; }
+  choice="$(printf '%s\n' "$rows" | rofi_menu "USB storage" 10 || true)"
+  [ -n "$choice" ] || return 0
+  path="$(awk '{ for (i=1; i<=NF; i++) if ($i ~ /^\/dev\//) { print $i; exit } }' <<<"$choice")"
+  [ -n "$path" ] || return 1
+  mount="$(storage_tsv | awk -F '\t' -v path="$path" '$2 == path { print $3; exit }')"
+  if [ -z "$mount" ]; then
+    output="$(udisksctl mount -b "$path" 2>/dev/null || true)"
+    mount="$(awk -F ' at ' '/ at / { sub(/\.$/, "", $2); print $2; exit }' <<<"$output")"
+  fi
+  [ -n "$mount" ] || return 0
+  if command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$mount" >/dev/null 2>&1 &
+  elif command -v nautilus >/dev/null 2>&1; then
+    nautilus "$mount" >/dev/null 2>&1 &
+  fi
+}
+
+reconnect_bus() {
+  local bus="$1"
+  local print_only="${2:-0}"
+  local sys_base sudo_cmd
+  [ -n "$bus" ] || return 1
+  if [ "$print_only" -eq 1 ]; then
+    printf 'unbind %s\n' "$bus"
+    printf 'bind %s\n' "$bus"
+    return 0
+  fi
+  sys_base="${USB_SYS_ROOT%/devices}"
+  sudo_cmd="sudo"
+  if [ -x /run/wrappers/bin/sudo ]; then
+    sudo_cmd="/run/wrappers/bin/sudo"
+  fi
+  printf '%s\n' "$bus" | "$sudo_cmd" tee "$sys_base/drivers/usb/unbind" >/dev/null
+  sleep "$REBIND_DELAY"
+  printf '%s\n' "$bus" | "$sudo_cmd" tee "$sys_base/drivers/usb/bind" >/dev/null
+}
+
+reconnect_cmd() {
+  local print_only=0 choice bus
+  if [ "${1:-}" = "--print" ]; then
+    print_only=1
+    shift || true
+  fi
+  choice="$(usb_rows | rofi_menu "Reconnect USB" 10 || true)"
+  [ -n "$choice" ] || return 0
+  bus="$(selected_bus_from_row "$choice" || true)"
+  reconnect_bus "$bus" "$print_only"
+}
+
+reconnect_headset_cmd() {
+  local print_only=0 rows choice bus label count
+  if [ "${1:-}" = "--print" ]; then
+    print_only=1
+    shift || true
+  fi
+  rows="$(headset_rows)"
+  [ -n "$rows" ] || { notify-send "USB headset" "No encontré headset USB conectado" 2>/dev/null || true; return 0; }
+  count="$(printf '%s\n' "$rows" | awk 'END { print NR + 0 }')"
+  if [ "$count" -eq 1 ]; then
+    choice="$rows"
+  else
+    choice="$(printf '%s\n' "$rows" | rofi_menu "Reconnect headset" 10 || true)"
+  fi
+  [ -n "$choice" ] || return 0
+  bus="$(selected_bus_from_row "$choice" || true)"
+  label="$(awk -v bus="$bus" '{ out=""; for (i=1; i<=NF; i++) { if ($i == bus) break; out = out (out == "" ? "" : " ") $i } print out; exit }' <<<"$choice")"
+  reconnect_bus "$bus" "$print_only"
+  if [ "$print_only" -eq 1 ]; then
+    printf 'device %s\n' "$label"
+  else
+    notify-send "USB headset" "✅ Reconectado: $label" 2>/dev/null || true
+  fi
+}
+
+nickname_cmd() {
+  local print_only=0 choice bus key name
+  if [ "${1:-}" = "--print" ]; then
+    print_only=1
+    shift || true
+  fi
+  choice="$(usb_rows | rofi_menu "USB nickname" 10 || true)"
+  [ -n "$choice" ] || return 0
+  bus="$(selected_bus_from_row "$choice" || true)"
+  key="$(selected_key_from_row "$choice" || true)"
+  [ -n "$bus" ] || return 1
+  [ -n "$key" ] || return 1
+  name="$(rofi_name_prompt || true)"
+  [ -n "$name" ] || return 0
+  save_name "$key" "$name"
+  reconnect_bus "$bus" "$print_only"
+}
+
+usage() {
+  cat <<'EOF'
+usage: hypr-usb-menu status|open|reconnect [--print]|reconnect-headset [--print]|nickname [--print]
+EOF
+}
+
+case "${1:-status}" in
+  status) status_cmd ;;
+  open) open_cmd ;;
+  reconnect) shift; reconnect_cmd "$@" ;;
+  reconnect-headset) shift; reconnect_headset_cmd "$@" ;;
+  nickname) shift; nickname_cmd "$@" ;;
+  -h|--help|help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
+
+choice="$(printf '%s\n' \
+  '󰀻 Apps' \
+  '󰒓 Tools' \
+  '󰔎 Tweaks' \
+  '󰖩 Devices' \
+  '󰍛 Performance / Cleanup' \
+  '󰒓 System' \
+  '󰌌 Help' \
+  '󰐥 Power' \
+  '󰅖 Quit' | hypr_rofi_dmenu 'Hyprland' || true)"
+
+case "$choice" in
+  *'Apps') exec "$bin_dir/hypr-apps-menu" ;;
+  *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
+  *'Tweaks') exec "$bin_dir/hypr-tweaks-menu" ;;
+  *'Devices') exec "$bin_dir/hypr-devices-menu" ;;
+  *'Performance / Cleanup') exec "$bin_dir/hypr-performance-menu" ;;
+  *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Help') exec "$bin_dir/hypr-help-menu" ;;
+  *'Power') exec "$bin_dir/hypr-power-menu" ;;
+  *'Quit'|'') exit 0 ;;
+esac

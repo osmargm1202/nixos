@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Show 3 stats overlays above all windows for 4s. Background conky (layer-shell) stays untouched.
+# If already showing, kill all early.
+if pgrep -f "conky-top" >/dev/null 2>&1; then
+    pkill -f "conky-top" 2>/dev/null || true
+    exit 0
+fi
+conky -c ~/.config/conky/conky-top.conf -d
+conky -c ~/.config/conky/conky-top-clock.conf -d
+conky -c ~/.config/conky/conky-top-apps.conf -d
+(sleep 4 && pkill -f "conky-top" 2>/dev/null) &
+disown $!

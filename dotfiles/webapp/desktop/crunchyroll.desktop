@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=crunchyroll
+Comment=Crunchyroll webapp Anime
+Exec=chromium --app="https://www.crunchyroll.com/" --new-window
+Icon=crunchyroll.png
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=chrome-www.crunchyroll.com__-Default
+StartupNotify=true
+Terminal=false

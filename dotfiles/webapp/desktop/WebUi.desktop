@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WebUi
+Comment=ORGM OpenWebUI
+Exec=chromium --app="https://chat.or-gm.com" --new-window
+Icon=WebUi
+Categories=Development;
+NoDisplay=false
+StartupWMClass=chrome-chat.or-gm.com__-Default
+StartupNotify=true
+Terminal=false

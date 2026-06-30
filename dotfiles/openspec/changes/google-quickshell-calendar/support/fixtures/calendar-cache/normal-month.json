@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-24T12:00:00Z",
+  "lastSuccessAt": "2026-05-24T11:58:00Z",
+  "timezone": "America/Santo_Domingo",
+  "source": { "backend": "gcalcli", "command": "fixture", "rangeStart": "2026-05-01", "rangeEnd": "2026-05-31" },
+  "status": { "state": "ok", "stale": false, "message": "", "lastErrorAt": null, "lastErrorKind": null, "lastError": null },
+  "events": [
+    {
+      "id": "evt-review",
+      "stableKey": "primary:evt-review:2026-05-24T10:00:00-04:00",
+      "calendarId": "primary",
+      "calendarName": "Personal",
+      "title": "Project review",
+      "description": "",
+      "location": "",
+      "start": "2026-05-24T10:00:00-04:00",
+      "end": "2026-05-24T11:00:00-04:00",
+      "startDate": "2026-05-24",
+      "endDate": "2026-05-24",
+      "allDay": false,
+      "htmlLink": "https://calendar.google.com/event?eid=evt-review",
+      "status": "confirmed",
+      "attendeesCount": 2,
+      "reminderEligible": true
+    },
+    {
+      "id": "evt-payday",
+      "stableKey": "primary:evt-payday:2026-05-30",
+      "calendarId": "primary",
+      "calendarName": "Personal",
+      "title": "Payday",
+      "description": "",
+      "location": "",
+      "start": "2026-05-30T00:00:00+00:00",
+      "end": "2026-05-31T00:00:00+00:00",
+      "startDate": "2026-05-30",
+      "endDate": "2026-05-31",
+      "allDay": true,
+      "htmlLink": "",
+      "status": "confirmed",
+      "attendeesCount": 0,
+      "reminderEligible": false
+    }
+  ]
+}

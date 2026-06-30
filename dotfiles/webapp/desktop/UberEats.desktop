@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=UberEats
+Comment=UberEats Web Application
+Exec=chromium --app="https://www.ubereats.com/" --new-window
+Icon=UberEats
+Categories=Utility;
+NoDisplay=false
+StartupWMClass=chrome-www.ubereats.com__-Default
+StartupNotify=true
+Terminal=false

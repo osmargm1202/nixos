@@ -1,0 +1,318 @@
+@import "orgm-current.css";
+
+* {
+  border: none;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Symbols Nerd Font Mono", "Noto Color Emoji", sans-serif;
+  font-size: 17px;
+}
+
+window.top_bar#waybar,
+window.bottom_bar#waybar {
+  background: rgba(0, 0, 0, 0.80);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+#custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
+#custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
+  color: @text;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 6px;
+  margin: 4px 1px;
+  border-radius: 12px;
+}
+#custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
+#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay0; }
+#custom-ws_1.active, #custom-ws_2.active, #custom-ws_3.active, #custom-ws_4.active, #custom-ws_5.active,
+#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
+#mode, #submap {
+  background: transparent;
+  border-radius: 12px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+window.top_bar .modules-left,
+window.top_bar .modules-center,
+window.top_bar .modules-right,
+window.bottom_bar .modules-left,
+window.bottom_bar .modules-center,
+window.bottom_bar .modules-right,
+#group-workspaces,
+#workspaces,
+#group-system,
+#system {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  min-height: 32px;
+  padding: 4px 10px;
+}
+window.top_bar .modules-left {
+  padding-left: 14px;
+}
+window.top_bar .modules-center {
+  font-weight: bold;
+  color: @blue;
+  padding: 0 18px;
+}
+window.top_bar .modules-right {
+  padding-left: 24px;
+  padding-right: 0;
+}
+window.bottom_bar .modules-center {
+}
+window.bottom_bar .modules-left { margin-left: 0; }
+window.bottom_bar .modules-right { margin-right: 0; }
+#custom-day_month, #custom-date {
+  color: @text;
+  padding: 0 12px;
+  margin: 4px 4px;
+}
+#custom-time {
+  background: transparent;
+  border-radius: 12px;
+  color: @text;
+  font-size: 24px;
+  font-weight: 800;
+  padding: 0 10px;
+  margin: 0 4px;
+}
+#custom-menu {
+  background: transparent;
+  box-shadow: none;
+  color: @text;
+  font-size: 29px;
+  padding: 0;
+  min-width: 47px;
+  margin: 0;
+}
+#custom-orgm_logo {
+  background: transparent;
+  background-image: url("orgm-hypr.png");
+  background-repeat: no-repeat;
+  background-position: 7px center;
+  background-size: 22px auto;
+  min-height: 30px;
+  min-width: 78px;
+  padding: 0 0 0 34px;
+  margin: 0 2px 0 0;
+  font-size: 17px;
+  color: @text;
+  font-weight: bold;
+}
+#group-usage, #usage, #group-system, #system,
+#custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap,
+#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #custom-clipboard, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
+#group-usage, #usage {
+  background: transparent;
+}
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
+#cpu, #memory, #temperature, #disk, #custom-swap,
+#custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
+  background-color: transparent;
+}
+
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 18px;
+  color: transparent;
+  font-size: 0;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 3px;
+}
+#custom-theme_toggle { background-image: url("icons/theme_toggle.svg"); }
+#custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
+#custom-usb_devices { background-image: url("icons/usb_devices.svg"); }
+#custom-memclean { background-image: url("icons/memclean.svg"); }
+#custom-nixclean { background-image: url("icons/nixclean.svg"); }
+#custom-hardware_fetch { background-image: url("icons/hardware_fetch.svg"); }
+#custom-pi_status { background-image: url("icons/pi_status.svg"); }
+#custom-headset_reconnect { background-image: url("icons/headset_reconnect.svg"); }
+#custom-logout_menu { color: @red; font-weight: bold; padding: 0 12px 0 6px; }
+#custom-menu { color: @text; font-size: 18px; padding: 0 10px 0 6px; }
+#custom-wallpaper { color: @text; font-size: 18px; }
+#custom-clipboard {
+  color: @text;
+  font-size: 18px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 3px;
+}
+#custom-pi_status.ready, #custom-pi_status.outdated { color: transparent; }
+#bluetooth, #network {
+  padding: 0 6px;
+}
+#group-usage #custom-metric_cpu, #group-usage #custom-metric_gpu, #group-usage #custom-metric_ram, #group-usage #custom-metric_ssd, #group-usage #custom-metric_swap,
+#usage #custom-metric_cpu, #usage #custom-metric_gpu, #usage #custom-metric_ram, #usage #custom-metric_ssd, #usage #custom-metric_swap,
+#group-system #backlight, #group-system #pulseaudio, #group-system #pulseaudio-slider, #group-system #battery,
+#system #backlight, #system #pulseaudio, #system #pulseaudio-slider, #system #battery {
+  background: transparent;
+  padding: 0 5px;
+  margin: 0;
+}
+#group-system #battery, #system #battery { margin-right: 6px; }
+#group-usage #custom-metric_cpu,
+#group-usage #custom-metric_gpu,
+#group-usage #custom-metric_ram,
+#group-usage #custom-metric_ssd,
+#group-usage #custom-metric_swap,
+#usage #custom-metric_cpu,
+#usage #custom-metric_gpu,
+#usage #custom-metric_ram,
+#usage #custom-metric_ssd,
+#usage #custom-metric_swap {
+  margin: 0 4px;
+}
+.metric-widget {
+  background: @surface0;
+  border: none;
+  border-radius: 11px;
+  padding: 3px 7px;
+  margin: 0 4px;
+  min-width: 88px;
+  font-size: 15px;
+}
+#custom-metric_cpu,
+#custom-metric_gpu,
+#custom-metric_ram,
+#custom-metric_ssd,
+#custom-metric_swap {
+  color: @text;
+}
+#custom-metric_cpu.metric-high,
+#custom-metric_gpu.metric-high,
+#custom-metric_ram.metric-high,
+#custom-metric_ssd.metric-high,
+#custom-metric_swap.metric-high { color: @green; }
+#custom-metric_cpu.metric-warn,
+#custom-metric_gpu.metric-warn,
+#custom-metric_ram.metric-warn,
+#custom-metric_ssd.metric-warn,
+#custom-metric_swap.metric-warn { color: @yellow; }
+#custom-metric_cpu.metric-critical,
+#custom-metric_gpu.metric-critical,
+#custom-metric_ram.metric-critical,
+#custom-metric_ssd.metric-critical,
+#custom-metric_swap.metric-critical { color: @red; }
+#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
+#network.disconnected, #battery.critical, #temperature.critical { color: @red; }
+#privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
+#custom-user { color: @text; font-weight: bold; }
+#window { color: @text; }
+#idle_inhibitor.activated { color: @blue; }
+#mpris { color: @text; }
+#backlight { color: @text; }
+#pulseaudio { color: @blue; font-size: 20px; }
+#pulseaudio:not(.microphone).muted { color: @red; }
+#pulseaudio.microphone.source-muted { color: @red; }
+#pulseaudio-slider {
+  min-width: 88px;
+  padding: 0 6px;
+}
+#pulseaudio-slider slider {
+  min-height: 0;
+  min-width: 0;
+  opacity: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+#pulseaudio-slider trough {
+  min-height: 8px;
+  min-width: 82px;
+  border-radius: 999px;
+  background: linear-gradient(to right, @surface0 0%, @surface0 65.8%, @panel_border 65.8%, @panel_border 67.5%, @surface0 67.5%, @surface0 100%);
+}
+#pulseaudio-slider highlight {
+  min-height: 8px;
+  border-radius: 999px;
+  background: @blue;
+}
+#pulseaudio-slider.microphone.muted highlight,
+#pulseaudio-slider.microphone.source-muted highlight {
+  background: @red;
+}
+#battery { color: @text; }
+#keyboard-state label.capslock { color: @base; font-weight: bold; }
+#keyboard-state label.capslock.locked { color: @text; }
+#custom-kbd_layout { color: @text; font-weight: bold; }
+#idle_inhibitor, #custom-keybindings_help {
+  background: transparent;
+  border-radius: 12px;
+  min-height: 28px;
+  padding: 0 10px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+#custom-keybindings_help { color: @text; font-weight: bold; }
+#battery.charging { color: @blue; }
+#battery.plugged, #battery.full { color: @text; }
+#battery.warning { color: @text; }
+
+window.dock_bar#waybar {
+  background-color: @panel_bg;
+  border: none;
+  border-radius: 12px;
+}
+#custom-dock_windows,
+#custom-dock_kitty,
+#custom-dock_nautilus,
+#custom-dock_zen,
+#custom-dock_chromium,
+#custom-dock_obsidian,
+#custom-dock_software {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center 4px;
+  background-size: 38px auto;
+  color: transparent;
+  font-size: 1px;
+  font-weight: 900;
+  min-width: 62px;
+  min-height: 50px;
+  padding: 36px 0 0 0;
+  margin: 0;
+}
+#custom-dock_windows.running,
+#custom-dock_kitty.running,
+#custom-dock_nautilus.running,
+#custom-dock_zen.running,
+#custom-dock_chromium.running,
+#custom-dock_obsidian.running,
+#custom-dock_software.running {
+  color: @blue;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+#custom-dock_windows.active,
+#custom-dock_kitty.active,
+#custom-dock_nautilus.active,
+#custom-dock_zen.active,
+#custom-dock_chromium.active,
+#custom-dock_obsidian.active,
+#custom-dock_software.active {
+  color: @text;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+window.dock_bar#waybar {
+  border: 2px solid @panel_border;
+}
+
+#custom-memclean, #custom-hardware_fetch, #custom-conky_toggle { margin-left: 16px; }
+
+#custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
+#custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }
+#custom-dock_nautilus { background-image: url("/home/osmarg/.local/share/icons/nautilus.png"); }
+#custom-dock_zen { background-image: url("/home/osmarg/.local/share/icons/zen-browser.png"); }
+#custom-dock_chromium { background-image: url("/home/osmarg/.local/share/icons/chromium-browser.svg"); }
+#custom-dock_obsidian { background-image: url("/home/osmarg/.local/share/icons/obsidian.png"); }
+#custom-dock_software { background-image: url("/home/osmarg/.local/share/icons/software.png"); }

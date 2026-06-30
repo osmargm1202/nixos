@@ -1,0 +1,239 @@
+{
+  "_guia": {
+    "fuente": "La columna Fuente se llena solo con referencias R-008 detectadas. Si no hay referencia R-008, queda en blanco.",
+    "custom": "Para dotación custom usar cantidad + unidad + dotacion_l_unidad_dia + referencia. Dejar referencia en blanco si no pertenece a R-008.",
+    "clasificacion_septico": "Declarar uso_residencial=true para vivienda/villa/casa/apartamento/residencial; false para comercio, oficinas, restaurante, tienda, industria, etc. Si se omite, el engine infiere por tipo o viviendas>0.",
+    "tabla_34": "Recomendado: en cada suministro no residencial declarar tipo_edificacion_tabla_34 y cantidad_tabla_34 para comparar contra R-008 Tabla 34. También se acepta tabla_34_items o tabla_34_key en consumos. Si no se declara, el método contextual usa fórmula hidráulica+lodos."
+  },
+  "dotaciones_r008_tabla_2": [
+    "viviendas_250",
+    "viviendas_300",
+    "industria_empleado",
+    "deposito_empleado",
+    "comercio_seco_local_hasta_50",
+    "comercio_seco_m2_51_100",
+    "comercio_seco_m2_mayor_100",
+    "oficinas_m2",
+    "oficinas_publicas_empleado",
+    "oficinas_publicas_visitante",
+    "centro_educativo_externo_estudiante",
+    "centro_educativo_semi_interno_estudiante",
+    "centro_educativo_interno_estudiante",
+    "centro_educativo_personal_no_residente",
+    "centro_educativo_personal_residente",
+    "hotel_cama",
+    "motel_cama",
+    "pension_cama",
+    "restaurante_local_hasta_40",
+    "restaurante_m2_41_100",
+    "restaurante_m2_mayor_100",
+    "cafeteria_local_hasta_30",
+    "cafeteria_m2_31_60",
+    "cafeteria_m2_61_100",
+    "cafeteria_m2_mayor_100",
+    "mercado_m2",
+    "hospital_cama",
+    "consultorio",
+    "clinica_dental",
+    "lavanderia_agua_kg",
+    "lavanderia_seco_kg",
+    "lavado_auto_automatico",
+    "lavado_auto_no_automatico",
+    "estacion_gasolina_bomba",
+    "parqueo_cubierto",
+    "auditorio_asiento",
+    "discoteca_m2",
+    "circo_espectador",
+    "estadio_espectador",
+    "areas_verdes",
+    "piscina_recirc",
+    "piscina_sin_recirc",
+    "vestidores_piscina"
+  ],
+  "dotaciones_custom_frecuentes_sin_r008": [
+    "poblacion_flotante_90",
+    "oficinas_persona_50",
+    "comedor_puesto_15",
+    "limpieza_mantenimiento_1_25"
+  ],
+  "septico_tabla_34_keys": [
+    "bares_cliente",
+    "campamento_empleado",
+    "clinica_medico_persona",
+    "clinica_administrativo_persona",
+    "clinica_paciente_persona",
+    "escuela_aula_40_estudiantes",
+    "guarderia_persona",
+    "hospital_cama",
+    "hotel_habitacion",
+    "motel_habitacion",
+    "iglesia_persona",
+    "lavadero_carro_servicio",
+    "drenaje_garaje",
+    "lavanderia_auto_servicio_maquina",
+    "asilo_cama",
+    "parque_duchas_banos_persona",
+    "parque_banos_persona",
+    "restaurante_banos_cocina_asiento",
+    "restaurante_lavaplatos_triturador_asiento",
+    "restaurante_cocina_sin_lavaplatos_asiento",
+    "restaurante_solo_banos_asiento",
+    "restaurante_24h_banos_cocina_asiento",
+    "restaurante_24h_lavaplatos_triturador_asiento",
+    "restaurante_comida_rapida_asiento",
+    "salon_reuniones_persona",
+    "salon_baile_persona",
+    "salon_belleza_estacion",
+    "salon_banquetes_cocina_comida",
+    "salon_banquetes_cocina_banos_comida"
+  ],
+  "project": {
+    "id": "demo-r008-contextual",
+    "mode": "nuevo",
+    "titulo_memoria": "Memoria de Cálculo - Cisterna y Sistema Séptico",
+    "nombre": "Proyecto Demo R-008 Contextual",
+    "cliente": "Cliente Demo",
+    "empresa": "ORGM",
+    "ubicacion": "República Dominicana",
+    "fecha": "auto",
+    "tipo_proyecto": "Residencial + local no residencial",
+    "normativa": "R-008 / MOPC - República Dominicana",
+    "ingeniero": {
+      "nombre": "Ing. Osmar García",
+      "codia": "CODIA-36467",
+      "firma_url": ""
+    },
+    "logos": [
+      {
+        "url": "https://r2.or-gm.com/bohc.png",
+        "alt": "Cliente"
+      },
+      {
+        "url": "https://r2.or-gm.com/orgm.png",
+        "alt": "ORGM"
+      }
+    ]
+  },
+  "criterios": {
+    "kd": 1.5,
+    "kh": 2.0,
+    "qmh_base": "qmax_diario",
+    "aplicar_minimo_6_hab_vivienda": true,
+    "habitantes_minimos_por_vivienda": 6,
+    "dias_cisterna_default": 2.0,
+    "permitir_1_5_dias_mas_16_viviendas": true,
+    "factor_aguas_residuales": 0.8,
+    "dotacion_septico_l_hab_dia": 200,
+    "retencion_septico_dias": 1.5,
+    "lodos_l_hab_anio": 40,
+    "periodo_limpieza_anios": 2,
+    "metodo_septico_default": "max_formula_tabla_r008",
+    "base_calculo_cisterna_default": "qmd",
+    "factor_seguridad_cisterna_default": 1.0,
+    "tiempo_llenado_h_default": 8.0,
+    "factor_acometida_default": 1.5,
+    "cantidad_opciones_guia": 3,
+    "dimension_cisterna": {
+      "relacion_largo_ancho": 2.0,
+      "altura_util_m": 2.0,
+      "borde_libre_m": 0.3
+    },
+    "dimension_septico": {
+      "relacion_largo_ancho": 2.5,
+      "profundidad_util_m": 1.5,
+      "camara_aire_m": 0.4
+    }
+  },
+  "suministros": [
+    {
+      "id": "V1",
+      "nombre": "Villa 1",
+      "tipo": "villa",
+      "uso_residencial": true,
+      "viviendas": 1,
+      "personas": 5,
+      "personas_por_vivienda": 5,
+      "area_solar_m2": 240,
+      "dotacion_l_hab_dia": null,
+      "consumos_adicionales": [
+        {
+          "concepto": "Área verde",
+          "cantidad": 80,
+          "unidad": "m²",
+          "dotacion_key": "areas_verdes"
+        }
+      ],
+      "notas": "Villa individual; se aplica mínimo normativo si criterios.aplicar_minimo_6_hab_vivienda=true."
+    },
+    {
+      "id": "REST-01",
+      "nombre": "Restaurante / local no residencial",
+      "tipo": "restaurante",
+      "uso_residencial": false,
+      "tipo_edificacion_tabla_34": "restaurante_banos_cocina_asiento",
+      "cantidad_tabla_34": 40,
+      "factor_tabla_34": 1,
+      "viviendas": 0,
+      "personas": null,
+      "personas_por_vivienda": 0,
+      "area_solar_m2": null,
+      "consumos": [
+        {
+          "concepto": "Restaurante área 41-100 m²",
+          "cantidad": 60,
+          "unidad": "m²",
+          "dotacion_key": "restaurante_m2_41_100"
+        },
+        {
+          "concepto": "Restaurante baños y cocina",
+          "cantidad": 40,
+          "unidad": "asiento",
+          "dotacion_l_unidad_dia": 50,
+          "referencia": ""
+        },
+        {
+          "concepto": "Custom sin R-008",
+          "cantidad": 12,
+          "unidad": "unidad",
+          "dotacion_l_unidad_dia": 35,
+          "referencia": ""
+        }
+      ],
+      "tabla_34_items": []
+    }
+  ],
+  "cisternas": [
+    {
+      "id": "CIS-01",
+      "nombre": "Cisterna general",
+      "suministros": ["V1", "REST-01"],
+      "dias_abastecimiento": 2,
+      "base_calculo": "qmd",
+      "factor_seguridad": 1.0,
+      "tiempo_llenado_h": 8,
+      "volumen_incendio_m3": 0,
+      "dimension_propuesta": null
+    }
+  ],
+  "septicos": [
+    {
+      "id": "SEP-V1",
+      "nombre": "Séptico residencial Villa 1",
+      "suministros": ["V1"],
+      "metodo": "max_formula_tabla_r008",
+      "dimension_propuesta": null
+    },
+    {
+      "id": "SEP-REST",
+      "nombre": "Séptico no residencial Restaurante",
+      "suministros": ["REST-01"],
+      "metodo": "max_formula_tabla_r008",
+      "dimension_propuesta": null
+    }
+  ],
+  "observaciones": [
+    "Verificar disponibilidad y calidad de fuente de agua.",
+    "Verificar condiciones locales del suelo antes de definir infiltración o disposición final.",
+    "Mantener distancia mínima de 5.00 m entre cisterna y cámara séptica."
+  ]
+}

@@ -1,0 +1,43 @@
+# Remaining orgm-hypr references after Task 5
+
+Generated after rewiring config callers that have restored shell-helper entrypoints.
+
+## Compatibility wrappers (intentional)
+
+`config/shared/.local/bin/*` helpers still exec `orgm-hypr ...` internally. Task 5 rewires dotfile callers to these helper names; replacing wrapper internals belongs to later Go/helper split work.
+
+## Deferred direct callers
+
+These direct callers remain because no restored shell helper exists yet, or because replacement belongs to later wallpaper/Go split work:
+
+- `config/shared/.config/hypr/lua/autostart.lua`
+  - `orgm-hypr session import-env`: no shell helper in this task.
+  - `orgm-hypr wallpaper restore`: inspected `hypr-random-wallpaper`; it only supports `next|daemon|stop`, no compatible restore command.
+  - `orgm-hypr wallpaper picker-daemon`: deferred until `orgm-wallpaper` exists in Task 6.
+  - `orgm-hypr calendar daemon`: no shell helper in this task.
+  - `orgm-hypr session start-containers arch windows`: no shell helper in this task.
+  - `orgm-hypr session start-discord`: no shell helper in this task.
+- `config/shared/.config/hypr/lua/keybindings.lua`
+  - `orgm-hypr helper toggle`: no shell helper in this task.
+  - `orgm-hypr obsidian open-or-focus`: no shell helper in this task.
+  - `orgm-hypr wallpaper pick`: deferred with wallpaper split.
+  - `orgm-hypr calendar toggle-ui`: no shell helper in this task.
+- `config/shared/.config/hypr/lua/programs.lua`
+  - `orgm-hypr pi prompt --launcher fuzzel`: no shell helper in this task.
+- `config/shared/.config/waybar-hypr/config`
+  - `orgm-hypr calendar toggle-ui`: no shell helper in this task.
+  - `orgm-hypr wallpaper pick`: deferred with wallpaper split.
+  - `orgm-hypr helper toggle/init`: no shell helper in this task.
+- `config/shared/.config/hypr/scripts/*`
+  - Walker-specific window switch / pi prompt remain direct because only fuzzel shell helpers exist in this task.
+- `config/shared/.config/quickshell/*`
+  - Calendar and wallpaper picker QML remain direct; wallpaper picker is deferred until `orgm-wallpaper` exists.
+- `config/shared/.config/fish/functions/orgm-hypr.fish`
+  - Compatibility function for host/distrobox invocation.
+- Cosmetic/docs refs remain in `style.css`, rofi theme comment, and Hypr Lua README.
+
+## Current audit command
+
+```bash
+rg -n 'orgm-hypr' config/shared/.config config/shared/.local/bin || true
+```
