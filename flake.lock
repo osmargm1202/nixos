@@ -100,11 +100,11 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1782605727,
-        "narHash": "sha256-vzE4mINfkQ1nGGy7MUx096jXducP3w9tjVceQkv0gj4=",
+        "lastModified": 1782813705,
+        "narHash": "sha256-mYDzBsr+lSV5HBgWc8Gcu7FqvotNtqrcnQdmJeDWnV4=",
         "owner": "osmargm1202",
         "repo": "shell",
-        "rev": "2a767a2ab91c7c66b9925c9242bea43f2df35490",
+        "rev": "6014a0b58d3d91d515757f14babbf69d6b12e865",
         "type": "github"
       },
       "original": {
@@ -152,22 +152,6 @@
         "owner": "AvengeMedia",
         "ref": "stable",
         "repo": "DankMaterialShell",
-        "type": "github"
-      }
-    },
-    "dotfiles-orgm-source": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1781397115,
-        "narHash": "sha256-8AFbJ53FA2HIQgUpknskDANMJyDsjZKh1BGrKkZw7T0=",
-        "owner": "osmargm1202",
-        "repo": "dotfiles",
-        "rev": "4db6679158df28cd523b553f90d34b58991d14a5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "osmargm1202",
-        "repo": "dotfiles",
         "type": "github"
       }
     },
@@ -980,7 +964,6 @@
         "caelestia-shell": "caelestia-shell",
         "dgop": "dgop",
         "dms": "dms",
-        "dotfiles-orgm-source": "dotfiles-orgm-source",
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprpaper": "hyprpaper",
