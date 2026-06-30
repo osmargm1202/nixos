@@ -62,6 +62,9 @@
       # Generic profile outputs use eval-only hardware so pure flake checks do not
       # depend on /etc or any real host. Host-specific outputs pass real hardware.
       pkgs = nixpkgs.legacyPackages.${system};
+      # Separate pkgs instance with allowUnfree for devShells (nix develop does not
+      # inherit nixpkgs.config from NixOS modules — needs explicit config here).
+      pkgsDev = import nixpkgs { inherit system; config.allowUnfree = true; };
       dotfilesOrgmSource = inputs.dotfiles-orgm-source;
       orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
@@ -215,7 +218,7 @@
 
       devShells.${system}.default =
         let
-          fhs = pkgs.buildFHSEnv {
+          fhs = pkgsDev.buildFHSEnv {
             name = "dev";
             targetPkgs =
               pkgs: with pkgs; [
@@ -251,7 +254,7 @@
             '';
           };
         in
-        pkgs.mkShell {
+        pkgsDev.mkShell {
           packages = [ fhs ];
           shellHook = ''
             exec ${fhs}/bin/dev fish
