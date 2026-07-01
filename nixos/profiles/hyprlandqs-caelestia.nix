@@ -9,6 +9,95 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
+
+  caelestiaDefaultSettings = builtins.toJSON {
+    ai = {
+      enableCelestialMode = false;
+      enableOllama = true;
+    };
+    appearance = {
+      islands = false;
+      pitchBlack = false;
+      padding.scale = 0.974;
+      rounding.scale = 0.799;
+      spacing.scale = 0.739;
+      transparency = {
+        enabled = true;
+        base = 0.920;
+        layers = 0.309;
+      };
+    };
+    background = {
+      enabled = true;
+      wallpaperEnabled = true;
+      videoWallpaperPaused = true;
+      videoWallpaperMuteOnMedia = true;
+      videoWallpaperPauseOnFullscreen = true;
+      desktopClock = {
+        enabled = true;
+        invertColors = false;
+        position = "top-right";
+        background = { enabled = true; blur = true; opacity = 0.669; };
+      };
+      desktopLyrics.enabled = true;
+      visualiser = { enabled = true; autoHide = true; };
+    };
+    bar = {
+      persistent = true;
+      position = "bottom";
+      entries = [
+        { id = "logo";         enabled = true; }
+        { id = "workspaces";   enabled = true; }
+        { id = "spacer";       enabled = true; }
+        { id = "activeWindow"; enabled = true; }
+        { id = "dock";         enabled = true; }
+        { id = "spacer";       enabled = true; }
+        { id = "tray";         enabled = true; }
+        { id = "github";       enabled = true; }
+        { id = "clock";        enabled = true; }
+        { id = "statusIcons";  enabled = true; }
+        { id = "power";        enabled = true; }
+      ];
+      activeWindow = { compact = false; inverted = false; };
+      clock = { background = false; showDate = true; showIcon = true; };
+      dock.monitorCenter = true;
+      github.background = false;
+      popouts = { activeWindow = true; statusIcons = true; tray = true; };
+      scrollActions = { volume = true; workspaces = true; };
+      status = { showAudio = true; showKbLayout = true; showMicrophone = true; };
+      tray = { background = false; compact = false; recolour = false; };
+      workspaces = {
+        shown = 10;
+        activeIndicator = true;
+        activeTrail = true;
+        occupiedBg = false;
+        perMonitorWorkspaces = true;
+        showWindows = true;
+        showWindowsOnSpecialWorkspaces = true;
+        useIcon = true;
+      };
+    };
+    dashboard.showOnHover = true;
+    general = {
+      showOverFullscreen = true;
+      apps = { explorer = [ "nautilus" "--new-window" ]; terminal = [ "kitty" ]; };
+      idle.timeouts = [
+        { idleAction = "lock";        timeout = 180; }
+        { idleAction = [ "suspend" ]; timeout = 600; }
+      ];
+    };
+    launcher = {
+      enableDangerousActions = false;
+      maxShown = 7;
+      showOnHover = false;
+      favouriteApps = [ "app.zen_browser.zen" "kitty" "whatsapp" "chatgpt" ];
+      useFuzzy = { actions = true; apps = true; schemes = true; wallpapers = true; };
+    };
+    services.pipPaused = true;
+    sidebar.enabled = true;
+    utilities.toasts = { fullscreen = "all"; gameModeChanged = true; transparency = true; };
+  };
+
   caelestiaShell = (inputs.caelestia-shell.packages.${system}.with-cli).overrideAttrs (old: {
     buildInputs = old.buildInputs ++ [ pkgs.qt6.qtmultimedia ];
     postPatch = (old.postPatch or "") + ''
@@ -51,7 +140,7 @@ in
     nerd-fonts.symbols-only
   ];
 
-  home-manager.users.${userName} = {
+  home-manager.users.${userName} = { lib, pkgs, ... }: {
     imports = [
       inputs.caelestia-shell.homeManagerModules.default
     ];
@@ -59,107 +148,14 @@ in
     programs.caelestia = {
       enable = true;
       package = caelestiaShell;
-      settings = {
-        ai = {
-          enableCelestialMode = false;
-          enableOllama = true;
-        };
-        appearance = {
-          islands = false;
-          pitchBlack = false;
-          padding.scale = 0.974;
-          rounding.scale = 0.799;
-          spacing.scale = 0.739;
-          transparency = {
-            enabled = true;
-            base = 0.920;
-            layers = 0.309;
-          };
-        };
-        background = {
-          enabled = true;
-          wallpaperEnabled = true;
-          videoWallpaperPaused = true;
-          videoWallpaperMuteOnMedia = true;
-          videoWallpaperPauseOnFullscreen = true;
-          desktopClock = {
-            enabled = true;
-            invertColors = false;
-            position = "top-right";
-            background = {
-              enabled = true;
-              blur = true;
-              opacity = 0.669;
-            };
-          };
-          desktopLyrics.enabled = true;
-          visualiser = {
-            enabled = true;
-            autoHide = true;
-          };
-        };
-        bar = {
-          persistent = true;
-          position = "bottom";
-          entries = [
-            { id = "logo";        enabled = true; }
-            { id = "workspaces";  enabled = true; }
-            { id = "spacer";      enabled = true; }
-            { id = "activeWindow"; enabled = true; }
-            { id = "dock";        enabled = true; }
-            { id = "spacer";      enabled = true; }
-            { id = "tray";        enabled = true; }
-            { id = "github";      enabled = true; }
-            { id = "clock";       enabled = true; }
-            { id = "statusIcons"; enabled = true; }
-            { id = "power";       enabled = true; }
-          ];
-          activeWindow = { compact = false; inverted = false; };
-          clock = { background = false; showDate = true; showIcon = true; };
-          dock.monitorCenter = true;
-          github.background = false;
-          popouts = { activeWindow = true; statusIcons = true; tray = true; };
-          scrollActions = { volume = true; workspaces = true; };
-          status = { showAudio = true; showKbLayout = true; showMicrophone = true; };
-          tray = { background = false; compact = false; recolour = false; };
-          workspaces = {
-            shown = 10;
-            activeIndicator = true;
-            activeTrail = true;
-            occupiedBg = false;
-            perMonitorWorkspaces = true;
-            showWindows = true;
-            showWindowsOnSpecialWorkspaces = true;
-            useIcon = true;
-          };
-        };
-        dashboard.showOnHover = true;
-        general = {
-          showOverFullscreen = true;
-          apps = {
-            explorer = [ "nautilus" "--new-window" ];
-            terminal = [ "kitty" ];
-          };
-          idle.timeouts = [
-            { idleAction = "lock";      timeout = 180; }
-            { idleAction = [ "suspend" ]; timeout = 600; }
-          ];
-        };
-        launcher = {
-          enableDangerousActions = false;
-          maxShown = 7;
-          showOnHover = false;
-          favouriteApps = [ "app.zen_browser.zen" "kitty" "whatsapp" "chatgpt" ];
-          useFuzzy = { actions = true; apps = true; schemes = true; wallpapers = true; };
-        };
-        services.pipPaused = true;
-        sidebar.enabled = true;
-        utilities.toasts = {
-          fullscreen = "all";
-          gameModeChanged = true;
-          transparency = true;
-        };
-      };
     };
+
+    home.activation.caelestiaDefaultSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      shell_cfg="$HOME/.config/caelestia/shell.json"
+      if [ ! -f "$shell_cfg" ]; then
+        $DRY_RUN_CMD mkdir -p "$(dirname "$shell_cfg")"
+        $DRY_RUN_CMD cp ${pkgs.writeText "caelestia-shell-defaults.json" caelestiaDefaultSettings} "$shell_cfg"
+      fi
+    '';
   };
 }
