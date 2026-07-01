@@ -6,12 +6,6 @@
 }:
 
 let
-  iconsBase = "/home/${userName}/Hobby/dotfiles/webapp/webapp-icons";
-  localIconsBase = "/home/${userName}/.local/share/icons";
-
-  fileIcon = name: "${iconsBase}/${name}.png";
-  localIcon = name: "${localIconsBase}/${name}.png";
-
   mkApp =
     {
       name,
@@ -35,21 +29,21 @@ let
     youtube = mkApp {
       name = "Youtube";
       url = "https://youtube.com";
-      icon = fileIcon "Youtube";
+      icon = "youtube-webapp";
       categories = [ "AudioVideo" ];
       wmClass = "chrome-youtube.com__-Default";
     };
     youtube-kids = mkApp {
       name = "YoutubeKids";
       url = "https://youtubekids.com";
-      icon = fileIcon "YoutubeKids";
+      icon = "youtube-kids";
       categories = [ "AudioVideo" ];
       wmClass = "chrome-youtubekids.com__-Default";
     };
     netflix = mkApp {
       name = "Netflix";
       url = "https://netflix.com";
-      icon = fileIcon "Netflix";
+      icon = "netflix";
       categories = [ "AudioVideo" ];
       wmClass = "chrome-netflix.com__-Default";
     };
@@ -63,7 +57,7 @@ let
     crunchyroll = mkApp {
       name = "crunchyroll";
       url = "https://www.crunchyroll.com/";
-      icon = localIcon "crunchyroll";
+      icon = "crunchyroll";
       comment = "Crunchyroll webapp Anime";
       categories = [ "AudioVideo" ];
       wmClass = "chrome-www.crunchyroll.com__-Default";
@@ -74,7 +68,7 @@ let
     poki = mkApp {
       name = "Poki";
       url = "https://poki.com";
-      icon = fileIcon "Poki";
+      icon = "poki";
       comment = "Poki Game App";
       categories = [ "Game" ];
       wmClass = "chrome-poki.com__-Default";
@@ -85,7 +79,7 @@ let
     gmail = mkApp {
       name = "Gmail";
       url = "https://gmail.com";
-      icon = fileIcon "Gmail";
+      icon = "gmail";
       categories = [
         "Network"
         "WebBrowser"
@@ -95,21 +89,21 @@ let
     outlook = mkApp {
       name = "Outlook - Hotmail";
       url = "https://outlook.office.com/";
-      icon = fileIcon "Outlook - Hotmail";
+      icon = "outlook-hotmail";
       categories = [ "Office" ];
       wmClass = "chrome-outlook.office.com__-Default";
     };
     microsoft-teams = mkApp {
       name = "Microsoft Teams";
       url = "https://teams.microsoft.com/";
-      icon = fileIcon "Microsoft Teams";
+      icon = "microsoft-teams";
       categories = [ "Office" ];
       wmClass = "chrome-teams.microsoft.com__-Default";
     };
     whatsapp = mkApp {
       name = "Whatsapp";
       url = "https://web.whatsapp.com/";
-      icon = fileIcon "Whatsapp";
+      icon = "whatsapp";
       categories = [
         "Network"
         "WebBrowser"
@@ -119,7 +113,7 @@ let
     cloud-orgm = mkApp {
       name = "Cloud ORGM";
       url = "https://cloud.or-gm.com/";
-      icon = fileIcon "Cloud ORGM";
+      icon = "applications-internet";
       comment = "Cloud ORGM Web Application";
       categories = [ "Office" ];
       wmClass = "chrome-cloud.or-gm.com__-Default";
@@ -127,7 +121,7 @@ let
     webui = mkApp {
       name = "WebUi";
       url = "https://chat.or-gm.com";
-      icon = fileIcon "WebUi";
+      icon = "webui";
       comment = "ORGM OpenWebUI";
       categories = [ "Development" ];
       wmClass = "chrome-chat.or-gm.com__-Default";
@@ -135,7 +129,7 @@ let
     banco-popular = mkApp {
       name = "Banco Popular";
       url = "https://ib.bpd.com.do";
-      icon = fileIcon "Banco Popular";
+      icon = "banco-popular";
       comment = "Internet Banking Banco Popular";
       categories = [ "Office" ];
       wmClass = "chrome-ib.bpd.com.do__-Default";
@@ -146,7 +140,7 @@ let
     github = mkApp {
       name = "Github";
       url = "https://github.com/osmargm1202";
-      icon = localIcon "Github";
+      icon = "github-webapp";
       comment = "osmargm1202 Github App";
       categories = [ "Development" ];
       wmClass = "chrome-github.com__-Default";
@@ -154,14 +148,14 @@ let
     google-cloud = mkApp {
       name = "Google Cloud Console";
       url = "https://console.cloud.google.com";
-      icon = fileIcon "Google Cloud Console";
+      icon = "google-cloud-console";
       categories = [ "Utility" ];
       wmClass = "chrome-console.cloud.google.com__-Default";
     };
     neon = mkApp {
       name = "Neon";
       url = "https://console.neon.tech/";
-      icon = fileIcon "Neon";
+      icon = "neon-db";
       comment = "Neon Postgresql Database App";
       categories = [
         "Network"
@@ -172,21 +166,21 @@ let
     rollbar = mkApp {
       name = "Rollbar";
       url = "https://app.rollbar.com/";
-      icon = fileIcon "Rollbar";
+      icon = "rollbar";
       categories = [ "Development" ];
       wmClass = "chrome-app.rollbar.com__-Default";
     };
     google-ai-studio = mkApp {
       name = "Google AI Studio";
       url = "https://aistudio.google.com/";
-      icon = fileIcon "Google AI Studio";
+      icon = "google-ai-studio";
       categories = [ "Development" ];
       wmClass = "chrome-aistudio.google.com__-Default";
     };
     excalidraw = mkApp {
       name = "Excalid Draw Diagramas";
       url = "https://excalidraw.com/";
-      icon = fileIcon "Excalid Draw Diagramas";
+      icon = "excalidraw";
       comment = "Excalid Draw Web App";
       categories = [ "Office" ];
       wmClass = "chrome-excalidraw.com__-Default";
@@ -194,14 +188,14 @@ let
     fast = mkApp {
       name = "Fast";
       url = "https://fast.com";
-      icon = fileIcon "Fast";
+      icon = "fast";
       categories = [ "Development" ];
       wmClass = "chrome-fast.com__-Default";
     };
     windows-docker = mkApp {
       name = "Windows Docker";
       url = "http://127.0.0.1:8006";
-      icon = fileIcon "Windows Docker";
+      icon = "windows-docker";
       comment = "Windows VM";
       categories = [ "Development" ];
       wmClass = "chrome-127.0.0.1_8006__-Default";
@@ -209,14 +203,14 @@ let
     claude = mkApp {
       name = "Claude";
       url = "https://claude.ai";
-      icon = fileIcon "Claude";
+      icon = "claude-webapp";
       categories = [ "Development" ];
       wmClass = "chrome-claude.ai__-Default";
     };
     chatgpt = mkApp {
       name = "Chatgpt";
       url = "https://chatgpt.com";
-      icon = fileIcon "Chatgpt";
+      icon = "chatgpt";
       categories = [ "Development" ];
       wmClass = "chrome-chatgpt.com__-Default";
     };
@@ -226,7 +220,7 @@ let
     facebook = mkApp {
       name = "Facebook";
       url = "https://facebook.com";
-      icon = fileIcon "Facebook";
+      icon = "facebook";
       categories = [
         "Network"
         "WebBrowser"
@@ -236,7 +230,7 @@ let
     instagram = mkApp {
       name = "Instagram";
       url = "https://instagram.com";
-      icon = fileIcon "Instagram";
+      icon = "instagram";
       categories = [
         "Network"
         "WebBrowser"
@@ -246,7 +240,7 @@ let
     ubereats = mkApp {
       name = "UberEats";
       url = "https://www.ubereats.com/";
-      icon = fileIcon "UberEats";
+      icon = "ubereats";
       categories = [ "Utility" ];
       wmClass = "chrome-www.ubereats.com__-Default";
     };
