@@ -77,16 +77,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1781930126,
-        "narHash": "sha256-AopjjM6497f3Usb6IAZgensjtzGlYGGpJLw7DRtP67I=",
-        "owner": "caelestia-dots",
-        "repo": "cli",
-        "rev": "b00dabaa9351d1383dfba162f5b3575b49a126e1",
+        "lastModified": 1782609436,
+        "narHash": "sha256-DM9/gwJ7LCyqdaL0uIDBjJo1rQyRUm7Q9a4BuilfZiM=",
+        "owner": "dim-ghub",
+        "repo": "caelestia-cli",
+        "rev": "91ef986e5972d2a46870679e4fed1d4806706cee",
         "type": "github"
       },
       "original": {
-        "owner": "caelestia-dots",
-        "repo": "cli",
+        "owner": "dim-ghub",
+        "repo": "caelestia-cli",
         "type": "github"
       }
     },
@@ -100,16 +100,16 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1782813705,
-        "narHash": "sha256-mYDzBsr+lSV5HBgWc8Gcu7FqvotNtqrcnQdmJeDWnV4=",
-        "owner": "osmargm1202",
-        "repo": "shell",
-        "rev": "6014a0b58d3d91d515757f14babbf69d6b12e865",
+        "lastModified": 1782856513,
+        "narHash": "sha256-cQrmM4szhJ2KCrq9yuTpmdSfQ2vFxgfSG26kB4e9czc=",
+        "owner": "dim-ghub",
+        "repo": "caelestia-shell",
+        "rev": "ddf4827737a8f9075c3cc0fa506653660166af22",
         "type": "github"
       },
       "original": {
-        "owner": "osmargm1202",
-        "repo": "shell",
+        "owner": "dim-ghub",
+        "repo": "caelestia-shell",
         "type": "github"
       }
     },
