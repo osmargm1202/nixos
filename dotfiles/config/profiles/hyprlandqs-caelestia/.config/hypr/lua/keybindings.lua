@@ -13,7 +13,7 @@ function M.setup(programs)
 
   -- Caelestia global shortcuts.
   hl.bind(mainMod .. " + Space",          dispatch("global caelestia:launcher"))
-  hl.bind(mainMod .. " + Return",         dispatch("global caelestia:launcher"))
+  hl.bind(mainMod .. " + Return",         hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + S",              dispatch("global caelestia:controlCenter"))
   hl.bind(mainMod .. " + ALT + Space",    dispatch("global caelestia:controlCenter"))
   hl.bind(mainMod .. " + D",              dispatch("global caelestia:dashboard"))
