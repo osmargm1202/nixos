@@ -1,6 +1,8 @@
 { pkgs, lib, ... }:
 
 {
+  imports = [ ./printer.nix ];
+
   services.xserver.enable = true;
 
   # Force Cinnamon-only desktop stack.

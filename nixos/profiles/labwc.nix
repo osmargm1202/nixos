@@ -8,6 +8,7 @@ in
 {
   imports = [
     inputs.dms.nixosModules.dank-material-shell
+    ./printer.nix
   ];
 
   services.xserver.enable = true;

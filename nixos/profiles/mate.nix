@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
 {
+  imports = [ ./printer.nix ];
+
   services.xserver.enable = true;
   services.xserver.desktopManager.mate.enable = true;
   services.displayManager.defaultSession = "mate";
@@ -56,7 +58,6 @@
   environment.systemPackages = with pkgs; [
     # MATE extras (core installed by desktopManager.mate)
     mate.mate-applets
-    mate.mate-extras
     mate.mate-icon-theme-faenza
 
     # Keyring plumbing
@@ -77,5 +78,5 @@
     materia-theme
     numix-cursor-theme
     yaru-remix-theme
-  ];
+  ] ++ mate.extraPackages;
 }

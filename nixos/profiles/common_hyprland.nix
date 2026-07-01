@@ -19,6 +19,7 @@ in
 {
   imports = [
     inputs.ltmnight-sddm-theme.nixosModules.default
+    ./printer.nix
   ];
 
   services.xserver.enable = false;
