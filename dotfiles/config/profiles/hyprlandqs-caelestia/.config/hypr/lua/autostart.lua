@@ -13,7 +13,7 @@ local exec_once = {
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
   -- hypridle is intentionally absent: caelestia manages idle/lock/dpms/sleep internally
-  "sh -lc '$HOME/.local/bin/hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
+  -- nwg-dock intentionally absent: caelestia has its own dock
   -- caelestia is started via systemd (programs.caelestia.systemd.enable = true in NixOS)
 }
 

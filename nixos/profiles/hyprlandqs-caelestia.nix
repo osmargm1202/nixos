@@ -18,13 +18,13 @@ let
     appearance = {
       islands = false;
       pitchBlack = false;
-      padding.scale = 0.974;
-      rounding.scale = 0.799;
-      spacing.scale = 0.739;
+      padding.scale = 0.9744502069185059;
+      rounding.scale = 0.7990623201956272;
+      spacing.scale = 0.7388705588319907;
       transparency = {
         enabled = true;
-        base = 0.920;
-        layers = 0.309;
+        base = 0.9204424872665535;
+        layers = 0.30916410229202035;
       };
     };
     background = {
@@ -37,7 +37,7 @@ let
         enabled = true;
         invertColors = false;
         position = "top-right";
-        background = { enabled = true; blur = true; opacity = 0.669; };
+        background = { enabled = true; blur = true; opacity = 0.669305648395722; };
       };
       desktopLyrics.enabled = true;
       visualiser = { enabled = true; autoHide = true; };
@@ -90,12 +90,25 @@ let
       enableDangerousActions = false;
       maxShown = 7;
       showOnHover = false;
-      favouriteApps = [ "app.zen_browser.zen" "kitty" "whatsapp" "chatgpt" ];
+      favouriteApps = [
+        "app.zen_browser.zen" "kitty" "org.gnome.Nautilus"
+        "whatsapp" "chatgpt" "org.gnome.Calculator"
+        "windows-rdp" "code" "claude" "vesktop"
+      ];
+      hiddenApps = [ "gmail" ];
       useFuzzy = { actions = true; apps = true; schemes = true; wallpapers = true; };
     };
-    services.pipPaused = true;
+    services = {
+      pipPaused = true;
+      arpcEnabled = true;
+      arpcSteamAutoDetect = true;
+      arpcTargetWindows = [ ];
+    };
     sidebar.enabled = true;
-    utilities.toasts = { fullscreen = "all"; gameModeChanged = true; transparency = true; };
+    utilities = {
+      gameMode.autoEnableRegexes = [ "dota2" "Hollow Knight Silksong" ];
+      toasts = { fullscreen = "all"; gameModeChanged = true; transparency = true; };
+    };
   };
 
   caelestiaShell = (inputs.caelestia-shell.packages.${system}.with-cli).overrideAttrs (old: {
