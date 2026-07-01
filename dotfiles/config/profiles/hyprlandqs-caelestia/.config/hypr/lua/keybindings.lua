@@ -10,7 +10,7 @@ function M.setup(programs)
   -- Caelestia global shortcuts.
   hl.bind(mainMod .. " + Space",          hl.dsp.global("caelestia:launcher"))
   hl.bind(mainMod .. " + Return",         hl.dsp.exec_cmd("kitty"))
-  hl.bind(mainMod .. " + S",              hl.dsp.global("caelestia:controlCenter"))
+  hl.bind(mainMod .. " + ALT + S",        hl.dsp.global("caelestia:controlCenter"))
   hl.bind(mainMod .. " + ALT + Space",    hl.dsp.global("caelestia:controlCenter"))
   hl.bind(mainMod .. " + D",              hl.dsp.global("caelestia:dashboard"))
   hl.bind(mainMod .. " + N",              hl.dsp.global("caelestia:sidebar"))
@@ -39,10 +39,10 @@ function M.setup(programs)
   hl.bind(mainMod .. " + ALT + L",        hl.dsp.exec_cmd(program("lock", "loginctl lock-session")))
   hl.bind("CTRL + Space",                 hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 
-  -- Scratchpad / special workspace (moved from S to ALT+S).
-  hl.bind(mainMod .. " + ALT + S",              hl.dsp.workspace.toggle_special("magic"))
-  hl.bind(mainMod .. " + ALT + SHIFT + S",      hl.dsp.window.move({ workspace = "special:magic", follow = false }))
-  hl.bind(mainMod .. " + ALT + CTRL + S",       hl.dsp.window.move({ workspace = "current" }))
+  -- Scratchpad / special workspace.
+  hl.bind(mainMod .. " + S",              hl.dsp.workspace.toggle_special("magic"))
+  hl.bind(mainMod .. " + SHIFT + S",      hl.dsp.window.move({ workspace = "special:magic", follow = false }))
+  hl.bind(mainMod .. " + CTRL + S",       hl.dsp.window.move({ workspace = "current" }))
 
   -- Media keys.
   hl.bind("XF86AudioRaiseVolume",      hl.dsp.exec_cmd("volume-osd up"),       { repeating = true, locked = true })
