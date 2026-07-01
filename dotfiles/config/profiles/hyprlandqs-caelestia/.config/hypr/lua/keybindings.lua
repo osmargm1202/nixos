@@ -1,9 +1,5 @@
 local M = {}
 
-local function dispatch(cmd)
-  return hl.dsp.exec_cmd("hyprctl dispatch " .. cmd)
-end
-
 function M.setup(programs)
   local mainMod = "SUPER"
 
@@ -12,20 +8,20 @@ function M.setup(programs)
   end
 
   -- Caelestia global shortcuts.
-  hl.bind(mainMod .. " + Space",          dispatch("global caelestia:launcher"))
+  hl.bind(mainMod .. " + Space",          hl.dsp.global("caelestia:launcher"))
   hl.bind(mainMod .. " + Return",         hl.dsp.exec_cmd("kitty"))
-  hl.bind(mainMod .. " + S",              dispatch("global caelestia:controlCenter"))
-  hl.bind(mainMod .. " + ALT + Space",    dispatch("global caelestia:controlCenter"))
-  hl.bind(mainMod .. " + D",              dispatch("global caelestia:dashboard"))
-  hl.bind(mainMod .. " + N",              dispatch("global caelestia:sidebar"))
-  hl.bind(mainMod .. " + M",              dispatch("global caelestia:utilities"))
-  hl.bind(mainMod .. " + CTRL + E",       dispatch("global caelestia:emoji"))
-  hl.bind(mainMod .. " + V",              dispatch("global caelestia:clipboard"))
-  hl.bind(mainMod .. " + Escape",         dispatch("global caelestia:windowSwitcher"))
-  hl.bind(mainMod .. " + slash",          dispatch("global caelestia:keybinds"))
-  hl.bind(mainMod .. " + B",              dispatch("global caelestia:wallpaper"))
-  hl.bind(mainMod .. " + T",              dispatch("global caelestia:terminal"))
-  hl.bind(mainMod .. " + ALT + E",        dispatch("global caelestia:session"))
+  hl.bind(mainMod .. " + S",              hl.dsp.global("caelestia:controlCenter"))
+  hl.bind(mainMod .. " + ALT + Space",    hl.dsp.global("caelestia:controlCenter"))
+  hl.bind(mainMod .. " + D",              hl.dsp.global("caelestia:dashboard"))
+  hl.bind(mainMod .. " + N",              hl.dsp.global("caelestia:sidebar"))
+  hl.bind(mainMod .. " + M",              hl.dsp.global("caelestia:utilities"))
+  hl.bind(mainMod .. " + CTRL + E",       hl.dsp.global("caelestia:emoji"))
+  hl.bind(mainMod .. " + V",              hl.dsp.global("caelestia:clipboard"))
+  hl.bind(mainMod .. " + Escape",         hl.dsp.global("caelestia:windowSwitcher"))
+  hl.bind(mainMod .. " + slash",          hl.dsp.global("caelestia:keybinds"))
+  hl.bind(mainMod .. " + B",              hl.dsp.global("caelestia:wallpaper"))
+  hl.bind(mainMod .. " + T",             hl.dsp.global("caelestia:terminal"))
+  hl.bind(mainMod .. " + ALT + E",        hl.dsp.global("caelestia:session"))
 
   -- Apps (Win+E and Win+W intentionally NOT mapped to caelestia).
   hl.bind(mainMod .. " + E",              hl.dsp.exec_cmd(programs.fileManager))
