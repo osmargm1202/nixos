@@ -29,9 +29,6 @@ in
   programs.gpu-screen-recorder.enable = true;
 
   environment.systemPackages = with pkgs; [
-    # Notification daemon (replaces swaync/waybar)
-    mako
-
     # Launcher / menus
     rofi
 

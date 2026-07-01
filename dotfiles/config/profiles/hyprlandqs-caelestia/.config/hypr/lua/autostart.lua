@@ -3,7 +3,6 @@ local exec_once = {
   "sh -lc 'sleep 0.5 && systemctl --user start graphical-session.target'",
   "systemctl --user start sunshine.service",
 
-  "mako",
   "nm-applet --indicator",
   "blueman-applet",
   "gnome-keyring-daemon --start --components=secrets,pkcs11,ssh",
