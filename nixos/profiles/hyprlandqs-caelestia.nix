@@ -15,6 +15,9 @@ let
       substituteInPlace modules/launcher/services/Emojis.qml \
         --replace-fail 'function recordUsage(char: string)' 'function recordUsage(charStr: string)' \
         --replace-fail 'frequencies[char] = (frequencies[char] || 0) + 1' 'frequencies[charStr] = (frequencies[charStr] || 0) + 1'
+      sed -i 's/\bid: char\b/id: charItem/g; s/\btarget: char\b/target: charItem/g; s/char\.index/charItem.index/g' \
+        modules/lock/center/InputField.qml \
+        components/PolkitDialog.qml
     '';
   });
 in
