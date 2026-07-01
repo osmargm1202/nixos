@@ -587,6 +587,17 @@ in
     "d ${dotfilesParent} 0755 ${userName} users - -"
   ];
 
+  # Ensure the graphical login (and thus the Hyprland/niri session it spawns)
+  # starts only after home-manager has finished linking the dotfiles. Without
+  # this ordering the compositor can read its config before the lua/*.lua
+  # symlinks exist, making every require() fail and dropping Hyprland into
+  # emergency mode. `wants` (not `requires`) so a home-manager failure degrades
+  # gracefully instead of blocking login entirely.
+  systemd.services.display-manager = {
+    after = [ "home-manager-${userName}.service" ];
+    wants = [ "home-manager-${userName}.service" ];
+  };
+
   systemd.services.orgm-dotfiles-repo = {
     description = "Clone and update ORGM dotfiles repository";
     wants = [ "network-online.target" ];
