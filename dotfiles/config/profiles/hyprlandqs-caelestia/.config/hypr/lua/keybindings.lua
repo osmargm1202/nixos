@@ -10,8 +10,8 @@ function M.setup(programs)
   -- Caelestia global shortcuts.
   hl.bind(mainMod .. " + Space",          hl.dsp.global("caelestia:launcher"))
   hl.bind(mainMod .. " + Return",         hl.dsp.exec_cmd("kitty"))
-  hl.bind(mainMod .. " + ALT + S",        hl.dsp.global("caelestia:controlCenter"))
-  hl.bind(mainMod .. " + ALT + Space",    hl.dsp.global("caelestia:controlCenter"))
+  hl.bind(mainMod .. " + ALT + S",        hl.dsp.global("caelestia:nexus"))
+  hl.bind(mainMod .. " + ALT + Space",    hl.dsp.global("caelestia:nexus"))
   hl.bind(mainMod .. " + D",              hl.dsp.global("caelestia:dashboard"))
   hl.bind(mainMod .. " + N",              hl.dsp.global("caelestia:sidebar"))
   hl.bind(mainMod .. " + M",              hl.dsp.global("caelestia:utilities"))
@@ -42,7 +42,6 @@ function M.setup(programs)
   -- Scratchpad / special workspace.
   hl.bind(mainMod .. " + S",              hl.dsp.workspace.toggle_special("magic"))
   hl.bind(mainMod .. " + SHIFT + S",      hl.dsp.window.move({ workspace = "special:magic", follow = false }))
-  hl.bind(mainMod .. " + CTRL + S",       hl.dsp.window.move({ workspace = "current" }))
 
   -- Media keys.
   hl.bind("XF86AudioRaiseVolume",      hl.dsp.exec_cmd("volume-osd up"),       { repeating = true, locked = true })
