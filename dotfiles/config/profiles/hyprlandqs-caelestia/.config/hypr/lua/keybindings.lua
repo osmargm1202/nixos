@@ -80,10 +80,10 @@ function M.setup(programs)
   -- Group navigation.
   hl.bind(mainMod .. " + grave",         hl.dsp.group.next())
   hl.bind(mainMod .. " + SHIFT + grave", hl.dsp.group.prev())
-  hl.bind(mainMod .. " + CTRL + minus",  dispatch("resizeactive -20 0"))
-  hl.bind(mainMod .. " + CTRL + equal",  dispatch("resizeactive 20 0"))
-  hl.bind(mainMod .. " + SHIFT + minus", dispatch("resizeactive 0 -20"))
-  hl.bind(mainMod .. " + SHIFT + equal", dispatch("resizeactive 0 20"))
+  hl.bind(mainMod .. " + CTRL + minus",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive -20 0"))
+  hl.bind(mainMod .. " + CTRL + equal",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive 20 0"))
+  hl.bind(mainMod .. " + SHIFT + minus", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -20"))
+  hl.bind(mainMod .. " + SHIFT + equal", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 20"))
 
   -- Focus / move.
   local dirs    = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
