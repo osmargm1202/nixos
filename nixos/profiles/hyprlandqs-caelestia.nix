@@ -35,7 +35,6 @@ in
     # Display management
     nwg-displays
     nwg-look
-    nwg-dock-hyprland
 
     # Power menu
     wlogout
