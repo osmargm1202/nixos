@@ -28,7 +28,12 @@ in
 
   programs.gpu-screen-recorder.enable = true;
 
+  # hyprlock used as lock screen via caelestia idle (idleAction: ["hyprlock"])
+  # instead of caelestia's built-in WlSessionLock which crashes on resume.
+  security.pam.services.hyprlock = {};
+
   environment.systemPackages = with pkgs; [
+    hyprlock
     # Notification daemon (replaces swaync/waybar)
     mako
 
