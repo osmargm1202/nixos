@@ -9,7 +9,9 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  caelestiaShell = inputs.caelestia-shell.packages.${system}.with-cli;
+  caelestiaShell = (inputs.caelestia-shell.packages.${system}.with-cli).overrideAttrs (old: {
+    buildInputs = old.buildInputs ++ [ pkgs.qt6.qtmultimedia ];
+  });
 in
 {
   imports = [
