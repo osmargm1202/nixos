@@ -1,35 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-launcher="rofi"
-input=""
-while [ "$#" -gt 0 ]; do
-  case "$1" in
-    --launcher) launcher="${2:-rofi}"; shift 2 ;;
-    --input) input="${2:-}"; shift 2 ;;
-    *) shift ;;
-  esac
-done
+TOOL=$(gum choose --header "AI Tool:" pi claude codex opencode) || exit 0
+[ -z "$TOOL" ] && exit 0
 
-if [ -z "$input" ]; then
-  case "$launcher" in
-    rofi)
-      lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
-      # shellcheck disable=SC1090
-      . "$lib"
-      input="$(printf '' | hypr_rofi_dmenu 'Pedir instrucción a Pi' 3 || true)"
-      ;;
-    walker)
-      input="$(printf '' | walker --dmenu --placeholder 'Pedir instrucción a Pi' || true)"
-      ;;
-    *)
-      lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
-      # shellcheck disable=SC1090
-      . "$lib"
-      input="$(printf '' | hypr_rofi_dmenu 'Pedir instrucción a Pi' 3 || true)"
-      ;;
-  esac
-fi
+PROMPT=$(gum input --placeholder "Prompt para $TOOL...") || exit 0
+[ -z "$PROMPT" ] && exit 0
 
-[ -n "$input" ] || exit 0
-exec kitty --class kitty --hold -e distrobox-enter arch -- pi "$input"
+exec kitty --hold -e dev -i -C "$TOOL $(printf '%q' "$PROMPT")"
