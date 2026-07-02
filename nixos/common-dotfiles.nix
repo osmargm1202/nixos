@@ -126,6 +126,7 @@ let
     ".local/bin/brightness-osd"
     ".local/bin/reset_config"
     ".local/bin/windows-rdp"
+    ".local/share/icons/hicolor/256x256/apps"
     ".local/share/applications/windows-rdp.desktop"
     ".local/share/icons/nixos.svg"
     ".local/share/icons/windows.png"
@@ -370,12 +371,28 @@ let
 
   # Host-specific shared paths (fish host config, desktop files, icons).
   # Source: dotfiles/config/hosts/<host>/<path>
+  # Subdirectories of .local/share/icons that are host-specific.
+  # .local/share/icons itself is intentionally NOT listed — doing so would
+  # block sharedPaths from deploying .local/share/icons/hicolor/256x256/apps
+  # (the priority filter removes shared child paths when a host parent exists).
+  hostIconSubdirs = [
+    ".local/share/icons/Nordic-bluish"
+    ".local/share/icons/Nordic-darker"
+    ".local/share/icons/Nordic-green"
+    ".local/share/icons/distrobox"
+    ".local/share/icons/default"
+    ".local/share/icons/hicolor/16x16"
+    ".local/share/icons/hicolor/32x32"
+    ".local/share/icons/hicolor/48x48"
+    ".local/share/icons/hicolor/64x64"
+    ".local/share/icons/hicolor/128x128"
+  ];
+
   hostPaths = {
     ero = [
       ".config/fish/age-host.fish"
       ".config/fish/host-ero.fish"
-      ".local/share/icons"
-    ];
+    ] ++ hostIconSubdirs;
     lenovo = [
       ".config/fish/age-host.fish"
       ".config/fish/host-lenovo.fish"
@@ -388,8 +405,7 @@ let
       ".local/share/applications/vscode.desktop"
       ".local/share/applications/webapps.json"
       ".local/share/applications/zed.desktop"
-      ".local/share/icons"
-    ];
+    ] ++ hostIconSubdirs;
     orgm = [
       ".config/fish/age-host.fish"
       ".config/fish/host-orgm.fish"
@@ -399,13 +415,11 @@ let
       ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
       ".local/share/applications/webapps.json"
-      ".local/share/icons"
-    ];
+    ] ++ hostIconSubdirs;
     jarq = [
       ".config/fish/age-host.fish"
       ".config/fish/host-jarq.fish"
-      ".local/share/icons"
-    ];
+    ] ++ hostIconSubdirs;
   };
 
   # Host+profile paths — host-specific overrides per profile (monitor configs, etc.)

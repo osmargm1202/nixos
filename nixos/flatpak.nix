@@ -32,6 +32,7 @@
       "org.gnome.SimpleScan"
       "org.inkscape.Inkscape"
       "org.libreoffice.LibreOffice"
+      "com.github.johnfactotum.Foliate"
     ];
   };
 }
