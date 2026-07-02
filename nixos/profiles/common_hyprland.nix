@@ -20,6 +20,7 @@ in
 {
   imports = [
     inputs.ltmnight-sddm-theme.nixosModules.default
+    inputs.bezel.nixosModules.default
     ./printer.nix
   ];
 
@@ -77,6 +78,9 @@ in
     enable = true;
     terminal = "kitty";
   };
+
+  services.bezel.enable = true;
+  hardware.uinput.enable = true;
 
   services.power-profiles-daemon.enable = true;
   # UPower DBus daemon — caelestia/quickshell BatteryMonitor reads battery via

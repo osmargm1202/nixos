@@ -19,6 +19,7 @@ let
   # Source: dotfiles/config/shared/<path>
   sharedPaths = [
     ".config/bat"
+    ".config/bezel"
     ".config/btop"
     ".config/delta"
     ".config/dolphinrc"
