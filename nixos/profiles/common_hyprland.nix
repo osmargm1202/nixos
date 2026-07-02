@@ -112,17 +112,45 @@ in
     };
   };
 
-  home-manager.users.${userName} = {
-    xdg.mimeApps = {
-      enable = true;
-      defaultApplications = {
-        "x-scheme-handler/http"  = "app.zen_browser.zen.desktop";
-        "x-scheme-handler/https" = "app.zen_browser.zen.desktop";
-        "text/html"              = "app.zen_browser.zen.desktop";
-        "application/xhtml+xml"  = "app.zen_browser.zen.desktop";
-      };
+  home-manager.users.${userName} =
+    { lib, pkgs, ... }:
+    let
+      mimeAppsDefaults = pkgs.writeText "mimeapps-defaults.list" ''
+        [Default Applications]
+        inode/directory=org.gnome.Nautilus.desktop
+        text/plain=org.gnome.TextEditor.desktop
+        text/markdown=org.gnome.TextEditor.desktop
+        text/x-markdown=org.gnome.TextEditor.desktop
+        text/x-lua=org.gnome.TextEditor.desktop
+        text/x-python=org.gnome.TextEditor.desktop
+        application/json=org.gnome.TextEditor.desktop
+        application/x-shellscript=org.gnome.TextEditor.desktop
+        text/html=app.zen_browser.zen.desktop
+        application/xhtml+xml=app.zen_browser.zen.desktop
+        x-scheme-handler/http=app.zen_browser.zen.desktop
+        x-scheme-handler/https=app.zen_browser.zen.desktop
+        x-scheme-handler/chrome=app.zen_browser.zen.desktop
+        application/pdf=org.gnome.Evince.desktop
+        image/png=org.gnome.Loupe.desktop
+        image/jpeg=org.gnome.Loupe.desktop
+        image/webp=org.gnome.Loupe.desktop
+        image/gif=org.gnome.Loupe.desktop
+        image/svg+xml=org.gnome.Loupe.desktop
+        application/zip=org.gnome.FileRoller.desktop
+        application/x-tar=org.gnome.FileRoller.desktop
+        application/x-7z-compressed=org.gnome.FileRoller.desktop
+        application/x-rar=org.gnome.FileRoller.desktop
+      '';
+    in
+    {
+      home.activation.mimeAppsDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        mime_cfg="$HOME/.config/mimeapps.list"
+        if [ ! -f "$mime_cfg" ]; then
+          $DRY_RUN_CMD mkdir -p "$(dirname "$mime_cfg")"
+          $DRY_RUN_CMD cp ${mimeAppsDefaults} "$mime_cfg"
+        fi
+      '';
     };
-  };
 
   xdg.mime = {
     enable = true;

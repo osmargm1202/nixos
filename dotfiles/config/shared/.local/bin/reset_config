@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Reset seeded user configs — deleted files are re-seeded on next nh os switch
+set -e
+
+ALL_CONFIGS=(
+  "mimeapps:$HOME/.config/mimeapps.list"
+  "caelestia:$HOME/.config/caelestia/shell.json"
+)
+
+usage() {
+  echo "Usage: reset_config [all] [mimeapps] [caelestia] ..."
+  echo ""
+  echo "Available configs:"
+  for entry in "${ALL_CONFIGS[@]}"; do
+    key="${entry%%:*}"
+    path="${entry#*:}"
+    printf "  %-12s %s\n" "$key" "$path"
+  done
+  echo ""
+  echo "Run 'sudo nh os switch' after reset to re-seed defaults."
+}
+
+remove_config() {
+  local key="$1"
+  local path="$2"
+  if [ -f "$path" ]; then
+    rm "$path"
+    echo "Removed [$key]: $path"
+  else
+    echo "Skip   [$key]: $path (not found)"
+  fi
+}
+
+if [ $# -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+for arg in "$@"; do
+  case "$arg" in
+    all)
+      for entry in "${ALL_CONFIGS[@]}"; do
+        remove_config "${entry%%:*}" "${entry#*:}"
+      done
+      ;;
+    *)
+      found=0
+      for entry in "${ALL_CONFIGS[@]}"; do
+        key="${entry%%:*}"
+        path="${entry#*:}"
+        if [ "$key" = "$arg" ]; then
+          remove_config "$key" "$path"
+          found=1
+          break
+        fi
+      done
+      if [ "$found" -eq 0 ]; then
+        echo "Unknown config: $arg"
+        usage
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+echo ""
+echo "Done. Run 'sudo nh os switch .#<host>' to re-seed."
