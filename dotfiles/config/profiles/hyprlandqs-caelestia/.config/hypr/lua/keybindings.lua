@@ -36,6 +36,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + T",      hl.dsp.exec_cmd("hypr-rofi-tmux-arch"),           { description = "Tmux session picker" })
   hl.bind(mainMod .. " + F10",            hl.dsp.exec_cmd("pavucontrol"),                   { description = "Audio mixer" })
   hl.bind(mainMod .. " + ALT + L",        hl.dsp.exec_cmd(program("lock", "loginctl lock-session")), { description = "Lock screen" })
+  hl.bind(mainMod .. " + ALT + P",        hl.dsp.exec_cmd("systemctl suspend"),                       { description = "Sleep / suspend" })
   hl.bind("CTRL + Space",                 hl.dsp.exec_cmd("hyprctl switchxkblayout all next"), { description = "Next keyboard layout" })
 
   -- Scratchpad / special workspace.
