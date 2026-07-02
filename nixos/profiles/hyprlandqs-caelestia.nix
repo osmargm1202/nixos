@@ -163,11 +163,13 @@ in
       package = caelestiaShell;
     };
 
+    # Seed shell.json on first install only. Use install (not a symlink or a bare
+    # cp) so the file is a real, writable copy — caelestia rewrites it at runtime,
+    # and cp from the nix store would inherit read-only 0444 perms.
     home.activation.caelestiaDefaultSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       shell_cfg="$HOME/.config/caelestia/shell.json"
       if [ ! -f "$shell_cfg" ]; then
-        $DRY_RUN_CMD mkdir -p "$(dirname "$shell_cfg")"
-        $DRY_RUN_CMD cp ${pkgs.writeText "caelestia-shell-defaults.json" caelestiaDefaultSettings} "$shell_cfg"
+        $DRY_RUN_CMD install -Dm644 ${pkgs.writeText "caelestia-shell-defaults.json" caelestiaDefaultSettings} "$shell_cfg"
       fi
     '';
   };
