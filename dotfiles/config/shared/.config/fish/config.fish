@@ -1,13 +1,8 @@
 set -g fish_greeting
 set -Ue fish_key_bindings
 
-# Auto-enter dev environment on interactive shells.
-# Skip with: NO_DEV_SHELL=1 fish  (or set it in terminal profile)
-if status is-interactive; and not set -q IN_DEV_SHELL; and not set -q NO_DEV_SHELL
-    if type -q dev
-        exec dev
-    end
-end
+# Dev environment (FHS) is launched manually: run `dev` when you need it.
+# NOT auto-entered — keeps host shell + sudo available by default.
 
 # if not set -q TMUX
 #     if type -q fastfetch
