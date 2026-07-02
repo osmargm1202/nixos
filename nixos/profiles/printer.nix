@@ -32,7 +32,7 @@
   hardware.sane = {
     enable = true;
     extraBackends = with pkgs; [
-      epkowa # Epson scanners (Perfection/Workforce series, e.g. WF-3251)
+      sane-airscan # Driverless eSCL/WSD scanning (modern Epson/Canon/HP, e.g. WF-3251)
       hplipWithPlugin # HP scanners
       brscan4
       brscan5
