@@ -663,7 +663,8 @@ in
           .config/Kvantum \
           .config/i3 .config/polybar .config/picom \
           .config/labwc \
-          .config/conky; do
+          .config/conky \
+          .local/share/icons; do
           target="$HOME/$old_dir"
           if [ -L "$target" ]; then
             $DRY_RUN_CMD rm "$target"
