@@ -1,6 +1,6 @@
 local exec_once = {
   "hypr-session-import-env",
-  "sh -lc 'sleep 0.5 && systemctl --user start graphical-session.target'",
+  "sh -lc 'sleep 0.5 && systemctl --user start nixos-fake-graphical-session.target'",
   "systemctl --user start sunshine.service",
 
   "nm-applet --indicator",

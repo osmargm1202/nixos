@@ -79,6 +79,9 @@ in
   };
 
   services.power-profiles-daemon.enable = true;
+  # UPower DBus daemon — caelestia/quickshell BatteryMonitor reads battery via
+  # Quickshell.Services.UPower; without it the shell reports "no battery".
+  services.upower.enable = true;
 
   services.dbus.enable = true;
   services.udisks2.enable = true;
