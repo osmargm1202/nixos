@@ -20,7 +20,6 @@ function M.setup(programs)
   hl.bind(mainMod .. " + Escape",         hl.dsp.global("caelestia:windowSwitcher"))
   hl.bind(mainMod .. " + slash",          hl.dsp.global("caelestia:keybinds"))
   hl.bind(mainMod .. " + B",              hl.dsp.global("caelestia:wallpaper"))
-  hl.bind(mainMod .. " + T",             hl.dsp.global("caelestia:terminal"))
   hl.bind(mainMod .. " + ALT + E",        hl.dsp.global("caelestia:session"))
 
   -- Apps (Win+E and Win+W intentionally NOT mapped to caelestia).

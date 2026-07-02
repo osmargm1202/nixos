@@ -124,6 +124,7 @@ let
     ".local/bin/kbd-layout-next"
     ".local/bin/memclean-dev"
     ".local/bin/brightness-osd"
+    ".local/bin/reset_config"
     ".local/bin/windows-rdp"
     ".local/share/applications/windows-rdp.desktop"
     ".local/share/icons/nixos.svg"
