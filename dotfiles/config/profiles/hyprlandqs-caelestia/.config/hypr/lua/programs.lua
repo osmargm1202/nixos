@@ -8,6 +8,7 @@ local programs = {
   lock = "hypr-lock",
   power_menu = "hypr-power-menu",
   display_settings = "nwg-displays",
+  piPrompt = "hypr-pi-prompt --launcher rofi",
 }
 
 return programs
