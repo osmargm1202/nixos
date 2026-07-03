@@ -91,7 +91,7 @@ let
       maxShown = 7;
       showOnHover = false;
       favouriteApps = [
-        "app.zen_browser.zen" "kitty" "org.gnome.Nautilus"
+        "zen-browser" "kitty" "org.gnome.Nautilus"
         "whatsapp" "chatgpt" "org.gnome.Calculator"
         "windows-rdp" "code" "claude" "vesktop"
       ];

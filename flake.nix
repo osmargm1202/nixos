@@ -48,6 +48,10 @@
       url = "github:osmargm1202/ltmnight-sddm-theme";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zen-browser-flake = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

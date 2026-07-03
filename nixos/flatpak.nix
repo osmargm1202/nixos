@@ -11,12 +11,9 @@
       }
     ];
 
-    overrides = {
-      "app.zen_browser.zen".Context.allow = "devel";
-    };
+    overrides = { };
 
     packages = [
-      "app.zen_browser.zen"
       "be.alexandervanhee.gradia"
       "com.discordapp.Discord"
       "com.google.EarthPro"

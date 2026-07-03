@@ -14,6 +14,8 @@ let
   dotfilesOrgmSource = ../../dotfiles;
   orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
+  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
+  psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
 in
@@ -128,11 +130,11 @@ in
         text/x-python=org.gnome.TextEditor.desktop
         application/json=org.gnome.TextEditor.desktop
         application/x-shellscript=org.gnome.TextEditor.desktop
-        text/html=app.zen_browser.zen.desktop
-        application/xhtml+xml=app.zen_browser.zen.desktop
-        x-scheme-handler/http=app.zen_browser.zen.desktop
-        x-scheme-handler/https=app.zen_browser.zen.desktop
-        x-scheme-handler/chrome=app.zen_browser.zen.desktop
+        text/html=zen-browser.desktop
+        application/xhtml+xml=zen-browser.desktop
+        x-scheme-handler/http=zen-browser.desktop
+        x-scheme-handler/https=zen-browser.desktop
+        x-scheme-handler/chrome=zen-browser.desktop
         application/pdf=org.gnome.Evince.desktop
         image/png=org.gnome.Loupe.desktop
         image/jpeg=org.gnome.Loupe.desktop
@@ -153,6 +155,44 @@ in
           $DRY_RUN_CMD cp ${mimeAppsDefaults} "$mime_cfg"
         fi
       '';
+
+      xdg.configFile."psd/psd.conf".text = ''
+        BROWSERS=(zen)
+      '';
+
+      systemd.user.services.psd = {
+        Unit = {
+          Description = "Profile-sync-daemon";
+          Wants = [ "psd-resync.service" ];
+          RequiresMountsFor = [ "/home/" ];
+        };
+        Service = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${psdZen}/bin/profile-sync-daemon startup";
+          ExecStop = "${psdZen}/bin/profile-sync-daemon unsync";
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
+
+      systemd.user.services.psd-resync = {
+        Unit = {
+          Description = "Timed resync";
+          After = [ "psd.service" ];
+          BindsTo = [ "psd.service" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${psdZen}/bin/profile-sync-daemon resync";
+        };
+      };
+
+      systemd.user.timers.psd-resync = {
+        Unit.Description = "Timer for profile-sync-daemon - 1Hour";
+        Unit.BindsTo = [ "psd.service" ];
+        Timer.OnUnitActiveSec = "1h";
+        Install.WantedBy = [ "timers.target" ];
+      };
     };
 
   xdg.mime = {
@@ -166,11 +206,11 @@ in
       "text/x-python" = [ "org.gnome.TextEditor.desktop" ];
       "application/json" = [ "org.gnome.TextEditor.desktop" ];
       "application/x-shellscript" = [ "org.gnome.TextEditor.desktop" ];
-      "text/html" = [ "app.zen_browser.zen.desktop" ];
-      "application/xhtml+xml" = [ "app.zen_browser.zen.desktop" ];
-      "x-scheme-handler/http" = [ "app.zen_browser.zen.desktop" ];
-      "x-scheme-handler/https" = [ "app.zen_browser.zen.desktop" ];
-      "x-scheme-handler/chrome" = [ "app.zen_browser.zen.desktop" ];
+      "text/html" = [ "zen-browser.desktop" ];
+      "application/xhtml+xml" = [ "zen-browser.desktop" ];
+      "x-scheme-handler/http" = [ "zen-browser.desktop" ];
+      "x-scheme-handler/https" = [ "zen-browser.desktop" ];
+      "x-scheme-handler/chrome" = [ "zen-browser.desktop" ];
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
       "image/png" = [ "org.gnome.Loupe.desktop" ];
       "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
@@ -219,6 +259,10 @@ in
 
     # Terminal
     kitty
+
+    # Browser
+    zenBrowser
+    psdZen
 
     # Portal / XDG
     xdg-utils
