@@ -15,6 +15,23 @@ let
   dotfilesParent = "/home/${userName}/Hobby";
   hostName = config.networking.hostName;
 
+  # Mirrors *.desktop files Steam (and similar launchers) drop into
+  # ~/Desktop over to ~/.local/share/applications so dock/launcher icons
+  # actually see them. Run both at HM activation and via a systemd --user
+  # path unit that reacts to ~/Desktop changes at runtime.
+  syncDesktopShortcutsScript = pkgs.writeShellScript "sync-desktop-shortcuts" ''
+    set -euo pipefail
+    src="$HOME/Desktop"
+    dst="$HOME/.local/share/applications"
+    [ -d "$src" ] || exit 0
+    mkdir -p "$dst"
+    shopt -s nullglob
+    for f in "$src"/*.desktop; do
+      cp -f "$f" "$dst/$(basename "$f")"
+    done
+    ${pkgs.desktop-file-utils}/bin/update-desktop-database "$dst" 2>/dev/null || true
+  '';
+
   # Paths symlinked for ALL profiles — terminal tools, editors, fonts, etc.
   # Source: dotfiles/config/shared/<path>
   sharedPaths = [
@@ -741,6 +758,28 @@ GTKEOF
           init_file ".config/vesktop/settings/quickcss.css" ""
         ''
       );
+
+      # Steam (and similar launchers) write "Create desktop shortcut" .desktop
+      # files into ~/Desktop instead of ~/.local/share/applications, so dock
+      # and app-launcher icons never pick them up. Mirror them automatically.
+      home.activation.syncDesktopShortcuts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        $DRY_RUN_CMD ${syncDesktopShortcutsScript}
+      '';
+
+      systemd.user.services.desktop-shortcut-sync = {
+        Unit.Description = "Copy *.desktop shortcuts from ~/Desktop into ~/.local/share/applications";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${syncDesktopShortcutsScript}";
+        };
+      };
+
+      systemd.user.paths.desktop-shortcut-sync = {
+        Unit.Description = "Watch ~/Desktop for new .desktop shortcuts (e.g. from Steam)";
+        Path.PathChanged = "%h/Desktop";
+        Path.Unit = "desktop-shortcut-sync.service";
+        Install.WantedBy = [ "default.target" ];
+      };
 
       home.file = lib.mkMerge [
         # Shared paths — dotfiles/config/shared/<path>
