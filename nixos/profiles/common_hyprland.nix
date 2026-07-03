@@ -39,7 +39,7 @@ in
       settings = {
         General.Numlock = "on";
         Wayland = {
-          CursorTheme = "Catppuccin-Macchiato-Teal-Cursors";
+          CursorTheme = "catppuccin-macchiato-teal-cursors";
           CursorSize = 36;
         };
       };
