@@ -157,21 +157,6 @@ in
           $DRY_RUN_CMD cp ${mimeAppsDefaults} "$mime_cfg"
         fi
       '';
-
-      # Force Steam to use XWayland (SDL x11 backend) so Remote Play works
-      # without the PipeWire portal screen-picker dialog.
-      xdg.desktopEntries.steam = {
-        name = "Steam";
-        exec = "env SDL_VIDEODRIVER=x11 steam %U";
-        icon = "steam";
-        comment = "Application for managing and playing games on Steam";
-        categories = [ "Network" "FileTransfer" "Game" ];
-        mimeType = [ "x-scheme-handler/steam" "x-scheme-handler/steamlink" ];
-        actions = {
-          "Store" = { exec = "steam steam://store"; name = "Open Steam Store"; };
-          "Community" = { exec = "steam steam://url/SteamIDFriendsPage"; name = "Open Steam Community"; };
-        };
-      };
     };
 
   xdg.mime = {
