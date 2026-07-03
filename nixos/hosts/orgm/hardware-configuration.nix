@@ -37,9 +37,30 @@
     fsType = "ext4";
   };
 
-  fileSystems."/" = {
+  fileSystems."/persist" = {
     device = "/dev/disk/by-uuid/8417da22-d554-4f06-ab91-f384ddfb3df4";
     fsType = "ext4";
+    neededForBoot = true;
+  };
+
+  # /nix must survive reboots (NixOS only needs /boot + /nix to boot — see
+  # wiki.nixos.org/wiki/Impermanence). Bind-mounted from the same persisted
+  # partition's existing /nix subdirectory — no data migration needed, the
+  # store is already there since this partition used to be root.
+  fileSystems."/nix" = {
+    device = "/persist/nix";
+    fsType = "none";
+    options = [ "bind" ];
+    neededForBoot = true;
+  };
+
+  fileSystems."/" = {
+    device = "none";
+    fsType = "tmpfs";
+    options = [
+      "size=8G"
+      "mode=755"
+    ];
   };
 
   fileSystems."/boot" = {

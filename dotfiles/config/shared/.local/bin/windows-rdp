@@ -22,8 +22,9 @@ ICON_FILE="$ICON_DIR/windows.png"
 
 # Seconds to wait after port is open for RDP to fully initialize
 RDP_BOOT_DELAY=10
-# Max retries for RDP connection
-RDP_MAX_RETRIES=5
+# Backoff delays (seconds) between retries after starting the container.
+# Attempt count = number of delays + 1 (one initial attempt, no wait before it).
+RDP_RETRY_DELAYS=(10 20 60 60)
 
 # ============================================================
 # Functions
@@ -157,7 +158,7 @@ rdp_connect() {
   local -a RDP_CMD
 
   if [[ "$started_container" == "1" ]]; then
-    max_retries="$RDP_MAX_RETRIES"
+    max_retries=$(( ${#RDP_RETRY_DELAYS[@]} + 1 ))
   fi
 
   rdp_command
@@ -193,8 +194,9 @@ rdp_connect() {
 
     # Startup path can race Windows RDP initialization; direct path should fail fast.
     if [[ "$started_container" == "1" && $attempt -lt $max_retries ]]; then
-      echo "Connection failed (exit code $rc). Retrying in 5s..."
-      sleep 5
+      local delay="${RDP_RETRY_DELAYS[$((attempt - 1))]}"
+      echo "Connection failed (exit code $rc). Retrying in ${delay}s..."
+      sleep "$delay"
     fi
     ((attempt++))
   done

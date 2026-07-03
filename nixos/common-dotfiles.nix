@@ -32,6 +32,17 @@ let
     ${pkgs.desktop-file-utils}/bin/update-desktop-database "$dst" 2>/dev/null || true
   '';
 
+  orgmDotfilesUpdateScript = pkgs.writeShellApplication {
+    name = "orgm-dotfiles-update";
+    runtimeInputs = with pkgs; [ git openssh ];
+    text = ''
+      cd "${dotfilesRepoPath}"
+      git fetch origin "${dotfilesBranch}"
+      git checkout "${dotfilesBranch}"
+      git pull --ff-only origin "${dotfilesBranch}" || true
+    '';
+  };
+
   # Paths symlinked for ALL profiles — terminal tools, editors, fonts, etc.
   # Source: dotfiles/config/shared/<path>
   sharedPaths = [
@@ -616,10 +627,13 @@ in
     wants = [ "home-manager-${userName}.service" ];
   };
 
+  # Boot only needs the repo to *exist* — home-manager reads from disk, it
+  # doesn't need today's remote commits. This used to also `git fetch` on
+  # every boot gated on network-online.target, serializing ~5-6s of
+  # NetworkManager-wait-online + the fetch itself in front of home-manager
+  # and login. Now it's a no-op (no network touched) once cloned once.
   systemd.services.orgm-dotfiles-repo = {
-    description = "Clone and update ORGM dotfiles repository";
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
+    description = "Ensure ORGM dotfiles repository is cloned";
     before = [ "home-manager-${userName}.service" ];
     wantedBy = [ "multi-user.target" ];
     path = with pkgs; [
@@ -649,14 +663,33 @@ in
           exit 1
         fi
         as_user git clone --branch "${dotfilesBranch}" "${dotfilesRepo}" "${dotfilesRepoPath}"
-      else
-        as_user git -C "${dotfilesRepoPath}" fetch origin "${dotfilesBranch}"
-        as_user git -C "${dotfilesRepoPath}" checkout "${dotfilesBranch}"
-        as_user git -C "${dotfilesRepoPath}" pull --ff-only origin "${dotfilesBranch}" || true
+        chown -R ${userName}:users "${dotfilesRepoPath}"
       fi
-
-      chown -R ${userName}:users "${dotfilesRepoPath}"
     '';
+  };
+
+  # Pulling latest dotfiles is now decoupled from boot entirely: a manual CLI
+  # helper (orgm-dotfiles-update) plus a background timer that starts well
+  # after login and re-runs daily. Neither blocks boot or home-manager.
+  systemd.services.orgm-dotfiles-update = {
+    description = "Fetch latest ORGM dotfiles (non-blocking)";
+    after = [ "network-online.target" "orgm-dotfiles-repo.service" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = userName;
+      ExecStart = "${orgmDotfilesUpdateScript}/bin/orgm-dotfiles-update";
+    };
+  };
+
+  systemd.timers.orgm-dotfiles-update = {
+    description = "Periodic ORGM dotfiles update";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "1d";
+      Persistent = true;
+    };
   };
 
   home-manager.users.${userName} =
@@ -816,6 +849,8 @@ GTKEOF
         ))
       ];
     };
+
+  environment.systemPackages = [ orgmDotfilesUpdateScript ];
 
   assertions = [
     {

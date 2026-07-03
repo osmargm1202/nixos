@@ -52,6 +52,7 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence.url = "github:nix-community/impermanence";
   };
 
   outputs =
@@ -229,6 +230,7 @@
       nixosConfigurations = {
         orgm-terminal = mkMinimalHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+          extraModules = [ inputs.impermanence.nixosModules.impermanence ./nixos/impermanence.nix ];
         };
         lenovo-terminal = mkMinimalHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
@@ -285,42 +287,42 @@
         orgm-gnome = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix; profileName = "gnome";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-cinnamon = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/cinnamon.nix; profileName = "cinnamon";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-hyprland = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-hyprlandqs-caelestia = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-labwc = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix; profileName = "labwc";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-i3 = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/i3.nix; profileName = "i3";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-xfce = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/xfce.nix; profileName = "xfce";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
         orgm-mate = mkHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
           profile = ./nixos/profiles/mate.nix; profileName = "mate";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
+          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ./nixos/impermanence.nix ];
         };
 
         ero-labwc = mkHost {
@@ -346,37 +348,37 @@
         lenovo-labwc = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/labwc.nix; profileName = "labwc";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-gnome = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/gnome.nix; profileName = "gnome";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-hyprland = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-hyprlandqs-caelestia = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-i3 = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/i3.nix; profileName = "i3";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-xfce = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/xfce.nix; profileName = "xfce";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
         lenovo-mate = mkHost {
           hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
           profile = ./nixos/profiles/mate.nix; profileName = "mate";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ./nixos/impermanence.nix ];
         };
       };
     };

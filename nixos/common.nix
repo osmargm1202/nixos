@@ -16,6 +16,7 @@
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
       inputs.nix-flatpak.nixosModules.nix-flatpak
+      inputs.impermanence.nixosModules.impermanence
       ./flatpak.nix
       ./common-dotfiles.nix
       ./webapps.nix
@@ -89,6 +90,15 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.consoleMode = "max";
   boot.loader.efi.canTouchEfiVariables = true;
+  # Default menu timeout was unset (systemd-boot's own ~5s default). Hold a key
+  # at the menu to browse generations; normal boot no longer waits for it.
+  boot.loader.timeout = 1;
+
+  # NetworkManager-wait-online blocks network-online.target on full WiFi/DHCP
+  # association (~5-6s measured), which in turn blocked orgm-dotfiles-repo and
+  # home-manager at boot. Nothing here actually needs a guaranteed-online state
+  # before login, so stop pulling it into network-online.target.
+  systemd.services.NetworkManager-wait-online.wantedBy = lib.mkForce [ ];
 
   hardware.uinput.enable = true;
   hardware.bluetooth = {

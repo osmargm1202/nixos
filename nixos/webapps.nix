@@ -17,7 +17,7 @@ let
     }:
     {
       inherit name;
-      exec = ''chromium --app="${url}" --new-window'';
+      exec = ''chromium --app="${url}" --class="${wmClass}" --new-window'';
       inherit icon comment categories;
       settings = {
         StartupNotify = "true";
