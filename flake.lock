@@ -66,26 +66,6 @@
         "type": "github"
       }
     },
-    "bezel": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1782918367,
-        "narHash": "sha256-q/bQmlfGv2gyut8aDSvnMZaIDi3JsZNysUIuMq5/YLY=",
-        "owner": "Indra55",
-        "repo": "bezel",
-        "rev": "39a2e74862b491f40b57ae040646c600e12436db",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Indra55",
-        "repo": "bezel",
-        "type": "github"
-      }
-    },
     "caelestia-cli": {
       "inputs": {
         "caelestia-shell": [
@@ -981,7 +961,6 @@
     },
     "root": {
       "inputs": {
-        "bezel": "bezel",
         "caelestia-shell": "caelestia-shell",
         "dgop": "dgop",
         "dms": "dms",
