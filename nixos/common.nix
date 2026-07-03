@@ -192,7 +192,6 @@
       "docker"
       "podman"
       "input"
-      "uinput"
       "video"
       "render"
     ];

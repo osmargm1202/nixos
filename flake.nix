@@ -48,10 +48,6 @@
       url = "github:osmargm1202/ltmnight-sddm-theme";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    bezel = {
-      url = "github:Indra55/bezel";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
