@@ -16,7 +16,6 @@
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
       inputs.nix-flatpak.nixosModules.nix-flatpak
-      inputs.impermanence.nixosModules.impermanence
       ./flatpak.nix
       ./common-dotfiles.nix
       ./webapps.nix
@@ -313,19 +312,27 @@
 
   # List services that you want to enable:
 
-  # Enable OpenSSH daemon.
-  services.openssh.enable = true;
+  # Enable OpenSSH daemon. Explicit port (rather than relying on the 22
+  # default) so every host stays on the same port even if that default
+  # ever changes upstream. openssh's own module auto-opens this port in
+  # the firewall (openFirewall defaults to true) — no manual allow needed.
+  services.openssh = {
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = true;
+    };
+  };
 
-  # Open ports in firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  #networking.firewall = {
-  # enable = true;
-  # allowedTCPPorts = [ 47984 47989 47990 48010 ];
-  # allowedUDPPorts = [ 47998 47999 48000 48010 ];
-  #};
-  # Or disable firewall altogether.
-  # networking.firewall.enable = false;
+  # 22 (SSH) and sunshine's ports are auto-opened by their own service
+  # modules (openssh openFirewall default true; nixos/gaming/sunshine.nix
+  # sets services.sunshine.openFirewall = true). Only HTTP/HTTPS need a
+  # manual allow here.
+  networking.firewall.allowedTCPPorts = [
+    80
+    443
+  ];
 
   system.stateVersion = "25.11"; # Did you read comment?
 }

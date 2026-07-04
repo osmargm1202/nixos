@@ -24,30 +24,9 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
-  fileSystems."/persist" = {
+  fileSystems."/" = {
     device = "/dev/disk/by-uuid/e9cda353-c924-4aed-b348-5de16c35e40a";
     fsType = "ext4";
-    neededForBoot = true;
-  };
-
-  # /nix must survive reboots (NixOS only needs /boot + /nix to boot — see
-  # wiki.nixos.org/wiki/Impermanence). Bind-mounted from the same persisted
-  # partition's existing /nix subdirectory — no data migration needed, the
-  # store is already there since this partition used to be root.
-  fileSystems."/nix" = {
-    device = "/persist/nix";
-    fsType = "none";
-    options = [ "bind" ];
-    neededForBoot = true;
-  };
-
-  fileSystems."/" = {
-    device = "none";
-    fsType = "tmpfs";
-    options = [
-      "size=8G"
-      "mode=755"
-    ];
   };
 
   fileSystems."/boot" = {
