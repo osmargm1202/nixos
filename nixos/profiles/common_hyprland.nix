@@ -23,6 +23,7 @@ in
   imports = [
     inputs.ltmnight-sddm-theme.nixosModules.default
     ./printer.nix
+    ../mods/wayland-vpets.nix
   ];
 
   services.xserver.enable = false;

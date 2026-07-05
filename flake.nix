@@ -52,6 +52,10 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    wayland-vpets = {
+      url = "github:furudbat/wayland-vpets";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
