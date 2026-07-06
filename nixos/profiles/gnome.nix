@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./printer.nix ];
+  imports = [ ./sddm.nix ./printer.nix ];
 
   services.xserver.enable = true;
   security.polkit.enable = true;
@@ -9,19 +9,11 @@
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
-  security.pam.services.gdm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
   services.power-profiles-daemon.enable = true;
 
   services.desktopManager.gnome.enable = true;
-
-  services.displayManager = {
-    defaultSession = "gnome";
-    gdm = {
-      enable = true;
-      autoSuspend = false;
-    };
-  };
+  services.displayManager.defaultSession = "gnome";
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";

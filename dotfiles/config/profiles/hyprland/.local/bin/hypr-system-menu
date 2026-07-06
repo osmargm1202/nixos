@@ -25,9 +25,6 @@ choice="$(printf '%s\n' \
   '󰔎 Theme light' \
   '󰔎 Theme dark' \
   '󰆍 User logs' \
-  '󰁯 orgm-dot status' \
-  '󰕚 orgm-dot diff' \
-  '󰑓 orgm-dot sync' \
   '󰉋 Open dotfiles' \
   '󰐥 Power' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
@@ -41,9 +38,6 @@ case "$choice" in
   *'Theme light') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-light ;;
   *'Theme dark') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
-  *'orgm-dot status') exec kitty --class dot-status -e sh -lc "hypr-orgm-dot status; read -r -p 'press enter...'" ;;
-  *'orgm-dot diff') exec kitty --class dot-diff -e sh -lc "hypr-orgm-dot diff; read -r -p 'press enter...'" ;;
-  *'orgm-dot sync') exec kitty --class dot-sync -e sh -lc "hypr-orgm-dot sync; read -r -p 'press enter...'" ;;
   *'Open dotfiles') exec nautilus "$repo" ;;
   *'Power') exec hypr-power-menu ;;
   *) exec hypr-main-menu ;;

@@ -32,6 +32,17 @@ HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
 profiles=(hyprland labwc sway i3 cinnamon gnome xfce mate server terminal)
 gpus=(intel radeon nvidia)
 kernels=(zen lts)
+# qylock SDDM login themes (github:Darkkal44/qylock, themes/ directory names).
+# clockwork first: repo-wide default when a host has no per-host override.
+sddm_themes=(
+  clockwork winter star-rail nier-automata terraria Genshin minecraft osu
+  osumania sword windows_7 wuwa forest field enfield nothing R1999_1 R1999_2
+  dog-samurai girl-coffee girl-pillow last-of-us man-bicycle material-you
+  ninja_gaiden pixel-coffee pixel-cyberpunk pixel-dusk-city pixel-emerald
+  pixel-hollowknight pixel-munchlax pixel-night-city pixel-rainyroom
+  pixel-sakura pixel-skyscrapers pixel-waterfall women-umbrella
+)
+SELECTED_SDDM_MODULE=""
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
@@ -89,6 +100,13 @@ confirm() {
 
 is_base_profile() {
   [ "${SELECTED_PROFILE:-}" = "server" ] || [ "${SELECTED_PROFILE:-}" = "terminal" ]
+}
+
+has_sddm_login() {
+  case "${SELECTED_PROFILE:-}" in
+    i3|server|terminal) return 1 ;;
+    *) return 0 ;;
+  esac
 }
 
 refresh_nixos_paths() {
@@ -304,6 +322,27 @@ choose_kernel() {
   done
 }
 
+choose_sddm_theme() {
+  say ""
+  say "Choose SDDM login theme (qylock):"
+  local i
+  for i in "${!sddm_themes[@]}"; do
+    say "  $((i + 1))) ${sddm_themes[$i]}"
+  done
+  say ""
+  local choice=""
+  while true; do
+    read_prompt "Theme [1-${#sddm_themes[@]}] default 1 (${sddm_themes[0]}): " choice
+    choice="${choice:-1}"
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sddm_themes[@]}" ]; then
+      SELECTED_SDDM_THEME="${sddm_themes[$((choice - 1))]}"
+      SELECTED_SDDM_MODULE="({ ... }: { programs.qylock.theme = \"$SELECTED_SDDM_THEME\"; })"
+      return 0
+    fi
+    say "Invalid selection."
+  done
+}
+
 choose_hostname() {
   say ""
   local current
@@ -373,6 +412,7 @@ EOF
       extraModules = [
         $SELECTED_GPU_MODULE
         $SELECTED_KERNEL_MODULE
+        $SELECTED_SDDM_MODULE
       ];
     };
   };
@@ -417,6 +457,9 @@ main() {
     choose_gpu
     choose_kernel
   fi
+  if has_sddm_login; then
+    choose_sddm_theme
+  fi
   choose_hostname
 
   say ""
@@ -428,6 +471,9 @@ main() {
   if ! is_base_profile; then
     say "  GPU        : $SELECTED_GPU"
     say "  Kernel     : $SELECTED_KERNEL"
+  fi
+  if has_sddm_login; then
+    say "  SDDM theme : $SELECTED_SDDM_THEME"
   fi
   say "  Hostname   : $SELECTED_HOSTNAME"
   say ""

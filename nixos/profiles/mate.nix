@@ -1,12 +1,11 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./printer.nix ];
+  imports = [ ./sddm.nix ./printer.nix ];
 
   services.xserver.enable = true;
   services.xserver.desktopManager.mate.enable = true;
   services.displayManager.defaultSession = "mate";
-  services.displayManager.sddm.enable = true;
 
   services.libinput.enable = true;
   security.polkit.enable = true;

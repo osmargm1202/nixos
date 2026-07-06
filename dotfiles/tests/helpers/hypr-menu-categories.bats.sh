@@ -13,9 +13,8 @@ PERF="$BIN/hypr-performance-menu"
 TWEAKS="$BIN/hypr-tweaks-menu"
 DEVICES="$BIN/hypr-devices-menu"
 HELP="$BIN/hypr-help-menu"
-ORGMDOT="$BIN/hypr-orgm-dot"
 
-for script in "$MAIN" "$TOOLS" "$SYSTEM" "$PERF" "$TWEAKS" "$DEVICES" "$HELP" "$ORGMDOT"; do
+for script in "$MAIN" "$TOOLS" "$SYSTEM" "$PERF" "$TWEAKS" "$DEVICES" "$HELP"; do
   [[ -x "$script" ]] || fail "script not executable: $script"
   bash -n "$script"
 done
@@ -53,20 +52,14 @@ assert_contains "$HELP" 'hypr-keyhelper init'
 assert_contains "$HELP" 'hypr-keybindings-help'
 assert_contains "$SYSTEM" 'hypr-power-menu'
 
-# Hypr menus must not escape to host. orgm-dot runs direct/fallback local, not distrobox-host-exec.
+# Hypr menus must not escape to host.
 for script in "$BIN"/hypr-*; do
   assert_not_contains "$script" 'distrobox-host-exec'
 done
-assert_contains "$ORGMDOT" 'orgm-dot'
-assert_contains "$ORGMDOT" 'go run ./cmd/orgm-dot'
-assert_contains "$SYSTEM" 'hypr-orgm-dot status'
-assert_contains "$SYSTEM" 'hypr-orgm-dot diff'
-assert_contains "$SYSTEM" 'hypr-orgm-dot sync'
 
 # New scripts are managed by dotfiles config.
 assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-tweaks-menu"'
 assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-devices-menu"'
 assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-help-menu"'
-assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-orgm-dot"'
 
 echo "hypr menu categories test passed"

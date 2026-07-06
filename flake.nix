@@ -12,6 +12,11 @@
       # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
       url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     };
+    hyprdeck = {
+      # Lua tab-group plugin for Hyprland's Lua config API.
+      url = "github:chpock/hyprdeck";
+      flake = false;
+    };
     hyprpaper = {
       # Keep hyprpaper IPC compatible with latest Hyprland/hyprctl.
       url = "github:hyprwm/hyprpaper";
@@ -40,13 +45,10 @@
       url = "github:AvengeMedia/dgop";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sddm-astronaut-theme = {
-      url = "github:Keyitdev/sddm-astronaut-theme";
-      flake = false;
-    };
-    ltmnight-sddm-theme = {
-      url = "github:osmargm1202/ltmnight-sddm-theme";
-      inputs.nixpkgs.follows = "nixpkgs";
+    qylock = {
+      # SDDM/quickshell lockscreen themes. Pins its own nixpkgs-unstable
+      # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
+      url = "github:Darkkal44/qylock";
     };
     zen-browser-flake = {
       url = "github:0xc000022070/zen-browser-flake";
@@ -69,7 +71,6 @@
       # inherit nixpkgs.config from NixOS modules — needs explicit config here).
       pkgsDev = import nixpkgs { inherit system; config.allowUnfree = true; };
       dotfilesOrgmSource = ./dotfiles;
-      orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { inherit dotfilesOrgmSource; };
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;
       };
@@ -207,16 +208,14 @@
 
       packages.${system} = {
         inherit
-          orgmDot
           orgmWallpaper
           orgmThemes
           codebaseMcp
           ;
-        "orgm-dot" = orgmDot;
         "orgm-wallpaper" = orgmWallpaper;
         "orgm-themes" = orgmThemes;
         "codebase-memory-mcp" = codebaseMcp;
-        default = orgmDot;
+        default = orgmWallpaper;
       };
 
       devShells.${system}.default =

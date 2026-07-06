@@ -21,36 +21,25 @@ let
 in
 {
   imports = [
-    inputs.ltmnight-sddm-theme.nixosModules.default
+    ./sddm.nix
     ./printer.nix
     ../mods/wayland-vpets.nix
   ];
 
   services.xserver.enable = false;
-  services.displayManager = {
-    defaultSession = "hyprland";
-    sddm = {
-      enable = true;
-      wayland = {
-        enable = true;
-        compositor = "kwin";
-      };
-      autoNumlock = true;
-      enableHidpi = true;
-      theme = "ltmnight";
-      settings = {
-        General.Numlock = "on";
-        Wayland = {
-          CursorTheme = "catppuccin-macchiato-teal-cursors";
-          CursorSize = 36;
-        };
-      };
-    };
-  };
+  services.displayManager.defaultSession = "hyprland";
 
-  environment.etc = lib.mkIf hasSddmKwinOutputConfig {
-    "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
-  };
+  environment.etc = lib.mkMerge [
+    (lib.mkIf hasSddmKwinOutputConfig {
+      "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
+    })
+    {
+      # Tab-group Lua plugin source, exposed at a stable path so hyprland.lua
+      # can `package.path`+`require` it without a manual git clone. Inert
+      # unless a profile's hyprland.lua requires it (see lua/hyprdeck.lua).
+      "hyprdeck".source = inputs.hyprdeck;
+    }
+  ];
   systemd.tmpfiles.rules = lib.optionals hasSddmKwinOutputConfig [
     "d /var/lib/sddm/.config 0755 sddm sddm -"
     "C /var/lib/sddm/.config/kwinoutputconfig.json 0644 sddm sddm - /etc/sddm/kwinoutputconfig-${config.networking.hostName}.json"

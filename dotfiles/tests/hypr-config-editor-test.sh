@@ -39,18 +39,11 @@ printf '%s\n' "$*" >>"$XDG_OPEN_ARGS"
 SH
 chmod +x "$TMP/bin/xdg-open"
 
-cat >"$TMP/bin/orgm-dot" <<'SH'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >>"$ORGM_DOT_ARGS"
-SH
-chmod +x "$TMP/bin/orgm-dot"
-
 run_editor() {
   : >"$TMP/prompts"
   : >"$TMP/inputs"
   : >"$TMP/kitty.args"
   : >"$TMP/xdg-open.args"
-  : >"$TMP/orgm-dot.args"
   PATH="$TMP/bin:$PATH" \
   HYPR_ROFI_LIB="$TMP/lib.sh" \
   HYPR_CONFIG_EDITOR_ROOT="$HYPR_ROOT" \
@@ -59,7 +52,6 @@ run_editor() {
   ROFI_INPUTS="$TMP/inputs" \
   KITTY_ARGS="$TMP/kitty.args" \
   XDG_OPEN_ARGS="$TMP/xdg-open.args" \
-  ORGM_DOT_ARGS="$TMP/orgm-dot.args" \
   "$SCRIPT"
 }
 
@@ -86,12 +78,6 @@ grep -Fxq -- "--class hypr-config-editor -e fish -lc nvim \"\$argv[1]\" -- $HYPR
   cat "$TMP/kitty.args" >&2
   exit 1
 }
-grep -Fxq -- 'sync .config/hypr/lua/input.lua' "$TMP/orgm-dot.args" || {
-  echo 'FAIL: nvim option should sync only selected managed file' >&2
-  cat "$TMP/orgm-dot.args" >&2
-  exit 1
-}
-
 printf 'hyprland.lua\nAbrir con app por defecto\n' >"$TMP/responses"
 run_editor
 
@@ -100,15 +86,4 @@ grep -Fxq -- "$HYPR_ROOT/hyprland.lua" "$TMP/xdg-open.args" || {
   cat "$TMP/xdg-open.args" >&2
   exit 1
 }
-if grep -Fxq 'Sincronizar Hypr config' "$TMP/prompts"; then
-  echo 'FAIL: default-app option should not ask before syncing' >&2
-  cat "$TMP/prompts" >&2
-  exit 1
-fi
-grep -Fxq -- 'sync .config/hypr/hyprland.lua' "$TMP/orgm-dot.args" || {
-  echo 'FAIL: default-app option should sync only selected managed Lua file automatically' >&2
-  cat "$TMP/orgm-dot.args" >&2
-  exit 1
-}
-
 echo 'hypr config editor test passed'

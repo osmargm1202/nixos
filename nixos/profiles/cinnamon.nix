@@ -1,17 +1,13 @@
 { pkgs, lib, ... }:
 
 {
-  imports = [ ./printer.nix ];
+  imports = [ ./sddm.nix ./printer.nix ];
 
   services.xserver.enable = true;
 
   # Force Cinnamon-only desktop stack.
   services.desktopManager.gnome.enable = lib.mkForce false;
   services.displayManager.defaultSession = lib.mkForce "cinnamon";
-  services.displayManager.gdm = {
-    enable = true;
-    autoSuspend = false;
-  };
   services.xserver.displayManager.lightdm.enable = lib.mkForce false;
 
   # Cinnamon as desktop environment.
@@ -32,7 +28,6 @@
   services.pulseaudio.enable = false;
 
   programs.dconf.enable = true;
-  security.pam.services.gdm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
   security.polkit.enable = true;
 

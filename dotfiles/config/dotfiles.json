@@ -4,7 +4,6 @@
     "destination": "~",
     "source_shared": "config/shared",
     "source_hosts": "config/hosts",
-    "state_dir": "~/.local/state/orgm-dot",
     "poll_seconds": 5
   },
   "shared": {

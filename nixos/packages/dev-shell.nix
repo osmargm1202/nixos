@@ -85,6 +85,7 @@ pkgs.buildFHSEnv {
       gcc
       gnumake
       openssl
+      openssl.dev
       pkg-config
       # AI/dev CLIs from nixpkgs
       claude-code

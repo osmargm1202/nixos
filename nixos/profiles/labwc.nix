@@ -1,36 +1,15 @@
 { pkgs, inputs, ... }:
 
-let
-  sddmAstronautTheme = pkgs.callPackage ../packages/sddm-astronaut-theme.nix {
-    src = inputs.sddm-astronaut-theme;
-  };
-in
 {
   imports = [
+    ./sddm.nix
     inputs.dms.nixosModules.dank-material-shell
     ./printer.nix
     ../mods/wayland-vpets.nix
   ];
 
   services.xserver.enable = true;
-  services.displayManager = {
-    defaultSession = "labwc";
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-      autoNumlock = true;
-      theme = "sddm-astronaut-theme";
-      extraPackages = with pkgs.qt6; [
-        qtmultimedia
-        qtsvg
-        qtvirtualkeyboard
-      ];
-      settings.General = {
-        InputMethod = "qtvirtualkeyboard";
-        Numlock = "on";
-      };
-    };
-  };
+  services.displayManager.defaultSession = "labwc";
 
   programs.labwc.enable = true;
   programs.xwayland.enable = true;
@@ -119,7 +98,6 @@ in
     labwc
     xwayland
 
-    sddmAstronautTheme
     kitty
     fuzzel
     quickshell
