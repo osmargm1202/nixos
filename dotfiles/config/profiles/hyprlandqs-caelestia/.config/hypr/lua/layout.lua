@@ -33,7 +33,7 @@ if hyprdeck.enabled then
       indicator_height = 0,
 
       col = {
-        active = "rgba(33ccff30)",
+        active = "rgba(0d47a130)",
         inactive = "rgba(2a2a2a55)",
       },
 
