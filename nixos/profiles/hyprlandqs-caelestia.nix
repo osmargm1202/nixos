@@ -121,6 +121,15 @@ let
       sed -i 's/\bid: char\b/id: charItem/g; s/\btarget: char\b/target: charItem/g; s/char\.index/charItem.index/g' \
         modules/lock/center/InputField.qml \
         components/PolkitDialog.qml
+
+      # Material's tertiary role is deliberately hue-rotated away from primary
+      # (triadic colour design) -- on a blue-derived wallpaper this renders as
+      # an unrelated purple/pink for the clock and OS logo, regardless of
+      # wallpaper. Bind them to primary instead so they always match the
+      # dominant theme colour.
+      sed -i 's/Colours\.palette\.m3tertiary/Colours.palette.m3primary/' \
+        modules/bar/components/Clock.qml \
+        modules/bar/components/OsIcon.qml
     '';
   });
 in
