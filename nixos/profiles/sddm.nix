@@ -25,5 +25,10 @@ in
     theme = hostTheme;
   };
 
+  # NVIDIA + KWin Wayland fails to composite the hardware cursor plane --
+  # click position works but the pointer image never renders. Force KWin
+  # to draw the cursor itself instead of relying on the hardware overlay.
+  systemd.services.display-manager.environment.KWIN_FORCE_SW_CURSOR = "1";
+
   security.pam.services.sddm.enableGnomeKeyring = true;
 }
