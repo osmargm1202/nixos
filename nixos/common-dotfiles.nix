@@ -323,7 +323,6 @@ let
       ".config/hypr/hyprland.lua"
       ".config/hypr/lua/autostart.lua"
       ".config/hypr/lua/environment.lua"
-      ".config/hypr/lua/hyprdeck.lua"
       ".config/hypr/lua/input.lua"
       ".config/hypr/lua/keybindings.lua"
       ".config/hypr/lua/layout.lua"
