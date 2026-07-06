@@ -132,7 +132,7 @@
     wdisplays
 
     nautilus
-    gnome-software
+    kdePackages.discover
     gnome-text-editor
     apostrophe
     loupe
