@@ -18,6 +18,9 @@ let
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
+  scrollOverviewSo = pkgs.runCommand "scrolloverview.so" { } ''
+    cp ${inputs.hyprland-scroll-overview.packages.${system}.default}/lib/libscrolloverview.so $out
+  '';
 in
 {
   imports = [
@@ -37,6 +40,14 @@ in
       # can `package.path`+`require` it without a manual git clone. Inert
       # unless a profile's hyprland.lua requires it (see lua/hyprdeck.lua).
       "hyprdeck".source = inputs.hyprdeck;
+
+      # Compiled Hyprland plugin (niri-style scroll overview). Built via
+      # inputs.hyprland-scroll-overview.inputs.hyprland.follows = "hyprland"
+      # in flake.nix so it's linked against our exact Hyprland rev -- the
+      # plugin ABI hash check fails at load time otherwise. Exposed at a
+      # stable path so each profile's autostart.lua can `hyprctl plugin load`
+      # it without depending on the store path directly.
+      "scrolloverview.so".source = scrollOverviewSo;
     }
   ];
   systemd.tmpfiles.rules = lib.optionals hasSddmKwinOutputConfig [

@@ -1,4 +1,5 @@
 local exec_once = {
+  "hyprctl plugin load /etc/scrolloverview.so",
   "hypr-session-import-env",
   "sh -lc 'sleep 0.5 && systemctl --user start nixos-fake-graphical-session.target'",
   "systemctl --user start sunshine.service",

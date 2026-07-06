@@ -17,6 +17,13 @@
       url = "github:chpock/hyprdeck";
       flake = false;
     };
+    hyprland-scroll-overview = {
+      # Native Hyprland plugin (compiled .so) -- must follow our exact
+      # Hyprland rev or the plugin ABI hash check fails at load time.
+      url = "github:yayuuu/hyprland-scroll-overview";
+      inputs.hyprland.follows = "hyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprpaper = {
       # Keep hyprpaper IPC compatible with latest Hyprland/hyprctl.
       url = "github:hyprwm/hyprpaper";

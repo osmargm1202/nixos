@@ -171,6 +171,27 @@
         "type": "github"
       }
     },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "hyprland-scroll-overview",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778716662,
+        "narHash": "sha256-m1Yf0wZ8j1OHjTc2UwHwyQRSnNeSgLJOd7q5Y45hzi4=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f7c1a2d347e4c52d5fb8d10cb4d94b5884e546fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems_3"
@@ -474,6 +495,30 @@
       "original": {
         "owner": "hyprwm",
         "repo": "hyprland-protocols",
+        "type": "github"
+      }
+    },
+    "hyprland-scroll-overview": {
+      "inputs": {
+        "flake-parts": "flake-parts",
+        "hyprland": [
+          "hyprland"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783276628,
+        "narHash": "sha256-eNR46sLL68VmNVmq683wI6r9aDX/EqebvhlJdCeBNpI=",
+        "owner": "yayuuu",
+        "repo": "hyprland-scroll-overview",
+        "rev": "5d24d43c3134e5bb2fbc9e841e0a996de1756360",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yayuuu",
+        "repo": "hyprland-scroll-overview",
         "type": "github"
       }
     },
@@ -1037,6 +1082,7 @@
         "home-manager": "home-manager",
         "hyprdeck": "hyprdeck",
         "hyprland": "hyprland",
+        "hyprland-scroll-overview": "hyprland-scroll-overview",
         "hyprpaper": "hyprpaper",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
