@@ -1,3 +1,5 @@
+local hyprdeck = require("lua.hyprdeck")
+
 local M = {}
 
 function M.setup(programs)
@@ -40,7 +42,7 @@ function M.setup(programs)
 
   -- Scratchpad / special workspace.
   hl.bind(mainMod .. " + S",              hl.dsp.workspace.toggle_special("magic"),                            { description = "Toggle scratchpad" })
-  hl.bind(mainMod .. " + SHIFT + S",      hl.dsp.window.move({ workspace = "special:magic", follow = false }), { description = "Move to scratchpad" })
+  hl.bind(mainMod .. " + SHIFT + S",      hyprdeck.hyd.dsp.window.move({ workspace = "special:magic", follow = false }), { description = "Move to scratchpad" })
 
   -- Media keys.
   hl.bind("XF86AudioRaiseVolume",           hl.dsp.exec_cmd("volume-osd up"),       { repeating = true, locked = true, description = "Volume up" })
@@ -62,7 +64,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + Print",    hl.dsp.exec_cmd("fish -c record_screen_gif"),           { description = "Record screen (gif)" })
 
   -- Window/session controls.
-  hl.bind(mainMod .. " + Tab",           hl.dsp.focus({ last = true }),                    { description = "Switch to last window" })
+  hl.bind(mainMod .. " + Tab",           hyprdeck.hyd.dsp.focus({ last = true }),          { description = "Switch to last window" })
   hl.bind(mainMod .. " + Q",             hl.dsp.window.close(),                            { description = "Close window" })
   hl.bind(mainMod .. " + SHIFT + Q",     hl.dsp.exec_cmd("hypr-kill-windows"),             { description = "Kill all windows" })
   hl.bind(mainMod .. " + SHIFT + E",     hl.dsp.exit(),                                    { description = "Exit Hyprland" })
@@ -87,30 +89,30 @@ function M.setup(programs)
   local dirs    = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
   local moveDirs = { left = "l", down = "d", up = "u", right = "r", h = "l", j = "d", k = "u", l = "r" }
   for key, dir in pairs(dirs) do
-    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ direction = dir }), { description = "Focus " .. dir })
+    hl.bind(mainMod .. " + " .. key, hyprdeck.hyd.dsp.focus({ direction = dir }), { description = "Focus " .. dir })
   end
   for key, dir in pairs(moveDirs) do
-    hl.bind(mainMod .. " + CTRL + " .. key, hl.dsp.window.move({ direction = dir }), { description = "Move window " .. dir })
+    hl.bind(mainMod .. " + CTRL + " .. key, hyprdeck.hyd.dsp.window.move({ direction = dir }), { description = "Move window " .. dir })
   end
 
   -- Workspaces.
-  hl.bind(mainMod .. " + Home",            hl.dsp.focus({ workspace = 1 }),           { description = "Workspace 1" })
-  hl.bind(mainMod .. " + End",             hl.dsp.focus({ workspace = 10 }),          { description = "Workspace 10" })
-  hl.bind(mainMod .. " + CTRL + Home",     hl.dsp.window.move({ workspace = 1 }),     { description = "Move to workspace 1" })
-  hl.bind(mainMod .. " + CTRL + End",      hl.dsp.window.move({ workspace = 10 }),    { description = "Move to workspace 10" })
-  hl.bind(mainMod .. " + Page_Down",       hl.dsp.focus({ workspace = "r-1" }),       { description = "Previous workspace" })
-  hl.bind(mainMod .. " + Page_Up",         hl.dsp.focus({ workspace = "r+1" }),       { description = "Next workspace" })
-  hl.bind(mainMod .. " + U",               hl.dsp.focus({ workspace = "r-1" }),       { description = "Previous workspace" })
-  hl.bind(mainMod .. " + I",               hl.dsp.focus({ workspace = "r+1" }),       { description = "Next workspace" })
-  hl.bind(mainMod .. " + CTRL + Page_Down",hl.dsp.window.move({ workspace = "r-1" }), { description = "Move to previous workspace" })
-  hl.bind(mainMod .. " + CTRL + Page_Up",  hl.dsp.window.move({ workspace = "r+1" }), { description = "Move to next workspace" })
-  hl.bind(mainMod .. " + CTRL + U",        hl.dsp.window.move({ workspace = "r-1" }), { description = "Move to previous workspace" })
-  hl.bind(mainMod .. " + CTRL + I",        hl.dsp.window.move({ workspace = "r+1" }), { description = "Move to next workspace" })
+  hl.bind(mainMod .. " + Home",            hyprdeck.hyd.dsp.focus({ workspace = 1 }),           { description = "Workspace 1" })
+  hl.bind(mainMod .. " + End",             hyprdeck.hyd.dsp.focus({ workspace = 10 }),          { description = "Workspace 10" })
+  hl.bind(mainMod .. " + CTRL + Home",     hyprdeck.hyd.dsp.window.move({ workspace = 1 }),     { description = "Move to workspace 1" })
+  hl.bind(mainMod .. " + CTRL + End",      hyprdeck.hyd.dsp.window.move({ workspace = 10 }),    { description = "Move to workspace 10" })
+  hl.bind(mainMod .. " + Page_Down",       hyprdeck.hyd.dsp.focus({ workspace = "r-1" }),       { description = "Previous workspace" })
+  hl.bind(mainMod .. " + Page_Up",         hyprdeck.hyd.dsp.focus({ workspace = "r+1" }),       { description = "Next workspace" })
+  hl.bind(mainMod .. " + U",               hyprdeck.hyd.dsp.focus({ workspace = "r-1" }),       { description = "Previous workspace" })
+  hl.bind(mainMod .. " + I",               hyprdeck.hyd.dsp.focus({ workspace = "r+1" }),       { description = "Next workspace" })
+  hl.bind(mainMod .. " + CTRL + Page_Down",hyprdeck.hyd.dsp.window.move({ workspace = "r-1" }), { description = "Move to previous workspace" })
+  hl.bind(mainMod .. " + CTRL + Page_Up",  hyprdeck.hyd.dsp.window.move({ workspace = "r+1" }), { description = "Move to next workspace" })
+  hl.bind(mainMod .. " + CTRL + U",        hyprdeck.hyd.dsp.window.move({ workspace = "r-1" }), { description = "Move to previous workspace" })
+  hl.bind(mainMod .. " + CTRL + I",        hyprdeck.hyd.dsp.window.move({ workspace = "r+1" }), { description = "Move to next workspace" })
 
   for i = 1, 10 do
     local key = i % 10
-    hl.bind(mainMod .. " + " .. key,         hl.dsp.focus({ workspace = i }),       { description = "Workspace " .. i })
-    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }), { description = "Move to workspace " .. i })
+    hl.bind(mainMod .. " + " .. key,         hyprdeck.hyd.dsp.focus({ workspace = i }),       { description = "Workspace " .. i })
+    hl.bind(mainMod .. " + SHIFT + " .. key, hyprdeck.hyd.dsp.window.move({ workspace = i }), { description = "Move to workspace " .. i })
   end
 
   -- Mouse.
