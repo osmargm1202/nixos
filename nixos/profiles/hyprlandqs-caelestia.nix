@@ -104,6 +104,7 @@ let
       arpcSteamAutoDetect = true;
       arpcTargetWindows = [ ];
     };
+    session.commands.logout = [ "hyprctl" "dispatch" "hl.dsp.exit()" ];
     sidebar.enabled = true;
     utilities = {
       gameMode.autoEnableRegexes = [ "dota2" "Hollow Knight Silksong" ];
