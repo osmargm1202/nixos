@@ -315,7 +315,7 @@ in
     gnome-characters
     sushi
     warehouse
-    kdePackages.discover
+    gnome-software
 
     # Desktop integration / theming
     gsettings-desktop-schemas

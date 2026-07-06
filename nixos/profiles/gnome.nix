@@ -53,7 +53,7 @@
     gnome-font-viewer
     gnome-characters
     sushi
-    kdePackages.discover
+    gnome-software
 
     # Tweaks / themes
     gnome-tweaks
