@@ -75,6 +75,7 @@ let
     ".config/fish/functions/check_night_mode.fish"
     ".config/fish/functions/check_recording.fish"
     ".config/fish/functions/check_webcam.fish"
+    ".config/fish/functions/claude.fish"
     ".config/fish/functions/clear-op.fish"
     ".config/fish/functions/clipboard_clear.fish"
     ".config/fish/functions/clipboard_copy.fish"
