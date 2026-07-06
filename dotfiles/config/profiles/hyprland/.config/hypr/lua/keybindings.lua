@@ -73,7 +73,7 @@ function M.setup(programs)
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hyprdeck.hyd.dsp.focus({ last = true }))
-  hl.bind("CTRL + Tab", function()
+  hl.bind("ALT + Tab", function()
     hl.plugin.scrolloverview.overview("toggle")
   end)
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
