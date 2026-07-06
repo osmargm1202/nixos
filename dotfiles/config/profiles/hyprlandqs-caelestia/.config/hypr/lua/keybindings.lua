@@ -63,7 +63,7 @@ function M.setup(programs)
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab",           hl.dsp.focus({ last = true }),                    { description = "Switch to last window" })
-  hl.bind("ALT + Tab", function()
+  hl.bind("CTRL + Tab", function()
     hl.plugin.scrolloverview.overview("toggle")
   end, { description = "Toggle scroll overview" })
   hl.bind(mainMod .. " + Q",             hl.dsp.window.close(),                            { description = "Close window" })
