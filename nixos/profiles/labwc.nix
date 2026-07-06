@@ -5,7 +5,6 @@
     ./sddm.nix
     inputs.dms.nixosModules.dank-material-shell
     ./printer.nix
-    ../mods/wayland-vpets.nix
   ];
 
   services.xserver.enable = true;

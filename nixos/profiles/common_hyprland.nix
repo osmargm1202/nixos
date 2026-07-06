@@ -23,7 +23,6 @@ in
   imports = [
     ./sddm.nix
     ./printer.nix
-    ../mods/wayland-vpets.nix
   ];
 
   services.xserver.enable = false;

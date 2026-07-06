@@ -17,10 +17,6 @@ in
     enableHidpi = true;
     settings = {
       General.Numlock = "on";
-      Wayland = {
-        CursorTheme = "catppuccin-macchiato-teal-cursors";
-        CursorSize = 36;
-      };
     };
   };
 
