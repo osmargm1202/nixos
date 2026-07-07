@@ -78,7 +78,6 @@
         inherit dotfilesOrgmSource;
       };
       orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
-      codebaseMcp = pkgs.callPackage ./nixos/packages/codebase-memory-mcp.nix { };
       braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       profiles = {
@@ -214,12 +213,10 @@
         inherit
           orgmWallpaper
           orgmThemes
-          codebaseMcp
           braveOrigin
           ;
         "orgm-wallpaper" = orgmWallpaper;
         "orgm-themes" = orgmThemes;
-        "codebase-memory-mcp" = codebaseMcp;
         "brave-origin" = braveOrigin;
         default = orgmWallpaper;
       };

@@ -153,14 +153,6 @@ in
 
     # Screen recorder (used by caelestia record)
     gpu-screen-recorder
-
-    # Video wallpapers
-    mpvpaper
-
-    # Fonts — hypremoji / emoji support in bar
-    noto-fonts-color-emoji
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.symbols-only
   ];
 
   home-manager.users.${userName} = { lib, pkgs, ... }: {

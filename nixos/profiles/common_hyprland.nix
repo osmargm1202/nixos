@@ -250,16 +250,12 @@ in
     matugen
     orgmWallpaper
     orgmThemes
-    libnotify
     ffmpeg
     python3Minimal
     hypridle
     hyprpicker
     hyprsunset
     hyprpolkitagent
-
-    # Terminal
-    kitty
 
     # Browser
     zenBrowser
@@ -277,7 +273,6 @@ in
     xdg-desktop-portal-gtk
 
     # Clipboard / screenshots / wlroots-compatible tools
-    wl-clipboard
     cliphist
     grim
     slurp
@@ -325,11 +320,9 @@ in
     # Desktop integration / theming
     gsettings-desktop-schemas
     adwaita-icon-theme
-    papirus-icon-theme
     hicolor-icon-theme
     gnome-themes-extra
     gnome-tweaks
-    yaru-remix-theme
     catppuccin-gtk
     catppuccin-cursors.macchiatoTeal
     catppuccin-cursors.latteTeal

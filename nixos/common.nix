@@ -25,7 +25,6 @@
       ./flatpak.nix
       ./common-dotfiles.nix
       ./webapps.nix
-      ./distrobox-apps.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
@@ -245,16 +244,11 @@
     btop
     fastfetch
     ntfs3g
-    gcc
     zoxide
     ncdu
-    gnumake
     podman-compose
     freerdp
     kitty
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.symbols-only
-    noto-fonts-color-emoji
     # CLI tools (replaces distrobox)
     bat
     ripgrep
@@ -292,7 +286,6 @@
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
-    (pkgs.callPackage ./packages/codebase-memory-mcp.nix { })
     (import ./packages/dev-shell.nix pkgs)
     (pkgs.callPackage ./packages/brave-origin.nix { })
   ];
