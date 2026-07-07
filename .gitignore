@@ -1,1 +1,6 @@
 .worktrees/
+
+# caelestia rewrites this on every colour-scheme change (apply_btop() in
+# caelestia-cli); ~/.config/btop is out-of-store symlinked straight into
+# this repo's working tree, so without this it shows dirty constantly.
+dotfiles/config/shared/.config/btop/themes/caelestia.theme

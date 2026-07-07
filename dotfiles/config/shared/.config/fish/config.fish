@@ -154,6 +154,13 @@ if type -q yazi
     alias y='yazi'
 end
 
+# caelestia writes a fully live-tuned config (incl. the caelestia colour
+# theme) to its own state dir on every scheme change; use that instead of
+# the static ~/.config/btop/btop.conf.
+if type -q btop
+    alias btop='btop -c ~/.local/state/caelestia/dots/btop/btop.conf'
+end
+
 # Tmux session selector con gum
 if type -q gum; and type -q tmux
     source ~/.config/fish/functions/tmuxls.fish
