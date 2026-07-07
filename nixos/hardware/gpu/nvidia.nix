@@ -14,7 +14,10 @@
     modesetting.enable = true;
     powerManagement.enable = true;
     powerManagement.finegrained = false;
-    open = false;
+    # Proprietary kernel module (open = false) fails to build against
+    # newer zen kernels: common/inc/nv-linux.h includes linux/of_gpio.h,
+    # which upstream kernel removed. Open modules don't hit that path.
+    open = true;
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
