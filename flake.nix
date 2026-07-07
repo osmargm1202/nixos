@@ -41,7 +41,7 @@
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
-      url = "github:dim-ghub/caelestia-shell";
+      url = "github:osmargm1202/shell/feat/nexus-settings-search";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dms = {
@@ -105,9 +105,9 @@
           userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           specialArgs = { inherit inputs userName profileName; };
           modules = [
+            { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
             hardware
             profile
@@ -124,9 +124,9 @@
           userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           specialArgs = { inherit inputs userName profileName; };
           modules = [
+            { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
             defaultHardware
             profile
@@ -143,9 +143,9 @@
           userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           specialArgs = { inherit inputs userName; };
           modules = [
+            { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
             ./nixos/general.nix
             hardware
@@ -162,9 +162,9 @@
           userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           specialArgs = { inherit inputs userName; };
           modules = [
+            { nixpkgs.hostPlatform = system; }
             hardware
             ./nixos/server.nix
             { networking.hostName = hostName; }
@@ -179,9 +179,9 @@
           userName ? "osmarg",
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           specialArgs = { inherit inputs userName; profileName = "terminal"; };
           modules = [
+            { nixpkgs.hostPlatform = system; }
             hardware
             ./nixos/terminal.nix
             { networking.hostName = hostName; }
