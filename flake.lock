@@ -910,6 +910,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-zen70": {
+      "locked": {
+        "lastModified": 1779796641,
+        "narHash": "sha256-ZsIrKmhp4vbBXoXXmR/tBXA/UCsAQiJL9vsgZEduhVY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "25f538306313eae3927264466c70d7001dcea1df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "25f538306313eae3927264466c70d7001dcea1df",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1772433332,
@@ -1087,6 +1103,7 @@
         "hyprpaper": "hyprpaper",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
+        "nixpkgs-zen70": "nixpkgs-zen70",
         "nwg-dock-hyprland-src": "nwg-dock-hyprland-src",
         "qylock": "qylock",
         "snappy-switcher": "snappy-switcher",
