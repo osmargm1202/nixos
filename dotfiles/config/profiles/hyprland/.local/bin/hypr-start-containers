@@ -2,7 +2,7 @@
 set -eu
 
 if [ "$#" -eq 0 ]; then
-  set -- arch windows
+  set -- windows
 fi
 
 if command -v docker >/dev/null 2>&1; then

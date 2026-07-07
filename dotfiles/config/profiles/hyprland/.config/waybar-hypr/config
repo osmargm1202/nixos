@@ -196,7 +196,7 @@
       "interval": 900,
       "format": "{}",
       "tooltip": true,
-      "on-click": "kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
+      "on-click": "kitty --title pi-update -e fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
     },
     "bluetooth": {
       "format": "󰂯",
@@ -634,7 +634,7 @@
       "interval": 900,
       "format": "{}",
       "tooltip": true,
-      "on-click": "kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
+      "on-click": "kitty --title pi-update -e fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
     },
 
     "custom/hypr_config_editor": {

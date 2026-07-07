@@ -69,7 +69,7 @@
     <!-- Applications: mirrors niri 80-binds.kdl -->
     <keybind key="W-slash">
       <action name="Execute">
-        <command>kitty --hold -e distrobox-enter arch -- tmuxls</command>
+        <command>kitty --hold -e fish -ic tmuxls</command>
       </action>
     </keybind>
     <keybind key="W-Return">
@@ -79,7 +79,7 @@
     </keybind>
     <keybind key="W-S-Return">
       <action name="Execute">
-        <command>kitty -e distrobox-enter arch</command>
+        <command>kitty</command>
       </action>
     </keybind>
     <keybind key="W-e">
@@ -94,17 +94,12 @@
     </keybind>
     <keybind key="W-a">
       <action name="Execute">
-        <command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command>
+        <command>kitty --class orgmai-chat -e orgmai chat</command>
       </action>
     </keybind>
     <keybind key="W-S-a">
       <action name="Execute">
-        <command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai prev</command>
-      </action>
-    </keybind>
-    <keybind key="W-S-r">
-      <action name="Execute">
-        <command>kitty -e distrobox-enter arch -- orgmrnc find</command>
+        <command>kitty --class orgmai-chat -e orgmai prev</command>
       </action>
     </keybind>
     <!-- Standalone stack: fuzzel, cliphist, swaync, DMS lock, playerctl, pamixer, brightnessctl. -->
@@ -175,12 +170,12 @@
     </keybind>
     <keybind key="W-S-slash">
       <action name="Execute">
-        <command>kitty --hold -e distrobox-enter arch -- tmuxnewz</command>
+        <command>kitty --hold -e fish -ic tmuxnewz</command>
       </action>
     </keybind>
     <keybind key="W-A-backslash">
       <action name="Execute">
-        <command>kitty --hold -e distrobox-enter arch -- tmuxdel</command>
+        <command>kitty --hold -e fish -ic tmuxdel</command>
       </action>
     </keybind>
     <keybind key="XF86AudioRaiseVolume" allowWhenLocked="yes">

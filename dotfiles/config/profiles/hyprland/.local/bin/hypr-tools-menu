@@ -7,7 +7,6 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 
 choice="$(printf '%s\n' \
   '󰆍 Terminal' \
-  '󰆍 Terminal Arch' \
   '󰉋 Files' \
   '󰍉 Search files' \
   ' Clipboard' \
@@ -17,7 +16,6 @@ choice="$(printf '%s\n' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
 
 case "$choice" in
-  *'Terminal Arch') exec kitty -e distrobox-enter arch ;;
   *'Terminal') exec kitty ;;
   *'Files') exec nautilus ;;
   *'Search files') exec hypr-rofi-open-file ;;

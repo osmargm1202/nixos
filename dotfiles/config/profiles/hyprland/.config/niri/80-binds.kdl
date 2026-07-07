@@ -1,12 +1,11 @@
 binds {
     Mod+Slash { show-hotkey-overlay; }
     Mod+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty"; }
-    Mod+Shift+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty" "-e" "distrobox-enter" "arch"; }
+    Mod+Shift+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty"; }
     Mod+E hotkey-overlay-title="Gestor de archivos" { spawn-sh "if command -v nautilus >/dev/null 2>&1; then nautilus; elif command -v flatpak >/dev/null 2>&1 && flatpak info org.gnome.Nautilus >/dev/null 2>&1; then flatpak run org.gnome.Nautilus; elif command -v xdg-open >/dev/null 2>&1; then xdg-open .; else echo 'explorador no disponible'; fi"; }
     Mod+W hotkey-overlay-title="Navegador (Zen)" { spawn "flatpak" "run" "app.zen_browser.zen"; }
-    Mod+A hotkey-overlay-title="chatgpt terminal (Arch distrobox)" { spawn "kitty" "--class" "orgmai-chat" "-e" "distrobox-enter" "arch" "--" "orgmai" "chat"; }
-    Mod+Shift+A hotkey-overlay-title="chatgpt terminal última conversación (Arch distrobox)" { spawn "kitty" "--class" "orgmai-chat" "-e" "distrobox-enter" "arch" "--" "orgmai" "prev"; }
-    Mod+Shift+R hotkey-overlay-title="orgmrnc find (Arch distrobox)" { spawn "kitty" "-e" "distrobox-enter" "arch" "--" "orgmrnc" "find"; }
+    Mod+A hotkey-overlay-title="chatgpt terminal" { spawn "kitty" "--class" "orgmai-chat" "-e" "orgmai" "chat"; }
+    Mod+Shift+A hotkey-overlay-title="chatgpt terminal última conversación" { spawn "kitty" "--class" "orgmai-chat" "-e" "orgmai" "prev"; }
 
     // DankMaterialShell (NixOS module instala `dms`).
     Mod+Y hotkey-overlay-title="Historial del portapapeles" { spawn "dms" "ipc" "call" "clipboard" "toggle"; }

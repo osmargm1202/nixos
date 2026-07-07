@@ -7,17 +7,6 @@ ttl="${WAYBAR_PI_STATUS_TTL:-21600}"
 pi_npm_package="${WAYBAR_PI_NPM_PACKAGE:-@earendil-works/pi-coding-agent}"
 pi_extensions_prefix="${WAYBAR_PI_EXTENSIONS_PREFIX:-$HOME/.pi/agent/npm}"
 pi_git_root="${WAYBAR_PI_GIT_ROOT:-$HOME/.pi/agent/git}"
-pi_distrobox="${WAYBAR_PI_STATUS_DISTROBOX:-arch}"
-
-if [ "${WAYBAR_PI_STATUS_IN_CONTAINER:-0}" != "1" ] && ! command -v pi >/dev/null 2>&1 && command -v distrobox-enter >/dev/null 2>&1; then
-  exec distrobox-enter "$pi_distrobox" -- env \
-    WAYBAR_PI_STATUS_IN_CONTAINER=1 \
-    WAYBAR_PI_STATUS_TTL="$ttl" \
-    WAYBAR_PI_NPM_PACKAGE="$pi_npm_package" \
-    WAYBAR_PI_EXTENSIONS_PREFIX="$pi_extensions_prefix" \
-    WAYBAR_PI_GIT_ROOT="$pi_git_root" \
-    bash "$0" "$@"
-fi
 
 json_escape() {
   python3 -c 'import json,sys; print(json.dumps(sys.stdin.read())[1:-1])'

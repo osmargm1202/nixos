@@ -31,7 +31,7 @@ case "$choice" in
   *'Memclean dry-run') exec kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P "enter..."' ;;
   *'Nixclean') exec kitty --class nixclean -e fish -lc 'nixclean; read -P "enter..."' ;;
   *'Hardware fastfetch') exec kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i' ;;
-  *'Pi update') exec kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i' ;;
+  *'Pi update') exec kitty --title pi-update -e fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i' ;;
   *'Pi status refresh') exec waybar-pi-status refresh ;;
   *'Power profile') exec waybar-power-profile pick ;;
   *) exec hypr-main-menu ;;

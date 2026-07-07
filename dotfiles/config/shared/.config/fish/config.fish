@@ -34,8 +34,7 @@ end
 set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/go/bin $PATH
-
-alias npm="pnpm"
+set -gx PATH $HOME/.npm-global/bin $PATH
 
 # Nix cleanup helpers.
 # En NixOS, sudo con setuid vive en /run/wrappers/bin/sudo. Algunas apps
@@ -82,9 +81,6 @@ if type -q zoxide
 end
 
 if type -q git
-    function dotpush
-        cd ~/Hobby/dotfiles && git add . && git commit -m "$argv" && git push
-    end
     alias gst="git status"
     alias gdiff="git diff"
     function gp

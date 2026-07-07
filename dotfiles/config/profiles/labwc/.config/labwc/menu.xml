@@ -5,11 +5,8 @@
     <item label="Terminal · kitty" icon="utilities-terminal">
       <action name="Execute"><command>kitty</command></action>
     </item>
-    <item label="Arch terminal · distrobox" icon="utilities-terminal">
-      <action name="Execute"><command>kitty -e distrobox-enter arch</command></action>
-    </item>
     <item label="Chat · orgmai" icon="utilities-terminal">
-      <action name="Execute"><command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command></action>
+      <action name="Execute"><command>kitty --class orgmai-chat -e orgmai chat</command></action>
     </item>
     <item label="Files · Nautilus" icon="org.gnome.Nautilus">
       <action name="Execute"><command>nautilus</command></action>

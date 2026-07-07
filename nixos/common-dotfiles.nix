@@ -268,7 +268,6 @@ let
       ".local/bin/hypr-rofi-open-file-dir"
       ".local/bin/hypr-rofi-open-file-terminal"
       ".local/bin/hypr-rofi-ssh-host"
-      ".local/bin/hypr-rofi-tmux-arch"
       ".local/bin/hypr-rofi-window"
       ".local/bin/hypr-session-import-env"
       ".local/bin/hypr-smart-run"
@@ -395,7 +394,6 @@ let
     ".local/share/icons/Nordic-bluish"
     ".local/share/icons/Nordic-darker"
     ".local/share/icons/Nordic-green"
-    ".local/share/icons/distrobox"
     ".local/share/icons/default"
     ".local/share/icons/hicolor/16x16"
     ".local/share/icons/hicolor/32x32"
@@ -412,15 +410,11 @@ let
     lenovo = [
       ".config/fish/age-host.fish"
       ".config/fish/host-lenovo.fish"
-      ".local/share/applications/arch.desktop"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
-      ".local/share/applications/jsignpdf.desktop"
       ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
-      ".local/share/applications/vscode.desktop"
       ".local/share/applications/webapps.json"
-      ".local/share/applications/zed.desktop"
     ] ++ hostIconSubdirs;
     orgm = [
       ".config/fish/age-host.fish"

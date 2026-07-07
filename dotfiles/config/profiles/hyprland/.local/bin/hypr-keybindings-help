@@ -58,7 +58,7 @@ entries() {
     launchers)
       entry 'Win+/' 'Atajos Hyprland' 'hypr-keybindings-help'
       entry 'Win+Enter' 'Terminal' 'kitty'
-      entry 'Win+Shift+Enter' 'Terminal Arch' 'kitty -e distrobox-enter arch'
+      entry 'Win+Shift+Enter' 'Terminal' 'kitty'
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus'
@@ -73,7 +73,6 @@ entries() {
       entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
       entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
       entry 'Win+Esc' 'Cambiar ventana' 'hypr-rofi-window'
-      entry 'Win+Shift+T' 'tmux Arch' 'hypr-rofi-tmux-arch'
       entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
       entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
       entry 'Win+V' 'Clipboard' 'cliphist + rofi'
