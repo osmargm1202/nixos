@@ -4,6 +4,7 @@
 require("lua.monitors")
 local programs = require("lua.programs")
 require("lua.autostart")
+require("lua.xfdesktop")
 require("lua.environment")
 require("lua.permissions")
 require("lua.look-and-feel")

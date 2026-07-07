@@ -265,6 +265,10 @@ in
     zenBrowser
     psdBrowsers
 
+    # Desktop icons (xfdesktop layer + panel)
+    xfce.xfdesktop
+    xfce.xfce4-panel
+
     # Portal / XDG
     xdg-utils
     desktop-file-utils

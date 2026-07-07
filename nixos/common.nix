@@ -8,10 +8,16 @@
   lib,
   inputs ? null,
   userName ? "osmarg",
+  profileName ? null,
   ...
 }:
 
 {
+  # Boot menu shows "Generation N <label>, built on <date>" -- date is
+  # always automatic (build timestamp), this just pins the name part
+  # to the profile instead of the default version string.
+  system.nixos.label = lib.mkIf (profileName != null) profileName;
+
   imports =
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
