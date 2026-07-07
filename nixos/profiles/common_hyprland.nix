@@ -16,6 +16,7 @@ let
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
+  psdBrowsers = pkgs.callPackage ../packages/psd-brave-origin.nix { inherit psdZen; };
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
   scrollOverviewSo = pkgs.runCommand "scrolloverview.so" { } ''
@@ -157,7 +158,7 @@ in
       '';
 
       xdg.configFile."psd/psd.conf".text = ''
-        BROWSERS=(zen)
+        BROWSERS=(zen chromium brave-origin)
       '';
 
       systemd.user.services.psd = {
@@ -169,8 +170,8 @@ in
         Service = {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = "${psdZen}/bin/profile-sync-daemon startup";
-          ExecStop = "${psdZen}/bin/profile-sync-daemon unsync";
+          ExecStart = "${psdBrowsers}/bin/profile-sync-daemon startup";
+          ExecStop = "${psdBrowsers}/bin/profile-sync-daemon unsync";
         };
         Install.WantedBy = [ "default.target" ];
       };
@@ -183,7 +184,7 @@ in
         };
         Service = {
           Type = "oneshot";
-          ExecStart = "${psdZen}/bin/profile-sync-daemon resync";
+          ExecStart = "${psdBrowsers}/bin/profile-sync-daemon resync";
         };
       };
 
@@ -262,7 +263,7 @@ in
 
     # Browser
     zenBrowser
-    psdZen
+    psdBrowsers
 
     # Portal / XDG
     xdg-utils

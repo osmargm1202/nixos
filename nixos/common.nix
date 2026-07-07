@@ -288,6 +288,7 @@
     })
     (pkgs.callPackage ./packages/codebase-memory-mcp.nix { })
     (import ./packages/dev-shell.nix pkgs)
+    (pkgs.callPackage ./packages/brave-origin.nix { })
   ];
 
   programs.dconf.enable = true;
