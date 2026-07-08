@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -231,7 +232,6 @@ in
       rsync
       smartmontools
       tcpdump
-      tmux
       tree
       unzip
       usbutils
@@ -240,7 +240,8 @@ in
       yq-go
       zoxide
     ]
-    ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ];
+    ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ]
+    ++ [ inputs.herdr.packages.${pkgs.system}.default ];
 
   services.fstrim.enable = true;
   services.smartd.enable = true;

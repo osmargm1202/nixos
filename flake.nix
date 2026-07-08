@@ -65,6 +65,11 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    herdr = {
+      # tmux replacement (agent multiplexer). Own nixpkgs pin -- needs
+      # zig_0_15 which may not exist on our stable 25.11 input.
+      url = "github:ogulcancelik/herdr";
+    };
   };
 
   outputs =
@@ -227,7 +232,10 @@
 
       devShells.${system}.default =
         let
-          fhs = import ./nixos/packages/dev-shell.nix pkgsDev;
+          fhs = import ./nixos/packages/dev-shell.nix {
+            pkgs = pkgsDev;
+            herdr = inputs.herdr.packages.${system}.default;
+          };
         in
         pkgsDev.mkShell {
           packages = [ fhs ];

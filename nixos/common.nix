@@ -223,7 +223,6 @@
     curl
     rsync
     vim
-    tmux
     stow
     gh
     fish
@@ -286,8 +285,12 @@
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
-    (import ./packages/dev-shell.nix pkgs)
+    (import ./packages/dev-shell.nix {
+      inherit pkgs;
+      herdr = inputs.herdr.packages.${pkgs.system}.default;
+    })
     (pkgs.callPackage ./packages/brave-origin.nix { })
+    inputs.herdr.packages.${pkgs.system}.default
   ];
 
   programs.dconf.enable = true;

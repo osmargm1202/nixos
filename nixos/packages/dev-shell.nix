@@ -1,9 +1,10 @@
 # FHS dev environment. Takes pkgs directly (not via callPackage) so the
-# caller controls allowUnfree. Call as: import ./packages/dev-shell.nix pkgs
+# caller controls allowUnfree. Call as:
+#   import ./packages/dev-shell.nix { inherit pkgs herdr; }
 #
 # After nixos-rebuild switch, the `dev` binary is in PATH system-wide —
 # no flake checkout path required on the target machine.
-pkgs:
+{ pkgs, herdr }:
 pkgs.buildFHSEnv {
   name = "dev";
   targetPkgs =
@@ -31,7 +32,7 @@ pkgs.buildFHSEnv {
       vim
       neovim
       nano
-      tmux
+      herdr
       stow
       less
       bc

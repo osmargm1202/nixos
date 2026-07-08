@@ -156,7 +156,6 @@ in
     figlet
     # shell + tooling
     fish
-    tmux
     zellij
     fzf
     fd
@@ -197,6 +196,7 @@ in
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
+    inputs.herdr.packages.${pkgs.system}.default
   ];
 
   # Nerd font glyphs for yazi/starship/fastfetch in the terminal.
