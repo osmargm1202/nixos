@@ -77,15 +77,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1782895953,
-        "narHash": "sha256-lJcKHFuPHRMoBurPiH33HGtrueEwsn3BqTl9cSDxChg=",
-        "owner": "dim-ghub",
+        "lastModified": 1783495346,
+        "narHash": "sha256-iV8HPhN4OogRDi7KYVSS/7AMZ/QCXTWjIwQc7SSVbwo=",
+        "owner": "osmargm1202",
         "repo": "caelestia-cli",
-        "rev": "9b2ded9941c1f3f7eb8343ea75939de0d96f63a3",
+        "rev": "890e6865362e1c41c0c77982c07136e82cdbbe78",
         "type": "github"
       },
       "original": {
-        "owner": "dim-ghub",
+        "owner": "osmargm1202",
         "repo": "caelestia-cli",
         "type": "github"
       }
@@ -100,16 +100,15 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1783446660,
-        "narHash": "sha256-kyhBj8qXzd0Dl9tuNWEN2x/E6H+9vA4jbllR4mWm2H4=",
+        "lastModified": 1783495368,
+        "narHash": "sha256-Emnb6zn4dAP0bZBhCTX99vFzA2/09PKvOrIAs8mAWmk=",
         "owner": "osmargm1202",
         "repo": "shell",
-        "rev": "cb62845f5c5f89d07756437a689509e79a4e7cf7",
+        "rev": "daa6982b6e48566b9bf55af2ee57f57365ad53ee",
         "type": "github"
       },
       "original": {
         "owner": "osmargm1202",
-        "ref": "feat/nexus-settings-search",
         "repo": "shell",
         "type": "github"
       }

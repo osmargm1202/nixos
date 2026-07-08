@@ -45,7 +45,7 @@
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
-      url = "github:osmargm1202/shell/feat/nexus-settings-search";
+      url = "github:osmargm1202/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dms = {
