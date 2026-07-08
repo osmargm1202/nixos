@@ -57,7 +57,6 @@ let
     ".config/fish/completions/aichat.fish"
     ".config/fish/completions/ftdv.fish"
     ".config/fish/conf.d/command-separator.fish"
-    ".config/fish/conf.d/fish_frozen_key_bindings.fish"
     ".config/fish/conf.d/fnm.fish"
     ".config/fish/config.fish"
     ".config/fish/functions/aichat_fish.fish"
