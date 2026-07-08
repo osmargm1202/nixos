@@ -18,6 +18,9 @@
   # to the profile instead of the default version string.
   system.nixos.label = lib.mkIf (profileName != null) profileName;
 
+  # Logitech G213 RGB (USB HID, no motherboard i2c needed)
+  services.hardware.openrgb.enable = true;
+
   imports =
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager

@@ -161,29 +161,6 @@ if type -q btop
     alias btop='btop -c ~/.local/state/caelestia/dots/btop/btop.conf'
 end
 
-# Tmux session selector con gum
-if type -q gum; and type -q tmux
-    source ~/.config/fish/functions/tmuxls.fish
-    source ~/.config/fish/functions/tmuxdel.fish
-end
-
-# Helper compartido (valida tmux para helpers tmux)
-source ~/.config/fish/functions/__tmux_init.fish
-source ~/.config/fish/functions/__tmux_shared.fish
-
-# Tmux new session (ventana única)
-source ~/.config/fish/functions/tmuxnew.fish
-
-# Tmux selector de directorios desde cwd con fzf + fd
-if type -q fzf; and type -q fd
-    source ~/.config/fish/functions/tmuxfd.fish
-end
-
-# Tmux new session usando zoxide + fzf
-if type -q zoxide; and type -q fzf
-    source ~/.config/fish/functions/tmuxnewz.fish
-end
-
 # Deshabilitar mensaje de ayuda de fish
 # Ejecutado una vez como variable universal, no en cada inicio.
 
