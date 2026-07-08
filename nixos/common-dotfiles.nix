@@ -728,7 +728,7 @@ in
 [Settings]
 gtk-theme-name=Adwaita-dark
 gtk-application-prefer-dark-theme=true
-gtk-icon-theme-name=Papirus-Dark
+gtk-icon-theme-name=Colloid-Dark
 gtk-cursor-theme-name=Catppuccin-Macchiato-Teal-Cursors
 gtk-cursor-theme-size=36
 gtk-font-name=Inter 11
