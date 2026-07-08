@@ -170,8 +170,24 @@ in
         Service = {
           Type = "oneshot";
           RemainAfterExit = true;
+          # Explicit PATH -- without it, psd's rsync/grep/awk/uname calls
+          # race the session's PATH import at early boot and fail silently
+          # (systemd retries until it wins the race), which can leave the
+          # "unsync" step never running cleanly before shutdown.
+          Environment = "PATH=${
+            lib.makeBinPath [
+              pkgs.rsync
+              pkgs.gnugrep
+              pkgs.gawk
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.procps
+              pkgs.psmisc
+            ]
+          }";
           ExecStart = "${psdBrowsers}/bin/profile-sync-daemon startup";
           ExecStop = "${psdBrowsers}/bin/profile-sync-daemon unsync";
+          TimeoutStopSec = 60;
         };
         Install.WantedBy = [ "default.target" ];
       };
@@ -184,6 +200,17 @@ in
         };
         Service = {
           Type = "oneshot";
+          Environment = "PATH=${
+            lib.makeBinPath [
+              pkgs.rsync
+              pkgs.gnugrep
+              pkgs.gawk
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.procps
+              pkgs.psmisc
+            ]
+          }";
           ExecStart = "${psdBrowsers}/bin/profile-sync-daemon resync";
         };
       };
