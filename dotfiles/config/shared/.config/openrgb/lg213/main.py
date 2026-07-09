@@ -4,18 +4,22 @@
 Two layers of lighting on top of the base OpenRGB profile:
 
 - Ambient: while a mapped app's window is focused in Hyprland, the whole
-  keyboard holds that app's color; focusing anything else restores the
-  colors the keyboard had at startup (the loaded profile).
+  keyboard holds that app's color; focusing anything else reloads the
+  saved .orp profile.
 - Notification: desktop notifications from mapped apps blink the 5 G213
-  areas with distinct colors for a few seconds, then fall back to
-  whatever ambient state is current.
+  areas (distinct colors per area, on/off) for a few seconds, then fall
+  back to whatever ambient state is current.
 
 The G213 exposes a single zone with 5 LEDs (Left, Middle, Right,
-Arrow/Home, Numpad); "zones" refers to those LEDs. Requires the OpenRGB
-SDK server (services.hardware.openrgb) and dbus-monitor in PATH. Exits
-cleanly when no G213 is connected so the same unit can run on every
-host. Without a Hyprland session the focus layer is skipped and only
-notifications work.
+Arrow/Home, Numpad); "zones" refers to those LEDs. Direct writes only
+reach the hardware in Direct mode, so it is forced before every effect.
+Restoring is done by reloading the .orp file through the openrgb CLI —
+the SDK server's color buffer is not a reliable snapshot of the profile.
+
+Requires the OpenRGB SDK server (services.hardware.openrgb) plus
+dbus-monitor and openrgb in PATH. Exits cleanly when no G213 is
+connected so the same unit can run on every host. Without a Hyprland
+session the focus layer is skipped and only notifications work.
 """
 
 import glob
@@ -32,6 +36,7 @@ from openrgb.utils import RGBColor
 
 RED = RGBColor(255, 0, 0)
 BLUE = RGBColor(0, 0, 255)
+OFF = RGBColor(0, 0, 0)
 
 # notification app_name substring (lowercase) -> blink base color
 NOTIFY_COLORS = {
@@ -50,7 +55,7 @@ FOCUS_COLORS = {
 }
 
 EFFECT_SECONDS = 3.0
-FRAME_SECONDS = 0.25
+FRAME_SECONDS = 0.5  # on/off cadence; G213 writes are slow, keep this coarse
 SERVER_RETRY_SECONDS = 5
 DEVICE_NAME = "G213"
 
@@ -59,8 +64,7 @@ def palette_for(base: RGBColor) -> list[RGBColor]:
     """Distinct color per LED area, derived from the app base color."""
     dim = RGBColor(base.red // 4, base.green // 4, base.blue // 4)
     white = RGBColor(255, 255, 255)
-    off = RGBColor(0, 0, 0)
-    return [base, white, dim, base, off]
+    return [base, white, dim, base, white]
 
 
 def match_color(table: dict, name: str) -> RGBColor | None:
@@ -71,12 +75,22 @@ def match_color(table: dict, name: str) -> RGBColor | None:
     return None
 
 
+def profile_path() -> str | None:
+    config_dir = os.path.join(
+        os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "OpenRGB"
+    )
+    preferred = os.path.join(config_dir, f"{socket.gethostname()}.orp")
+    if os.path.isfile(preferred):
+        return preferred
+    candidates = sorted(glob.glob(os.path.join(config_dir, "*.orp")))
+    return candidates[0] if candidates else None
+
+
 class G213Notifier:
     def __init__(self):
         self.client = None
         self.device = None
-        self.base_colors = []
-        self.ambient_color = None  # None -> base profile colors
+        self.ambient_color = None  # None -> base profile
         self.lock = threading.Lock()  # serializes all writes to the device
 
     def connect(self):
@@ -91,17 +105,18 @@ class G213Notifier:
             print(f"no {DEVICE_NAME} detected, exiting", flush=True)
             sys.exit(0)
         self.device = keyboards[0]
-        self.base_colors = [RGBColor(c.red, c.green, c.blue) for c in self.device.colors]
         print(f"connected: {self.device.name} ({len(self.device.leds)} leds)", flush=True)
 
-    def ambient_frame(self) -> list[RGBColor]:
-        if self.ambient_color is not None:
-            return [self.ambient_color] * len(self.device.leds)
-        return self.base_colors
-
-    def apply_ambient(self):
-        with self.lock:
-            self._set(self.ambient_frame())
+    def ensure_direct(self):
+        try:
+            if self.device.active_mode is None or self.device.modes[self.device.active_mode].name.lower() != "direct":
+                self.device.set_mode("direct")
+        except Exception:
+            # Fall back to setting it unconditionally; harmless if already direct.
+            try:
+                self.device.set_mode("direct")
+            except Exception as e:
+                print(f"could not force direct mode: {e}", flush=True)
 
     def _set(self, colors):
         try:
@@ -110,6 +125,27 @@ class G213Notifier:
             print(f"lost server: {e}, reconnecting", flush=True)
             self.connect()
 
+    def restore_base(self):
+        """Reload the saved profile — the only trustworthy 'undo'."""
+        path = profile_path()
+        if path:
+            subprocess.run(
+                ["openrgb", "-p", path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        else:
+            self._set([OFF] * len(self.device.leds))
+
+    def apply_ambient(self):
+        with self.lock:
+            if self.ambient_color is not None:
+                self.ensure_direct()
+                self._set([self.ambient_color] * len(self.device.leds))
+            else:
+                self.restore_base()
+
     # --- notification layer -------------------------------------------------
 
     def blink(self, base: RGBColor):
@@ -117,16 +153,19 @@ class G213Notifier:
         if not self.lock.acquire(blocking=False):
             return
         try:
+            self.ensure_direct()
             palette = palette_for(base)
             n = len(self.device.leds)
+            on = [palette[i % len(palette)] for i in range(n)]
+            off = [OFF] * n
             for frame in range(int(EFFECT_SECONDS / FRAME_SECONDS)):
-                self._set([palette[(i + frame) % len(palette)] for i in range(n)])
+                self._set(on if frame % 2 == 0 else off)
                 time.sleep(FRAME_SECONDS)
-            # Land on whatever ambient is current *now* (focus may have changed
-            # mid-effect), not on a stale snapshot.
-            self._set(self.ambient_frame())
         finally:
             self.lock.release()
+        # Land on whatever ambient is current *now* (focus may have changed
+        # mid-effect), not on a stale snapshot.
+        self.apply_ambient()
 
     def on_notification(self, app_name: str):
         color = match_color(NOTIFY_COLORS, app_name)

@@ -820,7 +820,7 @@ GTKEOF
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";
-          Environment = [ "PATH=${pkgs.dbus}/bin" ];
+          Environment = [ "PATH=${pkgs.dbus}/bin:${pkgs.openrgb}/bin" ];
           Restart = "on-failure";
           RestartSec = 10;
         };
