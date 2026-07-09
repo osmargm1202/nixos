@@ -58,6 +58,25 @@ for _, rule in ipairs(utilities) do
   hl.window_rule({ match = { class = rule.class }, center = true })
 end
 
+-- Browser web-notification popups (chromium, zen, brave-origin): keep them
+-- floating at their own popup size, pinned top-right, instead of tiling.
+local browser_notification_classes = {
+  "^(chromium|Chromium)$",
+  "^(brave-browser|Brave-browser|brave-origin)$",
+  "^(app.zen_browser.zen|zen-browser|zen(-beta)?)$",
+  "^(chrome-.*)$", -- PWAs (WhatsApp, etc.) spawn popups under their own class
+}
+
+for _, cls in ipairs(browser_notification_classes) do
+  hl.window_rule({
+    match = { class = cls, title = "^(.*[Nn]otificaci[oó]n.*|.*[Nn]otification.*)$" },
+    float = true,
+    pin = true,
+    no_initial_focus = true,
+    move = "100%-w-20 60",
+  })
+end
+
 hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
 
 hl.window_rule({ match = { modal = true }, float = true })
