@@ -260,6 +260,7 @@
     duf
     neovim
     git-lfs
+    jujutsu
     sops
     just
     watchexec
