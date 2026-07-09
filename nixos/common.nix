@@ -239,6 +239,7 @@
     jujutsu
     sops
     just
+    gum
     steam-run # quick FHS runner for random dynamic executables
     wl-clipboard
     xclip
