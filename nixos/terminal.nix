@@ -22,7 +22,8 @@ in
       inputs.home-manager.nixosModules.home-manager
       ./common-dotfiles.nix
     ]
-    ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
+    ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
+    ++ [ ./tailscale.nix ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -161,6 +162,7 @@ in
     fd
     ripgrep
     jq
+    gum
     bat
     delta
     eza

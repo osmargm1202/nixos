@@ -29,7 +29,8 @@
       ./common-dotfiles.nix
       ./webapps.nix
     ]
-    ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
+    ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
+    ++ [ ./tailscale.nix ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -228,6 +229,7 @@
     git
     age
     fd
+    jq
     trash-cli
     eza
     btop

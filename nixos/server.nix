@@ -61,6 +61,8 @@ let
   };
 in
 {
+  imports = [ ./tailscale.nix ];
+
   boot.kernelPackages = pkgs.linuxPackages;
   boot.tmp.cleanOnBoot = true;
   boot.loader.systemd-boot.enable = true;
@@ -212,6 +214,7 @@ in
       fish
       fzf
       git
+      gum
       htop
       iftop
       inetutils
