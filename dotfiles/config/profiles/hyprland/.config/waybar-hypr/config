@@ -170,7 +170,7 @@
       "tooltip": true,
       "on-click": "memclean-dev clean",
       "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e btop"
+      "on-click-middle": "kitty -e fish -lc btop"
     },
     "custom/nixclean": {
       "format": "󰃢",
@@ -214,29 +214,29 @@
     "cpu": {
       "format": " {usage}%",
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "memory": {
       "format": " {percentage}%",
       "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "temperature": {
       "format": " {temperatureC}°C",
       "critical-threshold": 85,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "disk#ssd": {
       "path": "/",
       "format": "󰋊 SSD {percentage_used}%",
       "tooltip-format": "{used} used / {total} total",
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "custom/swap": {
       "exec": "waybar-swap-usage",
       "interval": 5,
       "tooltip": false,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "group/system": {
       "orientation": "horizontal",
@@ -454,7 +454,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "custom/metric_gpu": {
       "exec": "waybar-metric-widget gpu",
@@ -464,7 +464,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "custom/metric_ram": {
       "exec": "waybar-metric-widget ram",
@@ -474,7 +474,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "custom/metric_ssd": {
       "exec": "waybar-metric-widget ssd",
@@ -484,7 +484,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "custom/metric_swap": {
       "exec": "waybar-metric-widget swap",
@@ -494,7 +494,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e btop"
+      "on-click": "kitty -e fish -lc btop"
     },
     "group/usage": {
       "orientation": "horizontal",
@@ -611,7 +611,7 @@
       "tooltip": true,
       "on-click": "memclean-dev clean",
       "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e btop"
+      "on-click-middle": "kitty -e fish -lc btop"
     },
 
     "custom/nixclean": {

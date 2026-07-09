@@ -201,7 +201,6 @@ in
       age
       bat
       dnsutils
-      btop
       ctop
       curl
       dive
@@ -225,7 +224,6 @@ in
       mosh
       mtr
       nano
-      ncdu
       nethogs
       nmap
       openssl
@@ -243,8 +241,14 @@ in
       yq-go
       zoxide
     ]
-    ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ]
-    ++ [ inputs.herdr.packages.${pkgs.system}.default ];
+    ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ];
+
+  # Apps efimeras (btop, ncdu, herdr): `nix run nixpkgs#app` / `nix run
+  # herdr` — registry pineado al input del sistema, comparte el store.
+  nix.registry = {
+    nixpkgs.flake = inputs.nixpkgs;
+    herdr.flake = inputs.herdr;
+  };
 
   services.fstrim.enable = true;
   services.smartd.enable = true;

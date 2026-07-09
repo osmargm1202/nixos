@@ -6,7 +6,8 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 choices=()
-command -v btop >/dev/null 2>&1 && choices+=("󰨇 btop")
+# btop es efimero (alias fish -> nix run), siempre disponible
+choices+=("󰨇 btop")
 command -v htop >/dev/null 2>&1 && choices+=("󰨇 htop")
 command -v dgop >/dev/null 2>&1 && choices+=("󰨇 dgop")
 command -v gnome-system-monitor >/dev/null 2>&1 && choices+=("󰍛 GNOME System Monitor")
@@ -23,7 +24,7 @@ choices+=(
 choice="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu 'Performance / Cleanup' || true)"
 
 case "$choice" in
-  *'btop') exec kitty -e btop ;;
+  *'btop') exec kitty -e fish -lc btop ;;
   *'htop') exec kitty -e htop ;;
   *'dgop') exec kitty -e dgop ;;
   *'GNOME') exec gnome-system-monitor ;;

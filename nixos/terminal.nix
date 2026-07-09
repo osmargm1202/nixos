@@ -38,13 +38,21 @@ in
   nix.settings.auto-optimise-store = true;
   nix.settings.trusted-users = [ "root" userName ];
 
+  # Mismo pin de registry que common.nix: `nix run nixpkgs#app` (aliases
+  # fish de apps efimeras) comparte el store del sistema.
+  nix.registry = lib.mkIf (inputs != null) {
+    nixpkgs.flake = inputs.nixpkgs;
+    herdr.flake = inputs.herdr;
+  };
+
   programs.nh = {
     enable = true;
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
     clean = {
       enable = true;
       dates = "daily";
-      extraArgs = "--keep-since 10d --keep 5";
+      # 30d: los store paths de apps efimeras (`nix run`) duran mas.
+      extraArgs = "--keep-since 30d --keep 5";
     };
   };
 
@@ -154,7 +162,6 @@ in
     gcc
     gnumake
     ntfs3g
-    figlet
     # shell + tooling
     fish
     zellij
@@ -168,27 +175,20 @@ in
     eza
     zoxide
     trash-cli
-    # monitors
+    # monitors (btop/fastfetch/ncdu: efimeras via alias fish)
     htop
-    btop
-    fastfetch
-    ncdu
     # editors
     helix
     neovim
-    # file manager
-    yazi
     # dev
     lazygit
-    # containers
+    # containers (podman-compose: efimera)
     distrobox
-    podman-compose
     # disk / recovery
     parted
     gptfdisk
     e2fsprogs
-    # search nix
-    nix-search-tv
+    # search nix (nix-search-tv suelto: efimero; ns es self-contained)
     (pkgs.writeShellApplication {
       name = "ns";
       runtimeInputs = with pkgs; [
@@ -198,7 +198,6 @@ in
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
-    inputs.herdr.packages.${pkgs.system}.default
   ];
 
   # Nerd font glyphs for yazi/starship/fastfetch in the terminal.

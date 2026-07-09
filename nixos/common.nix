@@ -51,6 +51,8 @@
   # nixpkgs-unstable — sin eval remoto, casi siempre instantáneo.
   nix.registry = lib.mkIf (inputs != null) {
     nixpkgs.flake = inputs.nixpkgs;
+    # herdr no esta en nixpkgs; pin para `nix run herdr` (alias fish)
+    herdr.flake = inputs.herdr;
   };
   nix.settings.extra-substituters = [ "https://hyprland.cachix.org" ];
   nix.settings.extra-trusted-public-keys = [
@@ -63,7 +65,9 @@
     clean = {
       enable = true;
       dates = "daily";
-      extraArgs = "--keep-since 10d --keep 5";
+      # 30d para que los store paths de apps efimeras (`nix run`)
+      # sobrevivan mas tiempo entre re-descargas.
+      extraArgs = "--keep-since 30d --keep 5";
     };
   };
 
@@ -222,36 +226,30 @@
     vim
     gh
     fzf
-    nix-search-tv
     nextcloud-client
     gtk3
     libnotify
     git
-    age
+    age # dependencia de arranque de fish (load_private_env) — no mover a efimero
     fd
     jq
     trash-cli
     eza
-    btop
-    fastfetch
     ntfs3g
-    ncdu
-    podman-compose
     freerdp
     kitty
     # Daily-driver CLI. Project/dev tooling lives in per-project flakes
     # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
+    # Efimeras via alias fish (nix run): btop fastfetch ncdu podman-compose
+    # yazi sops just xclip figlet tmux nix-search-tv herdr + emuladores.
     bat
     ripgrep
-    yazi
+    jq
     neovim
     jujutsu
-    sops
-    just
     gum
     steam-run # quick FHS runner for random dynamic executables
     wl-clipboard
-    xclip
     zip
     unzip
     # GUI apps (replaces distrobox versions — NixOS patches loaders automatically)
@@ -267,7 +265,6 @@
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
     (pkgs.callPackage ./packages/brave-origin.nix { })
-    inputs.herdr.packages.${pkgs.system}.default
   ];
 
   programs.dconf.enable = true;

@@ -151,9 +151,8 @@ if type -q fzf
     end
 end
 
-if type -q yazi
-    alias y='yazi'
-end
+alias yazi='nix run nixpkgs#yazi --'
+alias y='yazi'
 
 # Runner efimero: `, app [args...]` = nix run nixpkgs#app
 # Apps de uso esporadico no se instalan; se corren desde cache binario
@@ -166,11 +165,23 @@ function , --description 'nix run nixpkgs#<app>'
     nix run nixpkgs#$argv[1] -- $argv[2..-1]
 end
 
+# Apps efimeras: no instaladas, corren desde cache binario con el mismo
+# nixpkgs del sistema (registry pineado en common.nix) — mismo store
+# path, sin descarga extra. OJO: exec directo (kitty -e app, scripts
+# bash) NO pasa por estos aliases; usar `fish -lc app` o `, app`.
+for app in ncdu fastfetch xclip podman-compose sops just figlet tmux nix-search-tv dolphin-emu pcsx2 rpcs3
+    alias $app="nix run nixpkgs#$app --"
+end
+# herdr: pineado al input del flake del sistema (no esta en nixpkgs)
+alias herdr='nix run herdr --'
+
 # caelestia writes a fully live-tuned config (incl. the caelestia colour
 # theme) to its own state dir on every scheme change; use that instead of
 # the static ~/.config/btop/btop.conf.
-if type -q btop
-    alias btop='btop -c ~/.local/state/caelestia/dots/btop/btop.conf'
+if test -f ~/.local/state/caelestia/dots/btop/btop.conf
+    alias btop='nix run nixpkgs#btop -- -c ~/.local/state/caelestia/dots/btop/btop.conf'
+else
+    alias btop='nix run nixpkgs#btop --'
 end
 
 # Deshabilitar mensaje de ayuda de fish
