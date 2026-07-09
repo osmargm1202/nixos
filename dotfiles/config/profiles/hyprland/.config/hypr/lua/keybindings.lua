@@ -16,14 +16,12 @@ function M.setup(programs)
   -- Help / launchers.
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keyhelper toggle"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("orgm-wallpaper pick"))
-  hl.bind(mainMod .. " + CTRL + slash", hl.dsp.exec_cmd("kitty --hold -e dev -i -C tmuxls"))
-  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("env NO_DEV_SHELL=1 kitty"))
+  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
   hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("hypr-obsidian-open-or-focus"))
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-zen-new-window"))
 
-  hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("kitty -e dev -i -C 'orgmrnc find'"))
   hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
 
   -- Launchers and control center.

@@ -67,11 +67,6 @@
     <repeatDelay>350</repeatDelay>
     <repeatRate>30</repeatRate>
     <!-- Applications: mirrors niri 80-binds.kdl -->
-    <keybind key="W-slash">
-      <action name="Execute">
-        <command>kitty --hold -e fish -ic tmuxls</command>
-      </action>
-    </keybind>
     <keybind key="W-Return">
       <action name="Execute">
         <command>kitty</command>

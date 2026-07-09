@@ -65,7 +65,6 @@ entries() {
       entry 'Win+W' 'Browser' 'hypr-zen-new-window'
       entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
       entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'
-      entry 'Win+Shift+R' 'Buscar RNC' 'orgmrnc find'
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)
