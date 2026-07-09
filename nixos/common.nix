@@ -274,6 +274,13 @@
   # covers one-off FHS testing.
   programs.nix-ld.enable = true;
 
+  # FHS shebang shim: third-party scripts (Claude Code plugin hooks, npm
+  # postinstalls) hardcode #!/bin/bash, which NixOS doesn't provide by
+  # default (only /bin/sh). nix-ld covers ELF binaries; this covers scripts.
+  systemd.tmpfiles.rules = [
+    "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
+  ];
+
   fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
     jetbrains-mono
