@@ -21,6 +21,7 @@
       "com.google.EarthPro"
       "com.obsproject.Studio"
       "com.spotify.Client"
+      "io.dbeaver.DBeaverCommunity"
       "io.gitlab.theevilskeleton.Upscaler"
       "io.podman_desktop.PodmanDesktop"
       "md.obsidian.Obsidian"
@@ -31,6 +32,7 @@
       "org.gnome.SimpleScan"
       "org.inkscape.Inkscape"
       "org.libreoffice.LibreOffice"
+      "org.sqlitebrowser.sqlitebrowser"
       "com.github.johnfactotum.Foliate"
     ];
   };
