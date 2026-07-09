@@ -244,7 +244,6 @@
     # yazi sops just xclip figlet tmux nix-search-tv herdr + emuladores.
     bat
     ripgrep
-    jq
     neovim
     jujutsu
     gum
