@@ -140,6 +140,11 @@ in
 
   programs.gpu-screen-recorder.enable = true;
 
+  # Caelestia trae su propio UI de bluetooth; blueman (applet + manager)
+  # sobra aqui. common.nix lo enciende globalmente -- apagarlo solo en
+  # este profile. Los demas profiles lo conservan.
+  services.blueman.enable = lib.mkForce false;
+
   environment.systemPackages = with pkgs; [
     # Launcher / menus
     rofi

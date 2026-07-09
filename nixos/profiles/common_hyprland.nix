@@ -310,7 +310,6 @@ in
     pamixer
     playerctl
     pavucontrol
-    blueman
 
     # Communication
     vesktop

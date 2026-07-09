@@ -38,6 +38,7 @@ in
     # Hardware tray/TUI (fuera de common_hyprland: caelestia trae los suyos)
     networkmanagerapplet
     bluetui
+    blueman
 
     # Launchers / notification
     quickshell

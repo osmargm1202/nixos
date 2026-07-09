@@ -7,7 +7,8 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 
 choice="$(printf '%s\n' '󰂯 Bluetooth GUI' '󰋋 Reconnect device' '󰂯 bluetui' '󰅖 Cancel' | hypr_rofi_dmenu 'Bluetooth' || true)"
 case "$choice" in
-  *'GUI') exec blueman-manager ;;
+  # blueman ya no va en caelestia (el shell maneja bluetooth); GUI suelto efimero
+  *'GUI') exec nix run nixpkgs#overskride ;;
   *'Reconnect') exec "$HOME/.local/bin/hypr-bluetooth-reconnect" ;;
   # bluetui ya no va instalado en caelestia; se corre efimero desde cache
   *'bluetui') exec kitty -e nix run nixpkgs#bluetui ;;
