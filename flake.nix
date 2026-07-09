@@ -242,7 +242,7 @@
         ];
       };
 
-      nixosConfigurations = {
+      nixosConfigurations = let configs = {
         orgm-terminal = mkMinimalHost {
           hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         };
@@ -394,6 +394,12 @@
           profile = ./nixos/profiles/mate.nix; profileName = "mate";
           extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
         };
+      }; in configs // {
+        # Perfil por defecto de cada host (coincide con el hostname,
+        # asi `nh os switch` sin -H usa esta configuracion)
+        lenovo = configs.lenovo-hyprlandqs-caelestia;
+        orgm = configs.orgm-hyprlandqs-caelestia;
+        jarq = configs.jarq-hyprlandqs-caelestia;
       };
     };
 }
