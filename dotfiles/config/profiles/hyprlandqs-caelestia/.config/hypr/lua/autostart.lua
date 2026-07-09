@@ -12,6 +12,8 @@ local exec_once = {
   "nextcloud --background",
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
+  -- Loads saved RGB profile if one exists; no-op otherwise (keeps current config)
+  "openrgb-autostart",
   -- hypridle is intentionally absent: caelestia manages idle/lock/dpms/sleep internally
   -- nwg-dock intentionally absent: caelestia has its own dock
   -- caelestia is started via systemd (programs.caelestia.systemd.enable = true in NixOS)

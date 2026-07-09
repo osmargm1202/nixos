@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Conditional OpenRGB autostart: load a saved profile at session start so
+# lighting survives reboots (the SDK server alone does not re-apply profiles).
+# Prefers <hostname>.orp, falls back to the first *.orp found. If no profile
+# exists, exit silently — hardware keeps whatever configuration it has.
+set -euo pipefail
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/OpenRGB"
+
+profile="$config_dir/$(hostname).orp"
+if [ ! -f "$profile" ]; then
+  profile=$(find "$config_dir" -maxdepth 1 -name '*.orp' 2>/dev/null | sort | head -1)
+fi
+
+[ -n "${profile:-}" ] && [ -f "$profile" ] || exit 0
+
+exec openrgb --startminimized --profile "$profile"

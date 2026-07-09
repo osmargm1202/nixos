@@ -32,6 +32,9 @@ let
     ${pkgs.desktop-file-utils}/bin/update-desktop-database "$dst" 2>/dev/null || true
   '';
 
+  # Python env for ~/.config/openrgb/lg213/main.py (notification RGB effects)
+  lg213PythonEnv = pkgs.python3.withPackages (ps: [ ps.openrgb-python ]);
+
   orgmDotfilesUpdateScript = pkgs.writeShellApplication {
     name = "orgm-dotfiles-update";
     runtimeInputs = with pkgs; [ git openssh ];
@@ -124,6 +127,7 @@ let
     ".config/kitty"
     ".config/mpv"
     ".config/nvim"
+    ".config/openrgb/lg213"
     ".config/orgm-hosts"
     ".config/posting"
     ".config/starship.toml"
@@ -135,6 +139,7 @@ let
     ".icons"
     ".local/bin/kbd-layout-next"
     ".local/bin/memclean-dev"
+    ".local/bin/openrgb-autostart"
     ".local/bin/brightness-osd"
     ".local/bin/reset_config"
     ".local/bin/windows-rdp"
@@ -807,6 +812,19 @@ GTKEOF
           Type = "oneshot";
           ExecStart = "${syncDesktopShortcutsScript}";
         };
+      };
+
+      # Blinks the G213 keyboard areas on Discord/Steam notifications.
+      # The script exits 0 on hosts without a G213, so the unit is safe fleet-wide.
+      systemd.user.services.openrgb-notify = {
+        Unit.Description = "Blink G213 keyboard zones on app notifications";
+        Service = {
+          ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";
+          Environment = [ "PATH=${pkgs.dbus}/bin" ];
+          Restart = "on-failure";
+          RestartSec = 10;
+        };
+        Install.WantedBy = [ "default.target" ];
       };
 
       systemd.user.paths.desktop-shortcut-sync = {
