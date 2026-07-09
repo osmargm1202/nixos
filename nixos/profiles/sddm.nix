@@ -1,12 +1,19 @@
-{ config, inputs, ... }:
+{ config, pkgs, inputs, ... }:
 
 let
   hostThemeFile = ../hosts/${config.networking.hostName}/sddm-theme.nix;
   hostTheme = if builtins.pathExists hostThemeFile then import hostThemeFile else "clockwork";
+
+  # Upstream's nixosModules.default hits the deprecated `pkgs.system` alias
+  # (evaluation warning); call its builders directly until that's fixed.
+  qylock = inputs.qylock.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  sddmThemes = qylock.mkSddmThemes { themeOptions = { }; };
+  qylockShell = qylock.mkQuickshell {
+    defaultTheme = hostTheme;
+    themeOptions = { };
+  };
 in
 {
-  imports = [ inputs.qylock.nixosModules.default ];
-
   services.displayManager.sddm = {
     enable = true;
     wayland = {
@@ -18,12 +25,21 @@ in
     settings = {
       General.Numlock = "on";
     };
+    theme = hostTheme;
+    extraPackages = [
+      sddmThemes
+      # QML modules the themes import (e.g. Qt5Compat.GraphicalEffects).
+      # extraPackages contributes lib/qt-6/qml to the greeter's QML_IMPORT_PATH.
+      pkgs.qt6.qt5compat
+      pkgs.qt6.qtmultimedia
+      pkgs.qt6.qtsvg
+    ];
   };
 
-  programs.qylock = {
-    enable = true;
-    theme = hostTheme;
-  };
+  environment.systemPackages = [
+    sddmThemes
+    qylockShell
+  ];
 
   # NVIDIA + KWin Wayland fails to composite the hardware cursor plane --
   # click position works but the pointer image never renders. Force KWin
