@@ -44,6 +44,13 @@
     "flakes"
   ];
   nix.settings.auto-optimise-store = true;
+
+  # Pin `nixpkgs` del registry al input del sistema: `nix run nixpkgs#app`
+  # (función fish `,`) comparte el store del sistema en vez de bajar
+  # nixpkgs-unstable — sin eval remoto, casi siempre instantáneo.
+  nix.registry = lib.mkIf (inputs != null) {
+    nixpkgs.flake = inputs.nixpkgs;
+  };
   nix.settings.extra-substituters = [ "https://hyprland.cachix.org" ];
   nix.settings.extra-trusted-public-keys = [
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="

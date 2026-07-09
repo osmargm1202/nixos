@@ -35,6 +35,10 @@ in
     nwg-displays
     nwg-look
 
+    # Hardware tray/TUI (fuera de common_hyprland: caelestia trae los suyos)
+    networkmanagerapplet
+    bluetui
+
     # Launchers / notification
     quickshell
     fuzzel

@@ -145,7 +145,6 @@ in
     rofi
 
     # Display management
-    nwg-displays
     nwg-look
 
     # Power menu

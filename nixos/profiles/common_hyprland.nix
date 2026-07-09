@@ -310,34 +310,24 @@ in
     pamixer
     playerctl
     pavucontrol
-    networkmanagerapplet
-    bluetui
     blueman
-    overskride
-    iwgtk
 
     # Communication
     vesktop
 
     # GNOME apps used as defaults
+    # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,
+    # gnome-disk-utility, gnome-logs, seahorse, gnome-font-viewer,
+    # gnome-characters, warehouse, gnome-tweaks, overskride, iwgtk
     nautilus
     gnome-text-editor
-    apostrophe
     loupe
     evince
-    totem
     mpv
     file-roller
-    baobab
     gnome-calculator
-    gnome-disk-utility
-    gnome-logs
     gnome-system-monitor
-    seahorse
-    gnome-font-viewer
-    gnome-characters
     sushi
-    warehouse
     gnome-software
 
     # Desktop integration / theming
@@ -345,7 +335,6 @@ in
     adwaita-icon-theme
     hicolor-icon-theme
     gnome-themes-extra
-    gnome-tweaks
     catppuccin-gtk
     catppuccin-cursors.macchiatoTeal
     catppuccin-cursors.latteTeal

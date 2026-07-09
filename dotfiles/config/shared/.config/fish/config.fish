@@ -155,6 +155,17 @@ if type -q yazi
     alias y='yazi'
 end
 
+# Runner efimero: `, app [args...]` = nix run nixpkgs#app
+# Apps de uso esporadico no se instalan; se corren desde cache binario
+# (registry pineado al nixpkgs del sistema en common.nix).
+function , --description 'nix run nixpkgs#<app>'
+    if test (count $argv) -eq 0
+        echo "uso: , <app> [args...]" >&2
+        return 1
+    end
+    nix run nixpkgs#$argv[1] -- $argv[2..-1]
+end
+
 # caelestia writes a fully live-tuned config (incl. the caelestia colour
 # theme) to its own state dir on every scheme change; use that instead of
 # the static ~/.config/btop/btop.conf.

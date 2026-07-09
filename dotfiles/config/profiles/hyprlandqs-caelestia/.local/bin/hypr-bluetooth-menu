@@ -9,6 +9,7 @@ choice="$(printf '%s\n' '󰂯 Bluetooth GUI' '󰋋 Reconnect device' '󰂯 bluet
 case "$choice" in
   *'GUI') exec blueman-manager ;;
   *'Reconnect') exec "$HOME/.local/bin/hypr-bluetooth-reconnect" ;;
-  *'bluetui') exec kitty -e bluetui ;;
+  # bluetui ya no va instalado en caelestia; se corre efimero desde cache
+  *'bluetui') exec kitty -e nix run nixpkgs#bluetui ;;
   *) exec hypr-devices-menu ;;
 esac

@@ -128,8 +128,10 @@
 
     pavucontrol
     networkmanagerapplet
+    bluetui
     blueman
     wdisplays
+    nwg-displays
 
     nautilus
     gnome-software
