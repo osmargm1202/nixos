@@ -230,19 +230,17 @@
         default = orgmWallpaper;
       };
 
-      devShells.${system}.default =
-        let
-          fhs = import ./nixos/packages/dev-shell.nix {
-            pkgs = pkgsDev;
-            herdr = inputs.herdr.packages.${system}.default;
-          };
-        in
-        pkgsDev.mkShell {
-          packages = [ fhs ];
-          shellHook = ''
-            exec ${fhs}/bin/dev
-          '';
-        };
+      # Per-project dev environments live in each project's own flake.nix
+      # (scaffold one with the fish `flakeinit` function, then nix develop).
+      # The old FHS env (nixos/packages/dev-shell.nix) is kept on disk as
+      # reference but no longer wired anywhere. This shell is just for
+      # hacking on this repo.
+      devShells.${system}.default = pkgsDev.mkShell {
+        packages = with pkgsDev; [
+          nixfmt-rfc-style
+          nil
+        ];
+      };
 
       nixosConfigurations = {
         orgm-terminal = mkMinimalHost {

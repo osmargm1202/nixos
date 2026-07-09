@@ -39,7 +39,7 @@ in
 
   programs.nh = {
     enable = true;
-    flake = lib.mkDefault "/etc/nixos";
+    flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
     clean = {
       enable = true;
       dates = "daily";

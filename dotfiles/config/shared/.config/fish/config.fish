@@ -1,8 +1,9 @@
 set -g fish_greeting
 set -Ue fish_key_bindings
 
-# Dev environment (FHS) is launched manually: run `dev` when you need it.
-# NOT auto-entered — keeps host shell + sudo available by default.
+# Dev environments are per-project flakes: `flakeinit` scaffolds a
+# flake.nix (devShell vacio), luego `nix develop`. Para binarios sueltos:
+# steam-run (FHS) o nix-ld (claude, pi, codex).
 
 # if not set -q TMUX
 #     if type -q fastfetch

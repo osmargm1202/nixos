@@ -90,6 +90,7 @@ let
     ".config/fish/functions/fish_helix_command.fish"
     ".config/fish/functions/fish_helix_key_bindings.fish"
     ".config/fish/functions/fish_user_key_bindings.fish"
+    ".config/fish/functions/flakeinit.fish"
     ".config/fish/functions/fzf-cd-preview-widget.fish"
     ".config/fish/functions/fzf-file-preview-widget.fish"
     ".config/fish/functions/fzf_key_bindings.fish"

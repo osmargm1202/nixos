@@ -51,7 +51,7 @@
 
   programs.nh = {
     enable = true;
-    flake = lib.mkDefault "/etc/nixos";
+    flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
     clean = {
       enable = true;
       dates = "daily";
@@ -59,22 +59,8 @@
     };
   };
 
-  # Automatic system updates.
-  system.autoUpgrade = {
-    enable = true;
-    dates = "weekly";
-    operation = "switch";
-    randomizedDelaySec = "45min";
-    allowReboot = false;
-    flake = lib.mkDefault "/etc/nixos";
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "--update-input"
-      "home-manager"
-      "-L"
-    ];
-  };
+  # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host
+  # when we decide which machines should self-update.
 
   # Main kernel for all hosts. Keep host-specific overrides in each host file
   # only when hardware needs a different kernel.
@@ -179,7 +165,7 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
+  services.xserver.libinput.enable = true;
 
   # Define user account. Don’t forget to set password with ‘passwd’.
   # Fixed uid/gid + own primary group so ownership is stable across
@@ -226,59 +212,40 @@
     curl
     rsync
     vim
-    stow
     gh
-    fish
-    figlet
     fzf
     nix-search-tv
     nextcloud-client
     gtk3
     libnotify
     git
-    distrobox
     age
     fd
-    jq
     trash-cli
     eza
-    htop
     btop
     fastfetch
     ntfs3g
-    zoxide
     ncdu
     podman-compose
     freerdp
     kitty
-    # CLI tools (replaces distrobox)
+    # Daily-driver CLI. Project/dev tooling lives in per-project flakes
+    # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
     bat
     ripgrep
-    glow
-    gum
     yazi
-    duf
     neovim
-    git-lfs
     jujutsu
     sops
     just
-    watchexec
-    inotify-tools
+    steam-run # quick FHS runner for random dynamic executables
     wl-clipboard
     xclip
     zip
     unzip
-    pigz
-    tree
-    mtr
-    lsof
-    tcpdump
-    bc
     # GUI apps (replaces distrobox versions — NixOS patches loaders automatically)
     vscode
-    warp-terminal
-    zed-editor
     (chromium.override { enableWideVine = true; })
     (pkgs.writeShellApplication {
       name = "ns";
@@ -289,16 +256,17 @@
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
-    (import ./packages/dev-shell.nix {
-      inherit pkgs;
-      herdr = inputs.herdr.packages.${pkgs.system}.default;
-    })
     (pkgs.callPackage ./packages/brave-origin.nix { })
     inputs.herdr.packages.${pkgs.system}.default
   ];
 
   programs.dconf.enable = true;
   programs.adb.enable = true;
+
+  # Loader shim for dynamic binaries not packaged for NixOS
+  # (claude, pi, codex and other custom tools). steam-run (above)
+  # covers one-off FHS testing.
+  programs.nix-ld.enable = true;
 
   fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
@@ -311,7 +279,7 @@
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
-  # programs.mtr.enable = true;
+  programs.mtr.enable = true;
   # programs.gnupg.agent = {
   #   enable = true;
   #   enableSSHSupport = true;
