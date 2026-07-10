@@ -32,4 +32,11 @@
     "nvidia_drm"
     "nvidia_modeset"
   ];
+
+  # nvidia-vaapi-driver cannot export dmabufs the way Qt Multimedia requests
+  # (vaExportSurfaceHandle fails per frame; upstream limitation, the driver
+  # targets Firefox's consumption pattern). NVDEC decode keeps working; this
+  # skips the doomed per-frame zero-copy attempt and its fallback churn.
+  # Lives in the NVIDIA module on purpose: on Intel/AMD zero-copy works.
+  environment.sessionVariables.QT_DISABLE_HW_TEXTURES_CONVERSION = "1";
 }
