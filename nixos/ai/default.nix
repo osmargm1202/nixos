@@ -6,6 +6,7 @@
   imports = [
     ./claude.nix
     ./codex.nix
+    ./copilot.nix
     ./pi.nix
     ./opencode.nix
   ];
