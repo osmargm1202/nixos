@@ -55,5 +55,14 @@ function sshgo --description 'Pick a host from ~/.config/orgm-hosts/hosts.conf a
     set -l chosen_host $chosen_parts[1]
     set -l chosen_user $chosen_parts[2]
 
+    # Connect by Tailscale IP: works without MagicDNS/accept-dns, which we
+    # keep disabled so the system uses its own DNS resolvers.
+    set -l chosen_ip (echo $status_json | jq -r --arg h "$chosen_host" '
+        .Peer[] | select(.HostName | ascii_downcase == ($h | ascii_downcase)) | .TailscaleIPs[0] // empty
+    ')
+
+    if test -n "$chosen_ip"
+        exec ssh "$chosen_user@$chosen_ip"
+    end
     exec ssh "$chosen_user@$chosen_host"
 end
