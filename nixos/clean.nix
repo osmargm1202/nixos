@@ -23,7 +23,9 @@
     clean = {
       enable = true;
       dates = "weekly";
-      extraArgs = "--keep 3";
+      # keep-since 30d: los store paths de apps efimeras (`nix run`)
+      # sobreviven mas tiempo entre re-descargas.
+      extraArgs = "--keep 3 --keep-since 30d";
     };
   };
 

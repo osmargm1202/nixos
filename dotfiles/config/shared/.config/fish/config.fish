@@ -61,13 +61,14 @@ function nixg
     _orgm_sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +$keep
 end
 
+# Manual version of the automated cleanup in nixos/clean.nix.
+# nh clean all: generaciones sistema + usuarios + home-manager (keep 3) y GC.
 function nixclean
-    nixg 2
-    nixgc
+    _orgm_sudo nh clean all --keep 3 --keep-since 30d
     _orgm_sudo nix store optimise
+    _orgm_sudo journalctl --vacuum-time=30d
     flatpak uninstall --unused --assumeyes --noninteractive
     trash-empty 30 -f
-    _orgm_sudo journalctl --vacuum-time=7d
 end
 
 # Prompt más vistoso (starship opcional)
