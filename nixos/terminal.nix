@@ -23,7 +23,10 @@ in
       ./common-dotfiles.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
-    ++ [ ./tailscale.nix ];
+    ++ [
+      ./tailscale.nix
+      ./clean.nix
+    ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -45,15 +48,10 @@ in
     herdr.flake = inputs.herdr;
   };
 
+  # nh clean schedule lives in ./clean.nix
   programs.nh = {
     enable = true;
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
-    clean = {
-      enable = true;
-      dates = "daily";
-      # 30d: los store paths de apps efimeras (`nix run`) duran mas.
-      extraArgs = "--keep-since 30d --keep 5";
-    };
   };
 
   # LTS kernel for recovery stability.

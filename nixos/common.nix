@@ -30,7 +30,10 @@
       ./webapps.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
-    ++ [ ./tailscale.nix ];
+    ++ [
+      ./tailscale.nix
+      ./clean.nix
+    ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -59,16 +62,10 @@
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
   ];
 
+  # nh clean schedule lives in ./clean.nix
   programs.nh = {
     enable = true;
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
-    clean = {
-      enable = true;
-      dates = "daily";
-      # 30d para que los store paths de apps efimeras (`nix run`)
-      # sobrevivan mas tiempo entre re-descargas.
-      extraArgs = "--keep-since 30d --keep 5";
-    };
   };
 
   # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host

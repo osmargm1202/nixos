@@ -61,7 +61,10 @@ let
   };
 in
 {
-  imports = [ ./tailscale.nix ];
+  imports = [
+    ./tailscale.nix
+    ./clean.nix
+  ];
 
   boot.kernelPackages = pkgs.linuxPackages;
   boot.tmp.cleanOnBoot = true;
