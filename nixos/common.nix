@@ -274,8 +274,10 @@
   # FHS shebang shim: third-party scripts (Claude Code plugin hooks, npm
   # postinstalls) hardcode #!/bin/bash, which NixOS doesn't provide by
   # default (only /bin/sh). nix-ld covers ELF binaries; this covers scripts.
+  # Also: pi/bash tool hardcodes /usr/sbin/bash.
   systemd.tmpfiles.rules = [
     "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
+    "L+ /usr/sbin/bash - - - - ${pkgs.bash}/bin/bash"
   ];
 
   fonts.fontconfig.enable = true;

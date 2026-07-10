@@ -52,8 +52,8 @@
       "custom_name": null,
       "identity_cwd": "/home/osmarg/Hobby/nixos",
       "public_pane_numbers": {
-        "4": 2,
-        "6": 4
+        "4": 4,
+        "3": 2
       },
       "next_public_pane_number": 5,
       "public_tab_numbers": [
@@ -65,6 +65,20 @@
         {
           "custom_name": null,
           "layout": {
+            "Pane": 3
+          },
+          "panes": {
+            "3": {
+              "cwd": "/home/osmarg/Hobby/nixos"
+            }
+          },
+          "zoomed": false,
+          "focused": 3,
+          "root_pane": 3
+        },
+        {
+          "custom_name": "claude",
+          "layout": {
             "Pane": 4
           },
           "panes": {
@@ -75,20 +89,6 @@
           "zoomed": false,
           "focused": 4,
           "root_pane": 4
-        },
-        {
-          "custom_name": "claude",
-          "layout": {
-            "Pane": 6
-          },
-          "panes": {
-            "6": {
-              "cwd": "/home/osmarg/Hobby/nixos"
-            }
-          },
-          "zoomed": false,
-          "focused": 6,
-          "root_pane": 6
         }
       ],
       "active_tab": 1

@@ -22,17 +22,10 @@
   # Disable Plymouth while debugging Jarq boot hangs so kernel/systemd errors stay visible.
   boot.plymouth.enable = lib.mkForce false;
 
-  # BCM4352 needs Broadcom STA. Nixpkgs marks it insecure because upstream
-  # abandoned it, but this host depends on it unless the WiFi card is replaced.
-  nixpkgs.config.allowInsecurePredicate = pkg:
-    lib.getName pkg == "broadcom-sta";
-
-  boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
+  # BCM4352 is supported by the open-source brcmfmac driver (part of the kernel)
+  # with firmware from linux-firmware (enabled via enableRedistributableFirmware above).
+  # No extra module packages needed — removed broadcom-sta proprietary driver.
   boot.blacklistedKernelModules = [
-    "b43"
-    "bcma"
-    "brcmsmac"
-    "ssb"
     # ACPI INT3432 I2C controller times out and hangs this laptop during boot.
     # Side effect: touchscreen/tablet sensors may stay disabled.
     "i2c_designware_platform"

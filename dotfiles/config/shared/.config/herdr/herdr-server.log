@@ -118,3 +118,25 @@
 2026-07-10T14:58:29.429460Z  INFO herdr::server::headless: client resize client_id=4 cols=80 rows=24 cell_width_px=0 cell_height_px=0
 2026-07-10T14:58:29.447778Z  INFO herdr::server::headless: client disconnected client_id=4
 2026-07-10T15:48:38.413850Z  INFO herdr::logging: checking for updates event="update.check.start" subsystem="update" outcome="started"
+2026-07-10T23:00:55.915960Z  INFO herdr::api::server: api server listening path=/home/osmarg/.config/herdr/herdr.sock
+2026-07-10T23:00:55.918631Z  INFO herdr::logging: spawning pane terminal event="pane.spawn.start" subsystem="pane" outcome="started" pane_id=1 rows=24 cols=80 scrollback_limit_bytes=10000000
+2026-07-10T23:00:55.920584Z  INFO herdr::logging: pane child spawned event="pane.spawned" subsystem="pane" outcome="ok" pane_id=1 pid=8060
+2026-07-10T23:00:55.920970Z  INFO herdr::logging: spawning pane terminal event="pane.spawn.start" subsystem="pane" outcome="started" pane_id=2 rows=24 cols=80 scrollback_limit_bytes=10000000
+2026-07-10T23:00:55.921461Z  INFO herdr::logging: pane child spawned event="pane.spawned" subsystem="pane" outcome="ok" pane_id=2 pid=8063
+2026-07-10T23:00:55.921593Z  INFO herdr::logging: spawning pane terminal event="pane.spawn.start" subsystem="pane" outcome="started" pane_id=3 rows=24 cols=80 scrollback_limit_bytes=10000000
+2026-07-10T23:00:55.922140Z  INFO herdr::logging: pane child spawned event="pane.spawned" subsystem="pane" outcome="ok" pane_id=3 pid=8066
+2026-07-10T23:00:55.922250Z  INFO herdr::logging: spawning pane terminal event="pane.spawn.start" subsystem="pane" outcome="started" pane_id=4 rows=24 cols=80 scrollback_limit_bytes=10000000
+2026-07-10T23:00:55.922803Z  INFO herdr::logging: pane child spawned event="pane.spawned" subsystem="pane" outcome="ok" pane_id=4 pid=8069
+2026-07-10T23:00:55.923071Z  INFO herdr::logging: session restore evaluated event="persist.restore" subsystem="persist" outcome="ok" workspaces=2
+2026-07-10T23:00:55.923084Z  INFO herdr::app: using pane scrollback configuration pane_scrollback_limit_bytes=10000000
+2026-07-10T23:00:55.954900Z  INFO herdr::logging: checking for updates event="update.check.start" subsystem="update" outcome="started"
+2026-07-10T23:00:55.959373Z  INFO herdr::server::headless: restored session already has workspaces; ignoring startup cwd cwd=/home/osmarg
+2026-07-10T23:00:55.959708Z  INFO herdr::server::headless: client protocol socket listening path=/home/osmarg/.config/herdr/herdr-client.sock
+2026-07-10T23:00:55.959774Z  INFO herdr::server::headless: herdr server started api_socket=/home/osmarg/.config/herdr/herdr.sock client_socket=/home/osmarg/.config/herdr/herdr-client.sock
+2026-07-10T23:00:55.959802Z  INFO herdr::logging: herdr starting event="app.startup" subsystem="server" outcome="started" pid=8050
+2026-07-10T23:00:56.027746Z  INFO herdr::server::headless: client connected client_id=2 cols=167 rows=38 cell_width_px=0 cell_height_px=0 render_encoding=SemanticFrame
+2026-07-10T23:00:56.200710Z  WARN herdr::detect::manifest_update: skipping unknown remote manifest agent agent="maki"
+2026-07-10T23:01:00.640132Z  INFO herdr::logging: tab focused event="tab.focus" subsystem="tab" outcome="ok" workspace_id="w1" tab_id="w1:t1"
+2026-07-10T23:01:01.905281Z  INFO herdr::logging: tab focused event="tab.focus" subsystem="tab" outcome="ok" workspace_id="w1" tab_id="w1:t2"
+2026-07-10T23:01:03.480676Z  INFO herdr::server::headless: client disconnected client_id=2
+2026-07-10T23:01:06.907029Z  INFO herdr::logging: session saved event="persist.save" subsystem="persist" outcome="ok" path=/home/osmarg/.config/herdr/session.json workspaces=2
