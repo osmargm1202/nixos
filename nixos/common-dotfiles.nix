@@ -51,6 +51,7 @@ let
   sharedPaths = [
     ".config/bat"
     ".config/btop"
+    ".config/caelestia/cli.json"
     ".config/delta"
     ".config/dolphinrc"
     ".config/fastfetch"
@@ -136,7 +137,8 @@ let
     ".config/yazi"
     ".config/zathura"
     ".config/zellij"
-    ".icons"
+    # ".icons" intentionally NOT symlinked: nwg-look and dark/light theme
+    # automation own it; the default cursor theme is seeded once below.
     ".local/bin/kbd-layout-next"
     ".local/bin/memclean-dev"
     ".local/bin/openrgb-autostart"
@@ -695,6 +697,7 @@ in
           .config/i3 .config/polybar .config/picom \
           .config/labwc \
           .config/conky \
+          .icons \
           .local/share/icons; do
           target="$HOME/$old_dir"
           if [ -L "$target" ]; then
@@ -757,6 +760,49 @@ gtk-xft-hintstyle=hintnone
 gtk-xft-rgba=rgb
 gtk-application-prefer-dark-theme=1
 gtk-overlay-scrolling=true
+GTKEOF
+          fi
+          if [ ! -e "$HOME/.gtkrc-2.0" ]; then
+            cat > "$HOME/.gtkrc-2.0" << 'GTKEOF'
+include "/home/${userName}/.gtkrc-2.0.mine"
+gtk-theme-name="Adwaita-dark"
+gtk-icon-theme-name="Colloid-Dark"
+gtk-font-name="Inter 11"
+gtk-cursor-theme-name="catppuccin-latte-teal-cursors"
+gtk-cursor-theme-size=36
+gtk-toolbar-style=GTK_TOOLBAR_ICONS
+gtk-toolbar-icon-size=GTK_ICON_SIZE_LARGE_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=0
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=1
+gtk-xft-hinting=0
+gtk-xft-hintstyle="hintnone"
+gtk-xft-rgba="rgb"
+GTKEOF
+          fi
+          if [ ! -e "$HOME/.config/xsettingsd/xsettingsd.conf" ]; then
+            mkdir -p "$HOME/.config/xsettingsd"
+            cat > "$HOME/.config/xsettingsd/xsettingsd.conf" << 'GTKEOF'
+Net/ThemeName "Adwaita-dark"
+Net/IconThemeName "Colloid-Dark"
+Gtk/CursorThemeName "catppuccin-latte-teal-cursors"
+Net/EnableEventSounds 0
+EnableInputFeedbackSounds 0
+Xft/Antialias 1
+Xft/Hinting 0
+Xft/HintStyle "hintnone"
+Xft/RGBA "rgb"
+GTKEOF
+          fi
+          if [ ! -e "$HOME/.icons/default/index.theme" ]; then
+            mkdir -p "$HOME/.icons/default"
+            cat > "$HOME/.icons/default/index.theme" << 'GTKEOF'
+[Icon Theme]
+Name=Default
+Comment=Default Cursor Theme
+Inherits=catppuccin-latte-teal-cursors
 GTKEOF
           fi
         ''
