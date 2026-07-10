@@ -66,7 +66,8 @@ in
     ./clean.nix
   ];
 
-  boot.kernelPackages = pkgs.linuxPackages;
+  # Zen 7.0.10 pinned from nixpkgs-zen70.
+  boot.kernelPackages = inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
   boot.tmp.cleanOnBoot = true;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;

@@ -54,8 +54,8 @@ in
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
   };
 
-  # LTS kernel for recovery stability.
-  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_6_12;
+  # Zen 7.0.10 pinned from nixpkgs-zen70.
+  boot.kernelPackages = lib.mkDefault inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
 
   boot.plymouth = {
     enable = true;

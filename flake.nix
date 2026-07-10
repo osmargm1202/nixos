@@ -123,6 +123,7 @@
           modules = [
             { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
+            ./nixos/ai/default.nix
             hardware
             profile
             { networking.hostName = hostName; }
@@ -142,6 +143,7 @@
           modules = [
             { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
+            ./nixos/ai/default.nix
             defaultHardware
             profile
             { networking.hostName = hostName; }
@@ -161,6 +163,7 @@
           modules = [
             { nixpkgs.hostPlatform = system; }
             ./nixos/common.nix
+            ./nixos/ai/default.nix
             ./nixos/general.nix
             hardware
             (getProfile profile)
@@ -236,15 +239,24 @@
         default = orgmWallpaper;
       };
 
-      # Per-project dev environments live in each project's own flake.nix
-      # (scaffold one with the fish `flakeinit` function, then nix develop).
+      # Dev shell for hacking on this NixOS repo. Enter with `nix develop`.
       # The old FHS env (nixos/packages/dev-shell.nix) is kept on disk as
-      # reference but no longer wired anywhere. This shell is just for
-      # hacking on this repo.
+      # reference but no longer wired anywhere.
       devShells.${system}.default = pkgsDev.mkShell {
         packages = with pkgsDev; [
+          # Nix tooling
           nixfmt-rfc-style
           nil
+          statix       # lint anti-patterns
+          deadnix      # find dead Nix code
+          nix-output-monitor  # prettier nix build output (nom)
+          nvd          # diff derivations between generations
+          # Git
+          git
+          lazygit      # TUI for git
+          # General
+          just         # command runner
+          typos        # spell check
         ];
       };
 

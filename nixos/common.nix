@@ -71,9 +71,9 @@
   # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host
   # when we decide which machines should self-update.
 
-  # Main kernel for all hosts. Keep host-specific overrides in each host file
-  # only when hardware needs a different kernel.
-  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_zen;
+  # Zen 7.0.10 pinned from nixpkgs-zen70. Host-specific overrides in each
+  # host file only when hardware needs a different kernel.
+  boot.kernelPackages = lib.mkDefault inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
 
   boot.plymouth = {
     enable = true;
