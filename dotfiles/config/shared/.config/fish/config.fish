@@ -36,6 +36,8 @@ set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/go/bin $PATH
 set -gx PATH $HOME/.npm-global/bin $PATH
+set -gx PATH $HOME/.bun/bin $PATH
+set -gx PATH $HOME/.local/share/pnpm $PATH
 
 # Nix cleanup helpers.
 # En NixOS, sudo con setuid vive en /run/wrappers/bin/sudo. Algunas apps
