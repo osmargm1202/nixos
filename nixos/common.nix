@@ -25,7 +25,7 @@
   documentation.enable = false;
 
   # Solo firmware esencial (ahorra ~500+ MB).
-  hardware.enableRedistributableFirmware = false;
+  hardware.enableRedistributableFirmware = lib.mkForce false;
 
   # Solo los locales que uso.
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "es_DO.UTF-8/UTF-8" ];
