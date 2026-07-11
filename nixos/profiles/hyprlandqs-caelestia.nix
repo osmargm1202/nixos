@@ -133,15 +133,9 @@ in
 {
   imports = [
     ./common_hyprland.nix
-    inputs.skwd-wall.nixosModules.default
   ];
 
   programs.gpu-screen-recorder.enable = true;
-
-  # External wallpaper selector (our fork). Caelestia hands off to it via
-  # background.externalWallpaperCommand ("skwd wall toggle"). Enable the
-  # daemon once per user: systemctl --user enable --now skwd-daemon
-  programs.skwd-wall.enable = true;
 
   # Caelestia trae su propio UI de bluetooth; blueman (applet + manager)
   # sobra aqui. common.nix lo enciende globalmente -- apagarlo solo en

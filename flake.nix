@@ -48,12 +48,6 @@
       url = "github:osmargm1202/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    skwd-wall = {
-      # Our fork; wallpaper selector handed off from caelestia via
-      # background.externalWallpaperCommand. Pins its own nixpkgs
-      # (needs quickshell; upstream tests against its pin).
-      url = "github:osmargm1202/skwd-wall";
-    };
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
