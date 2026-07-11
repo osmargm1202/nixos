@@ -56,6 +56,8 @@ FOCUS_COLORS = {
 
 EFFECT_SECONDS = 3.0
 FRAME_SECONDS = 0.5  # on/off cadence; G213 writes are slow, keep this coarse
+AMBIENT_WRITE_ATTEMPTS = 4
+AMBIENT_WRITE_RETRY_SECONDS = 0.12
 SERVER_RETRY_SECONDS = 5
 DEVICE_NAME = "G213"
 
@@ -138,11 +140,19 @@ class G213Notifier:
         else:
             self._set([OFF] * len(self.device.leds))
 
+    def _set_uniform_ambient(self, color: RGBColor) -> None:
+        """Retry a uniform frame because G213 applies five HID writes separately."""
+        self.ensure_direct()
+        frame = [color] * len(self.device.leds)
+        for attempt in range(AMBIENT_WRITE_ATTEMPTS):
+            self._set(frame)
+            if attempt + 1 < AMBIENT_WRITE_ATTEMPTS:
+                time.sleep(AMBIENT_WRITE_RETRY_SECONDS)
+
     def apply_ambient(self):
         with self.lock:
             if self.ambient_color is not None:
-                self.ensure_direct()
-                self._set([self.ambient_color] * len(self.device.leds))
+                self._set_uniform_ambient(self.ambient_color)
             else:
                 self.restore_base()
 
