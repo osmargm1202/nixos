@@ -185,8 +185,8 @@ in
               pkgs.psmisc
             ]
           }";
-          ExecStart = "${psdBrowsers}/bin/profile-sync-daemon startup";
-          ExecStop = "${psdBrowsers}/bin/profile-sync-daemon unsync";
+          ExecStart = "${psdZen}/bin/profile-sync-daemon startup";
+          ExecStop = "${psdZen}/bin/profile-sync-daemon unsync";
           TimeoutStopSec = 60;
         };
         Install.WantedBy = [ "default.target" ];
@@ -211,7 +211,7 @@ in
               pkgs.psmisc
             ]
           }";
-          ExecStart = "${psdBrowsers}/bin/profile-sync-daemon resync";
+          ExecStart = "${psdZen}/bin/profile-sync-daemon resync";
         };
       };
 
