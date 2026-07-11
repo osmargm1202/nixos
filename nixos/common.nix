@@ -30,12 +30,8 @@
   # Solo los locales que uso.
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "es_DO.UTF-8/UTF-8" ];
 
-  # Auto-GC semanal, borra generations >14 dias.
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
-  };
+  # GC lo maneja nh.clean (semanal, keep 3 + 30d) en clean.nix.
+  # nix.gc no se activa para no conflictuar con nh clean.
 
   imports =
     lib.optionals (inputs != null) [
