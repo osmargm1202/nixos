@@ -21,6 +21,9 @@
   # Logitech G213 RGB (USB HID, no motherboard i2c needed)
   services.hardware.openrgb.enable = true;
 
+  # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
+  documentation.enable = false;
+
   imports =
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
@@ -237,8 +240,11 @@
     kitty
     # Daily-driver CLI. Project/dev tooling lives in per-project flakes
     # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
-    # Efimeras via alias fish (nix run): btop fastfetch ncdu podman-compose
+    # Efimeras via alias fish (nix run): btop fastfetch ncdu
     # yazi sops just xclip figlet tmux nix-search-tv herdr + emuladores.
+    # Compose provider: podman 5.x no longer ships built-in `compose`
+    # subcommand; `docker compose` shim requires this plugin to exist.
+    podman-compose
     bat
     ripgrep
     neovim
