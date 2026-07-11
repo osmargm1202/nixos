@@ -16,7 +16,7 @@ let
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
-  psdBrowsers = pkgs.callPackage ../packages/psd-brave-origin.nix { inherit psdZen; };
+  # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
   scrollOverviewSo = pkgs.runCommand "scrolloverview.so" { } ''
@@ -158,7 +158,7 @@ in
       '';
 
       xdg.configFile."psd/psd.conf".text = ''
-        BROWSERS=(zen chromium brave-origin)
+        BROWSERS=(zen chromium)
       '';
 
       systemd.user.services.psd = {
@@ -286,7 +286,7 @@ in
 
     # Browser
     zenBrowser
-    psdBrowsers
+    psdZen
 
     # Portal / XDG
     xdg-utils

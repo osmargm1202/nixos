@@ -1,1 +1,1 @@
-"winter"
+"hyprland_kath"

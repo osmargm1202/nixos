@@ -24,6 +24,19 @@
   # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
   documentation.enable = false;
 
+  # Solo firmware esencial (ahorra ~500+ MB).
+  hardware.enableRedistributableFirmware = false;
+
+  # Solo los locales que uso.
+  i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "es_DO.UTF-8/UTF-8" ];
+
+  # Auto-GC semanal, borra generations >14 dias.
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
+
   imports =
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
@@ -266,7 +279,7 @@
       checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
-    (pkgs.callPackage ./packages/brave-origin.nix { })
+    # brave-origin removido del closure (~404 MB); nix file conservado.
   ];
 
   programs.dconf.enable = true;

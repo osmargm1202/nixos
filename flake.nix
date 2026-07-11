@@ -56,11 +56,11 @@
       url = "github:AvengeMedia/dgop";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    qylock = {
-      # SDDM/quickshell lockscreen themes. Pins its own nixpkgs-unstable
-      # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
-      url = "github:Darkkal44/qylock";
-    };
+    # qylock = {
+    #   # SDDM/quickshell lockscreen themes. Pins its own nixpkgs-unstable
+    #   # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
+    #   url = "github:Darkkal44/qylock";
+    # };
     zen-browser-flake = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
