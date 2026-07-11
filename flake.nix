@@ -116,6 +116,7 @@
           specialArgs = { inherit inputs userName profileName; };
           modules = [
             { nixpkgs.hostPlatform = system; }
+            ./nixos/binary-cache.nix
             ./nixos/common.nix
             ./nixos/ai/default.nix
             hardware
@@ -136,6 +137,7 @@
           specialArgs = { inherit inputs userName profileName; };
           modules = [
             { nixpkgs.hostPlatform = system; }
+            ./nixos/binary-cache.nix
             ./nixos/common.nix
             ./nixos/ai/default.nix
             defaultHardware
@@ -156,6 +158,7 @@
           specialArgs = { inherit inputs userName; };
           modules = [
             { nixpkgs.hostPlatform = system; }
+            ./nixos/binary-cache.nix
             ./nixos/common.nix
             ./nixos/ai/default.nix
             ./nixos/general.nix
@@ -176,6 +179,7 @@
           specialArgs = { inherit inputs userName; };
           modules = [
             { nixpkgs.hostPlatform = system; }
+            ./nixos/binary-cache.nix
             hardware
             ./nixos/server.nix
             { networking.hostName = hostName; }
@@ -193,6 +197,7 @@
           specialArgs = { inherit inputs userName; profileName = "terminal"; };
           modules = [
             { nixpkgs.hostPlatform = system; }
+            ./nixos/binary-cache.nix
             hardware
             ./nixos/terminal.nix
             { networking.hostName = hostName; }
@@ -365,6 +370,7 @@
           inherit system;
           specialArgs = { inherit inputs; };
           modules = [
+            ./nixos/binary-cache.nix
             ./nixos/hosts/ero/hardware-configuration.nix
             ./nixos/server.nix
             { networking.hostName = "ero"; }
