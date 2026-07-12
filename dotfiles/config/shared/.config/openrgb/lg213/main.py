@@ -138,6 +138,7 @@ class G213Notifier:
         self.client = None
         self.device = None
         self.ambient_color = None  # None -> base profile
+        self._focus_applied = False
         self.lock = threading.Lock()  # serializes all writes to the device
 
     def connect(self):
@@ -254,8 +255,9 @@ class G213Notifier:
     def on_focus(self, window_class: str):
         rule = match_rule(self.rules, window_class, "window_classes")
         color = rule.color if rule is not None else None
-        if color != self.ambient_color:
+        if not self._focus_applied or color != self.ambient_color:
             self.ambient_color = color
+            self._focus_applied = True
             label = window_class if color else "base profile"
             print(f"ambient -> {label}", flush=True)
             self.apply_ambient()

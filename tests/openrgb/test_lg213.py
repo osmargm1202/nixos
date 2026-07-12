@@ -58,9 +58,17 @@ class ApplicationConfigurationTests(unittest.TestCase):
             lg213.match_rule(rules, "CRUNCHYROLL", "notification_names"), rules[0]
         )
 
-    def test_missing_or_malformed_config_returns_no_rules(self):
+    def test_missing_or_invalid_root_config_returns_no_rules(self):
         self.assertEqual(lg213.load_application_rules(Path("/missing/apps.json")), [])
         path = self.write_config({"applications": "invalid"})
+        self.assertEqual(lg213.load_application_rules(path), [])
+
+    def test_malformed_json_returns_no_rules(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = Path(directory.name) / "apps.json"
+        path.write_text('{"applications": [', encoding="utf-8")
+
         self.assertEqual(lg213.load_application_rules(path), [])
 
     def test_invalid_entry_is_skipped_without_losing_valid_entry(self):
@@ -85,6 +93,16 @@ class ConfiguredRuntimeTests(unittest.TestCase):
         self.notifier.on_focus("chrome-www.crunchyroll.com__-Default")
         self.assertEqual(self.notifier.ambient_color, self.orange)
         self.notifier.apply_ambient.assert_called_once_with()
+
+    def test_first_unmapped_focus_restores_base_only_once(self):
+        notifier = lg213.G213Notifier([])
+        notifier.apply_ambient = MagicMock()
+
+        notifier.on_focus("unmapped-window")
+        notifier.on_focus("another-unmapped-window")
+
+        self.assertIsNone(notifier.ambient_color)
+        notifier.apply_ambient.assert_called_once_with()
 
     @patch.object(lg213.threading, "Thread")
     def test_crunchyroll_notification_starts_orange_blink(self, thread):
