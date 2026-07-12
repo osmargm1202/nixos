@@ -23,6 +23,7 @@ session the focus layer is skipped and only notifications work.
 """
 
 import glob
+import json
 import os
 import re
 import socket
@@ -30,6 +31,8 @@ import subprocess
 import sys
 import threading
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
 from openrgb import OpenRGBClient
 from openrgb.utils import RGBColor
@@ -60,6 +63,73 @@ AMBIENT_WRITE_ATTEMPTS = 4
 AMBIENT_WRITE_RETRY_SECONDS = 0.12
 SERVER_RETRY_SECONDS = 5
 DEVICE_NAME = "G213"
+CONFIG_PATH = Path(__file__).with_name("apps.json")
+
+
+@dataclass(frozen=True)
+class ApplicationRule:
+    name: str
+    window_classes: tuple[str, ...]
+    notification_names: tuple[str, ...]
+    color: RGBColor
+
+
+def parse_hex_color(value: str) -> RGBColor:
+    if not isinstance(value, str) or re.fullmatch(r"#[0-9a-fA-F]{6}", value) is None:
+        raise ValueError("color must use #RRGGBB")
+    return RGBColor(*(int(value[index:index + 2], 16) for index in (1, 3, 5)))
+
+
+def _matcher_values(entry: dict, key: str) -> tuple[str, ...]:
+    values = entry.get(key, [])
+    if not isinstance(values, list) or any(
+        not isinstance(value, str) or not value for value in values
+    ):
+        raise ValueError(f"{key} must be a list of non-empty strings")
+    return tuple(values)
+
+
+def load_application_rules(path: Path | None = None) -> list[ApplicationRule]:
+    try:
+        payload = json.loads((path or CONFIG_PATH).read_text(encoding="utf-8"))
+        entries = payload["applications"]
+        if not isinstance(payload, dict) or not isinstance(entries, list):
+            raise ValueError("root must contain an applications list")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError, KeyError) as error:
+        print(f"could not load application rules: {error}", flush=True)
+        return []
+
+    rules = []
+    for entry in entries:
+        try:
+            if not isinstance(entry, dict):
+                raise TypeError("application entry must be an object")
+            name = entry["name"]
+            if not isinstance(name, str) or not name:
+                raise ValueError("name must be a non-empty string")
+            window_classes = _matcher_values(entry, "windowClasses")
+            notification_names = _matcher_values(entry, "notificationNames")
+            if not window_classes and not notification_names:
+                raise ValueError("application needs at least one matcher")
+            rules.append(ApplicationRule(
+                name=name,
+                window_classes=window_classes,
+                notification_names=notification_names,
+                color=parse_hex_color(entry["color"]),
+            ))
+        except (TypeError, ValueError, KeyError) as error:
+            print(f"skipping invalid application rule: {error}", flush=True)
+    return rules
+
+
+def match_rule(
+    rules: list[ApplicationRule], name: str, field: str
+) -> ApplicationRule | None:
+    lowered_name = name.lower()
+    for rule in rules:
+        if any(matcher.lower() in lowered_name for matcher in getattr(rule, field)):
+            return rule
+    return None
 
 
 def palette_for(base: RGBColor) -> list[RGBColor]:

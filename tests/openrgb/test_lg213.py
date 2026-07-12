@@ -1,5 +1,7 @@
 import importlib.util
+import json
 import sys
+import tempfile
 import types
 import unittest
 from dataclasses import dataclass
@@ -29,6 +31,45 @@ SPEC = importlib.util.spec_from_file_location("lg213_main", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 lg213 = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(lg213)
+
+
+class ApplicationConfigurationTests(unittest.TestCase):
+    def write_config(self, payload):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = Path(directory.name) / "apps.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def test_loads_color_and_matches_chromium_crunchyroll_class(self):
+        path = self.write_config({"applications": [{
+            "name": "Crunchyroll",
+            "windowClasses": ["crunchyroll"],
+            "notificationNames": ["Crunchyroll"],
+            "color": "#F28C28",
+        }]})
+        rules = lg213.load_application_rules(path)
+        self.assertEqual(rules[0].color, RGBColor(242, 140, 40))
+        match = lg213.match_rule(
+            rules, "chrome-www.crunchyroll.com__-Default", "window_classes"
+        )
+        self.assertEqual(match.name, "Crunchyroll")
+        self.assertIs(
+            lg213.match_rule(rules, "CRUNCHYROLL", "notification_names"), rules[0]
+        )
+
+    def test_missing_or_malformed_config_returns_no_rules(self):
+        self.assertEqual(lg213.load_application_rules(Path("/missing/apps.json")), [])
+        path = self.write_config({"applications": "invalid"})
+        self.assertEqual(lg213.load_application_rules(path), [])
+
+    def test_invalid_entry_is_skipped_without_losing_valid_entry(self):
+        path = self.write_config({"applications": [
+            {"name": "Bad", "windowClasses": ["bad"], "color": "orange"},
+            {"name": "Steam", "windowClasses": ["steam"], "color": "#0000FF"},
+        ]})
+        rules = lg213.load_application_rules(path)
+        self.assertEqual([rule.name for rule in rules], ["Steam"])
 
 
 class FakeDevice:
