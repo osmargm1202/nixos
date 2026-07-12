@@ -85,16 +85,10 @@ A comparison script should parse `/home/osmarg/Hobby/dotfiles/config/dotfiles.js
 
 ## Deployment
 
-Because this changes NixOS configuration, after implementation run:
+Because this changes NixOS configuration, commit the changes and apply them with:
 
 ```bash
-orgm-diff
-```
-
-If the diff looks correct, run:
-
-```bash
-orgm-sync
+nh os switch
 ```
 
 The NixOS repo flake input for dotfiles must be kept aligned with the dotfiles repository head when lockfile updates are made.

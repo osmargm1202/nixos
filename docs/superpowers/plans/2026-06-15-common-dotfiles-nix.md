@@ -491,27 +491,17 @@ nix eval .#nixosConfigurations.orgm.config.system.build.toplevel.drvPath
 
 Expected: command exits `0` and prints a `/nix/store/...-nixos-system-orgm-...drv` path.
 
-- [ ] **Step 4: Check deployment diff**
+- [ ] **Step 4: Apply the NixOS configuration**
 
 Run:
 
 ```bash
-orgm-diff
+nh os switch
 ```
 
-Expected: diff shows new `common-dotfiles` module behavior, `orgm-dotfiles-repo.service`, and removal of `orgmDot` package from installed system packages.
+Expected: system switch succeeds and deploys the new `common-dotfiles` module behavior and `orgm-dotfiles-repo.service`.
 
-- [ ] **Step 5: Apply only if diff is correct**
-
-Run only after reviewing `orgm-diff` output:
-
-```bash
-orgm-sync
-```
-
-Expected: system switch succeeds.
-
-- [ ] **Step 6: Commit verification fixes if formatter changed files**
+- [ ] **Step 5: Commit verification fixes if formatter changed files**
 
 If `nix fmt` changed files, run:
 

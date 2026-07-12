@@ -16,7 +16,7 @@
 - Missing or malformed configuration yields no rules without terminating the service.
 - Invalid entries are skipped independently while valid entries survive.
 - Existing OpenRGB connection, retries, blink timing, locking, and `.orp` restoration remain unchanged.
-- Dotfiles changes must be inspected with `orgm-diff` and deployed with `orgm-sync`.
+- Dotfiles changes are deployed through the NixOS/Home Manager configuration with `nh os switch`.
 
 ---
 
@@ -230,22 +230,17 @@ git commit -m "feat(openrgb): configure Crunchyroll keyboard color"
 Run: `python -m unittest tests.openrgb.test_lg213 -v`
 Expected: all tests PASS.
 
-- [ ] **Step 2: Show dotfiles deployment diff**
+- [ ] **Step 2: Deploy NixOS and Home Manager configuration**
 
-Run: `orgm-diff`
-Expected: output includes `~/.config/openrgb/lg213/main.py` and new `~/.config/openrgb/lg213/apps.json`; inspect before synchronization.
+Run: `nh os switch`
+Expected: exit 0 and live OpenRGB files updated from the repository.
 
-- [ ] **Step 3: Synchronize dotfiles**
-
-Run: `orgm-sync`
-Expected: exit 0 and live files updated.
-
-- [ ] **Step 4: Restart and inspect service**
+- [ ] **Step 3: Restart and inspect service**
 
 Run: `systemctl --user restart openrgb-notify.service && systemctl --user --no-pager --full status openrgb-notify.service`
 Expected: service active/running with no JSON loading error.
 
-- [ ] **Step 5: Verify final repository state and commit**
+- [ ] **Step 4: Verify final repository state and commit**
 
 Run: `git status --short`
 Expected: only pre-existing unrelated changes remain; feature files are clean.

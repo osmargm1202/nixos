@@ -105,4 +105,4 @@ Automated tests cover:
 
 ## Deployment
 
-Changes are made in the dotfiles source tree. After tests pass, `orgm-diff` shows pending system modifications and `orgm-sync` copies approved changes into the live configuration. The user service is then restarted so it reloads `apps.json`.
+Changes are made in the dotfiles source tree. After tests pass, commit the changes and run `nh os switch` to deploy the Home Manager configuration. Restart `openrgb-notify.service` if the switch does not restart it automatically, so it reloads `apps.json`.

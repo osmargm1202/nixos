@@ -16,7 +16,7 @@
 - Notification palette, frame count, cadence, and locking remain unchanged.
 - Base restoration continues loading the selected `.orp` profile through the OpenRGB CLI.
 - Do not modify or stage unrelated dirty working-tree files.
-- Dotfile rollout must use `orgm-diff` before `orgm-sync`; if either command is unavailable, stop and report the blocker rather than substituting a direct copy.
+- Dotfile rollout uses the NixOS/Home Manager configuration through `nh os switch`.
 
 ---
 
@@ -266,41 +266,20 @@ Expected: one commit containing only those two paths.
 - No repository files created or modified.
 
 **Interfaces:**
-- Consumes: committed retry implementation, `orgm-diff`, `orgm-sync`, `openrgb-notify.service`, and `/home/osmarg/.config/OpenRGB/orgm.orp`.
+- Consumes: committed retry implementation, `nh os switch`, `openrgb-notify.service`, and `/home/osmarg/.config/OpenRGB/orgm.orp`.
 - Produces: live service running the committed script and physical confirmation across all five G213 areas.
 
-- [ ] **Step 1: Confirm required dotfile tools exist before rollout**
+- [ ] **Step 1: Apply the NixOS and Home Manager configuration**
 
 Run:
 
 ```bash
-command -v orgm-diff
-command -v orgm-sync
+nh os switch
 ```
 
-Expected: each command prints an executable path. If either exits nonzero, stop and report that required dotfile tooling is unavailable; do not copy the file manually.
+Expected: switch completes successfully and updates `~/.config/openrgb/lg213/main.py` from the repository.
 
-- [ ] **Step 2: Inspect the pending live-system change**
-
-Run:
-
-```bash
-orgm-diff
-```
-
-Expected: OpenRGB section shows only the intended `main.py` ambient retry changes. Existing unrelated repository changes may appear separately and must not be altered.
-
-- [ ] **Step 3: Apply the reviewed dotfiles change**
-
-Run only after reviewing Step 2 output:
-
-```bash
-orgm-sync
-```
-
-Expected: sync completes successfully and updates `~/.config/openrgb/lg213/main.py` from the dotfiles source.
-
-- [ ] **Step 4: Restart the user service and verify startup**
+- [ ] **Step 2: Restart the user service and verify startup**
 
 Run:
 

@@ -75,9 +75,9 @@ Automated tests will isolate OpenRGB and timing with fakes or mocks and verify:
 Runtime verification will:
 
 1. Run the automated tests.
-2. Use `orgm-diff` to inspect the dotfiles change.
-3. Run `orgm-sync` to apply the dotfile to the live configuration.
-4. Restart `openrgb-notify.service`.
+2. Commit the dotfiles change.
+3. Run `nh os switch` to apply the Home Manager configuration.
+4. Restart `openrgb-notify.service` if the switch does not restart it automatically.
 5. Focus Steam and confirm blue across all five areas.
 6. Focus Vesktop/Discord or Dota and confirm red across all five areas.
 7. Focus an unmapped application and confirm `orgm.orp` restoration.
