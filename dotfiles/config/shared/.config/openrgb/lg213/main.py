@@ -23,6 +23,7 @@ session the focus layer is skipped and only notifications work.
 """
 
 import glob
+import json
 import os
 import re
 import socket
@@ -30,29 +31,13 @@ import subprocess
 import sys
 import threading
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
 from openrgb import OpenRGBClient
 from openrgb.utils import RGBColor
 
-RED = RGBColor(255, 0, 0)
-BLUE = RGBColor(0, 0, 255)
 OFF = RGBColor(0, 0, 0)
-
-# notification app_name substring (lowercase) -> blink base color
-NOTIFY_COLORS = {
-    "discord": RED,
-    "vesktop": RED,
-    "dota": RED,
-    "steam": BLUE,
-}
-
-# focused window class substring (lowercase) -> steady ambient color
-FOCUS_COLORS = {
-    "discord": RED,
-    "vesktop": RED,
-    "dota": RED,
-    "steam": BLUE,
-}
 
 EFFECT_SECONDS = 3.0
 FRAME_SECONDS = 0.5  # on/off cadence; G213 writes are slow, keep this coarse
@@ -60,6 +45,73 @@ AMBIENT_WRITE_ATTEMPTS = 4
 AMBIENT_WRITE_RETRY_SECONDS = 0.12
 SERVER_RETRY_SECONDS = 5
 DEVICE_NAME = "G213"
+CONFIG_PATH = Path(__file__).with_name("apps.json")
+
+
+@dataclass(frozen=True)
+class ApplicationRule:
+    name: str
+    window_classes: tuple[str, ...]
+    notification_names: tuple[str, ...]
+    color: RGBColor
+
+
+def parse_hex_color(value: str) -> RGBColor:
+    if not isinstance(value, str) or re.fullmatch(r"#[0-9a-fA-F]{6}", value) is None:
+        raise ValueError("color must use #RRGGBB")
+    return RGBColor(*(int(value[index:index + 2], 16) for index in (1, 3, 5)))
+
+
+def _matcher_values(entry: dict, key: str) -> tuple[str, ...]:
+    values = entry.get(key, [])
+    if not isinstance(values, list) or any(
+        not isinstance(value, str) or not value for value in values
+    ):
+        raise ValueError(f"{key} must be a list of non-empty strings")
+    return tuple(values)
+
+
+def load_application_rules(path: Path | None = None) -> list[ApplicationRule]:
+    try:
+        payload = json.loads((path or CONFIG_PATH).read_text(encoding="utf-8"))
+        entries = payload["applications"]
+        if not isinstance(payload, dict) or not isinstance(entries, list):
+            raise ValueError("root must contain an applications list")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError, KeyError) as error:
+        print(f"could not load application rules: {error}", flush=True)
+        return []
+
+    rules = []
+    for entry in entries:
+        try:
+            if not isinstance(entry, dict):
+                raise TypeError("application entry must be an object")
+            name = entry["name"]
+            if not isinstance(name, str) or not name:
+                raise ValueError("name must be a non-empty string")
+            window_classes = _matcher_values(entry, "windowClasses")
+            notification_names = _matcher_values(entry, "notificationNames")
+            if not window_classes and not notification_names:
+                raise ValueError("application needs at least one matcher")
+            rules.append(ApplicationRule(
+                name=name,
+                window_classes=window_classes,
+                notification_names=notification_names,
+                color=parse_hex_color(entry["color"]),
+            ))
+        except (TypeError, ValueError, KeyError) as error:
+            print(f"skipping invalid application rule: {error}", flush=True)
+    return rules
+
+
+def match_rule(
+    rules: list[ApplicationRule], name: str, field: str
+) -> ApplicationRule | None:
+    lowered_name = name.lower()
+    for rule in rules:
+        if any(matcher.lower() in lowered_name for matcher in getattr(rule, field)):
+            return rule
+    return None
 
 
 def palette_for(base: RGBColor) -> list[RGBColor]:
@@ -67,14 +119,6 @@ def palette_for(base: RGBColor) -> list[RGBColor]:
     dim = RGBColor(base.red // 4, base.green // 4, base.blue // 4)
     white = RGBColor(255, 255, 255)
     return [base, white, dim, base, white]
-
-
-def match_color(table: dict, name: str) -> RGBColor | None:
-    name = name.lower()
-    for key, color in table.items():
-        if key in name:
-            return color
-    return None
 
 
 def profile_path() -> str | None:
@@ -89,10 +133,12 @@ def profile_path() -> str | None:
 
 
 class G213Notifier:
-    def __init__(self):
+    def __init__(self, rules: list[ApplicationRule] | None = None):
+        self.rules = load_application_rules() if rules is None else rules
         self.client = None
         self.device = None
         self.ambient_color = None  # None -> base profile
+        self._focus_applied = False
         self.lock = threading.Lock()  # serializes all writes to the device
 
     def connect(self):
@@ -178,10 +224,12 @@ class G213Notifier:
         self.apply_ambient()
 
     def on_notification(self, app_name: str):
-        color = match_color(NOTIFY_COLORS, app_name)
-        if color is not None:
+        rule = match_rule(self.rules, app_name, "notification_names")
+        if rule is not None:
             print(f"notification from {app_name!r}", flush=True)
-            threading.Thread(target=self.blink, args=(color,), daemon=True).start()
+            threading.Thread(
+                target=self.blink, args=(rule.color,), daemon=True
+            ).start()
 
     def listen_notifications(self):
         """Follow org.freedesktop.Notifications Notify calls on the session bus."""
@@ -205,9 +253,11 @@ class G213Notifier:
     # --- focus layer --------------------------------------------------------
 
     def on_focus(self, window_class: str):
-        color = match_color(FOCUS_COLORS, window_class)
-        if color != self.ambient_color:
+        rule = match_rule(self.rules, window_class, "window_classes")
+        color = rule.color if rule is not None else None
+        if not self._focus_applied or color != self.ambient_color:
             self.ambient_color = color
+            self._focus_applied = True
             label = window_class if color else "base profile"
             print(f"ambient -> {label}", flush=True)
             self.apply_ambient()
