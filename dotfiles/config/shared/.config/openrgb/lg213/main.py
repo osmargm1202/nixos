@@ -37,25 +37,7 @@ from pathlib import Path
 from openrgb import OpenRGBClient
 from openrgb.utils import RGBColor
 
-RED = RGBColor(255, 0, 0)
-BLUE = RGBColor(0, 0, 255)
 OFF = RGBColor(0, 0, 0)
-
-# notification app_name substring (lowercase) -> blink base color
-NOTIFY_COLORS = {
-    "discord": RED,
-    "vesktop": RED,
-    "dota": RED,
-    "steam": BLUE,
-}
-
-# focused window class substring (lowercase) -> steady ambient color
-FOCUS_COLORS = {
-    "discord": RED,
-    "vesktop": RED,
-    "dota": RED,
-    "steam": BLUE,
-}
 
 EFFECT_SECONDS = 3.0
 FRAME_SECONDS = 0.5  # on/off cadence; G213 writes are slow, keep this coarse
@@ -139,14 +121,6 @@ def palette_for(base: RGBColor) -> list[RGBColor]:
     return [base, white, dim, base, white]
 
 
-def match_color(table: dict, name: str) -> RGBColor | None:
-    name = name.lower()
-    for key, color in table.items():
-        if key in name:
-            return color
-    return None
-
-
 def profile_path() -> str | None:
     config_dir = os.path.join(
         os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "OpenRGB"
@@ -159,7 +133,8 @@ def profile_path() -> str | None:
 
 
 class G213Notifier:
-    def __init__(self):
+    def __init__(self, rules: list[ApplicationRule] | None = None):
+        self.rules = load_application_rules() if rules is None else rules
         self.client = None
         self.device = None
         self.ambient_color = None  # None -> base profile
@@ -248,10 +223,12 @@ class G213Notifier:
         self.apply_ambient()
 
     def on_notification(self, app_name: str):
-        color = match_color(NOTIFY_COLORS, app_name)
-        if color is not None:
+        rule = match_rule(self.rules, app_name, "notification_names")
+        if rule is not None:
             print(f"notification from {app_name!r}", flush=True)
-            threading.Thread(target=self.blink, args=(color,), daemon=True).start()
+            threading.Thread(
+                target=self.blink, args=(rule.color,), daemon=True
+            ).start()
 
     def listen_notifications(self):
         """Follow org.freedesktop.Notifications Notify calls on the session bus."""
@@ -275,7 +252,8 @@ class G213Notifier:
     # --- focus layer --------------------------------------------------------
 
     def on_focus(self, window_class: str):
-        color = match_color(FOCUS_COLORS, window_class)
+        rule = match_rule(self.rules, window_class, "window_classes")
+        color = rule.color if rule is not None else None
         if color != self.ambient_color:
             self.ambient_color = color
             label = window_class if color else "base profile"

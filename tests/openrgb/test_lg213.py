@@ -72,6 +72,44 @@ class ApplicationConfigurationTests(unittest.TestCase):
         self.assertEqual([rule.name for rule in rules], ["Steam"])
 
 
+class ConfiguredRuntimeTests(unittest.TestCase):
+    def setUp(self):
+        self.orange = RGBColor(242, 140, 40)
+        self.rule = lg213.ApplicationRule(
+            "Crunchyroll", ("crunchyroll",), ("crunchyroll",), self.orange
+        )
+        self.notifier = lg213.G213Notifier([self.rule])
+        self.notifier.apply_ambient = MagicMock()
+
+    def test_crunchyroll_focus_sets_uniform_ambient_color(self):
+        self.notifier.on_focus("chrome-www.crunchyroll.com__-Default")
+        self.assertEqual(self.notifier.ambient_color, self.orange)
+        self.notifier.apply_ambient.assert_called_once_with()
+
+    @patch.object(lg213.threading, "Thread")
+    def test_crunchyroll_notification_starts_orange_blink(self, thread):
+        self.notifier.on_notification("Crunchyroll")
+        thread.assert_called_once_with(
+            target=self.notifier.blink, args=(self.orange,), daemon=True
+        )
+        thread.return_value.start.assert_called_once_with()
+
+    def test_repository_configuration_has_expected_names_and_colors(self):
+        rules = lg213.load_application_rules(
+            ROOT / "dotfiles/config/shared/.config/openrgb/lg213/apps.json"
+        )
+        self.assertEqual(
+            {rule.name: rule.color for rule in rules},
+            {
+                "Discord": RGBColor(255, 0, 0),
+                "Vesktop": RGBColor(255, 0, 0),
+                "Dota": RGBColor(255, 0, 0),
+                "Steam": RGBColor(0, 0, 255),
+                "Crunchyroll": self.orange,
+            },
+        )
+
+
 class FakeDevice:
     def __init__(self, led_count=5):
         self.leds = [object() for _ in range(led_count)]

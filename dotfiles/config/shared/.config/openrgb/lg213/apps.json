@@ -1,0 +1,9 @@
+{
+  "applications": [
+    {"name": "Discord", "windowClasses": ["discord"], "notificationNames": ["discord"], "color": "#FF0000"},
+    {"name": "Vesktop", "windowClasses": ["vesktop"], "notificationNames": ["vesktop"], "color": "#FF0000"},
+    {"name": "Dota", "windowClasses": ["dota"], "notificationNames": ["dota"], "color": "#FF0000"},
+    {"name": "Steam", "windowClasses": ["steam"], "notificationNames": ["steam"], "color": "#0000FF"},
+    {"name": "Crunchyroll", "windowClasses": ["crunchyroll"], "notificationNames": ["crunchyroll"], "color": "#F28C28"}
+  ]
+}
