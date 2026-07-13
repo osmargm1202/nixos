@@ -61,6 +61,7 @@ function M.setup(programs)
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab",           hl.dsp.focus({ last = true }),                    { description = "Switch to last window" })
+  hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"), { description = "Timed video workspace" })
   hl.bind("ALT + Tab", function()
     hl.plugin.scrolloverview.overview("toggle")
   end, { description = "Toggle scroll overview" })
@@ -117,6 +118,8 @@ function M.setup(programs)
   -- Mouse.
   hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true, description = "Drag window" })
   hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
+  hl.bind(mainMod .. " + mouse:274", hl.dsp.focus({ workspace = "r-1" }), { description = "Previous workspace" })
+  hl.bind(mainMod .. " + mouse:275", hl.dsp.focus({ workspace = "r+1" }), { description = "Next workspace" })
 end
 
 return M

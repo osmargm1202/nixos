@@ -70,6 +70,7 @@ function M.setup(programs)
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hyprdeck.hyd.dsp.focus({ last = true }))
+  hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"))
   hl.bind("ALT + Tab", function()
     hl.plugin.scrolloverview.overview("toggle")
   end)
@@ -128,6 +129,8 @@ function M.setup(programs)
   -- Mouse.
   hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
   hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+  hl.bind(mainMod .. " + mouse:274", hyprdeck.hyd.dsp.focus({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + mouse:275", hyprdeck.hyd.dsp.focus({ workspace = "r+1" }))
 end
 
 return M
