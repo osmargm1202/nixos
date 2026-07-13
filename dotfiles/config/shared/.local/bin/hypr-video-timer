@@ -38,6 +38,9 @@ terminate() {
 trap terminate HUP INT TERM
 trap 'stop_sleep; cleanup_state' EXIT
 
+exec {state_lock_fd}> "$runtime_root/lock"
+flock "$state_lock_fd"
+
 if [[ -f "$state_file" ]]; then
   read -r previous_pid previous_token < "$state_file" || true
   if [[ "${previous_pid:-}" =~ ^[1-9][0-9]*$ ]] \
@@ -49,11 +52,12 @@ if [[ -f "$state_file" ]]; then
 fi
 
 printf '%s %s\n' "$$" "$token" > "$state_file"
+flock -u "$state_lock_fd"
 
 hyprctl dispatch workspace previous
 if ! playerctl play; then
   if command -v notify-send >/dev/null 2>&1; then
-    notify-send 'Video timer' 'No se pudo iniciar la reproducción'
+    notify-send 'Video timer' 'No se pudo iniciar la reproducción' || true
   fi
 fi
 sleep "$seconds" &
