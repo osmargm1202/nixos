@@ -22,6 +22,17 @@ kill() {
 }
 export -f kill
 
+proc_starttime() {
+  local pid="$1"
+  local stat rest
+  local -a fields
+
+  stat="$(<"/proc/$pid/stat")"
+  rest="${stat##*) }"
+  read -r -a fields <<< "$rest"
+  printf '%s\n' "${fields[19]}"
+}
+
 wait_for_exit() {
   local pid="$1"
   local state
@@ -103,9 +114,25 @@ ROFI_CANCEL=1 run_timer
 [[ ! -s "$CALLS" ]] || fail "cancelled input caused side effects"
 
 CALLS="$TMP/invalid.calls"
-ROFI_CANCEL=0 ROFI_INPUT=0 run_timer
-ROFI_INPUT=abc run_timer
+ROFI_CANCEL=0
+for invalid in '' 0 abc -1 1.5; do
+  ROFI_INPUT="$invalid" run_timer
+ done
 [[ ! -s "$CALLS" ]] || fail "invalid input caused side effects"
+
+CALLS="$TMP/stale-unrelated.calls"
+mkdir -p "$TMP/runtime/hypr-video-timer-$UID"
+env HYPR_VIDEO_TIMER_TOKEN=unrelated-token bash -c \
+  'while :; do "$1" 0.05; done' hypr-video-timer-unrelated "$REAL_SLEEP" &
+unrelated=$!
+unrelated_starttime="$(proc_starttime "$unrelated")"
+printf '%s %s %s\n' "$unrelated" "$unrelated_starttime" stale-token \
+  > "$TMP/runtime/hypr-video-timer-$UID/state"
+ROFI_INPUT=1 run_timer
+builtin kill -0 "$unrelated" 2>/dev/null || fail "stale state signalled unrelated live process"
+! grep -q "^kill $unrelated$" "$CALLS" || fail "stale state attempted to signal unrelated live process"
+builtin kill "$unrelated" 2>/dev/null || true
+wait_for_exit "$unrelated" || fail "unrelated test process did not exit within 2 seconds"
 
 CALLS="$TMP/valid.calls"
 ROFI_INPUT=5 run_timer
@@ -137,7 +164,7 @@ wait_for_exit "$first" || fail "replaced invocation did not exit within 2 second
 [[ "$(stat -c %a "$TMP/runtime/hypr-video-timer-$UID")" == 700 ]] || fail "runtime directory mode is not 700"
 grep -q '^kill ' "$CALLS" || fail "replacement did not use fake kill behavior"
 
-CALLS="$TMP/concurrent.calls"
+CALLS="$TMP/cleanup-transfer-race.calls"
 rm -f "$TMP/kill-entered" "$TMP/kill-release"
 BLOCK_SLEEP=1 ROFI_INPUT=30 run_timer &
 incumbent=$!
@@ -145,36 +172,31 @@ for _ in {1..100}; do
   [[ -f "$TMP/runtime/hypr-video-timer-$UID/state" ]] && break
   "$REAL_SLEEP" 0.02
 done
-[[ -f "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "concurrent incumbent did not publish state"
+[[ -f "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "race incumbent did not publish state"
+read -r incumbent_owner _ < "$TMP/runtime/hypr-video-timer-$UID/state"
 
 DELAY_KILL=1 BLOCK_SLEEP=1 ROFI_INPUT=30 run_timer &
-older=$!
+replacement=$!
 for _ in {1..100}; do
   [[ -e "$TMP/kill-entered" ]] && break
   "$REAL_SLEEP" 0.02
 done
-[[ -e "$TMP/kill-entered" ]] || fail "older concurrent invocation did not reach delayed kill"
+[[ -e "$TMP/kill-entered" ]] || fail "replacement did not reach delayed signal"
+read -r replacement_owner _ < "$TMP/runtime/hypr-video-timer-$UID/state"
+[[ "$replacement_owner" != "$incumbent_owner" ]] || fail "ownership was not transferred before signalling incumbent"
 
-DELAY_KILL=0 BLOCK_SLEEP=1 ROFI_INPUT=30 run_timer &
-newer=$!
-"$REAL_SLEEP" 0.1
+builtin kill "$incumbent_owner" 2>/dev/null || true
+"$REAL_SLEEP" 0.05
+read -r owner_during_cleanup _ < "$TMP/runtime/hypr-video-timer-$UID/state"
+[[ "$owner_during_cleanup" == "$replacement_owner" ]] || fail "incumbent cleanup deleted replacement state"
 : > "$TMP/kill-release"
-wait_for_exit "$incumbent" || fail "concurrent incumbent did not exit within 2 seconds"
-wait_for_exit "$older" || fail "older concurrent invocation regained ownership"
-for _ in {1..100}; do
-  read -r owner_pid _ < "$TMP/runtime/hypr-video-timer-$UID/state" 2>/dev/null || owner_pid=""
-  owner_parent="$(awk '{print $4}' "/proc/$owner_pid/stat" 2>/dev/null || true)"
-  if [[ "$owner_pid" == "$newer" || "$owner_parent" == "$newer" ]]; then
-    break
-  fi
-  "$REAL_SLEEP" 0.02
-done
-read -r owner_pid _ < "$TMP/runtime/hypr-video-timer-$UID/state" 2>/dev/null || owner_pid=""
-owner_parent="$(awk '{print $4}' "/proc/$owner_pid/stat" 2>/dev/null || true)"
-[[ "$owner_pid" == "$newer" || "$owner_parent" == "$newer" ]] || fail "newest concurrent invocation does not own state"
-builtin kill "$owner_pid" 2>/dev/null || true
-wait_for_exit "$newer" || fail "newest concurrent invocation did not exit within 2 seconds"
-[[ ! -e "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "concurrent owned state was not cleaned"
+wait_for_exit "$incumbent" || fail "race incumbent did not exit within 2 seconds"
+read -r owner_after_cleanup _ < "$TMP/runtime/hypr-video-timer-$UID/state"
+[[ "$owner_after_cleanup" == "$replacement_owner" ]] || fail "incumbent cleanup removed replacement ownership"
+
+builtin kill "$replacement_owner" 2>/dev/null || true
+wait_for_exit "$replacement" || fail "race replacement did not exit within 2 seconds"
+[[ ! -e "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "race replacement state was not cleaned"
 
 grep -q '"\.local/bin/hypr-video-timer"' "$ROOT/config/dotfiles.json" || fail "dotfiles.json does not export helper"
 
