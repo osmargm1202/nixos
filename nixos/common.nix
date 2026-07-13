@@ -24,8 +24,8 @@
   # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
   documentation.enable = false;
 
-  # Solo firmware esencial (ahorra ~500+ MB).
-  hardware.enableRedistributableFirmware = lib.mkForce false;
+  # Firmware requerido por Wi-Fi, Bluetooth, microcode y otros dispositivos.
+  hardware.enableRedistributableFirmware = true;
 
   # Solo los locales que uso.
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "es_DO.UTF-8/UTF-8" ];

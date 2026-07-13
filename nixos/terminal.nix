@@ -96,6 +96,7 @@ in
     config.user.email = "osmargm1202@gmail.com";
   };
 
+  hardware.enableRedistributableFirmware = true;
   networking.networkmanager.enable = true;
   networking.firewall = {
     enable = true;

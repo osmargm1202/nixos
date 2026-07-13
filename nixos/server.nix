@@ -89,6 +89,8 @@ in
   };
   nix.optimise.automatic = true;
 
+  hardware.enableRedistributableFirmware = true;
+
   networking = {
     networkmanager.enable = true; # nmtui / nmcli for network config
     firewall = {
