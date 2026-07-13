@@ -11,7 +11,7 @@ The feature applies to both Hyprland dotfiles profiles:
 - `hyprland`
 - `hyprlandqs-caelestia`
 
-The shortcut is `SUPER + ALT + P`.
+The timer shortcut is `SUPER + SHIFT + TAB`. `SUPER + mouse wheel up` switches to the previous relative workspace, and `SUPER + mouse wheel down` switches to the next relative workspace.
 
 ## Components
 
@@ -21,7 +21,7 @@ Install `hypr-video-timer` under `.local/bin` in both profiles. The helper owns 
 
 ### Hyprland bindings
 
-Add the same binding to both profiles' `lua/keybindings.lua` files. The binding launches `hypr-video-timer` without blocking Hyprland.
+Add the same timer and workspace-wheel bindings to both profiles' `lua/keybindings.lua` files. The timer binding launches `hypr-video-timer` without blocking Hyprland. The wheel bindings use relative workspace navigation (`r-1` and `r+1`).
 
 ### Tests
 
@@ -77,7 +77,8 @@ Tests isolate external commands with stubs and verify:
 - Playerctl failure still produces the final switch;
 - a replacement prevents the old invocation's final switch;
 - stale runtime state does not terminate unrelated processes;
-- both profile bindings invoke the helper with `SUPER + ALT + P`.
+- both profile bindings invoke the helper with `SUPER + SHIFT + TAB`;
+- both profiles bind `SUPER + mouse wheel up/down` to previous/next relative workspace navigation.
 
 After tests pass, use `orgm-diff` to inspect system changes, then `orgm-sync` to apply approved dotfiles changes.
 
