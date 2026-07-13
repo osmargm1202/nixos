@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+seconds="$(printf '' | rofi -dmenu -p 'Segundos')" || exit 0
+[[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
+
+runtime_root="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/hypr-video-timer-$UID"
+state_file="$runtime_root/state"
+mkdir -p "$runtime_root"
+chmod 700 "$runtime_root"
+
+token="$$-$RANDOM-$RANDOM"
+sleep_pid=""
+
+owns_state() {
+  [[ -f "$state_file" ]] && [[ "$(<"$state_file")" == "$$ $token" ]]
+}
+
+cleanup_state() {
+  if owns_state; then
+    rm -f "$state_file"
+  fi
+}
+
+stop_sleep() {
+  [[ -n "$sleep_pid" ]] || return 0
+  local pid="$sleep_pid"
+  sleep_pid=""
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
+terminate() {
+  stop_sleep
+  cleanup_state
+  exit 0
+}
+trap terminate HUP INT TERM
+trap 'stop_sleep; cleanup_state' EXIT
+
+if [[ -f "$state_file" ]]; then
+  read -r previous_pid previous_token < "$state_file" || true
+  if [[ "${previous_pid:-}" =~ ^[1-9][0-9]*$ ]] \
+    && kill -0 "$previous_pid" 2>/dev/null \
+    && [[ -r "/proc/$previous_pid/cmdline" ]] \
+    && grep -aFq 'hypr-video-timer' "/proc/$previous_pid/cmdline"; then
+    kill "$previous_pid" 2>/dev/null || true
+  fi
+fi
+
+printf '%s %s\n' "$$" "$token" > "$state_file"
+
+hyprctl dispatch workspace previous
+if ! playerctl play; then
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send 'Video timer' 'No se pudo iniciar la reproducción'
+  fi
+fi
+sleep "$seconds" &
+sleep_pid=$!
+if wait "$sleep_pid"; then
+  sleep_pid=""
+else
+  sleep_status=$?
+  sleep_pid=""
+  exit "$sleep_status"
+fi
+
+owns_state || exit 0
+hyprctl dispatch workspace previous
+cleanup_state

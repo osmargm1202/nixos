@@ -99,6 +99,7 @@
       ".local/bin/hypr-tools-menu",
       ".local/bin/hypr-tweaks-menu",
       ".local/bin/hypr-transition-menu",
+      ".local/bin/hypr-video-timer",
       ".local/bin/hypr-usb-menu",
       ".local/bin/hypr-webapp-maker",
       ".local/bin/hypr-webapp-remover",
