@@ -1,0 +1,64 @@
+{ config, lib, pkgs, userName ? "osmarg", ... }:
+
+let
+  deskflowAppId = "org.deskflow.deskflow";
+  deskflowLauncher = pkgs.writeShellScript "deskflow-launcher" ''
+    #!/bin/sh
+    set -eu
+
+    wait_for_graphics() {
+      i=0
+      until [ "$i" -ge 30 ]; do
+        # Refresh environment values from systemd user manager.
+        WAYLAND_DISPLAY=""
+        DISPLAY=""
+        XDG_RUNTIME_DIR=""
+
+        while IFS= read -r line; do
+          case "$line" in
+            WAYLAND_DISPLAY=*) WAYLAND_DISPLAY="$(printf '%s' "$line" | sed 's/^WAYLAND_DISPLAY=//')" ;;
+            DISPLAY=*) DISPLAY="$(printf '%s' "$line" | sed 's/^DISPLAY=//')" ;;
+            XDG_RUNTIME_DIR=*) XDG_RUNTIME_DIR="$(printf '%s' "$line" | sed 's/^XDG_RUNTIME_DIR=//')" ;;
+          esac
+        done <<EOF
+$(systemctl --user show-environment 2>/dev/null || true)
+EOF
+
+        if [ -n "$WAYLAND_DISPLAY" ] || [ -n "$DISPLAY" ]; then
+          if [ -n "$XDG_RUNTIME_DIR" ] && [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+            return 0
+          fi
+        fi
+
+        sleep 1
+        i=$((i + 1))
+      done
+      return 1
+    }
+
+    wait_for_graphics
+    exec flatpak run ${deskflowAppId}
+  '';
+in
+{
+  services.flatpak.packages = lib.mkAfter [ deskflowAppId ];
+
+  home-manager.users.${userName} = {
+    systemd.user.services.deskflow = {
+      Unit = {
+        Description = "Start Deskflow in GUI session";
+      };
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${deskflowLauncher}";
+        Restart = "on-failure";
+        RestartSec = 10;
+      };
+
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
+    };
+  };
+}

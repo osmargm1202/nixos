@@ -15,6 +15,7 @@ in
     # T500 builds the NVIDIA kernel module too; needs the zen 7.0.10 pin
     # (zen 7.1.2 dropped linux/of_gpio.h, breaking driver 580.142).
     ../../hardware/kernel/zen70-pin.nix
+    ../../deskflow.nix
   ];
 
   # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2

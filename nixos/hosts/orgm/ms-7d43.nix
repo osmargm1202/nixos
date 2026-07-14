@@ -4,6 +4,7 @@
   imports = [
     ./audio.nix
     ./webapps.nix
+    ../../deskflow.nix
   ];
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.
