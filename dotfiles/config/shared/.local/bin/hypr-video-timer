@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" != "--internal-run" ]]; then
+  seconds="$(printf '' | rofi -dmenu -p 'Segundos')" || exit 0
+  [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
+
+  token="$(< /proc/sys/kernel/random/uuid)"
+  exec env HYPR_VIDEO_TIMER_TOKEN="$token" "$0" --internal-run "$seconds"
+fi
+
+[[ "$#" -eq 2 ]] || exit 2
+seconds="$2"
+token="${HYPR_VIDEO_TIMER_TOKEN:-}"
+[[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 2
+[[ "$token" =~ ^[[:alnum:]-]+$ ]] || exit 2
+
+runtime_root="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/hypr-video-timer-$UID"
+state_file="$runtime_root/state"
+mkdir -p "$runtime_root"
+chmod 700 "$runtime_root"
+
+sleep_pid=""
+state_locked=0
+
+proc_starttime() {
+  local pid="$1"
+  local stat rest
+  local -a fields
+
+  [[ -r "/proc/$pid/stat" ]] || return 1
+  stat="$(<"/proc/$pid/stat")"
+  rest="${stat##*) }"
+  read -r -a fields <<< "$rest"
+  [[ "${#fields[@]}" -gt 19 ]] || return 1
+  printf '%s\n' "${fields[19]}"
+}
+
+process_matches_identity() {
+  local pid="$1"
+  local expected_starttime="$2"
+  local expected_token="$3"
+  local actual_starttime
+
+  [[ "$pid" =~ ^[1-9][0-9]*$ ]] || return 1
+  [[ "$expected_starttime" =~ ^[1-9][0-9]*$ ]] || return 1
+  [[ "$expected_token" =~ ^[[:alnum:]-]+$ ]] || return 1
+  actual_starttime="$(proc_starttime "$pid")" || return 1
+  [[ "$actual_starttime" == "$expected_starttime" ]] || return 1
+  [[ -r "/proc/$pid/environ" ]] || return 1
+  grep -zFxq -- "HYPR_VIDEO_TIMER_TOKEN=$expected_token" "/proc/$pid/environ"
+}
+
+self_starttime="$(proc_starttime "$$")"
+exec {state_lock_fd}> "$runtime_root/lock"
+
+lock_state() {
+  flock "$state_lock_fd"
+  state_locked=1
+}
+
+unlock_state() {
+  flock -u "$state_lock_fd"
+  state_locked=0
+}
+
+owns_state_locked() {
+  local owner_pid owner_starttime owner_token extra
+
+  [[ -f "$state_file" ]] || return 1
+  read -r owner_pid owner_starttime owner_token extra < "$state_file" || return 1
+  [[ -z "${extra:-}" ]] || return 1
+  [[ "$owner_pid" == "$$" ]] \
+    && [[ "$owner_starttime" == "$self_starttime" ]] \
+    && [[ "$owner_token" == "$token" ]]
+}
+
+cleanup_state() {
+  local acquired=0
+
+  if [[ "$state_locked" -eq 0 ]]; then
+    lock_state
+    acquired=1
+  fi
+  if owns_state_locked; then
+    rm -f "$state_file"
+  fi
+  if [[ "$acquired" -eq 1 ]]; then
+    unlock_state
+  fi
+}
+
+stop_sleep() {
+  [[ -n "$sleep_pid" ]] || return 0
+  local pid="$sleep_pid"
+  sleep_pid=""
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
+terminate() {
+  stop_sleep
+  cleanup_state
+  trap - EXIT
+  exit 0
+}
+trap terminate HUP INT TERM
+trap 'stop_sleep; cleanup_state' EXIT
+
+lock_state
+previous_pid=""
+previous_starttime=""
+previous_token=""
+if [[ -f "$state_file" ]]; then
+  read -r previous_pid previous_starttime previous_token _ < "$state_file" || true
+fi
+printf '%s %s %s\n' "$$" "$self_starttime" "$token" > "$state_file"
+if process_matches_identity \
+  "${previous_pid:-}" "${previous_starttime:-}" "${previous_token:-}"; then
+  kill "$previous_pid" 2>/dev/null || true
+fi
+unlock_state
+
+hyprctl dispatch workspace previous
+if ! playerctl play; then
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send 'Video timer' 'No se pudo iniciar la reproducción' || true
+  fi
+fi
+sleep "$seconds" &
+sleep_pid=$!
+if wait "$sleep_pid"; then
+  sleep_pid=""
+else
+  sleep_status=$?
+  sleep_pid=""
+  exit "$sleep_status"
+fi
+
+lock_state
+if owns_state_locked; then
+  hyprctl dispatch workspace previous
+  rm -f "$state_file"
+fi
+unlock_state

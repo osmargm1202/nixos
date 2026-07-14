@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `SUPER + ALT + P` timer flow that visits previous workspace, starts media, waits requested seconds, then returns.
+**Goal:** Add `SUPER + SHIFT + TAB` timer flow that visits previous workspace, starts media, waits requested seconds, then returns; add `SUPER + mouse wheel` relative workspace navigation.
 
 **Architecture:** One shared Bash helper is deployed through existing shared dotfiles paths to both Hyprland profiles. Stub-driven shell tests verify behavior without a live compositor. Each profile binds same command; existing Caelestia suspend binding on that exact shortcut is replaced.
 
@@ -16,6 +16,9 @@
 - New valid invocation replaces active timer.
 - Playerctl failure must not prevent timed return.
 - Remain independent of Caelestia IPC.
+- Bind timer to `SUPER + SHIFT + TAB` in both profiles.
+- Bind `SUPER + mouse wheel up` to `r-1` and `SUPER + mouse wheel down` to `r+1` in both profiles.
+- Preserve existing Caelestia `SUPER + ALT + P` suspend binding.
 - Change only `dotfiles/` plus plan documentation; preserve unrelated working-tree changes.
 - Inspect with `orgm-diff`, then apply with `orgm-sync`.
 
@@ -75,30 +78,34 @@ git commit -m "feat(hypr): add video workspace timer"
 
 **Interfaces:**
 - Consumes: executable `hypr-video-timer` from Task 1.
-- Produces: `SUPER + ALT + P` binding in both profiles.
+- Produces: `SUPER + SHIFT + TAB` timer binding and `SUPER + mouse wheel up/down` workspace bindings in both profiles.
 
 - [ ] **Step 1: Write failing binding test**
 
-Assert each Lua file contains one `mainMod .. " + ALT + P"` binding executing `hypr-video-timer`. Assert Caelestia no longer maps that shortcut to `systemctl suspend`.
+Assert each Lua file contains one `mainMod .. " + SHIFT + Tab"` binding executing `hypr-video-timer`. Assert each file binds `mainMod .. " + mouse:274"` to workspace `r-1` and `mainMod .. " + mouse:275"` to workspace `r+1`. Assert Caelestia still maps `SUPER + ALT + P` to `systemctl suspend`.
 
 - [ ] **Step 2: Run test and verify red**
 
 Run: `bash dotfiles/tests/helpers/hypr-video-timer-bindings.bats.sh`
 
-Expected: nonzero because classic profile lacks binding and Caelestia maps shortcut to suspend.
+Expected: nonzero because both profiles lack timer and workspace-wheel bindings.
 
 - [ ] **Step 3: Add bindings**
 
 Classic profile:
 
 ```lua
-hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("hypr-video-timer"))
+hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"))
+hl.bind(mainMod .. " + mouse:274", hyprdeck.hyd.dsp.focus({ workspace = "r-1" }))
+hl.bind(mainMod .. " + mouse:275", hyprdeck.hyd.dsp.focus({ workspace = "r+1" }))
 ```
 
-Caelestia profile, replacing suspend line:
+Caelestia profile, preserving suspend binding:
 
 ```lua
-hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("hypr-video-timer"), { description = "Timed video workspace" })
+hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"), { description = "Timed video workspace" })
+hl.bind(mainMod .. " + mouse:274", hl.dsp.focus({ workspace = "r-1" }), { description = "Previous workspace" })
+hl.bind(mainMod .. " + mouse:275", hl.dsp.focus({ workspace = "r+1" }), { description = "Next workspace" })
 ```
 
 - [ ] **Step 4: Run binding and helper tests**
@@ -155,4 +162,4 @@ Expected: helper and Hyprland configuration copied to system locations successfu
 
 - [ ] **Step 5: Final verification**
 
-Verify `command -v hypr-video-timer`, executable bit, and active config contains timer binding. Report shortcut conflict resolution: Caelestia `SUPER + ALT + P` now starts timer instead of suspending.
+Verify `command -v hypr-video-timer`, executable bit, and active config contains timer and workspace-wheel bindings. Confirm Caelestia `SUPER + ALT + P` still suspends.
