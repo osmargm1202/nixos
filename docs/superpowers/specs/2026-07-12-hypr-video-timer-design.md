@@ -80,7 +80,7 @@ Tests isolate external commands with stubs and verify:
 - both profile bindings invoke the helper with `SUPER + SHIFT + TAB`;
 - both profiles bind `SUPER + mouse wheel up/down` to previous/next relative workspace navigation.
 
-After tests pass, use `orgm-diff` to inspect system changes, then `orgm-sync` to apply approved dotfiles changes.
+Register the new helper in both Hyprland profile lists in `nixos/common-dotfiles.nix`. Existing profile files update live through out-of-store symlinks; run `sudo nixos-rebuild switch` once to create the new helper symlink, then reload Hyprland.
 
 ## Non-goals
 

@@ -20,7 +20,7 @@
 - Bind `SUPER + mouse wheel up` to `r-1` and `SUPER + mouse wheel down` to `r+1` in both profiles.
 - Preserve existing Caelestia `SUPER + ALT + P` suspend binding.
 - Change only `dotfiles/` plus plan documentation; preserve unrelated working-tree changes.
-- Inspect with `orgm-diff`, then apply with `orgm-sync`.
+- Register new helper path in both Hyprland profile lists in `nixos/common-dotfiles.nix`, rebuild once, then reload Hyprland.
 
 ---
 
@@ -29,7 +29,7 @@
 **Files:**
 - Create: `dotfiles/config/shared/.local/bin/hypr-video-timer`
 - Create: `dotfiles/tests/helpers/hypr-video-timer.bats.sh`
-- Modify: `dotfiles/config/dotfiles.json`
+- Modify: `nixos/common-dotfiles.nix`
 
 **Interfaces:**
 - Consumes: `rofi -dmenu`, `hyprctl dispatch workspace previous`, `playerctl play`, `sleep`, optional `notify-send`, `$XDG_RUNTIME_DIR`.
@@ -37,7 +37,7 @@
 
 - [ ] **Step 1: Write failing stub-driven test**
 
-Create test harness that places fake `rofi`, `hyprctl`, `playerctl`, `sleep`, `notify-send`, and `kill` behavior on `PATH`; record calls in `$CALLS`. Assert cancelled and invalid input cause no side effects; valid `5` produces exact semantic order `hyprctl`, `playerctl`, `sleep 5`, `hyprctl`; Playerctl failure still reaches final switch; replacing state prevents stale process return; and `dotfiles.json` exports `.local/bin/hypr-video-timer`.
+Create test harness that places fake `rofi`, `hyprctl`, `playerctl`, `sleep`, `notify-send`, and `kill` behavior on `PATH`; record calls in `$CALLS`. Assert cancelled and invalid input cause no side effects; valid `5` produces exact semantic order `hyprctl`, `playerctl`, `sleep 5`, `hyprctl`; Playerctl failure still reaches final switch; replacing state prevents stale process return; and `nixos/common-dotfiles.nix` exports `.local/bin/hypr-video-timer` for both Hyprland profiles.
 
 - [ ] **Step 2: Run test and verify red**
 
@@ -54,7 +54,7 @@ seconds="$(printf '' | rofi -dmenu -p 'Segundos')" || exit 0
 [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
 ```
 
-Use a user runtime directory with mode `700`, an invocation token, PID/state ownership checks, signal trap, and cancellation of only a live process whose `/proc/$pid/cmdline` identifies `hypr-video-timer`. Dispatch first workspace switch, attempt `playerctl play`, notify on playback failure, sleep, verify token ownership, dispatch final switch, then clean owned state. Add shared export path to `dotfiles/config/dotfiles.json`.
+Use a user runtime directory with mode `700`, an invocation token, PID/state ownership checks, signal trap, and cancellation of only a live process whose `/proc/$pid/cmdline` identifies `hypr-video-timer`. Dispatch first workspace switch, attempt `playerctl play`, notify on playback failure, sleep, verify token ownership, dispatch final switch, then clean owned state. Add helper path to both Hyprland profile lists in `nixos/common-dotfiles.nix`.
 
 - [ ] **Step 4: Run focused tests**
 
@@ -65,7 +65,7 @@ Expected: `hypr video timer tests passed` and exit 0.
 - [ ] **Step 5: Commit helper**
 
 ```bash
-git add dotfiles/config/shared/.local/bin/hypr-video-timer dotfiles/tests/helpers/hypr-video-timer.bats.sh dotfiles/config/dotfiles.json
+git add dotfiles/config/shared/.local/bin/hypr-video-timer dotfiles/tests/helpers/hypr-video-timer.bats.sh nixos/common-dotfiles.nix
 git commit -m "feat(hypr): add video workspace timer"
 ```
 
@@ -126,7 +126,7 @@ git add dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua dotfi
 git commit -m "feat(hypr): bind video timer shortcut"
 ```
 
-### Task 3: Verify and deploy dotfiles
+### Task 3: Verify and activate dotfiles
 
 **Files:**
 - Verify all Task 1 and Task 2 files.
@@ -148,17 +148,17 @@ Expected: both exit 0.
 
 Run repository's established dotfiles test command if defined; otherwise execute all `dotfiles/tests/helpers/*.bats.sh` scripts and summarize failures without modifying unrelated code.
 
-- [ ] **Step 3: Inspect deployment diff**
+- [ ] **Step 3: Inspect tracked diff**
 
-Run: `orgm-diff`
+Run: `git diff --check` and inspect `git status --short`.
 
-Expected: intended helper/export/binding changes only for synchronization. Do not accept unrelated log, session, lockfile, or `result` changes.
+Expected: intended helper/export/binding changes only. Do not include unrelated log, session, lockfile, or `result` changes.
 
-- [ ] **Step 4: Synchronize**
+- [ ] **Step 4: Activate new helper symlink**
 
-Run: `orgm-sync`
+Run: `sudo nixos-rebuild switch --flake .#orgm`, then `hyprctl reload`.
 
-Expected: helper and Hyprland configuration copied to system locations successfully.
+Expected: Home Manager creates the new helper symlink and Hyprland reloads bindings.
 
 - [ ] **Step 5: Final verification**
 
