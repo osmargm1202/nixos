@@ -137,12 +137,12 @@ wait_for_exit "$unrelated" || fail "unrelated test process did not exit within 2
 
 CALLS="$TMP/valid.calls"
 ROFI_INPUT=5 run_timer
-expected=$'hyprctl dispatch workspace previous\nplayerctl play\nsleep 5\nhyprctl dispatch workspace previous'
+expected=$'hyprctl dispatch hl.dsp.focus({ workspace = "previous" })\nplayerctl play\nsleep 5\nplayerctl pause\nhyprctl dispatch hl.dsp.focus({ workspace = "previous" })'
 [[ "$(cat "$CALLS")" == "$expected" ]] || fail "valid timer call order differs: $(cat "$CALLS")"
 
 CALLS="$TMP/player-failure.calls"
 PLAYERCTL_FAIL=1 NOTIFY_FAIL=1 ROFI_INPUT=5 run_timer
-[[ "$(grep -c '^hyprctl dispatch workspace previous$' "$CALLS")" -eq 2 ]] || fail "playerctl and notification failure skipped final switch"
+[[ "$(grep -c '^hyprctl dispatch hl\.dsp\.focus({ workspace = "previous" })$' "$CALLS")" -eq 2 ]] || fail "playerctl and notification failure skipped final switch"
 grep -q '^notify-send ' "$CALLS" || fail "playerctl failure did not attempt notification"
 PLAYERCTL_FAIL=0 NOTIFY_FAIL=0
 
@@ -160,7 +160,7 @@ done
 grep -q '^sleep 30$' "$CALLS" || fail "first invocation did not enter sleep"
 BLOCK_SLEEP=0 ROFI_INPUT=1 run_timer
 wait_for_exit "$first" || fail "replaced invocation did not exit within 2 seconds"
-[[ "$(grep -c '^hyprctl dispatch workspace previous$' "$CALLS")" -eq 3 ]] || fail "replaced invocation returned to stale workspace"
+[[ "$(grep -c '^hyprctl dispatch hl\.dsp\.focus({ workspace = "previous" })$' "$CALLS")" -eq 3 ]] || fail "replaced invocation returned to stale workspace"
 [[ ! -e "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "owned state was not cleaned"
 [[ "$(stat -c %a "$TMP/runtime/hypr-video-timer-$UID")" == 700 ]] || fail "runtime directory mode is not 700"
 grep -q '^kill ' "$CALLS" || fail "replacement did not use fake kill behavior"

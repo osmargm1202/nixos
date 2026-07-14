@@ -121,7 +121,7 @@ if process_matches_identity \
 fi
 unlock_state
 
-hyprctl dispatch workspace previous
+hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
 if ! playerctl play; then
   if command -v notify-send >/dev/null 2>&1; then
     notify-send 'Video timer' 'No se pudo iniciar la reproducción' || true
@@ -139,7 +139,8 @@ fi
 
 lock_state
 if owns_state_locked; then
-  hyprctl dispatch workspace previous
+  playerctl pause || true
+  hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
   rm -f "$state_file"
 fi
 unlock_state
