@@ -917,7 +917,7 @@ GTKEOF
         ))
         # Force overwrite for migration/transition artifact that can exist from prior manual copies.
         {
-          ".local/bin/hypr-video-timer" = {
+          ".local/bin/hypr-video-timer" = lib.mkForce {
             force = true;
             source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/.local/bin/hypr-video-timer";
           };
