@@ -163,13 +163,6 @@ let
   profileSpecificPaths = {
     hyprland = [
       ".config/Kvantum/catppuccin-macchiato-teal-standard#"
-      ".config/conky/conky.conf"
-      ".config/conky/conky-apps.conf"
-      ".config/conky/conky-clock.conf"
-      ".config/conky/conky-top.conf"
-      ".config/conky/conky-top-clock.conf"
-      ".config/conky/conky-top-apps.conf"
-      ".config/conky/conky-draw.lua"
       ".config/dunst"
       ".config/fuzzel"
       ".config/gtk-4.0/noctalia.css"
@@ -234,7 +227,6 @@ let
       ".config/waybar-hypr/icons"
       ".config/wlogout"
       ".config/wofi"
-      ".local/bin/conky-gpu-stat"
       ".local/bin/hypr-apps-menu"
       ".local/bin/hypr-battery-alerts"
       ".local/bin/hypr-app-launcher"
@@ -242,7 +234,6 @@ let
       ".local/bin/hypr-bluetooth-menu"
       ".local/bin/hypr-bluetooth-reconnect"
       ".local/bin/hypr-config-editor"
-      ".local/bin/hypr-conky-toggle"
       ".local/bin/hypr-current-wallpaper"
       ".local/bin/hypr-devices-menu"
       ".local/bin/hypr-display-targets"
@@ -290,7 +281,6 @@ let
       ".local/bin/waybar-pi-status"
       ".local/bin/waybar-power-profile"
       ".local/bin/waybar-swap-usage"
-      ".local/bin/waybar-theme-toggle"
       ".local/bin/waybar-time-ampm"
       ".local/bin/waybar-watch"
       ".local/bin/mic-volume-osd"
@@ -675,8 +665,6 @@ in
   home-manager.users.${userName} =
     { config, lib, pkgs, ... }:
     {
-      home.packages = lib.mkIf (profileName == "hyprland") [ pkgs.conky ];
-
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         if [ -L "$HOME/.local/share/applications" ]; then
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"

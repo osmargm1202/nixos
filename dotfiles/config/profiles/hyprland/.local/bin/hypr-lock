@@ -5,6 +5,9 @@ if pgrep -x hyprlock >/dev/null 2>&1; then
   exit 0
 fi
 
+if command -v hypr-current-wallpaper >/dev/null 2>&1; then
+  hypr-current-wallpaper >/dev/null 2>&1 || true
+fi
 if command -v hyprlock >/dev/null 2>&1; then
   exec hyprlock --immediate-render --no-fade-in
 fi

@@ -6,8 +6,6 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 choice="$(printf '%s\n' \
-  '󰔎 Theme chooser' \
-  '󰔎 Theme toggle' \
   '󰸉 Wallpaper next' \
   '󰸉 Wallpaper picker' \
   '󰹹 Transitions' \
@@ -17,8 +15,6 @@ choice="$(printf '%s\n' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
 case "$choice" in
-  *'Theme chooser') exec hypr-theme-chooser ;;
-  *'Theme toggle') exec waybar-theme-toggle toggle ;;
   *'Wallpaper next') exec hypr-random-wallpaper next ;;
   *'Wallpaper picker') exec hypr-wallpaper-picker ;;
   *'Transitions') exec hypr-transition-menu ;;

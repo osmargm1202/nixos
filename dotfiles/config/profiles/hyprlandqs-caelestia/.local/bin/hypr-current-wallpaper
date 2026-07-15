@@ -1,14 +1,37 @@
 #!/bin/sh
 set -eu
 
-state_dir="${XDG_RUNTIME_DIR:-/tmp}"
-current_file="${state_dir}/hypr-random-wallpaper.current"
-out="${state_dir}/hypr-current-wallpaper"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
+current_file_runtime="${runtime_dir}/hypr-random-wallpaper.current"
+current_file_state="${state_dir}/hypr-random-wallpaper.current"
+out="${runtime_dir}/hypr-current-wallpaper"
 fallback="${HOME}/.config/wallpapers/xnm1-background.png"
 
+waytrogen_current_path() {
+  if ! command -v waytrogen >/dev/null 2>&1; then
+    return 1
+  fi
+
+  payload="$(waytrogen --list-current-wallpapers 2>/dev/null || true)"
+  [ -n "$payload" ] || return 1
+
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s\n' "$payload" | jq -r '.path // empty' 2>/dev/null
+  else
+    printf '%s\n' "$payload" | sed -n 's/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+  fi
+}
+
 wallpaper=""
-if [ -f "$current_file" ]; then
-  wallpaper=$(cat "$current_file" 2>/dev/null || true)
+wallpaper="$(waytrogen_current_path || true)"
+
+if [ -z "$wallpaper" ] && [ -f "$current_file_runtime" ]; then
+  wallpaper=$(cat "$current_file_runtime" 2>/dev/null || true)
+fi
+
+if [ -z "$wallpaper" ] && [ -f "$current_file_state" ]; then
+  wallpaper=$(cat "$current_file_state" 2>/dev/null || true)
 fi
 
 if [ -z "$wallpaper" ] || [ ! -f "$wallpaper" ]; then

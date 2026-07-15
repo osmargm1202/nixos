@@ -6,37 +6,21 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
-orgm_themes_cmd() {
-  if [ -x "$HOME/go/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/go/bin/orgm-themes"
-  elif [ -x "$HOME/.local/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/.local/bin/orgm-themes"
-  else
-    command -v orgm-themes
-  fi
-}
-theme_cmd="$(orgm_themes_cmd || true)"
 choice="$(printf '%s\n' \
   '󰑓 Restart all' \
   '󰑓 Reload Hyprland' \
   '󰑓 Restart Waybar' \
   '󰑓 Reload Dock' \
-  '󰨸 Restart Conky' \
-  '󰔎 Theme light' \
-  '󰔎 Theme dark' \
   '󰆍 User logs' \
   '󰉋 Open dotfiles' \
   '󰐥 Power' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
 
 case "$choice" in
-  *'Restart all') exec sh -lc 'hyprctl reload >/dev/null 2>&1 || true; (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &); ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true; pkill -x conky 2>/dev/null || true; sleep 0.3; conky -c ~/.config/conky/conky.conf -d; conky -c ~/.config/conky/conky-clock.conf -d; conky -c ~/.config/conky/conky-apps.conf -d' ;;
+  *'Restart all') exec sh -lc 'hyprctl reload >/dev/null 2>&1 || true; (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &); ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true' ;;
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Restart Waybar') exec waybar-watch ~/.config/waybar-hypr ;;
   *'Reload Dock') exec ~/.local/bin/hypr-nwg-dock reload ;;
-  *'Restart Conky') pkill -x conky 2>/dev/null || true; sleep 0.3; sh -lc 'conky -c ~/.config/conky/conky.conf -d && conky -c ~/.config/conky/conky-clock.conf -d && conky -c ~/.config/conky/conky-apps.conf -d' ;;
-  *'Theme light') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-light ;;
-  *'Theme dark') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'Open dotfiles') exec nautilus "$repo" ;;
   *'Power') exec hypr-power-menu ;;

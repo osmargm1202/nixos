@@ -1,17 +1,7 @@
 -- Hyprland 0.55 Lua window rules.
 
-local function current_theme_name()
-  local state_home = os.getenv("XDG_STATE_HOME") or ((os.getenv("HOME") or "") .. "/.local/state")
-  local file = io.open(state_home .. "/orgm-theme/current", "r")
-  if not file then
-    return "orgm-dark"
-  end
-  local theme = file:read("*l") or "orgm-dark"
-  file:close()
-  return theme
-end
-
-local light_mode = current_theme_name() == "orgm-light"
+-- Force dark mode in Hyprland window opacity presets.
+local light_mode = false
 local opaque = "1.0 override 1.0 override 1.0 override"
 local base_opacity = light_mode and opaque or "0.96 override 0.96 override 1.0 override"
 local file_opacity = light_mode and opaque or "0.88 override 0.88 override 1.0 override"
@@ -82,17 +72,6 @@ hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
 hl.window_rule({ match = { modal = true }, float = true })
 
 -- Discord starts normally; no forced scratchpad.
-
--- Conky background widgets: wlr-layer-shell bottom, transparent via own_window_transparent=true
-hl.layer_rule({ match = { namespace = "conky_namespace" }, blur = true })
-
--- Conky overlay: XWayland stats shown above windows for 4s via toggle button
-hl.window_rule({ match = { class = "^conky-overlay$" }, float = true })
-hl.window_rule({ match = { class = "^conky-overlay$" }, pin = true })
-hl.window_rule({ match = { class = "^conky-overlay$" }, no_initial_focus = true })
-hl.window_rule({ match = { class = "^conky-overlay$" }, border_size = 0 })
-hl.window_rule({ match = { class = "^conky-overlay$" }, rounding = 0 })
-hl.window_rule({ match = { class = "^conky-overlay$" }, no_shadow = true })
 
 hl.window_rule({
   name = "fix-xwayland-empty-class-drags",

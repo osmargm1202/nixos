@@ -111,14 +111,14 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
   background-color: transparent;
 }
 
-#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect {
+#custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 18px 18px;
@@ -128,7 +128,6 @@ window.bottom_bar .modules-right { margin-right: 0; }
   min-height: 24px;
   padding: 0 3px;
 }
-#custom-theme_toggle { background-image: url("icons/theme_toggle.svg"); }
 #custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
 #custom-usb_devices { background-image: url("icons/usb_devices.svg"); }
 #custom-memclean { background-image: url("icons/memclean.svg"); }
@@ -307,7 +306,7 @@ window.dock_bar#waybar {
   border: 2px solid @panel_border;
 }
 
-#custom-memclean, #custom-hardware_fetch, #custom-conky_toggle { margin-left: 16px; }
+#custom-memclean, #custom-hardware_fetch { margin-left: 16px; }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
 #custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }

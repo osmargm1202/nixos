@@ -116,7 +116,6 @@
       ".local/bin/waybar-watch",
       ".config/orgm-theme",
       ".local/bin/hypr-theme-chooser",
-      ".local/bin/waybar-theme-toggle",
       ".local/bin/hypr-bluetooth-reconnect",
       ".local/bin/hypr-rofi-calc",
       ".local/bin/hypr-rofi-clipboard",

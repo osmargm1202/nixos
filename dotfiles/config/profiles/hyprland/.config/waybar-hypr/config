@@ -22,7 +22,6 @@
       "privacy",
       "tray",
       "custom/clipboard",
-      "custom/theme_toggle",
       "custom/logout_menu"
     ],
     "group/workspaces": {
@@ -150,7 +149,7 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Wallpaper aleatorio",
-      "on-click": "hypr-random-wallpaper next",
+      "on-click": "waytrogen",
       "on-click-right": "hypr-wallpaper-picker"
     },
     "custom/usb_devices": {
@@ -376,14 +375,6 @@
       "tooltip": true,
       "tooltip-format": "Historial clipboard",
       "on-click": "hypr-rofi-clipboard"
-    },
-    "custom/theme_toggle": {
-      "exec": "waybar-theme-toggle status",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "waybar-theme-toggle toggle"
     }
   },
   {
@@ -582,7 +573,7 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Wallpaper aleatorio",
-      "on-click": "hypr-random-wallpaper next",
+      "on-click": "waytrogen",
       "on-click-right": "hypr-wallpaper-picker"
     },
 
@@ -642,13 +633,7 @@
       "tooltip": true,
       "tooltip-format": "Editar configs Hyprland",
       "on-click": "hypr-config-editor"
-    },
-
-    "custom/conky_toggle": {
-      "format": "󰥔",
-      "tooltip": true,
-      "tooltip-format": "Ver stats 4s encima de ventanas",
-      "on-click": "hypr-conky-toggle"
     }
+
   }
 ]

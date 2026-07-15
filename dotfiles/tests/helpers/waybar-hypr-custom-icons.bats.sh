@@ -6,7 +6,6 @@ style="$root/config/profiles/hyprland/.config/waybar-hypr/style.css"
 icons_dir="$root/config/profiles/hyprland/.config/waybar-hypr/icons"
 
 custom_buttons=(
-	theme_toggle
 	usb_devices
 	nixclean
 	hardware_fetch
@@ -35,7 +34,7 @@ if not match or 'border-radius: 12px;' not in match.group('body'):
 PY
 grep -q 'margin-left": 12' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "Waybar should keep Hyprland-like side gap"
 grep -q 'margin-right": 12' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "Waybar should keep Hyprland-like side gap"
-grep -q '"on-click": "hypr-random-wallpaper next"' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "wallpaper icon left click should use hypr-random-wallpaper"
+grep -q '"on-click": "waytrogen"' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "wallpaper icon left click should use waytrogen"
 grep -q '"on-click-right": "hypr-wallpaper-picker"' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "wallpaper icon right click should open picker"
 grep -q '"tooltip-format": "Wallpaper aleatorio"' "$root/config/profiles/hyprland/.config/waybar-hypr/config" || fail "wallpaper icon tooltip should describe random behavior"
 if grep -q '"on-click": "orgm-wallpaper random-static"' "$root/config/profiles/hyprland/.config/waybar-hypr/config"; then

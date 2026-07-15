@@ -53,8 +53,7 @@ fi
 exec nwg-dock-hyprland \
   "${dock_output_args[@]}" \
   -d \
-  -hd 0 \
-  -hl top \
+  -hl overlay \
   -p bottom \
   -a center \
   -i "${HYPR_NWG_DOCK_ICON_SIZE:-56}" \
