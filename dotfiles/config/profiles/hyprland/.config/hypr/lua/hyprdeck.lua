@@ -5,7 +5,7 @@
 -- Set ENABLED to false to fully disable: reverts to stock Hyprland focus/move
 -- dispatchers and drops the group config in layout.lua. No rebuild needed --
 -- just flip this and reload Hyprland config (hyprctl reload or relogin).
-local ENABLED = true
+local ENABLED = false
 
 local M = { enabled = ENABLED }
 
