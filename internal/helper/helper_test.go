@@ -62,18 +62,13 @@ func TestTogglePrintWritesCacheAndRequest(t *testing.T) {
 			t.Fatalf("expected %s: %v", path, err)
 		}
 	}
-	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
-	got := out.String()
-	if !strings.Contains(got, "ORGM_HELPER_CACHE="+filepath.Join(state, "orgm-helper", "keybindings.json")) ||
-		!strings.Contains(got, "ORGM_HELPER_REQUEST="+filepath.Join(state, "orgm-helper", "keyhelper-request.json")) ||
-		!strings.Contains(got, "ORGM_HELPER_SHOW=1") ||
-		!strings.Contains(got, "quickshell -p ") ||
-		!strings.Contains(got, wantPath) {
-		t.Fatalf("stdout = %q, want env launch command for %q", got, wantPath)
+	if got := out.String(); strings.TrimSpace(got) != "hypr-keybindings-help" {
+		t.Fatalf("stdout = %q, want hypr-keybindings-help", got)
 	}
 }
 
-func TestTogglePrintUsesQuickshellPlanWhenBinaryMissing(t *testing.T) {
+
+func TestTogglePrintUsesHyprKeybindingsHelp(t *testing.T) {
 	state := t.TempDir()
 	configHome := filepath.Join(t.TempDir(), "config")
 	t.Setenv("PATH", t.TempDir())
@@ -84,19 +79,18 @@ func TestTogglePrintUsesQuickshellPlanWhenBinaryMissing(t *testing.T) {
 		t.Fatalf("Run(toggle --print) error = %v", err)
 	}
 
-	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
 	got := out.String()
-	if !strings.Contains(got, "quickshell -p ") || !strings.Contains(got, wantPath) {
-		t.Fatalf("stdout = %q, want quickshell print plan for %q", got, wantPath)
+	if strings.TrimSpace(got) != "hypr-keybindings-help" {
+		t.Fatalf("stdout = %q, want hypr-keybindings-help", got)
 	}
 }
 
-func TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning(t *testing.T) {
+func TestToggleWritesRequestAndRunsKeyhelperWhenAlreadyRunningCheckReturnsTrue(t *testing.T) {
 	state := t.TempDir()
 	bin := t.TempDir()
-	logPath := filepath.Join(t.TempDir(), "quickshell.log")
+	logPath := filepath.Join(t.TempDir(), "menu.log")
 	writeExecutable(t, filepath.Join(bin, "pgrep"), "#!/bin/sh\nexit 0\n")
-	writeExecutable(t, filepath.Join(bin, "quickshell"), "#!/bin/sh\necho launched >>\"$ORGM_TEST_LOG\"\n")
+	writeExecutable(t, filepath.Join(bin, "hypr-keybindings-help"), "#!/bin/sh\necho helper:$* >>\"$ORGM_TEST_LOG\"\n")
 	t.Setenv("PATH", bin)
 	t.Setenv("ORGM_TEST_LOG", logPath)
 	var out, errOut strings.Builder
@@ -109,20 +103,20 @@ func TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning(t *testing.T) 
 	if _, err := os.Stat(requestPath); err != nil {
 		t.Fatalf("expected request file %s: %v", requestPath, err)
 	}
-	if data, err := os.ReadFile(logPath); err == nil {
-		t.Fatalf("quickshell log = %q, want no launch", data)
-	} else if !os.IsNotExist(err) {
-		t.Fatalf("read quickshell log: %v", err)
+	if data, err := os.ReadFile(logPath); err != nil {
+		t.Fatalf("menu log read: %v", err)
+	} else if !strings.Contains(string(data), "helper:") {
+		t.Fatalf("menu log = %q, want helper invocation", data)
 	}
 }
 
-func TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning(t *testing.T) {
+func TestToggleWritesRequestAndRunsKeyhelperWhenNotRunning(t *testing.T) {
 	state := t.TempDir()
 	bin := t.TempDir()
 	configHome := filepath.Join(t.TempDir(), "config")
-	logPath := filepath.Join(t.TempDir(), "quickshell.log")
+	logPath := filepath.Join(t.TempDir(), "menu.log")
 	writeExecutable(t, filepath.Join(bin, "pgrep"), "#!/bin/sh\nexit 1\n")
-	writeExecutable(t, filepath.Join(bin, "quickshell"), "#!/bin/sh\necho launch:$* cache:${ORGM_HELPER_CACHE:-} request:${ORGM_HELPER_REQUEST:-} show:${ORGM_HELPER_SHOW:-} >>\"$ORGM_TEST_LOG\"\n")
+	writeExecutable(t, filepath.Join(bin, "hypr-keybindings-help"), "#!/bin/sh\necho helper:$* >>\"$ORGM_TEST_LOG\"\n")
 	t.Setenv("PATH", bin)
 	t.Setenv("XDG_CONFIG_HOME", configHome)
 	t.Setenv("ORGM_TEST_LOG", logPath)
@@ -132,35 +126,22 @@ func TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning(t *testing.T) {
 		t.Fatalf("Run(toggle) error = %v", err)
 	}
 
-	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
-	waitForFileContains(t, logPath, "launch:-p "+wantPath)
+	waitForFileContains(t, logPath, "helper:")
 	waitForFileContains(t, logPath, "cache:"+filepath.Join(state, "orgm-helper", "keybindings.json"))
 	waitForFileContains(t, logPath, "request:"+filepath.Join(state, "orgm-helper", "keyhelper-request.json"))
-	waitForFileContains(t, logPath, "show:1")
 }
 
-func TestToggleFallsBackToHostExecWhenQuickshellMissing(t *testing.T) {
+func TestToggleFailsWithoutKeybindingsHelperBinary(t *testing.T) {
 	state := t.TempDir()
 	bin := t.TempDir()
-	configHome := filepath.Join(t.TempDir(), "config")
-	logPath := filepath.Join(t.TempDir(), "host-exec.log")
 	writeExecutable(t, filepath.Join(bin, "pgrep"), "#!/bin/sh\nexit 1\n")
-	writeExecutable(t, filepath.Join(bin, "distrobox-host-exec"), "#!/bin/sh\necho hostexec:$* >>\"$ORGM_TEST_LOG\"\n")
 	t.Setenv("PATH", bin)
-	t.Setenv("XDG_CONFIG_HOME", configHome)
-	t.Setenv("ORGM_TEST_LOG", logPath)
 	var out, errOut strings.Builder
 
-	if err := Run([]string{"toggle", "--state-home", state}, &out, &errOut); err != nil {
-		t.Fatalf("Run(toggle) error = %v", err)
+	err := Run([]string{"toggle", "--state-home", state}, &out, &errOut)
+	if err == nil {
+		t.Fatal("Run(toggle) expected error")
 	}
-
-	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
-	waitForFileContains(t, logPath, "hostexec:sh -lc")
-	waitForFileContains(t, logPath, "ORGM_HELPER_CACHE="+filepath.Join(state, "orgm-helper", "keybindings.json"))
-	waitForFileContains(t, logPath, "ORGM_HELPER_REQUEST="+filepath.Join(state, "orgm-helper", "keyhelper-request.json"))
-	waitForFileContains(t, logPath, "ORGM_HELPER_SHOW=1")
-	waitForFileContains(t, logPath, "quickshell -p "+wantPath)
 }
 
 func writeExecutable(t *testing.T, path, content string) {

@@ -136,20 +136,12 @@ func (p launchPlan) display() string {
 }
 
 func keyhelperLaunchPlan(cache, requestPath string, printOnly bool) (launchPlan, error) {
-	shellPath := keyhelperShellPath()
-	env := []string{"ORGM_HELPER_CACHE=" + cache, "ORGM_HELPER_REQUEST=" + requestPath, "ORGM_HELPER_SHOW=1"}
-	quickshellPlan := launchPlan{name: "quickshell", args: []string{"-p", shellPath}, env: env}
+	_ = cache
+	_ = requestPath
 	if printOnly {
-		return quickshellPlan, nil
+		return launchPlan{name: "hypr-keybindings-help", args: nil}, nil
 	}
-	if _, err := exec.LookPath("quickshell"); err == nil {
-		return quickshellPlan, nil
-	}
-	if _, err := exec.LookPath("distrobox-host-exec"); err == nil {
-		script := shellEnvJoin(env) + " " + shellJoin([]string{"quickshell", "-p", shellPath}) + " >/tmp/orgm-keyhelper.log 2>&1 &"
-		return launchPlan{name: "distrobox-host-exec", args: []string{"sh", "-lc", script}}, nil
-	}
-	return launchPlan{}, fmt.Errorf("quickshell not found")
+	return launchPlan{name: "hypr-keybindings-help", args: nil}, nil
 }
 
 func defaultStateHome() string {
@@ -197,7 +189,7 @@ func atomicWriteJSON(path string, payload any) error {
 }
 
 func isKeyhelperRunning() bool {
-	return exec.Command("pgrep", "-f", `quickshell.*keyhelper[/]shell[.]qml`).Run() == nil
+	return false
 }
 
 func shellEnvJoin(assignments []string) string {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GTK4 wallpaper picker backed by orgm-wallpaper."""
+"""GTK4 wallpaper picker backed by hypr-random-wallpaper."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 APP_ID = "org.orgm.HyprWallpaperPicker"
-BACKEND = "orgm-wallpaper"
+BACKEND = "hypr-random-wallpaper"
 DEFAULT_STATIC_DIR = pathlib.Path.home() / "Pictures" / "Wallpapers"
 DEFAULT_VIDEO_DIR = pathlib.Path.home() / "Videos" / "wallpapers"
 STATE_DIR = pathlib.Path(os.environ.get("XDG_STATE_HOME", pathlib.Path.home() / ".local" / "state")) / "hypr-wallpaper"
@@ -195,9 +195,12 @@ def load_data() -> PickerData:
 
 
 def build_backend_command(command: str, path: str | None = None, monitor: str | None = None) -> list[str]:
-    args = [BACKEND, command]
-    if path:
-        args.append(path)
+    if command == "set-static" or command == "set-video":
+        args = [BACKEND, "set"]
+        if path:
+            args.append(path)
+    else:
+        args = [BACKEND, "next"] if command in {"random-static", "random-video"} else [BACKEND, command]
     if monitor:
         args.extend(["--monitor", monitor])
     return args
@@ -212,10 +215,7 @@ def run_backend(command: str, path: str | None = None, monitor: str | None = Non
 
 
 def warm_page(kind: str, page: int, page_size: int) -> None:
-    try:
-        subprocess.Popen([BACKEND, "warm-page", kind, str(page), str(page_size)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except OSError:
-        pass
+    return None
 
 
 def parse_status_current(output: str) -> str | None:
@@ -448,7 +448,7 @@ class WallpaperPickerApp:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="GTK4 wallpaper picker backed by orgm-wallpaper")
+    parser = argparse.ArgumentParser(description="GTK4 wallpaper picker backed by hypr-random-wallpaper")
     parser.add_argument("--theme", choices=["dark", "light", "auto"], default="auto")
     parser.add_argument("--page-size", type=int, default=20)
     parser.add_argument("--monitor", help="Hyprland output name; omit for global")

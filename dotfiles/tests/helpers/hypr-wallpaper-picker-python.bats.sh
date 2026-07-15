@@ -2,18 +2,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_DIR="$ROOT/config/shared/.config/hypr/wallpaper-picker"
+APP_DIR="$ROOT/config/profiles/hyprland/.config/hypr/wallpaper-picker"
 APP="$APP_DIR/wallpaper_picker.py"
 
 compile_tmp="$(mktemp)"
-python - <<'PY' "$APP" "$compile_tmp"
+python - "$APP" "$compile_tmp" <<'PY'
 import py_compile
 import sys
 py_compile.compile(sys.argv[1], cfile=sys.argv[2], doraise=True)
 PY
 rm -f "$compile_tmp"
 
-PYTHONDONTWRITEBYTECODE=1 python -B - <<'PY' "$APP_DIR"
+PYTHONDONTWRITEBYTECODE=1 python -B - "$APP_DIR" <<'PY'
 import json
 import pathlib
 import sys
@@ -45,26 +45,26 @@ with tempfile.TemporaryDirectory() as tmp:
     assert data.tabs["video"][0].thumb.endswith("clip.png")
     assert [m.output for m in data.monitors] == ["DP-1", "HDMI-A-1"]
 
-    assert wp.build_backend_command("set-static", str(image), "DP-1") == ["orgm-wallpaper", "set-static", str(image), "--monitor", "DP-1"]
-    assert wp.build_backend_command("random-video", None, None) == ["orgm-wallpaper", "random-video"]
+    assert wp.build_backend_command("set-static", str(image), "DP-1") == ["hypr-random-wallpaper", "set", str(image), "--monitor", "DP-1"]
+    assert wp.build_backend_command("random-video", None, None) == ["hypr-random-wallpaper", "next"]
 
 print("hypr wallpaper picker python smoke test passed")
 PY
 
 for launcher in \
-    "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker" \
-    "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker-dark" \
-    "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker-light"; do
-    bash -n "$launcher"
+	"$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker" \
+	"$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker-dark" \
+	"$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker-light"; do
+	bash -n "$launcher"
 done
 
 with_fake_home() {
-    local tmp="$1"
-    mkdir -p "$tmp/home/.config/hypr/wallpaper-picker" "$tmp/home/.local/bin" "$tmp/bin"
-    cp "$APP" "$tmp/home/.config/hypr/wallpaper-picker/wallpaper_picker.py"
-    cp "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker" "$tmp/home/.local/bin/"
-    cp "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker-dark" "$tmp/home/.local/bin/"
-    cp "$ROOT/config/shared/.local/bin/hypr-wallpaper-picker-light" "$tmp/home/.local/bin/"
+	local tmp="$1"
+	mkdir -p "$tmp/home/.config/hypr/wallpaper-picker" "$tmp/home/.local/bin" "$tmp/bin"
+	cp "$APP" "$tmp/home/.config/hypr/wallpaper-picker/wallpaper_picker.py"
+	cp "$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker" "$tmp/home/.local/bin/"
+	cp "$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker-dark" "$tmp/home/.local/bin/"
+	cp "$ROOT/config/profiles/hyprland/.local/bin/hypr-wallpaper-picker-light" "$tmp/home/.local/bin/"
 }
 
 success_tmp="$(mktemp -d)"
@@ -80,7 +80,7 @@ printf '%s\n' "$@" >"$TEST_RECORD"
 SH
 chmod +x "$success_tmp/bin/python3"
 TEST_RECORD="$success_tmp/record" HOME="$success_tmp/home" PATH="$success_tmp/bin:$PATH" \
-    "$success_tmp/home/.local/bin/hypr-wallpaper-picker-dark" --page-size 9 "arg with spaces"
+	"$success_tmp/home/.local/bin/hypr-wallpaper-picker-dark" --page-size 9 "arg with spaces"
 grep -Fx -- "$success_tmp/home/.config/hypr/wallpaper-picker/wallpaper_picker.py" "$success_tmp/record" >/dev/null
 grep -Fx -- "--theme" "$success_tmp/record" >/dev/null
 grep -Fx -- "dark" "$success_tmp/record" >/dev/null
@@ -104,7 +104,7 @@ printf '%s\n' "$@" >"$TEST_RECORD"
 SH
 chmod +x "$fallback_tmp/bin/python3" "$fallback_tmp/bin/nix-shell"
 TEST_RECORD="$fallback_tmp/record" HOME="$fallback_tmp/home" PATH="$fallback_tmp/bin:$PATH" \
-    "$fallback_tmp/home/.local/bin/hypr-wallpaper-picker-light" --monitor "DP 1"
+	"$fallback_tmp/home/.local/bin/hypr-wallpaper-picker-light" --monitor "DP 1"
 grep -Fx -- "python3.withPackages (ps: [ ps.pygobject3 ])" "$fallback_tmp/record" >/dev/null
 grep -Fx -- "gtk4" "$fallback_tmp/record" >/dev/null
 grep -Fx -- "gobject-introspection" "$fallback_tmp/record" >/dev/null

@@ -22,7 +22,7 @@ func TestModelMainListsCompatibilityItems(t *testing.T) {
 	}
 }
 
-func TestPlanSelectionBuildsCanonicalOrgmHyprActions(t *testing.T) {
+func TestPlanSelectionBuildsCanonicalWrapperActions(t *testing.T) {
 	tests := []struct {
 		name      string
 		menuName  string
@@ -30,22 +30,22 @@ func TestPlanSelectionBuildsCanonicalOrgmHyprActions(t *testing.T) {
 		want      ActionPlan
 	}{
 		{
-			name:      "main tools delegates to orgm-hypr menu tools",
+			name:      "main tools delegates to hypr-tools-menu",
 			menuName:  "main",
 			selection: "󰒓 Tools",
-			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"menu", "tools"}}},
+			want:      ActionPlan{Command: Command{Name: "hypr-tools-menu"}},
 		},
 		{
-			name:      "main apps uses orgm-hypr launcher",
+			name:      "main apps delegates to hypr-apps-menu",
 			menuName:  "main",
 			selection: "󰀻 Apps",
-			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"launcher", "apps"}}},
+			want:      ActionPlan{Command: Command{Name: "hypr-apps-menu"}},
 		},
 		{
-			name:      "tools search files uses orgm-hypr file command",
+			name:      "tools search files uses hypr-rofi-open-file",
 			menuName:  "tools",
 			selection: "󰍉 Search files",
-			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"file", "open", "--launcher", "fuzzel"}}},
+			want:      ActionPlan{Command: Command{Name: "hypr-rofi-open-file"}},
 		},
 		{
 			name:      "power lock uses orgm-hypr session command",
@@ -158,8 +158,8 @@ func TestKeybindingCategoriesExposeMetadataAndEntries(t *testing.T) {
 	if len(first.Entries) == 0 {
 		t.Fatalf("launchers entries empty")
 	}
-	if first.Entries[0].Key != "Win+/" || first.Entries[0].Command != "orgm-hypr helper toggle" {
-		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr helper toggle", first.Entries[0])
+	if first.Entries[0].Key != "Win+/" || first.Entries[0].Command != "hypr-keybindings-help" {
+		t.Fatalf("first launcher entry = %#v, want Win+/ hypr-keybindings-help", first.Entries[0])
 	}
 }
 
@@ -168,8 +168,8 @@ func TestKeybindingEntriesFilterCategories(t *testing.T) {
 	if len(launchers) == 0 {
 		t.Fatalf("launchers entries empty")
 	}
-	if launchers[0].Key != "Win+/" || launchers[0].Command != "orgm-hypr helper toggle" {
-		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr helper toggle", launchers[0])
+	if launchers[0].Key != "Win+/" || launchers[0].Command != "hypr-keybindings-help" {
+		t.Fatalf("first launcher entry = %#v, want Win+/ hypr-keybindings-help", launchers[0])
 	}
 	assertKeybinding(t, launchers, "Win+E", "orgm-hypr file open-dir --launcher fuzzel")
 	assertNoKeybinding(t, launchers, "Win+O")

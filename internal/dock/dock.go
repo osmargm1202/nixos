@@ -39,7 +39,7 @@ func StartArgs(env Env) []string {
 		"-mb", defaultString(env.MarginBottom, "0"),
 		"-lp", defaultString(env.LauncherPosition, "start"),
 		"-ico", defaultString(env.LauncherIcon, filepath.Join(env.Home, ".local", "share", "icons", "nixos.svg")),
-		"-c", defaultString(env.LauncherCommand, "orgm-hypr menu main"),
+		"-c", defaultString(env.LauncherCommand, "hypr-main-menu"),
 	}
 }
 

@@ -2093,10 +2093,10 @@ func runWallpaperWithIO(args []string, stdout, stderr io.Writer) error {
 		var scriptArgs csvFlag
 		flags.StringVar(&opts.Mode, "mode", "", "wallpaper mode: static or video")
 		flags.StringVar(&opts.ManifestPath, "manifest", "", "TSV manifest path")
-		flags.StringVar(&opts.JSONPath, "json", "", "Quickshell JSON output path")
+		flags.StringVar(&opts.JSONPath, "json", "", "picker JSON output path")
 		flags.StringVar(&opts.CurrentPath, "current", "", "current wallpaper path")
-		flags.StringVar(&opts.Script, "script", "orgm-hypr", "script/command used by Quickshell apply actions")
-		flags.Var(&scriptArgs, "script-arg", "extra script argument for Quickshell actions; may be repeated")
+		flags.StringVar(&opts.Script, "script", "orgm-hypr", "script/command used by picker apply actions")
+		flags.Var(&scriptArgs, "script-arg", "extra script argument for picker actions; may be repeated")
 		if err := flags.Parse(args[1:]); err != nil {
 			return cli.UsageError(err.Error())
 		}
@@ -2163,7 +2163,7 @@ func runWallpaperWithIO(args []string, stdout, stderr io.Writer) error {
 		if len(args) < 2 {
 			return cli.UsageError("usage: orgm-hypr wallpaper carousel [static|video]")
 		}
-		return m.OpenQuickshellCarousel(args[1])
+		return m.MenuPick()
 	case "warm-thumbs":
 		if len(args) < 2 {
 			return cli.UsageError("usage: orgm-hypr wallpaper warm-thumbs [static|video] [index]")
@@ -2185,7 +2185,7 @@ func runWallpaperWithIO(args []string, stdout, stderr io.Writer) error {
 	case "daemon":
 		return m.RunDaemon()
 	default:
-		return cli.UsageError("usage: orgm-hypr wallpaper [restore|current|pick|random static|random video|carousel static|carousel video|set-static PATH|set-video PATH|status]")
+		return cli.UsageError("usage: orgm-hypr wallpaper [restore|current|pick|next|change|random static|random video|set-static PATH|set-video PATH|status]")
 	}
 }
 

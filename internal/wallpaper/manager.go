@@ -524,7 +524,7 @@ func (m *Manager) Restore() error {
 }
 
 func (m *Manager) MenuPick() error {
-	return m.OpenUnifiedQuickshellPicker()
+	return m.StartQuickshellPicker(false)
 }
 
 func (m *Manager) dataPathForMode(mode string) string {
@@ -532,23 +532,11 @@ func (m *Manager) dataPathForMode(mode string) string {
 }
 
 func (m *Manager) WriteQuickshellRequest(mode, dataPath string) error {
-	request := map[string]string{"mode": mode, "dataPath": dataPath, "nonce": strconv.FormatInt(time.Now().UnixNano(), 10)}
-	tmp := fmt.Sprintf("%s.%d", m.QuickshellRequest, os.Getpid())
-	file, err := os.Create(tmp)
-	if err != nil {
-		return err
+	// Legacy picker metadata file is no longer required by the shell picker flow.
+	if mode == "" || dataPath == "" {
+		return nil
 	}
-	encoder := json.NewEncoder(file)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(request); err != nil {
-		_ = file.Close()
-		return err
-	}
-	if err := file.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp, m.QuickshellRequest)
+	return nil
 }
 
 func (m *Manager) GenerateQuickshellData(mode, jsonPath string) error {
@@ -592,7 +580,7 @@ func (m *Manager) GenerateQuickshellData(mode, jsonPath string) error {
 		current = m.StateValue("path")
 	}
 	tmpJSON := fmt.Sprintf("%s.%d", jsonPath, os.Getpid())
-	if err := GeneratePickerData(DataOptions{Mode: mode, ManifestPath: m.QuickshellManifest, JSONPath: tmpJSON, CurrentPath: current, Script: "orgm-hypr", ScriptArgs: []string{"wallpaper"}}); err != nil {
+	if err := GeneratePickerData(DataOptions{Mode: mode, ManifestPath: m.QuickshellManifest, JSONPath: tmpJSON, CurrentPath: current, Script: "hypr-wallpaper-picker", ScriptArgs: []string{"set"}}); err != nil {
 		return err
 	}
 	return os.Rename(tmpJSON, jsonPath)
@@ -640,8 +628,8 @@ func (m *Manager) GenerateCombinedQuickshellData(jsonPath string) error {
 		JSONPath:     tmpJSON,
 		CurrentMode:  currentMode,
 		CurrentPath:  currentPath,
-		Script:       "orgm-hypr",
-		ScriptArgs:   []string{"wallpaper"},
+		Script:       "hypr-wallpaper-picker",
+		ScriptArgs:   []string{"set"},
 	}); err != nil {
 		return err
 	}
@@ -720,7 +708,7 @@ func (m *Manager) itemsFromManifest(mode string) ([]string, error) {
 	var items []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		rowMode, path, ok := strings.Cut(scanner.Text(), "\t")
+		rowMode, path, ok := strings.Cut(scanner.Text(), "	")
 		if ok && rowMode == mode {
 			items = append(items, path)
 		}
@@ -729,81 +717,42 @@ func (m *Manager) itemsFromManifest(mode string) ([]string, error) {
 }
 
 func (m *Manager) OpenQuickshellCarousel(mode string) error {
-	dataPath := m.dataPathForMode(mode)
-	if err := m.GenerateQuickshellData(mode, dataPath); err != nil {
-		return err
-	}
-	input, err := os.ReadFile(dataPath)
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(m.QuickshellData, input, 0o644); err != nil {
-		return err
-	}
-	if err := m.WriteQuickshellRequest(mode, dataPath); err != nil {
-		return err
-	}
-	return m.StartQuickshellPicker(true)
+	return m.StartQuickshellPicker(false)
 }
 
 func (m *Manager) OpenUnifiedQuickshellPicker() error {
-	dataPath := filepath.Join(m.StateDir, "wallpaper-picker-combined.json")
-	if err := m.GenerateCombinedQuickshellData(dataPath); err != nil {
-		return err
-	}
-	input, err := os.ReadFile(dataPath)
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(m.QuickshellData, input, 0o644); err != nil {
-		return err
-	}
-	if err := m.WriteQuickshellRequest("combined", dataPath); err != nil {
-		return err
-	}
-	return m.StartQuickshellPicker(true)
-}
-
-func (m *Manager) quickshellRunning() bool {
-	pid := readTrim(m.QuickshellPIDFile)
-	if isNumeric(pid) && exec.Command("kill", "-0", pid).Run() == nil {
-		out, _ := exec.Command("ps", "-p", pid, "-o", "command=").Output()
-		cmdline := string(out)
-		if strings.Contains(cmdline, "quickshell") && strings.Contains(cmdline, "wallpaper-picker") {
-			return true
-		}
-	}
-	out, err := exec.Command("pgrep", "-f", "quickshell .*wallpaper-picker").Output()
-	return err == nil && strings.TrimSpace(string(out)) != ""
+	return m.StartQuickshellPicker(false)
 }
 
 func (m *Manager) StartQuickshellPicker(show bool) error {
-	if m.quickshellRunning() {
-		if !show {
-			return nil
-		}
-		m.runIgnore("pkill", "-f", "quickshell .*wallpaper-picker")
-		_ = os.Remove(m.QuickshellPIDFile)
-	}
-	showFlag := "0"
-	if show {
-		showFlag = "1"
-	}
-	if commandExists("quickshell") {
-		cmd := m.cmd("quickshell", "-p", m.QuickshellConfig)
-		cmd.Env = append(os.Environ(), "HYPR_WALLPAPER_DATA="+m.QuickshellData, "HYPR_WALLPAPER_REQUEST="+m.QuickshellRequest, "HYPR_WALLPAPER_SHOW="+showFlag)
-		cmd.Stdout, cmd.Stderr = logFile("/tmp/hypr-wallpaper-quickshell.log")
+	if commandExists("hypr-wallpaper-picker") {
+		cmd := m.cmd("hypr-wallpaper-picker")
+		cmd.Stdout, cmd.Stderr = logFile("/tmp/hypr-wallpaper-picker.log")
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-		return os.WriteFile(m.QuickshellPIDFile, []byte(strconv.Itoa(cmd.Process.Pid)+"\n"), 0o644)
-	}
-	if commandExists("distrobox-host-exec") {
-		script := fmt.Sprintf("HYPR_WALLPAPER_DATA=%s HYPR_WALLPAPER_REQUEST=%s HYPR_WALLPAPER_SHOW=%s quickshell -p %s >/tmp/hypr-wallpaper-quickshell.log 2>&1 &", shellQuote(m.QuickshellData), shellQuote(m.QuickshellRequest), shellQuote(showFlag), shellQuote(m.QuickshellConfig))
-		m.runIgnore("distrobox-host-exec", "sh", "-lc", script)
 		return nil
 	}
-	return fmt.Errorf("quickshell not found")
+	if commandExists("orgm-hypr") {
+		cmd := m.cmd("orgm-hypr", "wallpaper", "pick")
+		cmd.Stdout, cmd.Stderr = logFile("/tmp/hypr-wallpaper-picker.log")
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		return nil
+	}
+	if show {
+		// keep deterministic behavior for callers that requested a visible picker
+	}
+	if commandExists("distrobox-host-exec") {
+		m.runIgnore("distrobox-host-exec", "sh", "-lc", "hypr-wallpaper-picker >/tmp/hypr-wallpaper-picker.log 2>&1 &")
+		return nil
+	}
+	return fmt.Errorf("hypr-wallpaper-picker not found")
+}
+
+func (m *Manager) quickshellRunning() bool {
+	return false
 }
 
 func (m *Manager) RunDaemon() error {

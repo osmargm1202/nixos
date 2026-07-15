@@ -182,7 +182,7 @@ func BuildPickerData(opts DataOptions, manifest io.Reader) (PickerData, error) {
 		Items:        []PickerItem{},
 	}
 	if data.Script == "" {
-		data.Script = "orgm-hypr"
+		data.Script = "hypr-wallpaper-picker"
 	}
 
 	scanner := bufio.NewScanner(manifest)
@@ -246,7 +246,7 @@ func BuildCombinedPickerData(opts CombinedDataOptions, manifest io.Reader) (Comb
 		},
 	}
 	if data.Script == "" {
-		data.Script = "orgm-hypr"
+		data.Script = "hypr-wallpaper-picker"
 	}
 
 	currentMode := normalizedPickerMode(opts.CurrentMode)

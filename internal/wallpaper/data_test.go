@@ -73,7 +73,7 @@ func TestBuildPickerDataVideo(t *testing.T) {
 	if data.ApplyCommand != "set-video" {
 		t.Fatalf("applyCommand = %q", data.ApplyCommand)
 	}
-	if data.Script != "orgm-hypr" {
+	if data.Script != "hypr-wallpaper-picker" {
 		t.Fatalf("script = %q", data.Script)
 	}
 	if len(data.Items) != 1 {
@@ -139,7 +139,7 @@ func TestBuildCombinedPickerDataIncludesNormalAndLiveTabs(t *testing.T) {
 		InitialMode: "video",
 		CurrentMode: "video",
 		CurrentPath: "/home/test/Videos/wallpapers/live.mp4",
-		Script:      "orgm-hypr",
+		Script:      "hypr-wallpaper-picker",
 		ScriptArgs:  []string{"wallpaper"},
 	}, manifest)
 	if err != nil {
@@ -152,8 +152,8 @@ func TestBuildCombinedPickerDataIncludesNormalAndLiveTabs(t *testing.T) {
 	if data.InitialMode != "video" {
 		t.Fatalf("initialMode = %q, want video", data.InitialMode)
 	}
-	if data.Script != "orgm-hypr" {
-		t.Fatalf("script = %q, want orgm-hypr", data.Script)
+	if data.Script != "hypr-wallpaper-picker" {
+		t.Fatalf("script = %q, want hypr-wallpaper-picker", data.Script)
 	}
 	if strings.Join(data.ScriptArgs, "\x00") != "wallpaper" {
 		t.Fatalf("scriptArgs = %#v, want [wallpaper]", data.ScriptArgs)
@@ -235,7 +235,7 @@ func TestGenerateCombinedPickerDataWritesJSON(t *testing.T) {
 		JSONPath:    jsonPath,
 		CurrentMode: "video",
 		CurrentPath: filepath.Join(tmp, "live.mp4"),
-		Script:      "orgm-hypr",
+		Script:      "hypr-wallpaper-picker",
 		ScriptArgs:  []string{"wallpaper"},
 	})
 	if err != nil {

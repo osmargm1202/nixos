@@ -34,7 +34,6 @@
       ".config/posting",
       ".config/qt5ct",
       ".config/qt6ct",
-      ".config/quickshell",
       ".config/rofi",
       ".config/starship.toml",
       ".config/swappy",
@@ -215,8 +214,6 @@
       ".config/hypr/scheme/current.conf",
       ".local/state/orgm-theme/current",
       ".local/state/orgm-theme/current.env",
-      ".config/quickshell/theme/theme.json",
-      ".config/quickshell/theme/current.json",
       ".local/share/icons/default/index.theme"
     ],
     "patterns": [

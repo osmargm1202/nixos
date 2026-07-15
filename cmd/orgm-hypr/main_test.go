@@ -501,15 +501,15 @@ func TestRunWithIOHelperInitWritesCache(t *testing.T) {
 	}
 }
 
-func TestRunWithIOHelperTogglePrintsQuickshellCommand(t *testing.T) {
+func TestRunWithIOHelperTogglePrintsHyprMenuCommand(t *testing.T) {
 	stateHome := t.TempDir()
 	var stdout, stderr bytes.Buffer
 	err := runWithIO([]string{"helper", "toggle", "--state-home", stateHome, "--print"}, &stdout, &stderr)
 	if err != nil {
 		t.Fatalf("runWithIO(helper toggle --print) error = %v", err)
 	}
-	if !strings.Contains(stdout.String(), "quickshell") || !strings.Contains(stdout.String(), "keyhelper") {
-		t.Fatalf("stdout = %q, want quickshell keyhelper command", stdout.String())
+	if !strings.Contains(stdout.String(), "hypr-keybindings-help") {
+		t.Fatalf("stdout = %q, want hypr-keybindings-help command", stdout.String())
 	}
 }
 
@@ -564,7 +564,7 @@ func TestRunWithIOSessionImportEnvPrintsCompatibilityCommands(t *testing.T) {
 	}
 }
 
-func TestRunWithIODockStartPrintArgsUsesCanonicalOrgmHyprMenu(t *testing.T) {
+func TestRunWithIODockStartPrintArgsUsesCanonicalHyprMainMenu(t *testing.T) {
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("HOME", home)
 	var stdout, stderr bytes.Buffer
@@ -574,7 +574,7 @@ func TestRunWithIODockStartPrintArgsUsesCanonicalOrgmHyprMenu(t *testing.T) {
 	if err != nil {
 		t.Fatalf("runWithIO(dock start --print-args) error = %v", err)
 	}
-	want := "nwg-dock-hyprland -r -p right -a center -i 56 -x -mr 8 -mt 0 -mb 0 -lp start -ico " + filepath.Join(home, ".local/share/icons/nixos.svg") + " -c orgm-hypr menu main\n"
+	want := "nwg-dock-hyprland -r -p right -a center -i 56 -x -mr 8 -mt 0 -mb 0 -lp start -ico " + filepath.Join(home, ".local/share/icons/nixos.svg") + " -c hypr-main-menu\n"
 	if got := stdout.String(); got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}
@@ -844,10 +844,10 @@ func TestRunWithIOMenuMainUsesRofiThemeAndScaleOverrides(t *testing.T) {
 	}
 }
 
-func TestRunWithIOMenuMainPowerOpensOrgmHyprPowerMenu(t *testing.T) {
+func TestRunWithIOMenuMainPowerOpensHyprPowerMenu(t *testing.T) {
 	bin := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "menu-main.log")
-	writeExecutable(t, filepath.Join(bin, "orgm-hypr"), "#!/bin/sh\necho orgm-hypr:$* >>\"$ORGM_TEST_LOG\"\n")
+	writeExecutable(t, filepath.Join(bin, "hypr-power-menu"), "#!/bin/sh\necho hypr-power-menu:$* >>\"$ORGM_TEST_LOG\"\n")
 	t.Setenv("PATH", bin)
 	t.Setenv("ORGM_TEST_LOG", logPath)
 	var stdout, stderr bytes.Buffer
@@ -857,7 +857,7 @@ func TestRunWithIOMenuMainPowerOpensOrgmHyprPowerMenu(t *testing.T) {
 	if err != nil {
 		t.Fatalf("runWithIO(menu main Power) error = %v", err)
 	}
-	waitForFileContains(t, logPath, "orgm-hypr:menu power\n")
+	waitForFileContains(t, logPath, "hypr-power-menu\n")
 }
 
 func TestRunWithIOWebappCreateDryRunPrintsPlanWithoutWriting(t *testing.T) {
@@ -1084,7 +1084,7 @@ func TestRunWithIOCapturesCurrentWallpaperUsageErrors(t *testing.T) {
 		{
 			name: "unknown subcommand",
 			args: []string{"wallpaper", "bogus"},
-			want: "usage: orgm-hypr wallpaper [restore|current|pick|random static|random video|carousel static|carousel video|set-static PATH|set-video PATH|status]",
+			want: "usage: orgm-hypr wallpaper [restore|current|pick|next|change|random static|random video|set-static PATH|set-video PATH|status]",
 		},
 		{
 			name: "missing set-static path",

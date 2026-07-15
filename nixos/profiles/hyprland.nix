@@ -34,6 +34,7 @@ in
     nwg-drawer
     nwg-displays
     nwg-look
+    waytrogen
 
     # Hardware tray/TUI (fuera de common_hyprland: caelestia trae los suyos)
     networkmanagerapplet
@@ -41,7 +42,6 @@ in
     blueman
 
     # Launchers / notification
-    quickshell
     fuzzel
     rofi
     libqalculate

@@ -6,33 +6,101 @@ current_file="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-random-wallpaper.curren
 daemon_pid_file="${XDG_RUNTIME_DIR:-/tmp}/hypr-random-wallpaper.daemon.pid"
 wallpaper_dir="${WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
 
-pick_wallpaper() {
+autofind_wallpaper() {
   [ -d "$wallpaper_dir" ] || return 1
 
-  find "$wallpaper_dir" -type f \( \
+  find "$wallpaper_dir" -type f \
     -iname '*.jpg' -o \
     -iname '*.jpeg' -o \
     -iname '*.png' -o \
     -iname '*.webp' \
-  \) | shuf -n 1
+    | shuf -n 1
+}
+
+pick_wallpaper() {
+  autofind_wallpaper
+}
+
+store_current_wallpaper() {
+  local wallpaper="$1"
+  mkdir -p "$(dirname "$current_file")"
+  printf '%s\n' "$wallpaper" >"$current_file"
 }
 
 set_wallpaper() {
   local wallpaper="$1"
+  local monitor="${2-}"
 
-  mkdir -p "$(dirname "$current_file")"
-  printf '%s\n' "$wallpaper" >"$current_file"
+  [ -f "$wallpaper" ] || return 1
+  store_current_wallpaper "$wallpaper"
 
   if command -v hyprctl >/dev/null 2>&1; then
     hyprctl hyprpaper preload "$wallpaper" >/dev/null 2>&1 || true
-    hyprctl hyprpaper wallpaper ",$wallpaper" >/dev/null 2>&1 || \
-      hyprctl dispatch exec "hyprctl hyprpaper wallpaper ,$wallpaper" >/dev/null 2>&1 || \
-      hyprctl keyword misc:background_color "rgba(000000ff)" >/dev/null 2>&1 || true
+    if [ -n "${monitor-}" ]; then
+      hyprctl hyprpaper wallpaper "$monitor,$wallpaper" >/dev/null 2>&1 || \
+        hyprctl dispatch exec "hyprctl hyprpaper wallpaper $monitor,$wallpaper" >/dev/null 2>&1 || \
+        true
+    else
+      hyprctl hyprpaper wallpaper ",$wallpaper" >/dev/null 2>&1 || \
+        hyprctl dispatch exec "hyprctl hyprpaper wallpaper ,$wallpaper" >/dev/null 2>&1 || \
+        hyprctl keyword misc:background_color "rgba(000000ff)" >/dev/null 2>&1 || true
+    fi
+    return 0
+  fi
+
+  return 1
+}
+
+waytrogen_current_path() {
+  if ! command -v waytrogen >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local payload
+  payload="$(waytrogen --list-current-wallpapers 2>/dev/null || true)"
+  [ -n "$payload" ] || return 1
+
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s\n' "$payload" | jq -r '.path // empty' 2>/dev/null
+  else
+    printf '%s\n' "$payload" | sed -n 's/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+  fi
+}
+
+restore_wallpaper() {
+  if command -v waytrogen >/dev/null 2>&1; then
+    if waytrogen --restore >/dev/null 2>&1; then
+      local current
+      current="$(waytrogen_current_path || true)"
+      if [ -n "$current" ] && [ -f "$current" ]; then
+        set_wallpaper "$current" >/dev/null 2>&1 || true
+        return 0
+      fi
+    fi
+  fi
+
+  if [ -f "$current_file" ]; then
+    local wallpaper
+    wallpaper="$(cat "$current_file" 2>/dev/null || true)"
+    if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
+      set_wallpaper "$wallpaper" >/dev/null 2>&1 || true
+    fi
   fi
 }
 
 next_wallpaper() {
   local wallpaper
+
+  if command -v waytrogen >/dev/null 2>&1; then
+    if waytrogen --random >/dev/null 2>&1; then
+      wallpaper="$(waytrogen_current_path || true)"
+      if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
+        set_wallpaper "$wallpaper"
+        return 0
+      fi
+    fi
+  fi
+
   wallpaper="$(pick_wallpaper)" || {
     echo "hypr-random-wallpaper: no wallpapers found in $wallpaper_dir" >&2
     return 1
@@ -87,9 +155,48 @@ stop_daemon() {
   rm -f "$daemon_pid_file"
 }
 
+set_wallpaper_from_args() {
+  local wallpaper=""
+  local monitor=""
+
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --monitor)
+        shift
+        monitor="${1-}"
+        ;;
+      --)
+        shift
+        ;;
+      *)
+        if [ -z "$wallpaper" ]; then
+          wallpaper="$1"
+        fi
+        ;;
+    esac
+    shift || true
+  done
+
+  if [ -z "$wallpaper" ]; then
+    echo "Usage: ${0##*/} set PATH [--monitor NAME]" >&2
+    return 2
+  fi
+
+  set_wallpaper "$wallpaper" "$monitor"
+}
+
+print_usage() {
+  cat <<EOF
+Usage: ${0##*/} [restore|next|random|random-static|random-video|set|set-static|set-video PATH [--monitor NAME]|daemon|stop]
+EOF
+}
+
 case "${1:-daemon}" in
-  next)
+  next|random|random-static|random-video)
     next_wallpaper
+    ;;
+  restore)
+    restore_wallpaper
     ;;
   daemon)
     run_daemon
@@ -97,8 +204,12 @@ case "${1:-daemon}" in
   stop)
     stop_daemon
     ;;
+  set|set-static|set-video)
+    shift
+    set_wallpaper_from_args "$@"
+    ;;
   *)
-    echo "Usage: ${0##*/} [next|daemon|stop]" >&2
+    print_usage >&2
     exit 2
     ;;
 esac

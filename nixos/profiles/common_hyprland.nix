@@ -12,7 +12,6 @@ let
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
   dotfilesOrgmSource = ../../dotfiles;
-  orgmWallpaper = pkgs.callPackage ../packages/orgm-wallpaper.nix { inherit dotfilesOrgmSource; };
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
@@ -275,7 +274,6 @@ in
     hyprpaperPkg
     mpvpaper
     matugen
-    orgmWallpaper
     orgmThemes
     ffmpeg
     python3Minimal

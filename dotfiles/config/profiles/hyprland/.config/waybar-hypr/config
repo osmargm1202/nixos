@@ -150,8 +150,8 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Wallpaper aleatorio",
-      "on-click": "orgm-wallpaper random-static",
-      "on-click-right": "orgm-wallpaper pick"
+      "on-click": "hypr-random-wallpaper next",
+      "on-click-right": "hypr-wallpaper-picker"
     },
     "custom/usb_devices": {
       "exec": "hypr-usb-menu status",
@@ -535,9 +535,9 @@
     "custom/keybindings_help": {
       "format": "?",
       "tooltip": true,
-      "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir helper\nClick derecho: actualizar lista",
-      "on-click": "hypr-keyhelper toggle",
-      "on-click-right": "hypr-keyhelper init"
+      "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir atajos\nClick derecho: abrir atajos",
+      "on-click": "hypr-keybindings-help",
+      "on-click-right": "hypr-keybindings-help"
     },
     "custom/menu": {
       "format": "󰍜",
@@ -582,8 +582,8 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Wallpaper aleatorio",
-      "on-click": "orgm-wallpaper random-static",
-      "on-click-right": "orgm-wallpaper pick"
+      "on-click": "hypr-random-wallpaper next",
+      "on-click-right": "hypr-wallpaper-picker"
     },
 
     "custom/usb_devices": {

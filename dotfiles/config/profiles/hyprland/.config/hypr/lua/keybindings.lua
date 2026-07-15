@@ -14,8 +14,8 @@ function M.setup(programs)
   end
 
   -- Help / launchers.
-  hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keyhelper toggle"))
-  hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("orgm-wallpaper pick"))
+  hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keybindings-help"))
+  hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("hypr-wallpaper-picker"))
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))

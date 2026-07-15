@@ -415,9 +415,9 @@
       }; in configs // {
         # Perfil por defecto de cada host (coincide con el hostname,
         # asi `nh os switch` sin -H usa esta configuracion)
-        lenovo = configs.lenovo-hyprlandqs-caelestia;
-        orgm = configs.orgm-hyprlandqs-caelestia;
-        jarq = configs.jarq-hyprlandqs-caelestia;
+        lenovo = configs.lenovo-hyprland;
+        orgm = configs.orgm-hyprland;
+        jarq = configs.jarq-hyprland;
       };
     };
 }
