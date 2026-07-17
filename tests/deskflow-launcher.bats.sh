@@ -91,4 +91,12 @@ stop_command="$(jq -r 'if (.ExecStop | type) == "array" then .ExecStop[0] else .
 [[ "$stop_command" == -*"/bin/flatpak kill org.deskflow.deskflow" ]] \
   || fail "Deskflow service must kill its Flatpak scope before restart"
 
-echo "PASS: Deskflow launcher preserves environment and supports clean restart"
+install_json="$({
+  cd "$REPO_DIR"
+  nix eval --json \
+    '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Install'
+})"
+jq -e '(.WantedBy // []) | index("default.target") != null' <<<"$install_json" >/dev/null \
+  || fail "Deskflow service must start automatically with default.target"
+
+echo "PASS: Deskflow launcher preserves environment, autostart, and clean restart"
