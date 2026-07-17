@@ -240,6 +240,7 @@
     libnotify
     git
     age # dependencia de arranque de fish (load_private_env) — no mover a efimero
+    uv
     fd
     jq
     trash-cli

@@ -43,10 +43,11 @@ in
 {
   services.flatpak.packages = lib.mkAfter [ deskflowAppId ];
 
+  # Deskflow installed but not started automatically (manual only).
   home-manager.users.${userName} = {
     systemd.user.services.deskflow = {
       Unit = {
-        Description = "Start Deskflow in GUI session";
+        Description = "Start Deskflow in GUI session (manual)";
       };
 
       Service = {
@@ -56,8 +57,10 @@ in
         RestartSec = 10;
       };
 
+      # Keep unit defined for manual start: `systemctl --user start deskflow`
+      # Autostart disabled by removing default.target binding.
       Install = {
-        WantedBy = [ "default.target" ];
+        WantedBy = [ ];
       };
     };
   };
