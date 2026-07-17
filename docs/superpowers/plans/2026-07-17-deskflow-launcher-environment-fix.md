@@ -234,7 +234,7 @@ Run:
 ```bash
 for host in lenovo-hyprland orgm-hyprland; do
   nix eval --json ".#nixosConfigurations.$host.config.services.flatpak.packages" \
-    | jq -e 'index("org.deskflow.deskflow") != null'
+    | jq -e 'map(.appId) | index("org.deskflow.deskflow") != null'
 done
 ```
 
