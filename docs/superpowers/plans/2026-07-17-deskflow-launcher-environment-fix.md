@@ -12,7 +12,7 @@
 
 - Modify only the shared launcher in `nixos/deskflow.nix` plus focused regression coverage.
 - Apply identical behavior to the `lenovo` and `orgm` hosts.
-- Preserve Flatpak ID `org.deskflow.deskflow`, 30 retries, one-second waits, `Restart=on-failure`, and current host selection.
+- Preserve Flatpak ID `org.deskflow.deskflow`, 30 retries, one-second waits, `Restart=on-failure`, `WantedBy=default.target`, and current host selection.
 - Keep Deskflow on stable version 1.26.0; do not select beta or continuous builds.
 - Preserve unrelated working-tree changes.
 - Existing out-of-store dotfile links update live; apply this NixOS module change with `nh os switch .#lenovo --diff always` after a successful `nh os build .#lenovo --diff always` review.
@@ -130,7 +130,15 @@ stop_command="$(jq -r 'if (.ExecStop | type) == "array" then .ExecStop[0] else .
 [[ "$stop_command" == -*"/bin/flatpak kill org.deskflow.deskflow" ]] \
   || fail "Deskflow service must kill its Flatpak scope before restart"
 
-echo "PASS: Deskflow launcher preserves environment and supports clean restart"
+install_json="$({
+  cd "$REPO_DIR"
+  nix eval --json \
+    '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Install'
+})"
+jq -e '(.WantedBy // []) | index("default.target") != null' <<<"$install_json" >/dev/null \
+  || fail "Deskflow service must start automatically with default.target"
+
+echo "PASS: Deskflow launcher preserves environment, autostart, and clean restart"
 ```
 
 - [ ] **Step 2: Run the test and verify the current launcher fails for the confirmed reason**
@@ -212,7 +220,7 @@ Run:
 Expected:
 
 ```text
-PASS: Deskflow launcher preserves environment and supports clean restart
+PASS: Deskflow launcher preserves environment, autostart, and clean restart
 ```
 
 - [ ] **Step 6: Commit the regression test and fix**

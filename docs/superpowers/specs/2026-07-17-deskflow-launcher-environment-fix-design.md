@@ -14,7 +14,7 @@ The installed Deskflow Flatpak is already the latest stable release, version 1.2
 
 - Modify only the shared Deskflow module in `nixos/deskflow.nix`.
 - Apply the behavior to both hosts that import the module: `lenovo` and `orgm`.
-- Preserve the current Flatpak application ID, retry count, systemd restart policy, and host selection.
+- Preserve the current Flatpak application ID, retry count, systemd restart policy, `default.target` autostart, and host selection.
 - Add an `ExecStop` hook that terminates the Flatpak scope before service restarts.
 - Add focused regression coverage for launcher environment handling and clean restart behavior.
 - Do not switch Deskflow to a beta or continuous release.
@@ -46,6 +46,7 @@ Add `tests/deskflow-launcher.bats.sh` with an executable behavior test around th
 - Stub `flatpak` and assert that it receives the parsed/exported values.
 - Stub retry behavior so the current bug fails quickly instead of waiting 30 seconds.
 - Assert that the evaluated unit defines an ignored-failure `ExecStop` command for `flatpak kill org.deskflow.deskflow`.
+- Assert that `Install.WantedBy` contains `default.target`, keeping Deskflow available in the tray after login.
 
 Each regression assertion must fail against the configuration without its fix and pass after the minimal change.
 
