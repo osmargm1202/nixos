@@ -47,13 +47,19 @@ fail() {
   exit 1
 }
 
-launcher="$({
+launcher_drv="$({
   cd "$REPO_DIR"
-  nix eval --json \
-    '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Service.ExecStart'
-} | jq -er '.[0]')"
+  nix eval --json --impure --expr '
+    let
+      flake = builtins.getFlake (toString ./.);
+      command = builtins.head flake.nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Service.ExecStart;
+    in
+    builtins.getContext command
+  '
+} | jq -er 'keys[0]')"
+launcher="$(nix-store --realise "$launcher_drv")"
 
-[[ -x "$launcher" ]] || fail "evaluated Deskflow launcher must be executable"
+[[ -x "$launcher" ]] || fail "realized Deskflow launcher must be executable"
 
 runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 [[ -S "$runtime_dir/bus" ]] \
