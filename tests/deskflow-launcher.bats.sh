@@ -82,4 +82,13 @@ grep -Fxq 'DISPLAY=:99' "$capture_file" \
 grep -Fxq "XDG_RUNTIME_DIR=$runtime_dir" "$capture_file" \
   || fail "runtime directory was not exported"
 
-echo "PASS: Deskflow launcher preserves bus access and exports graphics environment"
+service_json="$({
+  cd "$REPO_DIR"
+  nix eval --json \
+    '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Service'
+})"
+stop_command="$(jq -r 'if (.ExecStop | type) == "array" then .ExecStop[0] else .ExecStop // empty end' <<<"$service_json")"
+[[ "$stop_command" == -*"/bin/flatpak kill org.deskflow.deskflow" ]] \
+  || fail "Deskflow service must kill its Flatpak scope before restart"
+
+echo "PASS: Deskflow launcher preserves environment and supports clean restart"

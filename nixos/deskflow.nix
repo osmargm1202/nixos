@@ -62,6 +62,7 @@ in
       Service = {
         Type = "simple";
         ExecStart = "${deskflowLauncher}";
+        ExecStop = "-${pkgs.flatpak}/bin/flatpak kill ${deskflowAppId}";
         Restart = "on-failure";
         RestartSec = 10;
       };
