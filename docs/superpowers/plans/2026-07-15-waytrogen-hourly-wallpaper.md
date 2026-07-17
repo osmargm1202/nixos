@@ -422,21 +422,23 @@ nix flake check
 
 Expected: all commands exit 0. If `nix flake check` reports a pre-existing unrelated failure, record exact output and do not hide it.
 
-- [ ] **Step 3: Inspect system changes through ORGM tooling**
+- [ ] **Step 3: Inspect source changes**
 
 ```bash
-orgm-diff
+git diff -- dotfiles/config/profiles/hyprland dotfiles/tests/helpers
 ```
 
 Expected: diff contains only intended Hyprland helper, current-wallpaper, autostart, and test-related source changes; unrelated user files remain untouched.
 
-- [ ] **Step 4: Synchronize dotfiles**
+- [ ] **Step 4: Confirm live Home Manager links**
 
 ```bash
-orgm-sync
+readlink -f ~/.local/bin/hypr-random-wallpaper
+readlink -f ~/.local/bin/hypr-current-wallpaper
+readlink -f ~/.config/hypr/lua/autostart.lua
 ```
 
-Expected: deployed `~/.local/bin/hypr-random-wallpaper`, `~/.local/bin/hypr-current-wallpaper`, and `~/.config/hypr/lua/autostart.lua` match repository sources.
+Expected: each existing link resolves into this repository's `dotfiles/config/profiles/hyprland` source tree, so source edits are already live.
 
 - [ ] **Step 5: Replace stale `.thumb` Waytrogen state through Waytrogen**
 

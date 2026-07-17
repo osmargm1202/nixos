@@ -8,11 +8,10 @@ When a distrobox, toolbox, docker container, or development environment is detec
 
 # Dotfiles
 
-When changing dotfiles configuration use orgm-diff binary to show modifications to apply to the system and if good. execute orgm-sync to haven them copied to the system. 
-Dotfiles is the main location to change configuration.
+Dotfiles is the main location for configuration changes. Existing Home Manager out-of-store symlinks apply source edits live. When registering a new path or changing NixOS/Home Manager modules, run `nh os switch`.
 
-Remember to match nixos repo flake.lock on dotfiles head.
+Remember to match the NixOS repository `flake.lock` to the dotfiles repository head.
 
-# Nixos
+# NixOS
 
-when changin nixos flakes always remember to match dotfiles repo head to flake.lock. 
+When changing NixOS flakes, keep the dotfiles repository head aligned with `flake.lock`.

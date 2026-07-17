@@ -57,4 +57,4 @@ Automated shell tests verify:
 6. Daemon PID ownership protections remain intact.
 7. Waybar left click launches `waytrogen`.
 
-Verification also includes shell syntax checks, relevant Bats scripts, Nix evaluation/checks where practical, `orgm-diff`, and `orgm-sync` after reviewing the generated system changes.
+Verification also includes shell syntax checks, relevant Bats scripts, Nix evaluation/checks where practical, source diff review, and confirmation that existing Home Manager symlinks resolve to the edited files.

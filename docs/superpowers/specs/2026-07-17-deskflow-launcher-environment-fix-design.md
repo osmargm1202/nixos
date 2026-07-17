@@ -49,7 +49,7 @@ Verification also includes:
 - Focused Bats regression test.
 - Evaluation of representative `lenovo` and `orgm` graphical configurations.
 - `git diff --check` and review that generated/runtime files remain untouched.
-- `orgm-diff` review followed by `orgm-sync` to apply the approved declarative change.
+- `nh os build .#lenovo --diff always` review followed by `nh os switch .#lenovo --diff always` to apply the approved declarative change.
 - Runtime confirmation that `deskflow.service` stays active with the Flatpak process instead of accumulating restarts.
 
 ## Failure handling

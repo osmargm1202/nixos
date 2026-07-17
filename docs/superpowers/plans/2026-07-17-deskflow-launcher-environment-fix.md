@@ -15,7 +15,7 @@
 - Preserve Flatpak ID `org.deskflow.deskflow`, 30 retries, one-second waits, `Restart=on-failure`, and current host selection.
 - Keep Deskflow on stable version 1.26.0; do not select beta or continuous builds.
 - Preserve unrelated working-tree changes.
-- Use `orgm-diff` before `orgm-sync`; do not substitute a different system-application command if either tool is unavailable.
+- Existing out-of-store dotfile links update live; apply this NixOS module change with `nh os switch .#lenovo --diff always` after a successful `nh os build .#lenovo --diff always` review.
 
 ---
 
@@ -279,36 +279,35 @@ Expected: no whitespace errors; the fix commit contains only `nixos/deskflow.nix
 - Consumes: verified `lenovo-hyprland` configuration from Task 2.
 - Produces: running Deskflow Flatpak under a stable systemd user service.
 
-- [ ] **Step 1: Confirm required project application tools exist**
+- [ ] **Step 1: Confirm the NixOS deployment command exists**
 
 Run:
 
 ```bash
-type -P orgm-diff
-type -P orgm-sync
+type -P nh
 ```
 
-Expected: both commands print executable paths. If either command is unavailable, stop this task and report the blocker; do not substitute `nixos-rebuild`, `nh`, or direct Home Manager commands.
+Expected: prints the `nh` executable path.
 
-- [ ] **Step 2: Review system changes**
+- [ ] **Step 2: Build and review the host configuration**
 
 Run:
 
 ```bash
-orgm-diff
+nh os build .#lenovo --diff always
 ```
 
-Expected: output includes the Deskflow launcher/user-unit change and no unintended repository or system changes. Stop before syncing if unrelated destructive changes appear.
+Expected: build exits 0 and displays the package/system diff. Stop before switching if unrelated destructive changes appear.
 
-- [ ] **Step 3: Apply approved system changes**
+- [ ] **Step 3: Apply the approved host configuration**
 
 Run:
 
 ```bash
-orgm-sync
+nh os switch .#lenovo --diff always
 ```
 
-Expected: exit 0 after copying/applying the declarative configuration.
+Expected: exit 0 after activating the NixOS and Home Manager configuration.
 
 - [ ] **Step 4: Reload and restart the user service**
 
