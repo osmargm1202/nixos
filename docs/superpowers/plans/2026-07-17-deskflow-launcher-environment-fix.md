@@ -4,7 +4,7 @@
 
 **Goal:** Make the shared Deskflow user service start the stable Flatpak reliably on both `lenovo` and `orgm` instead of restarting every 40 seconds.
 
-**Architecture:** Keep the existing generated Bash launcher and systemd user unit. Capture the systemd user-manager environment before resetting parsed variables, then validate and export the recovered display/runtime values before replacing the launcher with the Deskflow Flatpak process.
+**Architecture:** Keep the existing generated Bash launcher and systemd user unit. Capture the systemd user-manager environment before resetting parsed variables, validate and export the recovered values, then use `ExecStop` to terminate Deskflow's separate Flatpak scope before service restarts.
 
 **Tech Stack:** NixOS modules, Home Manager systemd user services, Bash, Flatpak, shell regression tests.
 
@@ -30,7 +30,7 @@
 **Interfaces:**
 
 - Consumes: `nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Service.ExecStart`, whose first list item is the generated launcher path.
-- Produces: a launcher that queries the user manager while inherited `XDG_RUNTIME_DIR` is intact and exports `WAYLAND_DISPLAY`, `DISPLAY`, and `XDG_RUNTIME_DIR` to `flatpak`.
+- Produces: a launcher that queries the user manager while inherited `XDG_RUNTIME_DIR` is intact, exports graphics variables to `flatpak`, and cleans the separate Flatpak scope before restart.
 
 - [ ] **Step 1: Write the failing executable regression test**
 
@@ -121,7 +121,16 @@ grep -Fxq 'DISPLAY=:99' "$capture_file" \
 grep -Fxq "XDG_RUNTIME_DIR=$runtime_dir" "$capture_file" \
   || fail "runtime directory was not exported"
 
-echo "PASS: Deskflow launcher preserves bus access and exports graphics environment"
+service_json="$({
+  cd "$REPO_DIR"
+  nix eval --json \
+    '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.systemd.user.services.deskflow.Service'
+})"
+stop_command="$(jq -r 'if (.ExecStop | type) == "array" then .ExecStop[0] else .ExecStop // empty end' <<<"$service_json")"
+[[ "$stop_command" == -*"/bin/flatpak kill org.deskflow.deskflow" ]] \
+  || fail "Deskflow service must kill its Flatpak scope before restart"
+
+echo "PASS: Deskflow launcher preserves environment and supports clean restart"
 ```
 
 - [ ] **Step 2: Run the test and verify the current launcher fails for the confirmed reason**
@@ -176,7 +185,11 @@ EOF
       done
 ```
 
-Do not change the final `return 1`, `exec flatpak run`, package declaration, or systemd unit.
+Keep the final `return 1`, `exec flatpak run`, package declaration, and restart policy unchanged. Add this stop hook beside `ExecStart` in the service:
+
+```nix
+        ExecStop = "-${pkgs.flatpak}/bin/flatpak kill ${deskflowAppId}";
+```
 
 - [ ] **Step 4: Format the Nix module**
 
@@ -199,7 +212,7 @@ Run:
 Expected:
 
 ```text
-PASS: Deskflow launcher preserves bus access and exports graphics environment
+PASS: Deskflow launcher preserves environment and supports clean restart
 ```
 
 - [ ] **Step 6: Commit the regression test and fix**

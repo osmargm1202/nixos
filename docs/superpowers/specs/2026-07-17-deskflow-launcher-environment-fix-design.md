@@ -12,10 +12,11 @@ The installed Deskflow Flatpak is already the latest stable release, version 1.2
 
 ## Scope
 
-- Modify only the shared launcher in `nixos/deskflow.nix`.
+- Modify only the shared Deskflow module in `nixos/deskflow.nix`.
 - Apply the behavior to both hosts that import the module: `lenovo` and `orgm`.
 - Preserve the current Flatpak application ID, retry count, systemd restart policy, and host selection.
-- Add focused regression coverage for launcher environment handling.
+- Add an `ExecStop` hook that terminates the Flatpak scope before service restarts.
+- Add focused regression coverage for launcher environment handling and clean restart behavior.
 - Do not switch Deskflow to a beta or continuous release.
 - Preserve unrelated working-tree changes.
 
@@ -32,6 +33,10 @@ Each retry performs these operations in order:
 
 If the environment is not ready, the launcher sleeps one second and retries. After 30 unsuccessful attempts it exits non-zero, retaining the existing `Restart=on-failure` behavior.
 
+## Service stop behavior
+
+Flatpak moves Deskflow into its own application scope, outside the service cgroup. The unit therefore runs `flatpak kill org.deskflow.deskflow` from `ExecStop` before a restart or rebuild. The command uses systemd's failure-ignore prefix so stopping an already-closed application remains successful.
+
 ## Testing
 
 Add `tests/deskflow-launcher.bats.sh` with an executable behavior test around the evaluated launcher:
@@ -40,8 +45,9 @@ Add `tests/deskflow-launcher.bats.sh` with an executable behavior test around th
 - Return a controlled user-manager environment containing display and runtime values.
 - Stub `flatpak` and assert that it receives the parsed/exported values.
 - Stub retry behavior so the current bug fails quickly instead of waiting 30 seconds.
+- Assert that the evaluated unit defines an ignored-failure `ExecStop` command for `flatpak kill org.deskflow.deskflow`.
 
-The test must fail against the current launcher before the module changes and pass after the minimal fix.
+Each regression assertion must fail against the configuration without its fix and pass after the minimal change.
 
 Verification also includes:
 
@@ -54,4 +60,4 @@ Verification also includes:
 
 ## Failure handling
 
-Failure to query the user-manager environment remains non-fatal for an individual retry. The launcher does not launch Deskflow until display and bus prerequisites are valid. Flatpak launch failures remain visible to systemd and continue to use the existing restart policy.
+Failure to query the user-manager environment remains non-fatal for an individual retry. The launcher does not launch Deskflow until display and bus prerequisites are valid. Flatpak launch failures remain visible to systemd and continue to use the existing restart policy. Failure to kill an absent Flatpak during stop is ignored so service shutdown remains successful.
