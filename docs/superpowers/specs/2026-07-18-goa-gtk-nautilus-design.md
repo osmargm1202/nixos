@@ -2,7 +2,7 @@
 
 ## Goal
 
-Install `gnome-online-accounts-gtk` in every NixOS desktop profile that explicitly installs Nautilus.
+Install `gnome-online-accounts-gtk` in every NixOS desktop profile that explicitly installs Nautilus and ensure the GOA daemon is D-Bus activatable outside GNOME.
 
 ## Scope
 
@@ -13,10 +13,12 @@ Add the package beside Nautilus in:
 - `nixos/profiles/i3.nix`.
 - `nixos/profiles/labwc.nix`.
 
-Do not add it globally in `nixos/common.nix`, because terminal/server and desktop profiles without Nautilus do not need it. Do not alter GNOME Online Accounts services; this change installs only the requested GTK frontend package.
+Do not add it globally in `nixos/common.nix`, because terminal/server and desktop profiles without Nautilus do not need it.
+
+Enable `services.gnome.gnome-online-accounts.enable = true` in `common_hyprland.nix`, `i3.nix`, and `labwc.nix`. GNOME already enables the backend through its desktop module. The backend registration is required: without it, browser authentication succeeds but the GTK frontend waits forever because `goa-daemon` and `org.gnome.OnlineAccounts` are unavailable on the user D-Bus.
 
 ## Verification
 
-A shell contract test scans explicit Nautilus package entries and requires a neighboring `gnome-online-accounts-gtk` entry in each owning profile. Nix evaluation verifies the affected generic configurations, followed by `git diff --check`, diagnostics, commit, and push to `origin/master`.
+A shell contract test requires the frontend beside every explicit Nautilus entry and requires the backend option in non-GNOME owners. Nix evaluation verifies the backend is enabled in Hyprland, Caelestia, GNOME, i3, and Labwc, followed by `git diff --check`, diagnostics, commit, and push to `origin/master`.
 
 Existing unrelated Caelestia, Herdr, Kitty, and Yazi working-tree changes remain untouched.

@@ -11,6 +11,7 @@
   services.dbus.enable = true;
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
+  services.gnome.gnome-online-accounts.enable = true;
   programs.dconf.enable = true;
   programs.nautilus-open-any-terminal = {
     enable = true;

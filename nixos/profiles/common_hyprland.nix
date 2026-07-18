@@ -81,6 +81,7 @@ in
   };
 
   services.power-profiles-daemon.enable = true;
+  services.gnome.gnome-online-accounts.enable = true;
   # UPower DBus daemon — caelestia/quickshell BatteryMonitor reads battery via
   # Quickshell.Services.UPower; without it the shell reports "no battery".
   services.upower.enable = true;

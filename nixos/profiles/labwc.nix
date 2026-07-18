@@ -28,6 +28,8 @@
     terminal = "kitty";
   };
 
+  services.gnome.gnome-online-accounts.enable = true;
+
   xdg.portal = {
     enable = true;
     wlr.enable = true;
