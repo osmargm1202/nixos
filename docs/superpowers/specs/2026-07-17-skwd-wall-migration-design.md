@@ -18,7 +18,7 @@ Add `github:osmargm1202/skwd-wall` as a flake input. Import `inputs.skwd-wall.ni
 programs.skwd-wall.enable = true;
 ```
 
-The module supplies the `skwd-wall` selector, the `skwd` CLI, the `skwd-daemon` executable, and its user service. Remove `waytrogen` from the Hyprland system packages. Do not enable Skwd in the Caelestia profile.
+The module supplies the `skwd-wall` selector, the `skwd` CLI, the `skwd-daemon` executable, and its user service. The `osmargm1202/skwd-wall` fork pins `osmargm1202/skwd-daemon`, whose renderer uses Wayland window EGL configs with a surfaceless primary context. This avoids Mesa's lack of combined window/pbuffer configs and enables native video wallpapers and shader transitions. Remove `waytrogen` from the Hyprland system packages. Do not enable Skwd in the Caelestia profile.
 
 Because this changes a flake input and a NixOS module, deployment uses `nh os switch`. The repository `flake.lock` must remain aligned with the dotfiles repository head.
 
@@ -74,7 +74,7 @@ ${XDG_CACHE_HOME:-$HOME/.cache}/skwd-wall/wallpaper/current.jpg
 
 Automated checks cover:
 
-1. The Hyprland profile imports and enables the Skwd module and no longer installs Waytrogen.
+1. The Hyprland profile imports and enables the Skwd module, locks Osmar's patched daemon fork, and no longer installs Waytrogen.
 2. `graphical-session.target` wants `skwd-daemon.service` declaratively.
 3. Hyprland autostart invokes no wallpaper daemon or helper, and `hypr-skwd-wall-start` is absent.
 4. Both Waybar wallpaper definitions launch `skwd wall toggle` and contain no legacy right-click action.
@@ -82,7 +82,7 @@ Automated checks cover:
 6. The lockscreen bridge prefers Skwd `current.jpg` and preserves its fallback.
 7. Legacy picker and random-wallpaper tests are removed or replaced so the suite protects the new ownership model.
 8. Shell syntax checks, focused Bats tests, Nix evaluation, `nix flake check`, `git diff --check`, and diagnostics pass.
-9. `nh os switch` succeeds, followed by runtime checks for `systemctl --user status skwd-daemon.service`, Waybar launch, and Hyprlock background resolution.
+9. `nh os switch` succeeds, followed by runtime checks for `systemctl --user status skwd-daemon.service`, native video rendering, Waybar launch, and Hyprlock background resolution.
 
 ## Out of scope
 

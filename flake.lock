@@ -1006,22 +1006,6 @@
     },
     "nixpkgs_7": {
       "locked": {
-        "lastModified": 1783522502,
-        "narHash": "sha256-iffAls3iaNTyJC2faYcUXSI+Gp02cDjYl+MygxKl2GI=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "0bb7ec54c8483066ec9d7720e780a5caa71f8612",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_8": {
-      "locked": {
         "lastModified": 1774709303,
         "narHash": "sha256-D3Q07BbIA2KnTcSXIqqu9P586uWxN74zNoCH3h2ESHg=",
         "owner": "NixOS",
@@ -1159,18 +1143,21 @@
     },
     "skwd-daemon": {
       "inputs": {
-        "nixpkgs": "nixpkgs_7"
+        "nixpkgs": [
+          "skwd-wall",
+          "nixpkgs"
+        ]
       },
       "locked": {
-        "lastModified": 1782927628,
-        "narHash": "sha256-4TIN7vihllOfoYuGkJx8qdlsDnXU/U1fZLTniqpLWks=",
-        "owner": "liixini",
+        "lastModified": 1784409841,
+        "narHash": "sha256-PNArXJ7Cg0cyTjIweWURIF8KF8A2hFGIvV5oRxhVkJk=",
+        "owner": "osmargm1202",
         "repo": "skwd-daemon",
-        "rev": "36f165a68611dfc55f1878ddd34491cdb6e22a44",
+        "rev": "4e534d3b8957a9782fb4f6928ba94822f8fbef3c",
         "type": "github"
       },
       "original": {
-        "owner": "liixini",
+        "owner": "osmargm1202",
         "repo": "skwd-daemon",
         "type": "github"
       }
@@ -1182,11 +1169,11 @@
         "skwd-daemon": "skwd-daemon"
       },
       "locked": {
-        "lastModified": 1783684727,
-        "narHash": "sha256-OeeNRzvTB7Dl2S95uoOrRcxEX14oJAt6k0vDz9RtRPs=",
+        "lastModified": 1784410150,
+        "narHash": "sha256-nt3hFg44JohiohiIHfh86DDzxtE2oQmNEnxo5oGvQzI=",
         "owner": "osmargm1202",
         "repo": "skwd-wall",
-        "rev": "baaae5d54c2667461824c1a1a381621d1741935b",
+        "rev": "7f8d1183daebf07c95875fdeaa7fda4a0fcac412",
         "type": "github"
       },
       "original": {
@@ -1198,7 +1185,7 @@
     "snappy-switcher": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs_8"
+        "nixpkgs": "nixpkgs_7"
       },
       "locked": {
         "lastModified": 1780579459,

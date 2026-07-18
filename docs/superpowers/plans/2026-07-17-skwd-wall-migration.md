@@ -28,6 +28,10 @@
 
 This revision supersedes the historical Task 2 bootstrap implementation below. Remove `hypr-skwd-wall-start`, its dotfile registration, and its Hyprland autostart entry. Add `skwd-daemon.service` to `graphical-session.target` from `nixos/profiles/hyprland.nix`. Skwd owns restore behavior; automatic 1800-second rotation no longer resumes at login. Keep `hypr-current-wallpaper` because it is a read-only Hyprlock bridge, not a wallpaper controller.
 
+## Revision: Mesa Wayland video rendering
+
+The `osmargm1202/skwd-wall` fork must lock `osmargm1202/skwd-daemon`. The daemon fork selects window-only Wayland EGL configs and uses `EGL_KHR_surfaceless_context` for its offscreen FBO, replacing the unsupported combined `WINDOW_BIT | PBUFFER_BIT` requirement. Verify the Rust paper tests, workspace check, Nix daemon/wall/system builds, and runtime rendering of both a video and a shader transition before updating this repository's `flake.lock`.
+
 ---
 
 ### Task 1: Install Skwd through the classic Hyprland profile
