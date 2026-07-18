@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="${I3_CONFIG_ROOT:-$HOME/Hobby/nixos/dotfiles/config/profiles/i3/.config}"
+[[ -d "$root" ]] || { command -v notify-send >/dev/null 2>&1 && notify-send 'i3 config' "No existe $root" || true; exit 1; }
+
+selection="$(cd "$root" && find . -type f -printf '%P\n' | sort | i3-rofi 'i3 config' 16 || true)"
+[[ -n "$selection" ]] || exit 0
+case "$selection" in /*|*..*) exit 1 ;; esac
+file="$root/$selection"
+[[ -f "$file" ]] || exit 1
+
+action="$(printf '%s\n' 'Edit with nvim' 'Open default' Cancel | i3-rofi 'Open config' 3 || true)"
+case "$action" in
+  'Edit with nvim') exec kitty -e nvim "$file" ;;
+  'Open default') exec xdg-open "$file" ;;
+  *) exit 0 ;;
+esac

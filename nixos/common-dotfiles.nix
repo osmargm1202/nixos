@@ -292,6 +292,18 @@ let
       ".config/picom"
       ".config/polybar"
       ".config/rofi"
+      ".local/bin/i3-clipboard"
+      ".local/bin/i3-config-editor"
+      ".local/bin/i3-hotkeys"
+      ".local/bin/i3-keyboard-menu"
+      ".local/bin/i3-main-menu"
+      ".local/bin/i3-open-file"
+      ".local/bin/i3-performance-menu"
+      ".local/bin/i3-polybar-launch"
+      ".local/bin/i3-powermenu"
+      ".local/bin/i3-rofi"
+      ".local/bin/i3-ssh-host"
+      ".local/bin/i3-wallpaper-random"
     ];
 
     labwc = [

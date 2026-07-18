@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v powerprofilesctl >/dev/null 2>&1; then
+  command -v notify-send >/dev/null 2>&1 && notify-send 'Power profiles' 'powerprofilesctl no está disponible' || true
+  exit 0
+fi
+
+choice="$(printf '%s\n' 'Power saver' Balanced Performance Cancel | i3-rofi 'Power profile' 4 || true)"
+case "$choice" in
+  'Power saver') profile=power-saver ;;
+  Balanced) profile=balanced ;;
+  Performance) profile=performance ;;
+  *) exit 0 ;;
+esac
+exec powerprofilesctl set "$profile"

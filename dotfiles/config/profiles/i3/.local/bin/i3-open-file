@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="${1:-open}"
+case "$mode" in
+  open|dir|terminal) ;;
+  *) printf 'usage: i3-open-file open|dir|terminal\n' >&2; exit 2 ;;
+esac
+
+root="${I3_FILE_ROOT:-$HOME}"
+selection="$({
+  find "$root" -type f \
+    -not -path '*/.*' \
+    -not -path '*/.git/*' \
+    -not -path '*/.cache/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/target/*' \
+    -not -path '*/.local/share/Trash/*' \
+    -printf '%T@\t%P\n' 2>/dev/null \
+    | sort -rn | cut -f2-
+} | i3-rofi 'File' 18 || true)"
+[[ -n "$selection" ]] || exit 0
+file="$root/$selection"
+[[ -f "$file" ]] || exit 1
+
+case "$mode" in
+  open) exec xdg-open "$file" ;;
+  dir) exec nautilus "$(dirname "$file")" ;;
+  terminal) exec kitty --directory "$(dirname "$file")" ;;
+esac

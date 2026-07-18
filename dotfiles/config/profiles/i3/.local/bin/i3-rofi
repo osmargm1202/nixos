@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+prompt="${1:-i3}"
+lines="${2:-14}"
+exec rofi -dmenu -i -p "$prompt" -lines "$lines" -show-icons

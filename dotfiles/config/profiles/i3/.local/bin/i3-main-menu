@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' \
+  Apps Windows Files Clipboard Displays Wi-Fi Bluetooth Audio Keyboard Performance 'Edit config' Power \
+  | i3-rofi 'i3' 12 || true)"
+
+case "$choice" in
+  Apps) exec rofi -show drun ;;
+  Windows) exec rofi -show window ;;
+  Files) exec i3-open-file open ;;
+  Clipboard) exec i3-clipboard ;;
+  Displays) exec arandr ;;
+  Wi-Fi) exec nm-connection-editor ;;
+  Bluetooth) exec blueman-manager ;;
+  Audio) exec pavucontrol ;;
+  Keyboard) exec i3-keyboard-menu ;;
+  Performance) exec i3-performance-menu ;;
+  'Edit config') exec i3-config-editor ;;
+  Power) exec i3-powermenu ;;
+  *) exit 0 ;;
+esac

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' Lock Suspend Hibernate Logout Reboot 'Power off' Cancel | i3-rofi Power 7 || true)"
+case "$choice" in
+  Lock) exec i3lock-color --color=1a1b26 --ignore-empty-password ;;
+  Suspend) exec systemctl suspend ;;
+  Hibernate) exec systemctl hibernate ;;
+  Logout) exec i3-msg exit ;;
+  Reboot) exec systemctl reboot ;;
+  'Power off') exec systemctl poweroff ;;
+  *) exit 0 ;;
+esac

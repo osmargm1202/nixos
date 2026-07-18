@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config="${I3_CONFIG_FILE:-$HOME/.config/i3/config}"
+list_bindings() {
+  [[ -f "$config" ]] || return 0
+  awk '/^bindsym / {
+    key=$2
+    $1=""; $2=""
+    sub(/^[[:space:]]+/, "")
+    printf "%-24s %s\n", key, $0
+  }' "$config"
+}
+
+if [[ "${1:-}" == --list ]]; then
+  list_bindings
+  exit 0
+fi
+list_bindings | i3-rofi Atajos 20 >/dev/null || true

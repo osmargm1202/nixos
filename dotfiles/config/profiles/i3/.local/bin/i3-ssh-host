@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ssh_config_hosts() {
+  [[ -f "$HOME/.ssh/config" ]] || return 0
+  awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?]/) print $i }' "$HOME/.ssh/config"
+}
+
+known_hosts() {
+  [[ -f "$HOME/.ssh/known_hosts" ]] || return 0
+  awk -F'[ ,]' '$1 !~ /^\|/ && $1 != "" { print $1 }' "$HOME/.ssh/known_hosts" \
+    | sed 's/^\[//; s/\].*$//'
+}
+
+selection="$({ ssh_config_hosts; known_hosts; } | sort -u | sed '/^$/d' | i3-rofi 'SSH host' 14 || true)"
+[[ -n "$selection" ]] || exit 0
+exec kitty -e ssh "$selection"

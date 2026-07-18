@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' Toggle US Latam Cancel | i3-rofi Keyboard 4 || true)"
+case "$choice" in
+  US) exec setxkbmap -layout us -variant altgr-intl ;;
+  Latam) exec setxkbmap -layout latam ;;
+  Toggle)
+    current="$(setxkbmap -query | awk '$1 == "layout:" { print $2; exit }')"
+    if [[ "$current" == *latam* ]]; then
+      exec setxkbmap -layout us -variant altgr-intl
+    fi
+    exec setxkbmap -layout latam
+    ;;
+  *) exit 0 ;;
+esac
