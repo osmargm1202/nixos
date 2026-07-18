@@ -33,11 +33,9 @@
   services.libinput.enable = true;
   security.polkit.enable = true;
   services.dbus.enable = true;
-  services.gvfs = {
-    enable = true;
-    package = pkgs.gnome.gvfs.override {
-      googleSupport = true;
-    };
+  services.gvfs.enable = true;
+  services.gvfs.package = pkgs.gnome.gvfs.override {
+    googleSupport = true;
   };
   services.udisks2.enable = true;
   services.upower.enable = true;
@@ -133,7 +131,6 @@
     xdg-desktop-portal
     xdg-desktop-portal-gtk
     shared-mime-info
-    gnome-online-accounts-gtk
     stow
 
     networkmanagerapplet
@@ -156,6 +153,7 @@
     kitty
     chromium
     nautilus
+    gnome-online-accounts-gtk
     gnome-text-editor
     evince
     loupe
