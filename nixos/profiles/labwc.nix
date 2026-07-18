@@ -134,6 +134,7 @@
     nwg-displays
 
     nautilus
+    gnome-online-accounts-gtk
     gnome-software
     gnome-text-editor
     apostrophe

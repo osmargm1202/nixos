@@ -45,6 +45,7 @@
     kitty
     chromium
     nautilus
+    gnome-online-accounts-gtk
     stow
 
     networkmanagerapplet

@@ -317,6 +317,7 @@ in
     # gnome-disk-utility, gnome-logs, seahorse, gnome-font-viewer,
     # gnome-characters, warehouse, gnome-tweaks, overskride, iwgtk
     nautilus
+    gnome-online-accounts-gtk
     gnome-text-editor
     loupe
     evince

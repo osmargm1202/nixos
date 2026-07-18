@@ -39,6 +39,7 @@
     # GNOME core apps / integration
     gsettings-desktop-schemas
     nautilus
+    gnome-online-accounts-gtk
     gnome-console
     gnome-text-editor
     loupe
