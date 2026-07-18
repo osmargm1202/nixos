@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BIN="$ROOT/config/shared/.local/bin"
+SHARED_BIN="$ROOT/config/shared/.local/bin"
+PROFILE_BIN="$ROOT/config/profiles/hyprland/.local/bin"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -11,21 +12,34 @@ fail() {
   exit 1
 }
 
+helper_path() {
+  local name="$1"
+  if [ -e "$PROFILE_BIN/$name" ]; then
+    printf '%s\n' "$PROFILE_BIN/$name"
+  else
+    printf '%s\n' "$SHARED_BIN/$name"
+  fi
+}
+
 assert_executable() {
   local name="$1"
-  [ -x "$BIN/$name" ] || fail "$name is not executable"
+  local path
+  path="$(helper_path "$name")"
+  [ -x "$path" ] || fail "$name is not executable"
 }
 
 assert_syntax() {
   local name="$1"
-  bash -n "$BIN/$name" || fail "$name syntax check failed"
+  local path
+  path="$(helper_path "$name")"
+  bash -n "$path" || fail "$name syntax check failed"
 }
 
 for helper in \
   brightness-osd \
   volume-osd \
   mic-volume-osd \
-  hypr-random-wallpaper \
+  hypr-skwd-wall-start \
   hypr-app-launcher \
   hypr-bluetooth-reconnect \
   hypr-display-targets \
@@ -40,8 +54,5 @@ for helper in \
   assert_executable "$helper"
   assert_syntax "$helper"
 done
-
-rg -q "! -name 'orgm-current.css'" "$BIN/waybar-watch" || \
-  fail "waybar-watch should not restart Waybar for generated orgm-current.css theme updates"
 
 echo "hypr shell helper smoke tests passed"

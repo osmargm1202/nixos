@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -u
+
+systemctl_bin="${SYSTEMCTL_BIN:-systemctl}"
+skwd_bin="${SKWD_BIN:-skwd}"
+sleep_bin="${SLEEP_BIN:-sleep}"
+attempts="${SKWD_START_ATTEMPTS:-120}"
+rotation='{"interval":1800,"types":["static"]}'
+
+if ! "$systemctl_bin" --user start skwd-daemon.service; then
+  printf 'hypr-skwd-wall-start: failed to start skwd-daemon.service\n' >&2
+  exit 1
+fi
+
+for ((attempt = 1; attempt <= attempts; attempt++)); do
+  payload="$("$skwd_bin" wall list 2>/dev/null || true)"
+  if printf '%s\n' "$payload" | grep -Eq '"type"[[:space:]]*:[[:space:]]*"static"'; then
+    if "$skwd_bin" wall random_start "$rotation"; then
+      exit 0
+    fi
+    printf 'hypr-skwd-wall-start: failed to start static wallpaper rotation\n' >&2
+    exit 1
+  fi
+  if [ "$attempt" -lt "$attempts" ]; then
+    "$sleep_bin" 1
+  fi
+done
+
+printf 'hypr-skwd-wall-start: static wallpaper collection not ready after %s attempts\n' "$attempts" >&2
+exit 1
