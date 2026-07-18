@@ -55,7 +55,9 @@ Stack principal:
 - `rofi`, `kitty`;
 - `polybar`, `picom`;
 - `dunst`;
-- `feh`.
+- `feh`;
+- `rofi-calc`, `clipmenu`;
+- `arandr`, `xorg.xkill`.
 
 Integración diaria:
 
@@ -119,6 +121,37 @@ Los botones existentes no deben llamar comandos inexistentes. Se agregarán help
 
 Los helpers deben fallar con mensajes claros si no hay imágenes o si falta un comando, sin terminar la sesión i3.
 
+## Paridad diaria con helpers de Hyprland
+
+Hyprland dispone de aproximadamente 45 helpers. i3 no copiará ciegamente los que dependen de `hyprctl`, Wayland, Waybar, Hyprpaper, Hyprlock o plugins de Hyprland. Cada función diaria tendrá un helper `i3-*` o un programa X11 equivalente.
+
+| Función Hyprland | Equivalente i3 aprobado |
+| --- | --- |
+| Lanzador de aplicaciones | Rofi `drun` / `i3-app-launcher` |
+| Selector de ventanas | Rofi `window` / `i3-window-switcher` |
+| Buscar y abrir archivos | Helpers `i3-open-file`, `i3-open-file-dir` e `i3-open-file-terminal` |
+| Calculadora | `rofi-calc` mediante `i3-calc` |
+| Historial del portapapeles | `clipmenud` + `clipmenu` mediante `i3-clipboard` |
+| Selector de hosts SSH | `i3-ssh-host` con Rofi y Kitty |
+| Menú principal | `i3-main-menu` como agregador de acciones diarias |
+| Energía y sesión | `i3-powermenu` |
+| Perfiles de energía | `i3-performance-menu` con `powerprofilesctl` cuando esté disponible |
+| Wi-Fi | `nm-applet`/`nm-connection-editor`; helper Rofi solo si aporta acciones no cubiertas |
+| Bluetooth | `blueman-applet`/`blueman-manager` |
+| Dispositivos de audio | `pavucontrol` |
+| USB y automontaje | `udiskie`, UDisks2 y Nautilus |
+| Pantallas | `arandr` y `xrandr`, sin depender de `hyprctl` |
+| Layout de teclado | `i3-keyboard-menu` + `setxkbmap` |
+| Fondo actual/aleatorio | `feh` + `i3-wallpaper-random` |
+| Ayuda de atajos | `i3-hotkeys` |
+| Edición de configuración | `i3-config-editor` |
+| Cerrar ventana seleccionada | `xkill` o criterio i3 equivalente |
+| Pi prompt | Kitty ejecutando `pi`; helper solo si necesita entrada Rofi |
+
+Los scripts genéricos de Hyprland pueden servir como referencia de comportamiento, pero i3 no llamará ejecutables con prefijo `hypr-`. Si lógica reutilizable merece compartirse, se extraerá a un helper neutral y ambos perfiles usarán wrappers propios.
+
+No requieren paridad i3: transiciones de Hyprland, `hypr-nwg-dock`, plugins/grupos Hyprland, controles Hyprpaper, acciones Waybar, `hyprctl` workspace/focus y herramientas puramente Wayland. i3 ofrecerá sus operaciones nativas para workspace, foco, movimiento, fullscreen, scratchpad y layout.
+
 ## Portabilidad de Polybar
 
 La configuración actual contiene tres supuestos no portables:
@@ -157,6 +190,9 @@ Pruebas estructurales deben comprobar:
 - startx y su script generado están habilitados;
 - Xorg Server, i3, Rofi, Kitty, Polybar, Picom y helpers aparecen en el cierre apropiado;
 - cada comando llamado por i3/Polybar tiene paquete o helper correspondiente;
+- las funciones diarias de Hyprland tienen helper `i3-*` o programa X11 equivalente documentado;
+- ningún atajo/configuración i3 ejecuta un helper con prefijo `hypr-`;
+- `rofi-calc`, `clipmenu`, `arandr` y `xkill` están disponibles;
 - no quedan referencias a WezTerm ni al MP4 fijo;
 - scripts manejan falta de batería, GPU, sensores e imágenes.
 
