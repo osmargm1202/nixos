@@ -39,7 +39,6 @@ for helper in \
   brightness-osd \
   volume-osd \
   mic-volume-osd \
-  hypr-skwd-wall-start \
   hypr-app-launcher \
   hypr-bluetooth-reconnect \
   hypr-display-targets \
@@ -54,5 +53,8 @@ for helper in \
   assert_executable "$helper"
   assert_syntax "$helper"
 done
+
+[ ! -e "$PROFILE_BIN/hypr-skwd-wall-start" ] && [ ! -L "$PROFILE_BIN/hypr-skwd-wall-start" ] ||
+  fail "obsolete hypr-skwd-wall-start must not exist"
 
 echo "hypr shell helper smoke tests passed"

@@ -26,6 +26,7 @@ in
   ];
 
   programs.skwd-wall.enable = true;
+  systemd.user.targets.graphical-session.wants = [ "skwd-daemon.service" ];
 
   security.pam.services.hyprlock = {};
 

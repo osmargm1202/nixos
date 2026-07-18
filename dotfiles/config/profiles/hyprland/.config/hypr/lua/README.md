@@ -28,5 +28,5 @@ Keep this order deterministic. Put shared external command names in
 - Long-running or interactive work should call small scripts in `~/.local/bin`
   instead of embedding large shell pipelines in Lua.
 - High-cost startup helpers should call focused shell scripts directly (for
-  example, `hypr-skwd-wall-start` and `orgm-dot`).
+  example, `orgm-dot`).
 - Do not add new `orgm-hypr` calls; that umbrella command is retired.

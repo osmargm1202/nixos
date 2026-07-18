@@ -4,7 +4,6 @@ local exec_once = {
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme && printf \'orgm-dark\\n\' >\"${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme/current\"'",
   "systemctl --user start sunshine.service",
   "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
-  "sh -lc 'hypr-skwd-wall-start >>/tmp/hypr-skwd-wall-start.log 2>&1 || true'",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",
