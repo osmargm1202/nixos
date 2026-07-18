@@ -80,6 +80,8 @@ bindsym $mod+Shift+semicolon move right
 
 bindsym $mod+f fullscreen toggle
 bindsym $mod+Shift+space floating toggle
+bindsym $mod+grave scratchpad show
+bindsym $mod+Shift+grave move scratchpad
 bindsym $mod+s layout stacking
 bindsym $mod+g layout tabbed
 bindsym $mod+Shift+g layout toggle split
