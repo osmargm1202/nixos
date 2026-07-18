@@ -27,5 +27,7 @@ done
   || fail 'orgm autologin user'
 [[ "$(nix eval .#nixosConfigurations.jarq-i3.config.services.getty.autologinUser --raw 2>/dev/null)" == jarq ]] \
   || fail 'jarq autologin user'
+grep -q 'i3-startx-attempted' nixos/profiles/i3.nix \
+  || fail 'startx loop guard missing'
 
 printf 'PASS: i3 profile tests\n'

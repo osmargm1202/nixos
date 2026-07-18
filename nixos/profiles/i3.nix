@@ -23,7 +23,9 @@
   services.getty.autologinUser = userName;
 
   programs.fish.loginShellInit = lib.mkAfter ''
-    if test (tty) = /dev/tty1; and not set -q DISPLAY
+    set -l i3_startx_marker "/run/user/"(id -u)"/i3-startx-attempted"
+    if test (tty) = /dev/tty1; and not set -q DISPLAY; and not test -e "$i3_startx_marker"
+      touch "$i3_startx_marker"
       exec startx /etc/X11/xinit/xinitrc
     end
   '';
