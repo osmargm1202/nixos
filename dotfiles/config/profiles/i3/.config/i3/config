@@ -13,18 +13,31 @@ exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-
 exec --no-startup-id gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
+exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
 exec --no-startup-id picom --config ~/.config/picom/picom.conf -b
-exec --no-startup-id polybar --config=$HOME/.config/polybar/config.ini modern
+exec --no-startup-id clipmenud
+exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-color --color=1a1b26 --ignore-empty-password
+exec --no-startup-id i3-wallpaper-random --restore
+exec --no-startup-id i3-polybar-launch
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
-exec --no-startup-id xwinwrap -fs -fdt -ni -b -nf -un -o 1.0 -- mpv -wid WID --loop --no-audio --no-resume-playback --panscan=1.0 "$HOME/Videos/wallpapers/1.mp4"
 
 bindsym $mod+Return exec --no-startup-id $term
-bindsym $mod+m exec --no-startup-id $launcher
 bindsym $mod+space exec --no-startup-id $launcher
+bindsym $mod+Escape exec --no-startup-id rofi -show window
+bindsym $mod+c exec --no-startup-id rofi -show calc -modi calc
+bindsym $mod+v exec --no-startup-id i3-clipboard
+bindsym $mod+m exec --no-startup-id i3-open-file open
+bindsym $mod+Ctrl+m exec --no-startup-id i3-open-file dir
+bindsym $mod+Shift+m exec --no-startup-id i3-open-file terminal
+bindsym $mod+d exec --no-startup-id i3-ssh-host
+bindsym $mod+slash exec --no-startup-id i3-hotkeys
+bindsym $mod+Mod1+space exec --no-startup-id i3-main-menu
+bindsym $mod+p exec --no-startup-id arandr
 bindsym $mod+w exec --no-startup-id $browser
 bindsym $mod+e exec --no-startup-id $files
 bindsym $mod+q kill
+bindsym $mod+Shift+q exec --no-startup-id xkill
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+BackSpace reload
 bindsym $mod+Shift+e exec --no-startup-id i3-msg exit
@@ -36,10 +49,14 @@ bindsym $mod+Shift+o exec --no-startup-id systemctl suspend
 bindsym $mod+Mod1+o exec --no-startup-id systemctl poweroff
 bindsym $mod+Mod1+r exec --no-startup-id systemctl reboot
 
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+bindsym XF86AudioRaiseVolume exec --no-startup-id pamixer --increase 5
+bindsym XF86AudioLowerVolume exec --no-startup-id pamixer --decrease 5
+bindsym XF86AudioMute exec --no-startup-id pamixer --toggle-mute
+bindsym XF86AudioMicMute exec --no-startup-id pamixer --default-source --toggle-mute
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioStop exec --no-startup-id playerctl stop
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
+bindsym XF86AudioNext exec --no-startup-id playerctl next
 bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl set +5%
 bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 

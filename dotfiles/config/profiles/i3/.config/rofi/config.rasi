@@ -1,9 +1,9 @@
 configuration{
-    modi: "drun";
+    modi: "drun,run,window,ssh,calc";
     icon-theme: "Numix-Circle";
     font: "JetBrains Mono Regular 13";
     show-icons: true;
-    terminal: "wezterm";
+    terminal: "kitty";
     drun-display-format: "{icon} {name}";
     location: 0;
     disable-history: false;
