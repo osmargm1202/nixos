@@ -4,9 +4,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Install `gnome-online-accounts-gtk` in every NixOS profile that explicitly installs Nautilus and register the GOA backend on D-Bus.
+**Goal:** Install `gnome-online-accounts-gtk` in every NixOS profile that explicitly installs Nautilus, register the GOA backend on D-Bus, and restore native Google Drive mounting.
 
-**Architecture:** Keep package ownership beside Nautilus instead of adding a global GUI dependency. `common_hyprland.nix` covers both Hyprland variants; GNOME, i3, and Labwc receive matching entries in their own package lists. Enable the GOA service in common Hyprland, i3, and Labwc; GNOME already enables it through its desktop module.
+**Architecture:** Keep package ownership beside Nautilus instead of adding a global GUI dependency. `common_hyprland.nix` covers both Hyprland variants; GNOME, i3, and Labwc receive matching entries in their own package lists. Enable the GOA service in common Hyprland, i3, and Labwc; GNOME already enables it through its desktop module. Override GVfs in the four owners to restore its legacy Google backend, with a narrowly scoped exception for EOL libsoup 2 that the user explicitly accepted.
 
 **Tech Stack:** NixOS modules, Bash contract test, Nix evaluation, Git.
 
@@ -14,6 +14,8 @@
 
 - Add `gnome-online-accounts-gtk` beside each explicit Nautilus package.
 - Enable `services.gnome.gnome-online-accounts` wherever the frontend is installed and the desktop does not already enable it.
+- Build each owning profile's GVfs with `googleSupport = true`.
+- Permit only insecure `libsoup-2.74.3`; do not broaden the security exception.
 - Modify `common_hyprland.nix`, `gnome.nix`, `i3.nix`, and `labwc.nix` only.
 - Place the package immediately after each explicit `nautilus` package entry.
 - Do not add the package to `nixos/common.nix`.
@@ -199,3 +201,61 @@ git add \
 git commit -m "fix(desktop): enable GOA D-Bus backend"
 git push origin master
 ```
+
+---
+
+### Task 3: Restore legacy Google Drive mounting
+
+**Files:**
+
+- Modify: `tests/goa-gtk-nautilus.bats.sh`
+- Modify: `nixos/profiles/common_hyprland.nix`
+- Modify: `nixos/profiles/gnome.nix`
+- Modify: `nixos/profiles/i3.nix`
+- Modify: `nixos/profiles/labwc.nix`
+- Modify: `docs/superpowers/specs/2026-07-18-goa-gtk-nautilus-design.md`
+
+**Security:**
+
+Upstream and Nixpkgs disable this backend because `libgdata` requires EOL libsoup 2 with known unfixed CVEs. The user explicitly accepted this risk after being offered the recommended rclone mount and no-files alternatives.
+
+- [ ] **Step 1: Extend the contract and verify RED**
+
+Require each Nautilus/GOA owner to contain:
+
+```nix
+services.gvfs.package = pkgs.gnome.gvfs.override {
+  googleSupport = true;
+};
+nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
+```
+
+Run the test and expect failure naming common Hyprland.
+
+- [ ] **Step 2: Configure the legacy backend**
+
+Add the override and exact security exception to common Hyprland, GNOME, i3, and Labwc. Do not permit other insecure packages.
+
+- [ ] **Step 3: Build and inspect the backend**
+
+Run:
+
+```bash
+out=$(nix build --no-link --print-out-paths \
+  .#nixosConfigurations.hyprland.config.services.gvfs.package)
+test -x "$out/libexec/gvfsd-google"
+test -f "$out/share/gvfs/mounts/google.mount"
+grep -Fq 'Type=google-drive' "$out/share/gvfs/mounts/google.mount"
+```
+
+Expected: all checks pass. Verify all five target configurations evaluate to the same GVfs output path.
+
+- [ ] **Step 4: Commit, push, and activate**
+
+Commit only the four profiles, contract test, spec, and plan. Push to `origin/master`, then run:
+
+```bash
+nh os switch .#lenovo-hyprland
+```
+
+Restart the user session so GVfs and D-Bus load the new package, then mount the existing GOA Google Drive volume in Nautilus.

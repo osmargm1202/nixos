@@ -39,4 +39,17 @@ for profile in \
 		fail "GOA backend must be enabled in $profile"
 done
 
-printf 'PASS: GOA GTK frontend and backend configured together\n'
+for profile in \
+	nixos/profiles/common_hyprland.nix \
+	nixos/profiles/gnome.nix \
+	nixos/profiles/i3.nix \
+	nixos/profiles/labwc.nix; do
+	grep -Fq 'services.gvfs.package = pkgs.gnome.gvfs.override {' "$ROOT/$profile" ||
+		fail "Google Drive GVfs package must be selected in $profile"
+	grep -Fq 'googleSupport = true;' "$ROOT/$profile" ||
+		fail "Google Drive GVfs backend must be enabled in $profile"
+	grep -Fq 'nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];' "$ROOT/$profile" ||
+		fail "libsoup2 security exception must be explicit in $profile"
+done
+
+printf 'PASS: GOA GTK, backend, and legacy Google Drive GVfs configured together\n'
