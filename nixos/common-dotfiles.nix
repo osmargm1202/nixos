@@ -187,8 +187,6 @@ let
       ".config/hypr/noctalia/noctalia-colors.conf"
       ".config/hypr/scripts/pi-walker-prompt.sh"
       ".config/hypr/scripts/walker-window-switch.sh"
-      ".config/hypr/wallpaper-picker/README.md"
-      ".config/hypr/wallpaper-picker/wallpaper_picker.py"
       ".config/niri/00-startup.kdl"
       ".config/niri/10-workspace.kdl"
       ".config/niri/30-input.kdl"

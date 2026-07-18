@@ -6,8 +6,7 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 choice="$(printf '%s\n' \
-  '󰸉 Wallpaper next' \
-  '󰸉 Wallpaper picker' \
+  '󰸉 Wallpaper selector' \
   '󰹹 Transitions' \
   '󰌌 Keyboard layout next' \
   '󰍛 Free memory' \
@@ -15,8 +14,7 @@ choice="$(printf '%s\n' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
 case "$choice" in
-  *'Wallpaper next') exec hypr-random-wallpaper next ;;
-  *'Wallpaper picker') exec hypr-wallpaper-picker ;;
+  *'Wallpaper selector') exec skwd wall toggle ;;
   *'Transitions') exec hypr-transition-menu ;;
   *'Keyboard layout next') exec kbd-layout-next ;;
   *'Free memory') exec memclean-dev clean ;;

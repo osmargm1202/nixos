@@ -8,7 +8,8 @@ fail() {
 assert_contains() { grep -Fq "$2" "$1" || fail "expected $2 in $1"; }
 assert_not_contains() { ! grep -Fq "$2" "$1" || fail "did not expect $2 in $1"; }
 
-BIN="$ROOT/config/shared/.local/bin"
+BIN="$ROOT/config/profiles/hyprland/.local/bin"
+KEYS="$ROOT/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
 MAIN="$BIN/hypr-main-menu"
 TOOLS="$BIN/hypr-tools-menu"
 SYSTEM="$BIN/hypr-system-menu"
@@ -37,10 +38,13 @@ assert_contains "$MAIN" 'hypr-help-menu'
 # Waybar custom buttons are reachable from categorized rofi menus.
 assert_contains "$TOOLS" 'hypr-rofi-clipboard'
 assert_contains "$TOOLS" 'hypr-config-editor'
-assert_contains "$TWEAKS" 'waybar-theme-toggle toggle'
-assert_contains "$TWEAKS" 'hypr-random-wallpaper next'
-assert_contains "$TWEAKS" 'hypr-wallpaper-picker'
+assert_contains "$TWEAKS" 'skwd wall toggle'
+assert_not_contains "$TWEAKS" 'hypr-random-wallpaper'
+assert_not_contains "$TWEAKS" 'hypr-wallpaper-picker'
 assert_contains "$TWEAKS" 'kbd-layout-next'
+assert_contains "$KEYS" 'mainMod .. " + ALT + W", hl.dsp.exec_cmd("skwd wall toggle")'
+assert_contains "$KEYS" 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("chromium")'
+assert_not_contains "$KEYS" 'hypr-wallpaper-picker'
 assert_contains "$DEVICES" 'hypr-usb-menu open'
 assert_contains "$DEVICES" 'hypr-usb-menu nickname'
 assert_contains "$DEVICES" 'hypr-bluetooth-reconnect'
@@ -59,9 +63,26 @@ for script in "$BIN"/hypr-*; do
 	assert_not_contains "$script" 'distrobox-host-exec'
 done
 
-# New scripts are managed by dotfiles config.
-assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-tweaks-menu"'
-assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-devices-menu"'
-assert_contains "$ROOT/config/dotfiles.json" '".local/bin/hypr-help-menu"'
+# Profile scripts are managed by the NixOS dotfile module.
+DOTFILES_NIX="$ROOT/../nixos/common-dotfiles.nix"
+assert_contains "$DOTFILES_NIX" '".local/bin/hypr-tweaks-menu"'
+assert_contains "$DOTFILES_NIX" '".local/bin/hypr-devices-menu"'
+assert_contains "$DOTFILES_NIX" '".local/bin/hypr-help-menu"'
+
+for legacy in \
+  "$BIN/hypr-random-wallpaper" \
+  "$BIN/hypr-wallpaper-picker" \
+  "$BIN/hypr-wallpaper-picker-dark" \
+  "$BIN/hypr-wallpaper-picker-light" \
+  "$ROOT/config/profiles/hyprland/.config/hypr/wallpaper-picker/README.md" \
+  "$ROOT/config/profiles/hyprland/.config/hypr/wallpaper-picker/wallpaper_picker.py" \
+  "$ROOT/config/profiles/hyprland/.config/quickshell/wallpaper-picker/shell.qml"; do
+  [ ! -e "$legacy" ] || fail "legacy wallpaper file remains: $legacy"
+done
+
+classic_paths="$(awk '/^    hyprland = \[/,/^    \];/' "$DOTFILES_NIX")"
+if printf '%s\n' "$classic_paths" | rg -q 'waytrogen|hypr-random-wallpaper|hypr-wallpaper-picker'; then
+  fail "classic Hyprland dotfile registrations still contain legacy wallpaper paths"
+fi
 
 echo "hypr menu categories test passed"
