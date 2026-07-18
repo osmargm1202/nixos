@@ -37,8 +37,6 @@ pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
     timeout 900 'systemctl suspend' \
     before-sleep 'dms ipc call lock lock' >/dev/null 2>&1 &
 
-pgrep -u "$USER" -x nextcloud >/dev/null 2>&1 || nextcloud --background >/dev/null 2>&1 &
-
 # Discord espera a DMS para aparecer en systray.
 pgrep -u "$USER" -f 'com.discordapp.Discord' >/dev/null 2>&1 || \
   (until pgrep -u "$USER" -x dms >/dev/null 2>&1; do sleep 1; done; \
