@@ -6,7 +6,7 @@
 
 **Goal:** Replace Waytrogen and the classic Hyprland legacy wallpaper flow with declaratively installed `skwd-wall` and `skwd-daemon`.
 
-**Architecture:** The classic Hyprland NixOS profile imports the Skwd module and exposes its selector, CLI, renderer, and user service. A small session bootstrap starts the daemon, waits a bounded time for a populated collection, and asks Skwd to rotate static wallpapers every 1800 seconds; Waybar and Hyprland keybindings invoke the Skwd selector directly. Hyprlock keeps a narrow read-only bridge to Skwd's generated `current.jpg` and never applies a desktop wallpaper.
+**Architecture:** The classic Hyprland NixOS profile imports the Skwd module and exposes its selector, CLI, renderer, and user service. `graphical-session.target` starts the daemon declaratively; no compositor bootstrap helper remains. Skwd restores the previous wallpaper itself, while Waybar and Hyprland keybindings invoke the selector directly. Hyprlock keeps a narrow read-only bridge to Skwd's generated `current.jpg` and never applies a desktop wallpaper.
 
 **Tech Stack:** Nix flakes, NixOS modules, Home Manager out-of-store symlinks, Bash, Hyprland Lua configuration, Waybar JSONC, Bats-style shell tests, systemd user services, `skwd` CLI.
 
@@ -14,8 +14,8 @@
 
 - Apply only to the classic `hyprland` profile; do not modify `hyprlandqs-caelestia`.
 - Use `github:osmargm1202/skwd-wall` and its `skwd-daemon` dependency.
-- `skwd-daemon` is the only component allowed to restore, apply, or rotate desktop wallpapers.
-- Automatic rotation uses exactly 1800 seconds and `types: ["static"]`.
+- `skwd-daemon` is the only component allowed to restore or apply desktop wallpapers.
+- Do not start automatic rotation at login.
 - `Win+Alt+W` runs `skwd wall toggle`; `Win+Shift+W` runs `chromium`.
 - Waybar has no legacy wallpaper-picker right-click action.
 - Hyprlock prefers `${XDG_CACHE_HOME:-$HOME/.cache}/skwd-wall/wallpaper/current.jpg` and retains the existing fallback.
@@ -23,6 +23,10 @@
 - Do not delete user wallpapers or Skwd runtime data.
 - Source edits under `dotfiles/` are live through Home Manager out-of-store symlinks.
 - Run `nh os switch` after changing flake and NixOS module wiring.
+
+## Revision: declarative daemon ownership
+
+This revision supersedes the historical Task 2 bootstrap implementation below. Remove `hypr-skwd-wall-start`, its dotfile registration, and its Hyprland autostart entry. Add `skwd-daemon.service` to `graphical-session.target` from `nixos/profiles/hyprland.nix`. Skwd owns restore behavior; automatic 1800-second rotation no longer resumes at login. Keep `hypr-current-wallpaper` because it is a read-only Hyprlock bridge, not a wallpaper controller.
 
 ---
 

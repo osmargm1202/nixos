@@ -28,6 +28,8 @@
     terminal = "kitty";
   };
 
+  services.gnome.gnome-online-accounts.enable = true;
+
   xdg.portal = {
     enable = true;
     wlr.enable = true;
@@ -76,6 +78,10 @@
 
   services.dbus.enable = true;
   services.gvfs.enable = true;
+  services.gvfs.package = pkgs.gnome.gvfs.override {
+    googleSupport = true;
+  };
+  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
 
@@ -134,6 +140,7 @@
     nwg-displays
 
     nautilus
+    gnome-online-accounts-gtk
     gnome-software
     gnome-text-editor
     apostrophe

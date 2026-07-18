@@ -18,11 +18,8 @@ fi
 grep -Eq '"sh -lc '\''\$HOME/\.local/bin/hypr-display-targets ensure && \$HOME/\.local/bin/waybar-watch ~/\.config/waybar-hypr'\''' "$AUTOSTART" ||
 	fail "Waybar autostart should ensure display targets and run waybar-watch ~/.config/waybar-hypr"
 
-grep -Fq 'hypr-skwd-wall-start >>/tmp/hypr-skwd-wall-start.log 2>&1 || true' "$AUTOSTART" ||
-	fail "Hyprland autostart must launch the bounded Skwd bootstrap"
-
-if grep -Eq 'waytrogen|hypr-random-wallpaper|hypr-current-wallpaper' "$AUTOSTART"; then
-	fail "Hyprland autostart must not launch a legacy wallpaper controller"
+if grep -Eq 'hypr-skwd-wall-start|skwd-daemon|waytrogen|hypr-random-wallpaper|hypr-current-wallpaper' "$AUTOSTART"; then
+	fail "Hyprland autostart must not launch a wallpaper daemon or helper"
 fi
 
 echo "hypr autostart checks passed"

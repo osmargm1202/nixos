@@ -248,7 +248,6 @@ let
       ".local/bin/hypr-performance-menu"
       ".local/bin/hypr-pi-prompt"
       ".local/bin/hypr-power-menu"
-      ".local/bin/hypr-skwd-wall-start"
       ".local/bin/hypr-rofi-calc"
       ".local/bin/hypr-rofi-clipboard"
       ".local/bin/hypr-rofi-lib"

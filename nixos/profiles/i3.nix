@@ -33,11 +33,18 @@
   services.libinput.enable = true;
   security.polkit.enable = true;
   services.dbus.enable = true;
-  services.gvfs.enable = true;
+  services.gvfs = {
+    enable = true;
+    package = pkgs.gnome.gvfs.override {
+      googleSupport = true;
+    };
+  };
   services.udisks2.enable = true;
   services.upower.enable = true;
   services.gnome.gnome-keyring.enable = true;
+  services.gnome.gnome-online-accounts.enable = true;
   services.power-profiles-daemon.enable = true;
+  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
 
   programs.dconf.enable = true;
   security.pam.services.login.enableGnomeKeyring = true;
@@ -126,6 +133,9 @@
     xdg-desktop-portal
     xdg-desktop-portal-gtk
     shared-mime-info
+    gnome-online-accounts-gtk
+    stow
+
     networkmanagerapplet
     blueman
     pavucontrol

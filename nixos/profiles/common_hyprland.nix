@@ -81,6 +81,7 @@ in
   };
 
   services.power-profiles-daemon.enable = true;
+  services.gnome.gnome-online-accounts.enable = true;
   # UPower DBus daemon — caelestia/quickshell BatteryMonitor reads battery via
   # Quickshell.Services.UPower; without it the shell reports "no battery".
   services.upower.enable = true;
@@ -88,6 +89,10 @@ in
   services.dbus.enable = true;
   services.udisks2.enable = true;
   services.gvfs.enable = true;
+  services.gvfs.package = pkgs.gnome.gvfs.override {
+    googleSupport = true;
+  };
+  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
 
@@ -317,6 +322,7 @@ in
     # gnome-disk-utility, gnome-logs, seahorse, gnome-font-viewer,
     # gnome-characters, warehouse, gnome-tweaks, overskride, iwgtk
     nautilus
+    gnome-online-accounts-gtk
     gnome-text-editor
     loupe
     evince

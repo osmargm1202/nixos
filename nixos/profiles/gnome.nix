@@ -7,6 +7,10 @@
   security.polkit.enable = true;
   services.dbus.enable = true;
   services.gvfs.enable = true;
+  services.gvfs.package = pkgs.gnome.gvfs.override {
+    googleSupport = true;
+  };
+  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
   security.pam.services.login.enableGnomeKeyring = true;
@@ -39,6 +43,7 @@
     # GNOME core apps / integration
     gsettings-desktop-schemas
     nautilus
+    gnome-online-accounts-gtk
     gnome-console
     gnome-text-editor
     loupe

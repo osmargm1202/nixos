@@ -14,6 +14,8 @@ grep -Fq 'skwd-wall = {' "$FLAKE" || fail "missing skwd-wall flake input"
 grep -Fq 'url = "github:osmargm1202/skwd-wall";' "$FLAKE" || fail "skwd-wall input must use Osmar fork"
 grep -Fq 'inputs.skwd-wall.nixosModules.default' "$PROFILE" || fail "Hyprland profile must import Skwd module"
 grep -Fq 'programs.skwd-wall.enable = true;' "$PROFILE" || fail "Hyprland profile must enable Skwd"
+grep -Fq 'systemd.user.targets.graphical-session.wants = [ "skwd-daemon.service" ];' "$PROFILE" ||
+  fail "graphical session must start Skwd daemon declaratively"
 if grep -Eq '^[[:space:]]+waytrogen([[:space:]]|$)' "$PROFILE"; then
   fail "Hyprland profile must not install Waytrogen"
 fi

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Replace Waytrogen and the legacy Hyprland wallpaper flow with `skwd-wall` and `skwd-daemon` in the classic `hyprland` profile. Skwd becomes the only component that restores, applies, and rotates desktop wallpapers.
+Replace Waytrogen and the legacy Hyprland wallpaper flow with `skwd-wall` and `skwd-daemon` in the classic `hyprland` profile. Skwd becomes the only component that restores and applies desktop wallpapers.
 
 ## Scope
 
@@ -24,17 +24,11 @@ Because this changes a flake input and a NixOS module, deployment uses `nh os sw
 
 ## Session startup and ownership
 
-Hyprland autostart starts `skwd-daemon.service` through the user systemd manager. This avoids the previously documented Hyprland user-service startup issue without requiring a one-time manual `systemctl --user enable` command.
+The classic Hyprland profile adds `skwd-daemon.service` to `graphical-session.target` declaratively. Hyprland autostart does not launch the daemon or any wallpaper helper.
 
-After starting the service, session startup waits for the Skwd socket and a populated wallpaper collection with a bounded timeout. Once ready, it invokes:
+The daemon restores its saved wallpaper automatically after its initial scan. Automatic 30-minute rotation is intentionally no longer started at login; users can select or start wallpaper behavior through Skwd itself.
 
-```sh
-skwd wall random_start '{"interval":1800,"types":["static"]}'
-```
-
-The daemon restores its saved wallpaper automatically after its initial scan. Automatic rotation remains every 30 minutes and includes static images only. Videos and Wallpaper Engine scenes remain available for manual selection.
-
-Startup must not use `waytrogen`, `hypr-random-wallpaper`, direct `hyprctl hyprpaper` commands, or a second wallpaper daemon. Repeated startup is safe: `systemctl start` is idempotent and `random_start` replaces an existing Skwd rotation task.
+Startup must not use `hypr-skwd-wall-start`, `waytrogen`, `hypr-random-wallpaper`, direct `hyprctl hyprpaper` commands, or a second wallpaper daemon.
 
 ## User interaction
 
@@ -71,9 +65,8 @@ ${XDG_CACHE_HOME:-$HOME/.cache}/skwd-wall/wallpaper/current.jpg
 
 ## Error handling
 
-- Failure to start `skwd-daemon.service` is logged and does not block the rest of Hyprland startup.
-- The readiness wait is bounded. A missing socket, empty collection, or failed `skwd wall list` leaves automatic rotation disabled for that session instead of creating an infinite startup process.
-- The selector remains callable even when automatic rotation did not start; its CLI error remains visible in logs.
+- systemd restarts `skwd-daemon.service` on failure without blocking Hyprland startup.
+- The selector remains callable when the daemon is unavailable; Skwd reports the service error directly.
 - A missing Skwd `current.jpg` leaves Hyprlock on the existing fallback image.
 - No wallpaper source file is deleted during migration.
 
@@ -82,19 +75,19 @@ ${XDG_CACHE_HOME:-$HOME/.cache}/skwd-wall/wallpaper/current.jpg
 Automated checks cover:
 
 1. The Hyprland profile imports and enables the Skwd module and no longer installs Waytrogen.
-2. Hyprland autostart starts `skwd-daemon.service`, performs a bounded readiness check, and requests a 1800-second static-only rotation.
-3. Autostart no longer invokes Waytrogen or `hypr-random-wallpaper`.
+2. `graphical-session.target` wants `skwd-daemon.service` declaratively.
+3. Hyprland autostart invokes no wallpaper daemon or helper, and `hypr-skwd-wall-start` is absent.
 4. Both Waybar wallpaper definitions launch `skwd wall toggle` and contain no legacy right-click action.
 5. `Win+Alt+W` toggles Skwd and `Win+Shift+W` launches Chromium.
 6. The lockscreen bridge prefers Skwd `current.jpg` and preserves its fallback.
 7. Legacy picker and random-wallpaper tests are removed or replaced so the suite protects the new ownership model.
 8. Shell syntax checks, focused Bats tests, Nix evaluation, `nix flake check`, `git diff --check`, and diagnostics pass.
-9. `nh os switch` succeeds, followed by runtime checks for `systemctl --user status skwd-daemon.service`, `skwd wall random_status`, Waybar launch, and Hyprlock background resolution.
+9. `nh os switch` succeeds, followed by runtime checks for `systemctl --user status skwd-daemon.service`, Waybar launch, and Hyprlock background resolution.
 
 ## Out of scope
 
 - Enabling Skwd in `hyprlandqs-caelestia`.
-- Changing the 30-minute interval after migration.
+- Restoring automatic wallpaper rotation at login.
 - Adding videos or Wallpaper Engine scenes to automatic rotation.
 - Redesigning Skwd itself or changing the external repositories.
 - Deleting user wallpapers or Skwd runtime data.
