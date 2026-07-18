@@ -22,7 +22,10 @@ in
 {
   imports = [
     ./common_hyprland.nix
+    inputs.skwd-wall.nixosModules.default
   ];
+
+  programs.skwd-wall.enable = true;
 
   security.pam.services.hyprlock = {};
 
@@ -34,7 +37,6 @@ in
     nwg-drawer
     nwg-displays
     nwg-look
-    waytrogen
 
     # Hardware tray/TUI (fuera de common_hyprland: caelestia trae los suyos)
     networkmanagerapplet

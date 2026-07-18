@@ -48,6 +48,11 @@
       url = "github:osmargm1202/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    skwd-wall = {
+      # Osmar fork of the standalone selector; it carries the matching
+      # skwd-daemon package and user service.
+      url = "github:osmargm1202/skwd-wall";
+    };
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
