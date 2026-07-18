@@ -6,7 +6,22 @@ if ! command -v powerprofilesctl >/dev/null 2>&1; then
   exit 0
 fi
 
-choice="$(printf '%s\n' 'Power saver' Balanced Performance Cancel | i3-rofi 'Power profile' 4 || true)"
+mapfile -t profiles < <(
+  powerprofilesctl list 2>/dev/null \
+    | sed -nE 's/^[[:space:]*]+([a-z-]+):.*/\1/p'
+)
+choices=()
+for profile in "${profiles[@]}"; do
+  case "$profile" in
+    power-saver) choices+=('Power saver') ;;
+    balanced) choices+=(Balanced) ;;
+    performance) choices+=(Performance) ;;
+  esac
+done
+((${#choices[@]} > 0)) || exit 0
+choices+=(Cancel)
+
+choice="$(printf '%s\n' "${choices[@]}" | i3-rofi 'Power profile' "${#choices[@]}" || true)"
 case "$choice" in
   'Power saver') profile=power-saver ;;
   Balanced) profile=balanced ;;
