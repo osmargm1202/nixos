@@ -303,6 +303,9 @@ let
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"
       ".local/bin/i3-ssh-host"
+      ".local/bin/i3-status-battery"
+      ".local/bin/i3-status-cpu-temp"
+      ".local/bin/i3-status-gpu-temp"
       ".local/bin/i3-wallpaper-random"
     ];
 

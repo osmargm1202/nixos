@@ -32,6 +32,9 @@ helpers=(
   i3-hotkeys
   i3-config-editor
   i3-polybar-launch
+  i3-status-battery
+  i3-status-cpu-temp
+  i3-status-gpu-temp
 )
 for helper in "${helpers[@]}"; do
   [[ -x "$BIN/$helper" ]] || fail "$helper missing or not executable"
@@ -54,5 +57,22 @@ ROFI_INPUT="$TMP/rofi-input" I3_FILE_ROOT="$TMP/files" PATH="$TMP/bin:$PATH" "$B
 
 grep -q 'visible/file.txt' "$TMP/rofi-input" || fail 'visible file missing from picker'
 ! grep -q '.hidden/file.txt' "$TMP/rofi-input" || fail 'hidden file leaked into picker'
+
+mkdir -p "$TMP/power/BAT1" "$TMP/hwmon/hwmon0" "$TMP/empty"
+printf 'Battery\n' > "$TMP/power/BAT1/type"
+printf '73\n' > "$TMP/power/BAT1/capacity"
+printf 'Discharging\n' > "$TMP/power/BAT1/status"
+printf 'coretemp\n' > "$TMP/hwmon/hwmon0/name"
+printf '56000\n' > "$TMP/hwmon/hwmon0/temp1_input"
+
+battery="$(I3_POWER_SUPPLY_ROOT="$TMP/power" "$BIN/i3-status-battery")"
+[[ "$battery" == *73%* ]] || fail 'BAT1 was not auto-detected'
+cpu="$(I3_HWMON_ROOT="$TMP/hwmon" "$BIN/i3-status-cpu-temp")"
+[[ "$cpu" == *56* ]] || fail 'CPU temperature not detected'
+mkdir -p "$TMP/gpu-only/hwmon0"
+printf 'amdgpu\n' > "$TMP/gpu-only/hwmon0/name"
+printf '67000\n' > "$TMP/gpu-only/hwmon0/temp1_input"
+[[ -z "$(I3_HWMON_ROOT="$TMP/gpu-only" "$BIN/i3-status-cpu-temp")" ]] || fail 'GPU sensor was mislabeled as CPU'
+[[ -z "$(I3_POWER_SUPPLY_ROOT="$TMP/empty" "$BIN/i3-status-battery")" ]] || fail 'desktop battery output must be empty'
 
 printf 'PASS: i3 shell helper tests\n'

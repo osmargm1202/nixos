@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s nullglob
+
+if command -v nvidia-smi >/dev/null 2>&1; then
+  value="$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -n1 || true)"
+  if [[ "$value" =~ ^[0-9]+$ ]] && ((value <= 150)); then
+    printf '󰾲 GPU %s°C\n' "$value"
+    exit 0
+  fi
+fi
+
+root="${I3_HWMON_ROOT:-/sys/class/hwmon}"
+for hwmon in "$root"/hwmon*; do
+  name="$(cat "$hwmon/name" 2>/dev/null || true)"
+  [[ "$name" =~ ^(amdgpu|i915|xe)$ ]] || continue
+  for input in "$hwmon"/temp*_input; do
+    value="$(cat "$input" 2>/dev/null || true)"
+    [[ "$value" =~ ^[0-9]+$ ]] || continue
+    ((value >= 0 && value <= 150000)) || continue
+    printf '󰾲 GPU %s°C\n' "$((value / 1000))"
+    exit 0
+  done
+done
+exit 0

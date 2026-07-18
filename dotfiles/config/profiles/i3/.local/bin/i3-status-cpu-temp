@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s nullglob
+
+root="${I3_HWMON_ROOT:-/sys/class/hwmon}"
+for hwmon in "$root"/hwmon*; do
+  name="$(cat "$hwmon/name" 2>/dev/null || true)"
+  for input in "$hwmon"/temp*_input; do
+    value="$(cat "$input" 2>/dev/null || true)"
+    [[ "$value" =~ ^[0-9]+$ ]] || continue
+    ((value >= 0 && value <= 150000)) || continue
+    temp=$((value / 1000))
+    if [[ "$name" =~ ^(coretemp|k10temp|zenpower|cpu_thermal)$ ]]; then
+      printf '󰔏 CPU %s°C\n' "$temp"
+      exit 0
+    fi
+  done
+done
+exit 0
