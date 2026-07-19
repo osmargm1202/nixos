@@ -1,0 +1,30 @@
+{
+  "mode": "opencode",
+  "timeout_ms": 1200000,
+  "stall_timeout_ms": 240000,
+  "max_concurrency": 5,
+  "debug": false,
+  "session_resources": "lean",
+  "history_panel_shortcut": "ctrl+,",
+  "detail_cancel_shortcut": "x",
+  "background_handoff_shortcut": "ctrl+h",
+  "default_tools": [
+    "read"
+  ],
+  "model_profiles": {
+    "planner": { "effort": "high" },
+    "builder": { "effort": "high" },
+    "sdd-explorer": { "effort": "medium" },
+    "sdd-spec": { "effort": "high" },
+    "sdd-design": { "effort": "high" },
+    "sdd-plan": { "effort": "high" },
+    "sdd-tasks": { "effort": "medium" },
+    "sdd-builder": { "effort": "high" },
+    "sdd-reviewer": { "effort": "high" },
+    "sdd-verifier": { "effort": "medium" },
+    "tdd-planner": { "effort": "high" },
+    "tdd-builder": { "effort": "high" },
+    "tdd-reviewer": { "effort": "high" },
+    "tdd-verifier": { "effort": "medium" }
+  }
+}
