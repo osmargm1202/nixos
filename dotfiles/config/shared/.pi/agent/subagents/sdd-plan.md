@@ -33,4 +33,6 @@ Provide goal, constraints, exact file map, interfaces between work units, test-f
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Include the exact written path. Set `next_recommended` to `sdd-tasks` when strategy is complete.

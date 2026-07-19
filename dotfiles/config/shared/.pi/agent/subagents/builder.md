@@ -39,4 +39,6 @@ Implement exactly one approved task in the supplied working directory. Keep chan
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Include changed paths and exact commands/results. Use `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, or `BLOCKED`. Set `next_recommended` to the main agent for review.

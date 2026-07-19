@@ -39,4 +39,6 @@ Implement exactly one supplied SDD task against its approved spec, design, and t
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Report changed files, exact RED/GREEN commands/results, and concerns. Use the four standard statuses. Set `next_recommended` to `sdd-reviewer` only when work is ready for independent review.

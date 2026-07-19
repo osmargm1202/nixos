@@ -34,4 +34,6 @@ Create a concrete implementation plan for one bounded task. Explore enough code 
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Use `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, or `BLOCKED`. Set `next_recommended` to `builder` when plan is executable.

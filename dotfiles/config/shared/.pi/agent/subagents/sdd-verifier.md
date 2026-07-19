@@ -33,4 +33,6 @@ Check requirement coverage, completed task/review status, focused and full tests
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Include exact commands and outcomes. Set `next_recommended` to `sdd-builder` for a confirmed defect or `complete` only when every required gate passes.

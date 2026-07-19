@@ -33,4 +33,6 @@ Cross-check reported RED evidence with changed tests, run focused tests and requ
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Include exact commands/results. Set `next_recommended` to `tdd-builder` for confirmed defects or `complete` only when all gates pass.

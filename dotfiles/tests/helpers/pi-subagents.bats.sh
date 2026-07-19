@@ -25,14 +25,26 @@ groups = {
     "tdd": ["tdd-planner", "tdd-builder", "tdd-reviewer", "tdd-verifier"],
 }
 expected = [name for names in groups.values() for name in names]
-readonly = {
-    "planner", "sdd-explorer", "sdd-reviewer", "sdd-verifier",
-    "tdd-reviewer", "tdd-verifier",
+base_tools = {"read", "grep", "find", "ls", "bash", "symbol_search", "module_report", "read_symbol", "read_enclosing"}
+diagnostic_tools = {"lsp_diagnostics", "lens_diagnostics"}
+write_tools = {"write", "edit"}
+context7_tools = {"context7_resolve-library-id", "context7_query-docs"}
+tool_contracts = {
+    "planner": base_tools,
+    "builder": base_tools | write_tools | diagnostic_tools,
+    "sdd-explorer": base_tools | context7_tools,
+    "sdd-spec": base_tools | write_tools,
+    "sdd-design": base_tools | write_tools,
+    "sdd-plan": base_tools | write_tools,
+    "sdd-tasks": base_tools | write_tools,
+    "sdd-builder": base_tools | write_tools | diagnostic_tools,
+    "sdd-reviewer": base_tools | diagnostic_tools,
+    "sdd-verifier": base_tools | diagnostic_tools,
+    "tdd-planner": base_tools | write_tools,
+    "tdd-builder": base_tools | write_tools | diagnostic_tools,
+    "tdd-reviewer": base_tools | diagnostic_tools,
+    "tdd-verifier": base_tools | diagnostic_tools,
 }
-artifact_writers = {"sdd-spec", "sdd-design", "sdd-plan", "sdd-tasks", "tdd-planner"}
-builders = {"builder", "sdd-builder", "tdd-builder"}
-required_navigation = {"read", "grep", "find", "ls", "bash", "symbol_search", "module_report", "read_symbol", "read_enclosing"}
-required_diagnostics = {"lsp_diagnostics", "lens_diagnostics"}
 
 
 def fail(message: str) -> None:
@@ -71,34 +83,28 @@ def parse_agent(name: str) -> tuple[dict[str, str], list[str], str]:
 
 def check_agent(name: str) -> None:
     metadata, tools, body = parse_agent(name)
+    if not re.fullmatch(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", name):
+        fail(f"{name}: name must be lowercase kebab-case")
+    if set(metadata) != {"name", "description"}:
+        fail(f"{name}: frontmatter keys must be name, description, and tools only")
     if metadata.get("name") != name:
         fail(f"{name}: frontmatter name mismatch")
     if not metadata.get("description"):
         fail(f"{name}: missing trigger-focused description")
-    if not tools:
-        fail(f"{name}: empty tool allowlist")
-    if any(tool.startswith("subagent_") for tool in tools):
-        fail(f"{name}: subagent delegation tool is forbidden")
-    missing_navigation = required_navigation - set(tools)
-    if missing_navigation:
-        fail(f"{name}: missing navigation tools {sorted(missing_navigation)}")
-    if name in readonly and ({"write", "edit"} & set(tools)):
-        fail(f"{name}: read-only role contains write/edit")
-    if name in artifact_writers and not {"write", "edit"}.issubset(tools):
-        fail(f"{name}: artifact writer requires write and edit")
-    if name in builders:
-        required = {"write", "edit"} | required_diagnostics
-        if not required.issubset(tools):
-            fail(f"{name}: builder missing {sorted(required - set(tools))}")
-    if name in {"sdd-reviewer", "sdd-verifier", "tdd-reviewer", "tdd-verifier"}:
-        if not required_diagnostics.issubset(tools):
-            fail(f"{name}: reviewer/verifier missing diagnostics")
-    context7 = {"context7_resolve-library-id", "context7_query-docs"}
-    if name == "sdd-explorer" and not context7.issubset(tools):
-        fail("sdd-explorer: missing Context7 tools")
-    if name != "sdd-explorer" and context7 & set(tools):
-        fail(f"{name}: Context7 must be limited to sdd-explorer")
-    for marker in ("## Boundaries", "## Output contract", "next_recommended"):
+    if len(tools) != len(set(tools)):
+        fail(f"{name}: duplicate tool entries")
+    actual_tools = set(tools)
+    wanted_tools = tool_contracts[name]
+    if actual_tools != wanted_tools:
+        fail(f"{name}: tool contract mismatch; missing={sorted(wanted_tools - actual_tools)}, extra={sorted(actual_tools - wanted_tools)}")
+    markers = (
+        "## Boundaries",
+        "## Output contract",
+        "next_recommended",
+        "DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED",
+        "Advance to `next_recommended` only when status is `DONE`",
+    )
+    for marker in markers:
         if marker not in body:
             fail(f"{name}: missing body contract marker {marker}")
     if "subagent_*" not in body:
@@ -109,12 +115,23 @@ def check_config() -> None:
     if not config_path.is_file():
         fail(f"missing config: {config_path}")
     config = json.loads(config_path.read_text())
-    if config.get("session_resources") != "lean":
-        fail("subagents.json: session_resources must be lean")
-    if config.get("debug") is not False:
-        fail("subagents.json: debug must be false")
-    if config.get("default_tools") != ["read"]:
-        fail("subagents.json: default_tools must be ['read']")
+    expected_values = {
+        "mode": "opencode",
+        "timeout_ms": 1200000,
+        "stall_timeout_ms": 240000,
+        "max_concurrency": 5,
+        "debug": False,
+        "session_resources": "lean",
+        "history_panel_shortcut": "ctrl+,",
+        "detail_cancel_shortcut": "x",
+        "background_handoff_shortcut": "ctrl+h",
+        "default_tools": ["read"],
+    }
+    if set(config) != {*expected_values, "model_profiles"}:
+        fail("subagents.json: unexpected or missing top-level fields")
+    for key, wanted in expected_values.items():
+        if config.get(key) != wanted:
+            fail(f"subagents.json: {key} must equal {wanted!r}")
     profiles = config.get("model_profiles")
     if not isinstance(profiles, dict) or set(profiles) != set(expected):
         fail("subagents.json: model_profiles must match all 14 agents exactly")
@@ -129,16 +146,22 @@ def check_deployment() -> None:
     if not nix_module.is_file():
         fail(f"missing Nix module: {nix_module}")
     text = nix_module.read_text()
+    match = re.search(r"(?ms)^\s*sharedPaths\s*=\s*\[(.*?)^\s*\];", text)
+    if not match:
+        fail("common-dotfiles.nix: sharedPaths list not found")
+    shared_paths = re.findall(r'^\s*"([^"]+)"', match.group(1), re.MULTILINE)
     for path in (".pi/agent/subagents", ".pi/agent/subagents.json"):
-        marker = f'"{path}"'
-        if text.count(marker) != 1:
-            fail(f"common-dotfiles.nix: expected exactly one {marker}")
+        if shared_paths.count(path) != 1:
+            fail(f"common-dotfiles.nix: expected exactly one {path!r} in sharedPaths")
 
 
 if group not in {*groups, "deployment", "all"}:
     fail(f"unknown group: {group}")
 
 if group == "all":
+    actual_files = {path.stem for path in subagents.glob("*.md")}
+    if actual_files != set(expected):
+        fail(f"catalog files mismatch; missing={sorted(set(expected) - actual_files)}, extra={sorted(actual_files - set(expected))}")
     check_config()
     for name in expected:
         check_agent(name)

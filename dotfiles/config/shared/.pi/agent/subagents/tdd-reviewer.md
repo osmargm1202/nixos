@@ -33,4 +33,6 @@ Check that the test failed for the intended missing behavior, tests real behavio
 
 ## Output contract
 
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Classify findings as Critical, Important, or Minor. Set `next_recommended` to `tdd-builder` for blocking fixes or `tdd-verifier` when review passes.
