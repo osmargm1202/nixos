@@ -31,7 +31,7 @@ Crear un catálogo global de subagentes para Pi que permita delegar planificaci�
 - Crear configuración global `dotfiles/config/shared/.pi/agent/subagents.json`.
 - Registrar `.pi/agent/subagents` y `.pi/agent/subagents.json` en `nixos/common-dotfiles.nix` bajo `sharedPaths`.
 - Definir responsabilidades, herramientas, estados y handoffs por fase.
-- Configurar aislamiento `lean`, logging desactivado y esfuerzo por rol.
+- Configurar aislamiento `lean`, logging desactivado, esfuerzo por rol y Codex Spark para los tres builders.
 - Validar estructura, configuración, despliegue y descubrimiento después de `/reload`.
 
 ### No incluido
@@ -41,7 +41,7 @@ Crear un catálogo global de subagentes para Pi que permita delegar planificaci�
 - Implementar una extensión nueva o modificar `pi-subagents-j0k3r`.
 - Crear delegación entre subagentes.
 - Ocultar o mostrar agentes dinámicamente según la fase.
-- Fijar un modelo específico por agente.
+- Fijar modelos específicos para planners, productores de artefactos, reviewers o verifiers.
 - Añadir persistencia de memoria directa a los subagentes.
 
 ## 4. Arquitectura
@@ -171,24 +171,24 @@ Reglas:
   "background_handoff_shortcut": "ctrl+h",
   "model_profiles": {
     "planner": { "effort": "high" },
-    "builder": { "effort": "high" },
+    "builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "sdd-explorer": { "effort": "medium" },
     "sdd-spec": { "effort": "high" },
     "sdd-design": { "effort": "high" },
     "sdd-plan": { "effort": "high" },
     "sdd-tasks": { "effort": "medium" },
-    "sdd-builder": { "effort": "high" },
+    "sdd-builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "sdd-reviewer": { "effort": "high" },
     "sdd-verifier": { "effort": "medium" },
     "tdd-planner": { "effort": "high" },
-    "tdd-builder": { "effort": "high" },
+    "tdd-builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "tdd-reviewer": { "effort": "high" },
     "tdd-verifier": { "effort": "medium" }
   }
 }
 ```
 
-Los perfiles fijarán solo `effort`; al omitir `model`, cada agente heredará el modelo del orquestador activo.
+Los perfiles de `builder`, `sdd-builder` y `tdd-builder` fijarán `model: "openai-codex/gpt-5.3-codex-spark"` y `effort: "high"`. Los otros once agentes omitirán `model` y heredarán el modelo del orquestador activo.
 
 ### 7.2 Esfuerzo por rol
 
@@ -197,7 +197,16 @@ Los perfiles fijarán solo `effort`; al omitir `model`, cada agente heredará el
 | `medium` | `sdd-explorer`, `sdd-tasks`, `sdd-verifier`, `tdd-verifier` |
 | `high` | `planner`, `builder`, `sdd-spec`, `sdd-design`, `sdd-plan`, `sdd-builder`, `sdd-reviewer`, `tdd-planner`, `tdd-builder`, `tdd-reviewer` |
 
-### 7.3 Allowlist por clase
+### 7.3 Routing de modelos
+
+| Modelo | Agentes |
+|---|---|
+| `openai-codex/gpt-5.3-codex-spark` | `builder`, `sdd-builder`, `tdd-builder` |
+| Modelo activo heredado | Los otros once agentes |
+
+El routing se define únicamente en `subagents.json`; los archivos Markdown no fijarán `model` ni `effort`.
+
+### 7.4 Allowlist por clase
 
 | Clase | Herramientas exactas |
 |---|---|
@@ -274,7 +283,8 @@ El trabajo queda aceptado cuando:
 - SDD y TDD tienen handoffs explícitos;
 - `tdd-builder` conserva ciclo completo RED→GREEN→REFACTOR;
 - reviewers/verifiers permanecen read-only;
-- modelo se hereda y esfuerzo se aplica por perfil;
+- `builder`, `sdd-builder` y `tdd-builder` usan `openai-codex/gpt-5.3-codex-spark` con esfuerzo `high`;
+- los otros once agentes heredan el modelo activo y conservan su esfuerzo por perfil;
 - JSON, frontmatter y allowlists pasan validación.
 
 ## 10. Riesgos y mitigaciones
@@ -285,7 +295,8 @@ El trabajo queda aceptado cuando:
 | Prompts amplios causan scope creep | Una tarea por builder y contratos de salida obligatorios |
 | Bash permite mutaciones en roles read-only | Allowlist sin edit/write y prohibición explícita; revisar comandos reportados |
 | Herramientas de extensión no están cargadas en sesión anidada | `session_resources: lean` conserva extensiones en modo tools-only; validar nombres disponibles |
-| Modelo activo no tiene capacidad suficiente | Agente devuelve `BLOCKED`; orquestador puede reintentar con modelo más capaz |
+| Modelo activo no tiene capacidad suficiente para roles no implementadores | Agente devuelve `BLOCKED`; orquestador puede reintentar con modelo más capaz |
+| Codex Spark no está disponible o falla para un builder | Runner reporta error o usa su fallback documentado al modelo actual; no cambiar perfiles silenciosamente |
 | Rutas heredadas generan confusión futura | Mantener nuevo catálogo en `subagents/`; migración del legado queda fuera de alcance |
 | Cambios ajenos presentes en el monorepo | Stage y commit solo de archivos pertenecientes a esta iniciativa |
 | Registro accidental en manifiesto legado | Cambiar únicamente `nixos/common-dotfiles.nix`; mantener `dotfiles/config/dotfiles.json` fuera del diff |
