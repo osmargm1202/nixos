@@ -40,6 +40,6 @@ Implement one approved behavior. No production code may be written before a test
 
 ## Output contract
 
-Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Proceed to the next workflow phase or complete only when status is `DONE`. For a non-`DONE` status, `next_recommended` may identify corrective builder or human action, but the orchestrator must resolve it first.
 
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Evidence must include exact RED command/output/reason, GREEN command/output, refactor verification, and changed paths. Set `next_recommended` to `tdd-reviewer` only after a valid complete cycle.

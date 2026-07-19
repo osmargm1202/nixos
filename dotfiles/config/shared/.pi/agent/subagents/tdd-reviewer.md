@@ -33,6 +33,6 @@ Check that the test failed for the intended missing behavior, tests real behavio
 
 ## Output contract
 
-Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Proceed to the next workflow phase or complete only when status is `DONE`. For a non-`DONE` status, `next_recommended` may identify corrective builder or human action, but the orchestrator must resolve it first.
 
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Classify findings as Critical, Important, or Minor. Set `next_recommended` to `tdd-builder` for blocking fixes or `tdd-verifier` when review passes.

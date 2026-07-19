@@ -33,6 +33,6 @@ Return separate verdicts for spec compliance and task quality. Cite file and lin
 
 ## Output contract
 
-Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Advance to `next_recommended` only when status is `DONE`; concerns require orchestrator resolution.
+Allowed status values: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`. Proceed to the next workflow phase or complete only when status is `DONE`. For a non-`DONE` status, `next_recommended` may identify corrective builder or human action, but the orchestrator must resolve it first.
 
 Return `status`, `executive_summary`, `artifacts`, `verification`, `risks`, and `next_recommended`. Use `DONE` only when both verdicts pass. Set `next_recommended` to `sdd-builder` for Critical/Important fixes, the next task's `sdd-builder` when more tasks remain, or `sdd-verifier` after the final clean task review.

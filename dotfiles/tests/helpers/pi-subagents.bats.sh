@@ -55,7 +55,10 @@ def parse_agent(name: str) -> tuple[dict[str, str], list[str], str]:
     path = subagents / f"{name}.md"
     if not path.is_file():
         fail(f"missing agent definition: {path}")
-    text = path.read_text()
+    raw = path.read_bytes()
+    if b"\r\n" in raw:
+        fail(f"{name}: CRLF frontmatter is incompatible with the production loader")
+    text = raw.decode("utf-8")
     lines = text.splitlines()
     if not lines or lines[0] != "---":
         fail(f"missing opening frontmatter delimiter: {path}")
@@ -102,7 +105,7 @@ def check_agent(name: str) -> None:
         "## Output contract",
         "next_recommended",
         "DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED",
-        "Advance to `next_recommended` only when status is `DONE`",
+        "Proceed to the next workflow phase or complete only when status is `DONE`",
     )
     for marker in markers:
         if marker not in body:
