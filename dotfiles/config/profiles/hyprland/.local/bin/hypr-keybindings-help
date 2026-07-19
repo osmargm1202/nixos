@@ -93,8 +93,9 @@ entries() {
       entry 'Win+H/J/K/L' 'Mover foco vim' 'movefocus'
       entry 'Win+Ctrl+←/↓/↑/→' 'Mover ventana' 'movewindow'
       entry 'Win+Ctrl+H/J/K/L' 'Mover ventana vim' 'movewindow'
-      entry 'Win+- / Win+=' 'Resize ancho' 'resizeactive'
-      entry 'Win+Shift+- / +=' 'Resize alto' 'resizeactive'
+      entry 'Win+Alt+flechas' 'Resize ancho/alto' 'resizeactive 40px'
+      entry 'Win+Ctrl+- / +=' 'Resize ancho' 'resizeactive 20px'
+      entry 'Win+Shift+- / +=' 'Resize alto' 'resizeactive 20px'
       ;;
     workspaces)
       entry 'Win+1..0' 'Ir workspace' 'workspace 1..10'

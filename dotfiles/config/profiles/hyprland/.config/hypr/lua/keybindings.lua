@@ -94,6 +94,10 @@ function M.setup(programs)
   hl.bind(mainMod .. " + CTRL + equal", dispatch("resizeactive 20 0"))
   hl.bind(mainMod .. " + SHIFT + minus", dispatch("resizeactive 0 -20"))
   hl.bind(mainMod .. " + SHIFT + equal", dispatch("resizeactive 0 20"))
+  hl.bind(mainMod .. " + ALT + left", dispatch("resizeactive -40 0"), { repeating = true })
+  hl.bind(mainMod .. " + ALT + right", dispatch("resizeactive 40 0"), { repeating = true })
+  hl.bind(mainMod .. " + ALT + up", dispatch("resizeactive 0 -40"), { repeating = true })
+  hl.bind(mainMod .. " + ALT + down", dispatch("resizeactive 0 40"), { repeating = true })
 
   -- Focus / move.
   local dirs = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
