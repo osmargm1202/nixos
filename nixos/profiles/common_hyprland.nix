@@ -281,6 +281,7 @@ in
     matugen
     orgmThemes
     ffmpeg
+    steamcmd
     python3Minimal
     hypridle
     hyprpicker
