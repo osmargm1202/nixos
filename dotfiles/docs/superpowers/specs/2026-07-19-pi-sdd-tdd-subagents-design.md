@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-19
 
-**Estado:** Corregido para nueva aprobación
+**Estado:** Aprobado para planificación
 
 **Repositorio:** `/home/osmarg/Hobby/nixos`
 
