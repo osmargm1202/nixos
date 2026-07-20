@@ -3,7 +3,7 @@
 // Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
 
 configuration {
-    font: "JetBrainsMono Nerd Font 12";
+    font: "JetBrainsMono Nerd Font 14.4";
     terminal: "kitty";
     show-icons: true;
     icon-theme: "Papirus";
