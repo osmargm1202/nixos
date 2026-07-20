@@ -144,6 +144,7 @@ let
     ".local/bin/openrgb-autostart"
     ".local/bin/brightness-osd"
     ".local/bin/reset_config"
+    ".local/bin/steam-workshop-image"
     ".local/bin/windows-rdp"
     ".local/share/icons/hicolor/256x256/apps"
     ".local/share/applications/windows-rdp.desktop"

@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf 'steam-workshop-image: %s\n' "$*" >&2
+  exit 1
+}
+
+(($# == 1)) || fail 'usage: steam-workshop-image URL_OR_ID'
+input="$1"
+if [[ "$input" =~ ^[0-9]+$ ]]; then
+  id="$input"
+elif [[ "$input" =~ [\?\&]id=([0-9]+) ]]; then
+  id="${BASH_REMATCH[1]}"
+else
+  fail 'invalid Workshop ID or URL'
+fi
+
+for command in steamcmd jq realpath find sort sed cp mv mktemp; do
+  command -v "$command" >/dev/null 2>&1 || fail "missing command: $command"
+done
+
+steam_root="${STEAM_ROOT:-$HOME/.local/share/Steam}"
+workshop_root="${STEAM_WORKSHOP_ROOT:-$steam_root/steamapps/workshop/content/431960}"
+destination="${STEAM_WALLPAPER_DEST:-$HOME/Pictures/Wallpapers/Steam}"
+steam_user="${STEAMCMD_USER:-anonymous}"
+mkdir -p "$steam_root"
+
+steamcmd \
+  +force_install_dir "$steam_root" \
+  +login "$steam_user" \
+  +workshop_download_item 431960 "$id" validate \
+  +quit >&2 || fail "SteamCMD failed for Workshop item $id"
+
+item_dir="$workshop_root/$id"
+[[ -d "$item_dir" ]] || fail "downloaded item directory not found: $item_dir"
+item_real="$(realpath -e -- "$item_dir")"
+project="$item_dir/project.json"
+
+is_image_name() {
+  case "${1,,}" in
+    *.jpg|*.jpeg|*.png|*.webp|*.gif) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+resolve_relative_image() {
+  local relative="$1" resolved
+  [[ -n "$relative" && "$relative" != /* ]] || return 1
+  case "/$relative/" in
+    */../*) return 1 ;;
+  esac
+  is_image_name "$relative" || return 1
+  resolved="$(realpath -e -- "$item_dir/$relative" 2>/dev/null)" || return 1
+  [[ "$resolved" == "$item_real/"* ]] || return 1
+  printf '%s\n' "$resolved"
+}
+
+source_image=''
+title=''
+if [[ -f "$project" ]] && jq -e . "$project" >/dev/null 2>&1; then
+  title="$(jq -r '.title // empty' "$project")"
+  project_file="$(jq -r '.file // empty' "$project")"
+  preview_file="$(jq -r '.preview // empty' "$project")"
+  source_image="$(resolve_relative_image "$project_file" || true)"
+  if [[ -z "$source_image" ]]; then
+    source_image="$(resolve_relative_image "$preview_file" || true)"
+  fi
+fi
+
+if [[ -z "$source_image" ]]; then
+  for preview in preview.jpg preview.jpeg preview.png preview.webp preview.gif; do
+    source_image="$(resolve_relative_image "$preview" || true)"
+    [[ -n "$source_image" ]] && break
+  done
+fi
+
+if [[ -z "$source_image" ]]; then
+  while IFS= read -r -d '' candidate; do
+    source_image="$(realpath -e -- "$candidate")"
+    break
+  done < <(
+    find "$item_dir" -type f \( \
+      -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o \
+      -iname '*.webp' -o -iname '*.gif' \
+    \) -print0 | sort -z
+  )
+fi
+[[ -n "$source_image" ]] || fail "no compatible image found in Workshop item $id"
+
+LC_ALL=C slug="$(
+  printf '%s' "$title" \
+    | sed -E 's/[^[:alnum:]]+/-/g; s/^-+//; s/-+$//' \
+    | cut -c1-80
+)"
+extension="${source_image##*.}"
+extension="${extension,,}"
+filename="$id${slug:+-$slug}.$extension"
+mkdir -p "$destination"
+destination="$(realpath -m -- "$destination")"
+final="$destination/$filename"
+temporary="$(mktemp "$destination/.${filename}.XXXXXX")"
+trap 'rm -f -- "${temporary:-}"' EXIT
+cp -- "$source_image" "$temporary"
+chmod 0644 "$temporary"
+mv -f -- "$temporary" "$final"
+temporary=''
+printf '%s\n' "$final"

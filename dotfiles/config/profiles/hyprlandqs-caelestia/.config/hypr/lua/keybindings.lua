@@ -84,6 +84,10 @@ function M.setup(programs)
   hl.bind(mainMod .. " + CTRL + equal",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive 20 0"),        { description = "Resize: grow width" })
   hl.bind(mainMod .. " + SHIFT + minus", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -20"),       { description = "Resize: shrink height" })
   hl.bind(mainMod .. " + SHIFT + equal", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 20"),        { description = "Resize: grow height" })
+  hl.bind(mainMod .. " + ALT + left",    hl.dsp.exec_cmd("hyprctl dispatch resizeactive -40 0"),       { repeating = true, description = "Resize: shrink width" })
+  hl.bind(mainMod .. " + ALT + right",   hl.dsp.exec_cmd("hyprctl dispatch resizeactive 40 0"),        { repeating = true, description = "Resize: grow width" })
+  hl.bind(mainMod .. " + ALT + up",      hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -40"),       { repeating = true, description = "Resize: shrink height" })
+  hl.bind(mainMod .. " + ALT + down",    hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 40"),        { repeating = true, description = "Resize: grow height" })
 
   -- Focus / move.
   local dirs    = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
