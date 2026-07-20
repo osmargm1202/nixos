@@ -13,7 +13,9 @@ let
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
   dotfilesOrgmSource = ../../dotfiles;
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
-  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
+  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
+    zenBrowserFlakeSrc = inputs.zen-browser-flake;
+  };
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
   # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
@@ -26,6 +28,7 @@ in
   imports = [
     ./sddm.nix
     ./printer.nix
+    ./vesktop.nix
   ];
 
   services.xserver.enable = false;
@@ -316,7 +319,6 @@ in
     pavucontrol
 
     # Communication
-    vesktop
 
     # GNOME apps used as defaults
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,

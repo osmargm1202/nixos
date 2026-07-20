@@ -69,4 +69,23 @@ grep -Fq 'Discord Flatpak com.discordapp.Discord is not installed' "$tmp/error" 
 grep -RFq -- "$POLICY" "$vesktop_out/bin" \
   || fail 'Vesktop wrapper missing policy'
 
+grep -Fq './vesktop.nix' "$ROOT/nixos/profiles/common_hyprland.nix" \
+  || fail 'common Hyprland profile does not import vesktop module'
+if grep -Eq '^[[:space:]]+vesktop[[:space:]]*$' "$ROOT/nixos/profiles/common_hyprland.nix"; then
+  fail 'raw Vesktop package remains in common Hyprland package list'
+fi
+
+for profile in orgm-hyprland orgm-hyprlandqs-caelestia; do
+  packages="$(cd "$ROOT" && nix eval ".#nixosConfigurations.$profile.config.environment.systemPackages" --json)"
+  jq -e 'any(.[]; test("vesktop-webrtc-"))' <<<"$packages" >/dev/null \
+    || fail "wrapped Vesktop missing from $profile"
+  jq -e 'any(.[]; test("discord"))' <<<"$packages" >/dev/null \
+    || fail "Discord wrapper missing from $profile"
+done
+
+exec_line="$(cd "$ROOT" && nix eval --raw \
+  '.#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.xdg.desktopEntries."com.discordapp.Discord".exec')"
+[[ "$exec_line" == */bin/discord\ %U ]] \
+  || fail "unexpected Discord desktop Exec: $exec_line"
+
 echo 'PASS: Discord and Vesktop wrappers enforce WebRTC policy'
