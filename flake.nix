@@ -2,13 +2,13 @@
   description = "Modular NixOS flake for orgm";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     # Pinned to the nixos-25.11 rev that shipped zen 7.0.10 -- current
     # nixpkgs' zen (7.1.2) dropped linux/of_gpio.h, breaking the NVIDIA
     # driver build. Only linuxPackages_zen is pulled from this input.
     nixpkgs-zen70.url = "github:NixOS/nixpkgs/25f538306313eae3927264466c70d7001dcea1df";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
