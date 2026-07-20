@@ -13,17 +13,17 @@
   ],
   "model_profiles": {
     "planner": { "effort": "high" },
-    "builder": { "effort": "high" },
+    "builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "sdd-explorer": { "effort": "medium" },
     "sdd-spec": { "effort": "high" },
     "sdd-design": { "effort": "high" },
     "sdd-plan": { "effort": "high" },
     "sdd-tasks": { "effort": "medium" },
-    "sdd-builder": { "effort": "high" },
+    "sdd-builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "sdd-reviewer": { "effort": "high" },
     "sdd-verifier": { "effort": "medium" },
     "tdd-planner": { "effort": "high" },
-    "tdd-builder": { "effort": "high" },
+    "tdd-builder": { "model": "openai-codex/gpt-5.3-codex-spark", "effort": "high" },
     "tdd-reviewer": { "effort": "high" },
     "tdd-verifier": { "effort": "medium" }
   }

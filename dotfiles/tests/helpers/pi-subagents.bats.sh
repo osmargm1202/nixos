@@ -139,10 +139,17 @@ def check_config() -> None:
     if not isinstance(profiles, dict) or set(profiles) != set(expected):
         fail("subagents.json: model_profiles must match all 14 agents exactly")
     medium = {"sdd-explorer", "sdd-tasks", "sdd-verifier", "tdd-verifier"}
+    spark_builders = {"builder", "sdd-builder", "tdd-builder"}
     for name, profile in profiles.items():
-        wanted = "medium" if name in medium else "high"
-        if profile != {"effort": wanted}:
-            fail(f"subagents.json: {name} profile must be effort={wanted} only")
+        effort = "medium" if name in medium else "high"
+        wanted = {"effort": effort}
+        if name in spark_builders:
+            wanted = {
+                "model": "openai-codex/gpt-5.3-codex-spark",
+                "effort": "high",
+            }
+        if profile != wanted:
+            fail(f"subagents.json: {name} profile must equal {wanted!r}")
 
 
 def check_deployment() -> None:
