@@ -51,6 +51,14 @@ CAPTURE="$tmp/calls" FLATPAK_BIN="$tmp/flatpak" \
 [[ "$(grep -Fxc -- "$POLICY" "$tmp/calls")" == 1 ]] \
   || fail 'Discord wrapper duplicated supplied policy'
 
+: >"$tmp/calls"
+CAPTURE="$tmp/calls" FLATPAK_BIN="$tmp/flatpak" \
+  "$discord_out/bin/discord" --force-webrtc-ip-handling-policy=bad_public --start-minimized
+[[ "$(grep -Fxc -- "$POLICY" "$tmp/calls")" == 1 ]] \
+  || fail 'Discord wrapper must normalize conflicting policy to required policy'
+grep -Fq -- '--force-webrtc-ip-handling-policy=bad_public' "$tmp/calls" \
+  && fail 'Discord wrapper leaked conflicting policy value'
+
 if CAPTURE="$tmp/calls" FLATPAK_BIN="$tmp/flatpak" FLATPAK_INFO_FAIL=1 \
   "$discord_out/bin/discord" 2>"$tmp/error"; then
   fail 'Discord wrapper accepted a missing Flatpak app'
