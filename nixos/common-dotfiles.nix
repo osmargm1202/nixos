@@ -182,6 +182,7 @@ let
       ".config/hypr/lua/permissions.lua"
       ".config/hypr/lua/programs.lua"
       ".config/hypr/lua/README.md"
+      ".config/hypr/lua/runtime-workspaces.lua"
       ".config/hypr/lua/windows-workspaces.lua"
       ".config/hypr/noctalia/noctalia-colors.conf"
       ".config/hypr/scripts/pi-walker-prompt.sh"
