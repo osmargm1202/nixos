@@ -88,4 +88,10 @@ exec_line="$(cd "$ROOT" && nix eval --raw \
 [[ "$exec_line" == */bin/discord\ %U ]] \
   || fail "unexpected Discord desktop Exec: $exec_line"
 
+helper="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-start-discord"
+grep -Fq 'command -v Discord' "$helper" \
+  || fail 'uppercase Discord fallback missing'
+[[ "$(grep -Fc '"$policy"' "$helper")" == 3 ]] \
+  || fail 'not every Discord autostart branch carries policy'
+
 echo 'PASS: Discord and Vesktop wrappers enforce WebRTC policy'

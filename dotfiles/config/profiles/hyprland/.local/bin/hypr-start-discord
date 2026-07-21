@@ -1,10 +1,16 @@
 #!/bin/sh
 set -eu
 
+policy='--force-webrtc-ip-handling-policy=default_public_and_private_interfaces'
+
 if command -v discord >/dev/null 2>&1; then
-  exec discord --start-minimized
+  exec discord "$policy" --start-minimized
+fi
+
+if command -v Discord >/dev/null 2>&1; then
+  exec Discord "$policy" --start-minimized
 fi
 
 if command -v flatpak >/dev/null 2>&1 && flatpak info com.discordapp.Discord >/dev/null 2>&1; then
-  exec flatpak run com.discordapp.Discord --start-minimized
+  exec flatpak run com.discordapp.Discord "$policy" --start-minimized
 fi
