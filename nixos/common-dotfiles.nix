@@ -124,7 +124,6 @@ let
     ".config/fish/icons/rec_icon.png"
     ".config/fish/private-env.fish.age"
     ".config/helix"
-    ".config/herdr"
     ".config/kitty"
     ".config/mpv"
     ".config/nvim"
