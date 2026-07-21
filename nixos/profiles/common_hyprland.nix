@@ -15,6 +15,15 @@ let
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
   psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
+  vesktopNoInputVolumeAdjustment = pkgs.symlinkJoin {
+    name = "vesktop-no-input-volume-adjustment-${pkgs.vesktop.version}";
+    paths = [ pkgs.vesktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/vesktop \
+        --add-flags "--disable-features=WebRtcAllowInputVolumeAdjustment"
+    '';
+  };
   # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
@@ -316,7 +325,7 @@ in
     pavucontrol
 
     # Communication
-    vesktop
+    vesktopNoInputVolumeAdjustment
 
     # GNOME apps used as defaults
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,
