@@ -38,9 +38,9 @@
       flake = false;
     };
     waybar-source-target-src = {
-      # Pending upstream support for pulseaudio source sliders.
+      # PulseAudio source-slider support merged after the 0.15.0 tag.
       # PR: https://github.com/Alexays/Waybar/pull/4908
-      url = "github:7FM/Waybar/ab5b1a6cd41d10da238e6ab5da32d798aa6ba04c";
+      url = "github:Alexays/Waybar/d2a082933a1dfcc3e518f94b046c8caf328db011";
       flake = false;
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
