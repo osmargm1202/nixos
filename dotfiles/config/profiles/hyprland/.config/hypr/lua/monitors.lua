@@ -50,3 +50,14 @@ end
 if not loaded then
   hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 end
+
+-- Keep NWG workspace loading in this already-deployed module: a new required
+-- module can be referenced live before Home Manager creates its symlink.
+if home ~= "" then
+  local workspace_path = home .. "/.config/hypr/workspaces.lua"
+  local workspace_file = io.open(workspace_path, "r")
+  if workspace_file then
+    workspace_file:close()
+    dofile(workspace_path)
+  end
+end

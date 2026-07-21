@@ -2,7 +2,6 @@
 -- Canonical config for this setup; legacy split .conf fallbacks were removed.
 
 require("lua.monitors")
-require("lua.runtime-workspaces")
 local programs = require("lua.programs")
 require("lua.autostart")
 require("lua.environment")

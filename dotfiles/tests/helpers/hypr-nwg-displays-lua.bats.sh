@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REPO="$(cd "$ROOT/.." && pwd)"
 MONITORS="$ROOT/config/profiles/hyprland/.config/hypr/lua/monitors.lua"
-WORKSPACES="$ROOT/config/profiles/hyprland/.config/hypr/lua/runtime-workspaces.lua"
 HYPRLAND="$ROOT/config/profiles/hyprland/.config/hypr/hyprland.lua"
 DOTFILES_MODULE="$REPO/nixos/common-dotfiles.nix"
 TMP="$(mktemp -d)"
@@ -52,15 +51,19 @@ if run_monitors >/dev/null 2>&1; then
   fail 'malformed runtime monitors.lua must surface a config error instead of silently using host fallback'
 fi
 
-[ -f "$WORKSPACES" ] || fail 'runtime-workspaces.lua must exist'
-grep -Fq 'require("lua.runtime-workspaces")' "$HYPRLAND" || fail 'hyprland.lua must load optional runtime workspaces'
-grep -Fq '".config/hypr/lua/runtime-workspaces.lua"' "$DOTFILES_MODULE" ||
-  fail 'Home Manager must deploy the tracked runtime workspace loader'
+if grep -Fq 'require("lua.runtime-workspaces")' "$HYPRLAND"; then
+  fail 'hyprland.lua must not require a loader that appears only after Home Manager switch'
+fi
+if grep -Fq '".config/hypr/lua/runtime-workspaces.lua"' "$DOTFILES_MODULE"; then
+  fail 'runtime workspace loading must not require a new Home Manager symlink'
+fi
 
+rm -f "$TMP/home/.config/hypr/monitors.lua"
 printf 'hl.workspace_rule({ workspace = "9" })\n' > "$TMP/home/.config/hypr/workspaces.lua"
-workspace_output="$(HOME="$TMP/home" "$LUA" - "$WORKSPACES" <<'LUA'
+workspace_output="$(HOME="$TMP/home" HOSTNAME="testhost" "$LUA" - "$MONITORS" <<'LUA'
 local module = arg[1]
 hl = {
+  monitor = function() end,
   workspace_rule = function(rule)
     print(rule.workspace)
   end,
@@ -71,9 +74,10 @@ LUA
 [ "$workspace_output" = '9' ] || fail 'runtime workspaces.lua must load when present'
 
 rm "$TMP/home/.config/hypr/workspaces.lua"
-workspace_output="$(HOME="$TMP/home" "$LUA" - "$WORKSPACES" <<'LUA'
+workspace_output="$(HOME="$TMP/home" HOSTNAME="testhost" "$LUA" - "$MONITORS" <<'LUA'
 local module = arg[1]
 hl = {
+  monitor = function() end,
   workspace_rule = function(rule)
     print(rule.workspace)
   end,
