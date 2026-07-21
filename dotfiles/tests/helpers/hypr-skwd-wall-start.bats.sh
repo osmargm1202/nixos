@@ -21,8 +21,11 @@ if grep -Fq '.local/bin/hypr-skwd-wall-start' "$DOTFILES_MODULE"; then
 fi
 grep -Fq 'systemd.user.targets.graphical-session.wants = [ "skwd-daemon.service" ];' "$PROFILE" ||
   fail "graphical session must start skwd-daemon declaratively"
-grep -Fq '"sh -lc '\''hypr-session-import-env && systemctl --user start graphical-session.target'\''",' "$AUTOSTART" ||
-  fail "Hyprland must import its environment before activating graphical-session.target"
+grep -Fq '"sh -lc '\''hypr-session-import-env && systemctl --user start nixos-fake-graphical-session.target'\''",' "$AUTOSTART" ||
+  fail "Hyprland must import its environment before activating NixOS graphical-session bridge"
+if grep -Fq 'systemctl --user start graphical-session.target' "$AUTOSTART"; then
+  fail "graphical-session.target refuses direct starts; use the NixOS bridge target"
+fi
 if grep -Fq 'systemctl --user start skwd-daemon.service' "$AUTOSTART"; then
   fail "Hyprland must activate the graphical target instead of starting Skwd directly"
 fi

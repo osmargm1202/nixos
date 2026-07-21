@@ -28,9 +28,9 @@ A manual `systemctl --user start skwd-daemon.service` starts the existing unit a
 
 ## Considered Approaches
 
-### 1. Activate `graphical-session.target` after environment import — selected
+### 1. Activate `graphical-session.target` through the NixOS bridge — selected
 
-Chain the existing `hypr-session-import-env` startup command with `systemctl --user start graphical-session.target`. This preserves standard systemd lifecycle semantics and starts every unit already declared for the graphical session, including SKWD.
+Chain the existing `hypr-session-import-env` startup command with `systemctl --user start nixos-fake-graphical-session.target`. NixOS provides this bridge for sessions that are not systemd-aware; its `BindsTo=graphical-session.target` dependency activates the standard target indirectly. This is required because `graphical-session.target` declares `RefuseManualStart=yes` and rejects direct starts.
 
 ### 2. Start only `skwd-daemon.service` from Hyprland
 
@@ -45,16 +45,17 @@ This is fully declarative but may start before Hyprland exports `WAYLAND_DISPLAY
 In `autostart.lua`, replace the standalone environment-import command with one shell transaction:
 
 ```text
-hypr-session-import-env && systemctl --user start graphical-session.target
+hypr-session-import-env && systemctl --user start nixos-fake-graphical-session.target
 ```
 
 Ordering is explicit:
 
 1. Hyprland starts.
 2. `hypr-session-import-env` copies Wayland/session variables into the systemd user manager and D-Bus activation environment.
-3. Only after that command succeeds, systemd activates `graphical-session.target`.
-4. The existing target `Wants=skwd-daemon.service` starts the packaged SKWD unit.
-5. SKWD reads `last-wallpaper.json` and restores the saved wallpaper.
+3. Only after that command succeeds, systemd starts `nixos-fake-graphical-session.target`.
+4. The bridge pulls in `graphical-session.target` through its packaged `BindsTo` dependency.
+5. The existing target `Wants=skwd-daemon.service` starts the packaged SKWD unit.
+6. SKWD reads `last-wallpaper.json` and restores the saved wallpaper.
 
 The existing declaration in `nixos/profiles/hyprland.nix` remains:
 
@@ -69,7 +70,7 @@ The daemon remains owned by systemd with its packaged `Restart=on-failure` behav
 - Environment import remains tolerant of unavailable variables, as implemented by `hypr-session-import-env`.
 - A target or daemon failure remains visible through `systemctl --user status` and `journalctl --user`.
 - No retry loop or duplicate process guard is added; systemd owns retries and idempotency.
-- Re-running target start is safe because systemd target activation is idempotent.
+- Re-running the bridge target start is safe because systemd target activation is idempotent.
 
 ## Testing
 
@@ -78,7 +79,7 @@ The daemon remains owned by systemd with its packaged `Restart=on-failure` behav
 Update focused tests to assert:
 
 - environment import precedes target activation in one startup command;
-- Hyprland starts `graphical-session.target`, not `skwd-daemon.service` directly;
+- Hyprland starts `nixos-fake-graphical-session.target`, never the manual-start-refusing `graphical-session.target` or `skwd-daemon.service` directly;
 - the obsolete bootstrap helper remains absent;
 - the NixOS profile still wires SKWD into `graphical-session.target`.
 
@@ -90,7 +91,7 @@ The new assertion must fail against the current implementation before production
 - Run shell/Lua diagnostics and formatting checks.
 - Build `lenovo-hyprland` completely.
 - Deploy without restarting Hyprland.
-- Simulate a fresh graphical target transaction by stopping SKWD/target, importing the live environment, and starting `graphical-session.target`.
+- Simulate a fresh graphical target transaction by stopping SKWD/targets, importing the live environment, and starting `nixos-fake-graphical-session.target`.
 - Confirm target and daemon become active, SKWD logs `auto-restored wallpaper`, and `skwd-paper-still` owns surfaces for `eDP-1` and `HDMI-A-1`.
 - Confirm no duplicate daemon processes.
 - Verify automatic startup after the next normal login or reboot.

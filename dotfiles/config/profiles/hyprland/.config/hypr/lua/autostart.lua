@@ -1,6 +1,6 @@
 local exec_once = {
   "hyprctl plugin load /etc/scrolloverview.so",
-  "sh -lc 'hypr-session-import-env && systemctl --user start graphical-session.target'",
+  "sh -lc 'hypr-session-import-env && systemctl --user start nixos-fake-graphical-session.target'",
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme && printf \'orgm-dark\\n\' >\"${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme/current\"'",
   "systemctl --user start sunshine.service",
   "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
