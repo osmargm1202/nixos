@@ -18,15 +18,15 @@ Its capture stream remained active and speech no longer changed the source volum
 
 ## Permanent Configuration
 
-Define a wrapped Vesktop package in `nixos/profiles/common_hyprland.nix` using `symlinkJoin` and `wrapProgram`. The wrapper will append:
+Extend the existing wrapped Vesktop package in `nixos/packages/vesktop-webrtc.nix`. Its `symlinkJoin` and `wrapProgram` configuration already applies the required WebRTC IP policy; it will also append:
 
 ```text
 --disable-features=WebRtcAllowInputVolumeAdjustment
 ```
 
-Replace the unwrapped `vesktop` entry in `environment.systemPackages` with this package. Because the package retains Vesktop's desktop files and binary name, launches from the application menu, terminal, and profile startup use the same protected command.
+The existing `nixos/profiles/vesktop.nix` module deploys this package and `common_hyprland.nix` imports that module. Because the package retains Vesktop's desktop files and binary name, launches from the application menu, terminal, and profile startup use the same protected command.
 
-Both `orgm-hyprland` and `orgm-hyprlandqs-caelestia` inherit the change through `common_hyprland.nix`.
+Both `orgm-hyprland` and `orgm-hyprlandqs-caelestia` inherit the combined wrapper through the shared module.
 
 ## Volume Policy
 
@@ -36,9 +36,9 @@ Dota 2, PipeWire, WirePlumber, mic keybindings, and the existing OSD remain unch
 
 ## Testing
 
-Add a focused shell test that verifies:
+Extend `tests/discord-vesktop-webrtc-policy.bats.sh` to verify:
 
-- `common_hyprland.nix` defines a wrapped Vesktop package;
+- the shared Vesktop wrapper keeps its existing WebRTC IP policy;
 - the wrapper contains `--disable-features=WebRtcAllowInputVolumeAdjustment`;
 - both Hyprland configurations include the wrapped package;
 - no fixed microphone volume is introduced.

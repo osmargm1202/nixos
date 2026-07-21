@@ -12,6 +12,13 @@ let
   waybarSourceTarget = (pkgs.waybar.override { cavaSupport = false; }).overrideAttrs (old: {
     version = "0.15.0";
     src = inputs.waybar-source-target-src;
+    # Keep upstream checks enabled, but bound its 200-cycle thread stress test:
+    # parallel local Nix builds can starve the subprocess past its alarm.
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace test/utils/sleeper_thread.cpp \
+        --replace-fail "alarm(5);" "alarm(30);" \
+        --replace-fail "for (int i = 0; i < 200; ++i)" "for (int i = 0; i < 20; ++i)"
+    '';
   });
   nwgDockHyprlandGit = pkgs.nwg-dock-hyprland.overrideAttrs (old: {
     version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";

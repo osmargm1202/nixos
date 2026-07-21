@@ -1,6 +1,6 @@
 local exec_once = {
   "hyprctl plugin load /etc/scrolloverview.so",
-  "hypr-session-import-env",
+  "sh -lc 'hypr-session-import-env && systemctl --user start nixos-fake-graphical-session.target'",
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme && printf \'orgm-dark\\n\' >\"${XDG_STATE_HOME:-$HOME/.local/state}/orgm-theme/current\"'",
   "systemctl --user start sunshine.service",
   "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
@@ -10,6 +10,7 @@ local exec_once = {
   "gnome-keyring-daemon --start --components=secrets,pkcs11,ssh",
   "hyprpolkitagent",
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts && hypr-battery-alerts daemon >>${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log 2>&1'",
+  "nextcloud --background",
   "hypr-start-discord",
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",

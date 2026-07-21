@@ -35,7 +35,7 @@
   services.dbus.enable = true;
   services.gvfs.enable = true;
   services.gvfs.package = pkgs.gnome.gvfs.override {
-    googleSupport = true;
+    gnomeSupport = true;
   };
   services.udisks2.enable = true;
   services.upower.enable = true;

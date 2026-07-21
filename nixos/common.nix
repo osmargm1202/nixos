@@ -235,6 +235,7 @@
     vim
     gh
     fzf
+    nextcloud-client
     gtk3
     libnotify
     git
@@ -242,6 +243,7 @@
     uv
     fd
     jq
+    android-tools
     trash-cli
     eza
     ntfs3g
@@ -279,7 +281,6 @@
   ];
 
   programs.dconf.enable = true;
-  programs.adb.enable = true;
 
   # Loader shim for dynamic binaries not packaged for NixOS
   # (claude, pi, codex and other custom tools). steam-run (above)

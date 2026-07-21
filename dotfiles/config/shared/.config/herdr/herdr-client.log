@@ -1,9 +1,0 @@
-2026-07-09T08:19:20.983397Z  INFO herdr::logging: herdr starting event="app.startup" subsystem="client" outcome="started" pid=4104
-2026-07-09T08:19:20.983448Z  INFO herdr::client: connecting to server path=/home/osmarg/.config/herdr/herdr-client.sock
-2026-07-09T08:19:21.040600Z  INFO herdr::client: handshake succeeded version=16 encoding=SemanticFrame
-2026-07-09T08:19:38.450130Z  INFO herdr::logging: herdr starting event="app.startup" subsystem="client" outcome="started" pid=4552
-2026-07-09T08:19:38.450153Z  INFO herdr::client: connecting to server path=/home/osmarg/.config/herdr/herdr-client.sock
-2026-07-09T08:19:38.539584Z  INFO herdr::client: handshake succeeded version=16 encoding=SemanticFrame
-2026-07-10T23:00:55.964224Z  INFO herdr::logging: herdr starting event="app.startup" subsystem="client" outcome="started" pid=8035
-2026-07-10T23:00:55.964258Z  INFO herdr::client: connecting to server path=/home/osmarg/.config/herdr/herdr-client.sock
-2026-07-10T23:00:56.027313Z  INFO herdr::client: handshake succeeded version=16 encoding=SemanticFrame

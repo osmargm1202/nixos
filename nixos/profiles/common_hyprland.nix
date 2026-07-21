@@ -13,17 +13,10 @@ let
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
   dotfilesOrgmSource = ../../dotfiles;
   orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
-  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix { zenBrowserFlakeSrc = inputs.zen-browser-flake; };
-  psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
-  vesktopNoInputVolumeAdjustment = pkgs.symlinkJoin {
-    name = "vesktop-no-input-volume-adjustment-${pkgs.vesktop.version}";
-    paths = [ pkgs.vesktop ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/vesktop \
-        --add-flags "--disable-features=WebRtcAllowInputVolumeAdjustment"
-    '';
+  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
+    zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
+  psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
   # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
@@ -35,6 +28,7 @@ in
   imports = [
     ./sddm.nix
     ./printer.nix
+    ./vesktop.nix
   ];
 
   services.xserver.enable = false;
@@ -99,7 +93,7 @@ in
   services.udisks2.enable = true;
   services.gvfs.enable = true;
   services.gvfs.package = pkgs.gnome.gvfs.override {
-    googleSupport = true;
+    gnomeSupport = true;
   };
   nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
   services.gnome.gnome-keyring.enable = true;
@@ -323,9 +317,6 @@ in
     pamixer
     playerctl
     pavucontrol
-
-    # Communication
-    vesktopNoInputVolumeAdjustment
 
     # GNOME apps used as defaults
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,

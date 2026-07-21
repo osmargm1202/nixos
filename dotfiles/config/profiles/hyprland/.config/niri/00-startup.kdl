@@ -1,4 +1,5 @@
 // DMS se inicia por systemd desde NixOS (`programs.dank-material-shell.systemd.enable = true`).
+spawn-at-startup "nextcloud"
 spawn-at-startup "flatpak" "run" "com.discordapp.Discord"
 spawn-at-startup "fish" "-c" "wl-paste -t text --watch cliphist store & wl-paste -t image/png --watch cliphist store"
 spawn-at-startup "mpvpaper" "-o" "no-audio loop hwdec=auto" "*" "/home/osmarg/Videos/wallpapers/fondo.mp4"
