@@ -235,6 +235,7 @@
     vim
     gh
     fzf
+    nextcloud-client
     gtk3
     libnotify
     git
