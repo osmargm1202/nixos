@@ -1,6 +1,6 @@
 -- Monitor layout loader.
--- Host-specific layouts live in lua/monitors/<hostname>.lua.
--- If no host file exists, this generated fallback lets Hyprland choose connected outputs safely.
+-- NWG Displays owns ~/.config/hypr/monitors.lua at runtime.
+-- Tracked host layouts are recovery fallbacks when no runtime layout exists.
 
 local function read_hostname()
   local host = os.getenv("HOSTNAME")
@@ -17,19 +17,7 @@ local function read_hostname()
   return host
 end
 
-local function load_host_monitors()
-  local host = read_hostname()
-  if not host or host == "" then
-    return false
-  end
-
-  host = host:gsub("[^%w_-]", "_")
-  local home = os.getenv("HOME") or ""
-  if home == "" then
-    return false
-  end
-
-  local path = home .. "/.config/hypr/lua/monitors/" .. host .. ".lua"
+local function load_lua(path)
   local file = io.open(path, "r")
   if not file then
     return false
@@ -39,6 +27,26 @@ local function load_host_monitors()
   return true
 end
 
-if not load_host_monitors() then
+local function load_host_monitors(home)
+  local host = read_hostname()
+  if not host or host == "" then
+    return false
+  end
+
+  host = host:gsub("[^%w_-]", "_")
+  return load_lua(home .. "/.config/hypr/lua/monitors/" .. host .. ".lua")
+end
+
+local home = os.getenv("HOME") or ""
+local loaded = false
+
+if home ~= "" then
+  loaded = load_lua(home .. "/.config/hypr/monitors.lua")
+  if not loaded then
+    loaded = load_host_monitors(home)
+  end
+end
+
+if not loaded then
   hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 end

@@ -12,6 +12,10 @@ let
   waybarSourceTarget = (pkgs.waybar.override { cavaSupport = false; }).overrideAttrs (old: {
     version = "0.15.0";
     src = inputs.waybar-source-target-src;
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace test/utils/sleeper_thread.cpp \
+        --replace-fail "alarm(5);" "alarm(30);"
+    '';
   });
   nwgDockHyprlandGit = pkgs.nwg-dock-hyprland.overrideAttrs (old: {
     version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";
