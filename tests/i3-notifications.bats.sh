@@ -7,6 +7,7 @@ DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
+CAELESTIA_BIN="$ROOT/dotfiles/config/profiles/hyprlandqs-caelestia/.local/bin"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 
 fail() {
@@ -36,8 +37,12 @@ for helper in volume-osd mic-volume-osd; do
   [ -x "$SHARED_BIN/$helper" ] || fail "$helper must be shared and executable"
   [ ! -e "$HYPR_BIN/$helper" ] || fail "$helper must not remain Hyprland-owned"
   grep -Fq "    \".local/bin/$helper\"" "$DOTFILES" || fail "$helper missing from shared deployment"
-  bash -n "$SHARED_BIN/$helper"
+  [ -x "$CAELESTIA_BIN/$helper" ] || fail "Caelestia-specific $helper variant must remain available"
+  bash -n "$SHARED_BIN/$helper" "$CAELESTIA_BIN/$helper"
 done
+
+grep -Fq 'sp == hp || lib.hasPrefix (hp + "/") sp' "$DOTFILES" ||
+  fail 'profile-specific exact paths must override shared Home Manager paths'
 
 grep -Fq 'systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {' "$DOTFILES" ||
   fail 'Lenovo must not start the absent G213 notification observer'

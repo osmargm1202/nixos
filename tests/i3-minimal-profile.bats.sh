@@ -17,6 +17,9 @@ for forbidden in polybar picom conky waybar 'hypr-'; do
 	if grep -Eqi "$forbidden" "$PROFILE" "$I3_CONFIG"; then
 		fail "minimal i3 profile still references $forbidden"
 	fi
+	if grep -REqi "$forbidden" "$I3_ROOT"; then
+		fail "minimal i3 dotfile tree still references $forbidden"
+	fi
 done
 
 grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar block missing'

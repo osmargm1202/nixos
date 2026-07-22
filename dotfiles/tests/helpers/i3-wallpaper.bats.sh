@@ -67,6 +67,12 @@ CALLS="$TMP/random.calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/state" \
   "$HELPER" --restore
 grep -Fq 'a-fallback.jpg' "$TMP/random.calls" || fail 'restore without state must choose fallback image'
 
+: >"$TMP/direct-random.calls"
+CALLS="$TMP/direct-random.calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/state" \
+  I3_WALLPAPER_DIR="$TMP/wallpapers" PATH="$TMP/bin:$PATH" \
+  "$HELPER" --random
+grep -Fq 'a-fallback.jpg' "$TMP/direct-random.calls" || fail 'random command must apply an available image'
+
 cat >"$TMP/bin/i3-wallpaper" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$CALLS"

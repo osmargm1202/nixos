@@ -562,20 +562,20 @@ let
   pathsForHostProfile = (hostProfilePaths.${hostName} or {}).${profileName} or [];
 
   # Priority: hostProfilePaths > hostPaths > profilePaths > sharedPaths
-  # Pass 1 — drop lower-priority paths that are children of higher-priority dirs
+  # Pass 1 — drop lower-priority paths that equal or sit below higher-priority paths
   higherThanShared = currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
   higherThanProfile = pathsForHost ++ pathsForHostProfile;
 
   pass1SharedPaths = lib.filter (sp:
-    !builtins.any (hp: lib.hasPrefix (hp + "/") sp) higherThanShared
+    !builtins.any (hp: sp == hp || lib.hasPrefix (hp + "/") sp) higherThanShared
   ) sharedPaths;
 
   pass1ProfilePaths = lib.filter (pp:
-    !builtins.any (hp: lib.hasPrefix (hp + "/") pp) higherThanProfile
+    !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) higherThanProfile
   ) currentProfilePaths;
 
   pass1HostPaths = lib.filter (hp:
-    !builtins.any (hpp: lib.hasPrefix (hpp + "/") hp) pathsForHostProfile
+    !builtins.any (hpp: hp == hpp || lib.hasPrefix (hpp + "/") hp) pathsForHostProfile
   ) pathsForHost;
 
   # Pass 2 — drop any path that has child paths in the combined list
