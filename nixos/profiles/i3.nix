@@ -7,6 +7,7 @@
 }:
 
 let
+  i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
@@ -134,6 +135,7 @@ in
     setxkbmap
     xkill
     i3
+    i3expo
     i3lock-color
 
     # Launchers, notifications, wallpaper and X11 helpers.

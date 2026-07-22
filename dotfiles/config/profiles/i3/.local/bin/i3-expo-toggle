@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+pid_file="$runtime_dir/i3expod.pid"
+ready_file="$runtime_dir/i3expod.ready"
+pid=''
+starttime=''
+
+is_daemon() {
+  local candidate="${1:-}" expected_start="${2:-}" actual_start
+  [[ "$candidate" =~ ^[0-9]+$ && "$expected_start" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$candidate" 2>/dev/null || return 1
+  [[ -r "/proc/$candidate/stat" ]] || return 1
+  actual_start="$(awk '{ print $22 }' "/proc/$candidate/stat")"
+  [[ "$actual_start" == "$expected_start" ]]
+}
+
+is_ready() {
+  local candidate="${1:-}" ready_pid=''
+  [[ -f "$ready_file" ]] && ready_pid="$(head -n1 "$ready_file")"
+  [[ "$ready_pid" == "$candidate" ]]
+}
+
+[[ -f "$pid_file" ]] && read -r pid starttime <"$pid_file"
+if ! is_daemon "$pid" "$starttime"; then
+  rm -f "$pid_file" "$ready_file"
+  i3-expo-daemon >/dev/null 2>&1 &
+fi
+
+# A session-started daemon may be alive while pygame/i3 IPC still initializes.
+# Preserve its identity and wait for the package readiness handshake.
+for _ in {1..20}; do
+  if [[ -f "$pid_file" ]]; then read -r pid starttime <"$pid_file"; fi
+  is_daemon "$pid" "$starttime" && is_ready "$pid" && break
+  sleep 0.1
+done
+
+if is_daemon "$pid" "$starttime" && is_ready "$pid"; then
+  kill -USR1 "$pid"
+  exit 0
+fi
+
+notify-send 'i3 Expo' 'Could not start the workspace overview daemon' 2>/dev/null || true
+exit 1

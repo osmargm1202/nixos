@@ -19,8 +19,8 @@ window {
     anchor: center;
     width: @width;
     background-color: @bg-col;
-    border: 2px;
-    border-color: @border-col;
+    border: 0px;
+    border-color: transparent;
     border-radius: 15px;
 }
 

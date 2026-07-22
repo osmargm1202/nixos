@@ -14,7 +14,7 @@ fail() {
 
 required_bindings=(
   'bindsym $mod+w exec --no-startup-id i3-zen-new-window'
-  'bindsym $mod+Tab exec --no-startup-id i3-rofi --window'
+  'bindsym $mod+Tab workspace back_and_forth'
   'bindsym $mod+Shift+w exec --no-startup-id chromium'
   'bindsym $mod+o exec --no-startup-id i3-obsidian-open-or-focus'
   'bindsym $mod+Shift+p exec --no-startup-id i3-pi-prompt'

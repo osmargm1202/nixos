@@ -15,6 +15,7 @@ exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
 exec --no-startup-id clipmenud
+exec --no-startup-id i3-expo-daemon
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3-lock --nofork
 exec --no-startup-id i3-caffeine-toggle off
 exec --no-startup-id i3-monitor-profile --apply
@@ -23,8 +24,8 @@ exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id $term
 bindsym $mod+space exec --no-startup-id $launcher
-bindsym $mod+Escape exec --no-startup-id i3-rofi --window
-bindsym $mod+Tab exec --no-startup-id i3-rofi --window
+bindsym $mod+Escape exec --no-startup-id i3-expo-toggle
+bindsym $mod+Tab workspace back_and_forth
 bindsym Mod1+Tab exec --no-startup-id i3-rofi --window
 bindsym $mod+c exec --no-startup-id i3-calc
 bindsym $mod+Shift+c exec --no-startup-id i3-caffeine-toggle

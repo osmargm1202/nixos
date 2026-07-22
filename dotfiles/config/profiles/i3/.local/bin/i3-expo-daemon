@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+pid_file="$runtime_dir/i3expod.pid"
+ready_file="$runtime_dir/i3expod.ready"
+lock_file="$runtime_dir/i3expod.lock"
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper"
+args=()
+
+exec 9>"$lock_file"
+flock -n 9 || exit 0
+
+if [[ -f "$state_file" ]]; then
+  wallpaper="$(head -n1 "$state_file")"
+  [[ -f "$wallpaper" ]] && args=(-w "$wallpaper")
+fi
+
+starttime="$(awk '{ print $22 }' "/proc/$$/stat")"
+rm -f "$ready_file"
+printf '%s %s\n' "$$" "$starttime" >"$pid_file"
+export I3EXPO_READY_FILE="$ready_file"
+exec i3expod.py "${args[@]}"

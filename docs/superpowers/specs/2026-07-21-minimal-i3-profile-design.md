@@ -22,9 +22,10 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
 - Use Rofi for clipboard selection from both `Mod+V` and the main menu.
 - Enable Autorandr for DRM hotplug and suspend/resume detection. Saved profiles remain runtime-owned under `~/.config/autorandr`; unmatched monitor sets fall back to a horizontal layout.
-- Use a neutral `i3-menu.rasi` with the same palette, dimensions, typography, padding and icon sizing as the active Hyprland Rofi menus; never deploy a `hypr-menu` artifact in i3.
+- Use a neutral, borderless `i3-menu.rasi` with the same palette, dimensions, typography, padding and icon sizing as the active Hyprland Rofi menus; never deploy a `hypr-menu` artifact in i3.
 - `Mod+W` follows Hyprland behavior: launch Zen when absent, otherwise create a blank tab and focus its i3 window.
 - Use persisted wallpaper as the blurred/translucent i3 lock background and expose caffeine through the bar plus `Mod+Shift+C`.
+- Run the pinned `morrolinux/i3expo-ng` screenshot daemon once per i3 session. `Mod+Escape` signals its Expo overview, `Alt+Tab` remains the themed Rofi window selector, and `Mod+Tab` uses `workspace back_and_forth`.
 
 ## Session and Bar
 
@@ -43,7 +44,7 @@ The 36px bar uses Noto Sans 14 for larger workspace labels and status text. Font
 
 ## Helper Scope
 
-Keep the existing i3-native helpers for themed Rofi, persistent clipboard history, files, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, caffeine, lock styling, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
+Keep the existing i3-native helpers for themed Rofi, i3 Expo overview, persistent clipboard history, files, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, caffeine, lock styling, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
 
 The helper audit counted 55 executable Hyprland-profile helpers: 22 already matched, 15 portable gaps, and 18 compositor/panel-specific omissions. The approved daily scope closes active keyboard and menu behavior while leaving eight optional functions outside scope: battery alerts, Bluetooth auto-reconnect, stale/unbound smart-run, container autostart, Discord autostart, theme chooser, and webapp maker/remover.
 
@@ -116,7 +117,8 @@ Static/TDD contracts must verify:
 
 - no Picom, Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile;
 - native i3bar invokes Bumblebee Status with caffeine/date/time modules, Nord Powerline, larger Noto typography, clean date/time icons, and the requested mixed-locale formats;
-- Rofi is plugin-wrapped, uses the neutral Hyprland-parity theme everywhere, Mod+C invokes a working `i3-calc`, and Win+Alt+Space has a physical-keycode binding plus fallback;
+- Rofi is plugin-wrapped, borderless, uses the neutral Hyprland-parity theme everywhere, Mod+C invokes a working `i3-calc`, and Win+Alt+Space has a physical-keycode binding plus fallback;
+- i3expo-ng is source/hash pinned, single-instance, receives `Mod+Escape`, while `Alt+Tab` remains Rofi and `Mod+Tab` is workspace back-and-forth;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have i3 equivalents;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
 - Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
