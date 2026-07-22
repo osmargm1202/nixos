@@ -27,7 +27,7 @@ grep -Fq 'bumblebeeI3 = ' "$PROFILE" ||
   fail 'Bumblebee clean iconset and shortcut/date/time plugins missing'
 grep -Fq 'status_command bumblebee-status -m shortcut date time' "$CONFIG" || fail 'caffeine bar button missing'
 grep -Fq 'shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle"' "$CONFIG" || fail 'portable caffeine button command missing'
-grep -Fq -- '-i i3-clean -t nord-powerline' "$CONFIG" || fail 'clean icons or Nord theme missing'
+grep -Fq -- '-i i3-clean -t i3-nord-powerline' "$CONFIG" || fail 'clean icons or translucent Nord theme missing'
 [ -f "$ICONS" ] || fail 'calendar-safe Bumblebee iconset missing'
 jq -e '.date.prefix == "" and .time.prefix == ""' "$ICONS" >/dev/null || fail 'date/time icons still overlap text'
 

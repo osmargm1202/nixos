@@ -14,7 +14,7 @@ fail() {
 
 grep -Fq 'bumblebeeI3 = ' "$PROFILE" ||
   fail 'Bumblebee Status must embed clean icons and caffeine/date/time modules'
-expected='status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline'
+expected='status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline'
 mapfile -t commands < <(grep -E '^[[:space:]]*status_command ' "$I3")
 [[ "${#commands[@]}" -eq 1 ]] || fail 'i3bar must declare exactly one status command'
 actual="${commands[0]}"

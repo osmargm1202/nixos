@@ -15,6 +15,7 @@ exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
+exec --no-startup-id systemctl --user start picom.service
 exec --no-startup-id clipmenud
 exec --no-startup-id $run i3-expo-daemon
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock --nofork
@@ -191,7 +192,6 @@ bindsym $mod+Ctrl+Mod1+r mode "resize"
 for_window [class="Pavucontrol"] floating enable
 for_window [class="Nm-connection-editor"] floating enable
 for_window [class="Blueman-manager"] floating enable
-for_window [class="org.gnome.Nautilus"] floating enable
 for_window [class="flameshot"] floating enable
 for_window [all] border pixel 1
 
@@ -204,8 +204,20 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
+  i3bar_command i3bar --transparency
   font pango:Noto Sans, JetBrainsMono Nerd Font 18
   height 28
-  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
+  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline
   tray_output primary
+
+  colors {
+    background #1a1b26b8
+    statusline #c0caf5ff
+    separator  #00000000
+    focused_workspace  #7aa2f7e6 #7aa2f7e6 #1a1b26ff
+    active_workspace   #292e42d9 #292e42d9 #c0caf5ff
+    inactive_workspace #1f2335cc #1f2335cc #a9b1d6ff
+    urgent_workspace   #f7764ee6 #f7764ee6 #ffffffff
+    binding_mode       #e0af68e6 #e0af68e6 #1a1b26ff
+  }
 }
