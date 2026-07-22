@@ -10,7 +10,7 @@ fail() {
   exit 1
 }
 
-grep -q 'status_command i3status' "$I3" || fail 'native i3status bar missing'
+grep -Fq 'status_command bumblebee-status -m date time' "$I3" || fail 'Bumblebee date/time bar missing'
 grep -q 'exec --no-startup-id i3-wallpaper --restore' "$I3" || fail 'wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3lock-color --nofork' "$I3" || fail 'xss-lock must keep locker in foreground'

@@ -288,7 +288,6 @@ let
     i3 = [
       ".config/dunst"
       ".config/i3"
-      ".config/i3status"
       ".config/rofi"
       ".local/bin/i3-calc"
       ".local/bin/i3-clipboard"

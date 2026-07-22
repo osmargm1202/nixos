@@ -2,7 +2,7 @@
 
 ## Goal
 
-Convert the shared i3 profile used by `lenovo-i3`, `orgm-i3`, `ero-i3`, `jarq-i3`, and generic `i3` into a minimal X11 desktop built around i3bar, a date/time-only `i3status`, and portable daily shortcut parity with Hyprland.
+Convert the shared i3 profile used by `lenovo-i3`, `orgm-i3`, `ero-i3`, `jarq-i3`, and generic `i3` into a minimal X11 desktop built around i3bar, date/time-only Bumblebee Status with Nord Powerline, and portable daily shortcut parity with Hyprland.
 
 The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It keeps existing i3-native equivalents, Rofi, Kitty, Dunst, NetworkManager/Bluetooth/removable-disk tray applets, and a persistent Feh wallpaper workflow.
 
@@ -10,7 +10,7 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 
 - Apply the minimal design to every i3 output, not only Lenovo.
 - Remove Picom, Polybar, and Conky packages, startup commands, dotfile paths, helpers, tests, and profile artifacts.
-- Use i3's native `bar` with `status_command i3status`; show only a Spanish weekday/date and a separate 12-hour AM/PM time block.
+- Use i3's native bar with Bumblebee Status modules `date time` and theme `nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales.
 - Restore active daily Hyprland shortcut behavior with i3/X11 equivalents, but do not port `hypr-menu`, Waybar/SwayNC/NWG operations, unused helpers, autostart daemons, or theme tooling.
 - Keep `nm-applet`, `blueman-applet`, `udiskie`, and a PipeWire/PulseAudio volume applet in session startup.
 - Use Dunst with popups, history/DND bindings, and volume/microphone OSD.
@@ -26,12 +26,12 @@ The existing getty autologin and `startx` flow remains unchanged. The i3 configu
 
 ```text
 bar {
-  status_command i3status
+  status_command bumblebee-status -m date time -p date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -t nord-powerline
   tray_output primary
 }
 ```
 
-The bar owns workspace buttons and the tray. `pasystray` provides interactive output volume control through PipeWire's PulseAudio compatibility layer. A minimal i3status configuration has exactly two `tztime` blocks: Spanish `%A %d/%m/%Y` and English-locale `%I:%M %p`, separated by ` · `. This mixed-locale split is required because `es_DO.UTF-8` does not provide a reliable AM/PM marker. Battery, network, CPU/load, memory/disk, and temperature are intentionally omitted. No custom watcher or JSON helper is used.
+The bar owns workspace buttons and the tray. `pasystray` provides interactive output volume control through PipeWire's PulseAudio compatibility layer. Bumblebee Status has only `date` and `time` modules. Date uses `es_DO.UTF-8` for the Spanish weekday; time uses `en_US.UTF-8` because `es_DO.UTF-8` does not provide a reliable AM/PM marker. Nord Powerline supplies the visual separators. Battery, network, CPU/load, memory/disk, and temperature are intentionally omitted.
 
 ## Helper Scope
 
@@ -98,7 +98,7 @@ Unrelated Hyprland helpers remain intact for Hyprland profiles. Omission from i3
 Static/TDD contracts must verify:
 
 - no Picom, Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile;
-- native i3bar invokes `i3status`, owns the tray, and exposes only the requested mixed-locale date/time blocks;
+- native i3bar invokes Bumblebee Status with only date/time modules, Nord Powerline, and the requested mixed-locale formats;
 - Rofi is plugin-wrapped and Mod+C invokes a working `i3-calc`;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have i3 equivalents;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;

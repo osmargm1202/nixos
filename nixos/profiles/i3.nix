@@ -25,7 +25,9 @@ in
     };
     windowManager.i3 = {
       enable = true;
-      extraPackages = with pkgs; [ i3status ];
+      extraPackages = with pkgs; [
+        (bumblebee-status.override { plugins = p: [ p.date p.time ]; })
+      ];
     };
   };
   services.displayManager.defaultSession = "none+i3";

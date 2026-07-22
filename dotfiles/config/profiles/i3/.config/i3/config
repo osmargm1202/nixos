@@ -201,7 +201,6 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
-  status_command i3status
-  separator_symbol " · "
+  status_command bumblebee-status -m date time -p date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -t nord-powerline
   tray_output primary
 }
