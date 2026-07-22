@@ -70,13 +70,16 @@ Move compositor-independent `volume-osd` and `mic-volume-osd` to shared dotfiles
 
 ## Persistent Wallpaper
 
-Create `i3-wallpaper` with three operations:
+Create `i3-wallpaper` with shared and per-monitor operations:
 
-- `--set FILE`: validate one local image, canonicalize it, apply `feh --bg-fill`, and persist the path;
-- `--restore`: apply the persisted file when valid, otherwise choose and persist a random image;
-- `--random`: choose, apply, and persist a random image from `${I3_WALLPAPER_DIR:-$HOME/.config/wallpapers}`.
+- `--set FILE`: validate one local image, apply it to every active output, persist it as the shared fallback, and clear per-output overrides;
+- `--set-active FILE`: apply the image only to the output under the pointer, falling back to the focused-window center, primary output, then first active output;
+- `--set-output OUTPUT FILE`: apply an explicit output override;
+- `--restore`: rebuild the complete active-output image list in XRandR monitor order and persist any legacy/fallback migration;
+- `--random`: choose one random image for every output;
+- `--random-active`: choose a random image only for the pointer/focused output.
 
-State lives at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`. Feh is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. `i3-monitor-profile --apply` restores this wallpaper only after Autorandr finishes, preventing XRandR from clearing a concurrently applied background.
+Shared fallback state retains its compatibility mirror at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`; authoritative connector/default state is published as an atomic generation through `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpapers`, with connector files at `wallpapers/OUTPUT` and `.default` for shared fallback. A per-user `flock` serializes Autorandr, Nautilus, and keyboard invocations. Disconnected outputs retain their assignments and recover them when that connector returns. Existing single-file state migrates automatically. Feh receives one ordered image per active Xinerama output and is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. `i3-monitor-profile --apply` restores wallpapers only after Autorandr finishes, preventing XRandR from clearing a concurrently applied background.
 
 Add executable Nautilus script:
 
@@ -84,7 +87,7 @@ Add executable Nautilus script:
 ~/.local/share/nautilus/scripts/Set as Wallpaper
 ```
 
-It accepts exactly one local selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set`. Validation and persistence remain centralized in the helper. Home Manager activation removes any stale copy for every profile, then installs it as a real executable file after `linkGeneration` only for i3. Nautilus 50 therefore reliably exposes **Scripts → Set as Wallpaper** in i3 without leaking a broken action into other profiles.
+It accepts exactly one local selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set-active`. Pointer position selects the target monitor; focused-window geometry is the fallback. Validation, full-layout Feh application, and persistence remain centralized in the helper. Home Manager activation removes any stale copy for every profile, then installs it as a real executable file after `linkGeneration` only for i3. Nautilus 50 therefore reliably exposes **Scripts → Set as Wallpaper** in i3 without leaking a broken action into other profiles.
 
 ## Lock Screen
 
@@ -132,11 +135,11 @@ Static/TDD contracts must verify:
 - `ffcast`, the UPower service/package, and power-profiles-daemon remain available for recording and energy management;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
-- wallpaper set/restore/random behavior with mocked Feh and notifications, serialized after Autorandr;
+- shared and per-output wallpaper set/restore/random behavior, pointer/focus output targeting, XRandR/Feh ordering, legacy migration, and serialization after Autorandr;
 - every lock path uses packaged `i3lock-fancy`, overwrite-safe Scrot capture, Spanish prompt, `--nofork` forwarding, and secure solid-color fallback without a standalone `i3lock-color` collision;
 - clipboard empty/populated history behavior and themed Rofi invocation;
 - one Pasystray process source and functional caffeine state restoration;
-- Nautilus script delegates one selected path and rejects invalid selection;
+- Nautilus script delegates one selected path to active-output targeting and rejects invalid selection;
 - Dunst paths are portable, progress bars enabled, history/DND bindings exist, and all urgency timeouts equal eight seconds;
 - clipboard helper, `Mod+V`, and main menu all resolve through Rofi;
 - Autorandr hotplug service, EDID matching, horizontal fallback, login restore, runtime profile save/load, and local-only ownership remain declared;

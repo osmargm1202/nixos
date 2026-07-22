@@ -31,6 +31,18 @@ cat >"$TMP/bin/shuf" <<'STUB'
 #!/usr/bin/env bash
 head -n1
 STUB
+cat >"$TMP/bin/xrandr" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+  --listactivemonitors)
+    printf 'Monitors: 1\n 0: +*eDP-1 1920/309x1080/174+0+0 eDP-1\n'
+    ;;
+  --query)
+    printf 'eDP-1 connected primary 1920x1080+0+0\n'
+    ;;
+  *) exit 2 ;;
+esac
+STUB
 chmod +x "$TMP/bin/"*
 
 image="$TMP/wallpapers/selected image.png"
@@ -81,14 +93,14 @@ chmod +x "$TMP/bin/i3-wallpaper"
 CALLS="$TMP/nautilus.calls" PATH="$TMP/bin:$PATH" \
   NAUTILUS_SCRIPT_SELECTED_FILE_PATHS="$image"$'\n' \
   "$NAUTILUS"
-grep -Fxq -- "--set $image" "$TMP/nautilus.calls" || fail 'Nautilus script must delegate selected path'
+grep -Fxq -- "--set-active $image" "$TMP/nautilus.calls" || fail 'Nautilus script must delegate selected path to active output'
 
 if CALLS="$TMP/nautilus-multi.calls" PATH="$TMP/bin:$PATH" \
   NAUTILUS_SCRIPT_SELECTED_FILE_PATHS="$image"$'\n'"$TMP/wallpapers/a-fallback.jpg"$'\n' \
   "$NAUTILUS"; then
   fail 'Nautilus script must reject multiple selections'
 fi
-if grep -q '^--set ' "$TMP/nautilus-multi.calls"; then
+if grep -q '^--set-active ' "$TMP/nautilus-multi.calls"; then
   fail 'multiple selection must not change wallpaper'
 fi
 

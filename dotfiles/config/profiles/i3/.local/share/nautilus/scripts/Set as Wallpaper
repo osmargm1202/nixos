@@ -17,4 +17,4 @@ if ((${#files[@]} != 1)); then
   exit 1
 fi
 
-exec "$helper" --set "${files[0]}"
+exec "$helper" --set-active "${files[0]}"

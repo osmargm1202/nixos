@@ -168,6 +168,7 @@ in
     feh
     arandr
     xclip
+    xdotool
     xkb-switch
 
     # Desktop integration.

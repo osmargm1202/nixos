@@ -18,7 +18,8 @@ grep -Eq '^[[:space:]]+catppuccin-gtk[[:space:]]*$' "$PROFILE" ||
   fail 'i3 must install the selected Catppuccin GTK theme'
 grep -Fq 'helper="${I3_WALLPAPER_HELPER:-$HOME/.local/bin/i3-wallpaper}"' "$SCRIPT" ||
   fail 'Nautilus action must not depend on its restricted PATH'
-grep -Fq 'exec "$helper" --set' "$SCRIPT" || fail 'Nautilus action does not call the absolute helper'
+grep -Fq 'exec "$helper" --set-active' "$SCRIPT" ||
+  fail 'Nautilus action does not target the pointer/focused monitor'
 [[ -x "$SCRIPT" ]] || fail 'Nautilus wallpaper action source is not executable'
 ! grep -Eq 'for_window \[class="org\.gnome\.Nautilus"\].*floating enable' "$I3_CONFIG" ||
   fail 'Nautilus must use normal i3 tiling'
@@ -48,7 +49,7 @@ chmod +x "$tmp/home/.local/bin/i3-wallpaper"
 HOME="$tmp/home" PATH="/run/current-system/sw/bin" WALLPAPER_CAPTURE="$tmp/capture" \
   NAUTILUS_SCRIPT_SELECTED_FILE_PATHS="$image" "$SCRIPT"
 mapfile -t args <"$tmp/capture"
-[[ "${args[0]:-}" == --set ]] || fail 'Nautilus action omitted --set'
+[[ "${args[0]:-}" == --set-active ]] || fail 'Nautilus action omitted --set-active'
 [[ "${args[1]:-}" == "$image" ]] || fail 'Nautilus action corrupted selected path'
 
 printf 'PASS: Nautilus receives selected icons and PATH-independent wallpaper action\n'
