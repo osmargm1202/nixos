@@ -287,15 +287,18 @@ let
 
     i3 = [
       ".config/autostart/autorandr.desktop"
+      ".config/bumblebee-status"
       ".config/dunst"
       ".config/i3"
       ".config/rofi"
+      ".local/bin/i3-caffeine-toggle"
       ".local/bin/i3-calc"
       ".local/bin/i3-clipboard"
       ".local/bin/i3-config-editor"
       ".local/bin/i3-devices-menu"
       ".local/bin/i3-hotkeys"
       ".local/bin/i3-keyboard-menu"
+      ".local/bin/i3-lock"
       ".local/bin/i3-main-menu"
       ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"

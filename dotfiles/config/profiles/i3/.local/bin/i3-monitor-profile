@@ -5,14 +5,20 @@ notify() {
   notify-send -a 'i3-displays' -t 1800 'Displays' "$1" 2>/dev/null || true
 }
 
+restore_wallpaper() {
+  i3-wallpaper --restore >/dev/null 2>&1 || notify 'Monitor restored, but wallpaper restore failed'
+}
+
 apply_profile() {
+  local status=0
   if autorandr --change --force --default horizontal --match-edid; then
-    i3-wallpaper --restore >/dev/null 2>&1 || true
     notify 'Monitor profile restored'
-    return 0
+  else
+    notify 'No monitor profile matched; keeping current XRandR layout'
+    status=1
   fi
-  notify 'No monitor profile could be applied'
-  return 1
+  restore_wallpaper
+  return "$status"
 }
 
 save_profile() {
@@ -47,7 +53,7 @@ load_profile() {
     notify "Could not load $profile: ${error:-unknown error}"
     return 1
   fi
-  i3-wallpaper --restore >/dev/null 2>&1 || true
+  restore_wallpaper
   notify "Loaded profile: $profile"
 }
 

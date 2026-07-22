@@ -14,14 +14,14 @@ fail() {
 
 required_bindings=(
   'bindsym $mod+w exec --no-startup-id i3-zen-new-window'
-  'bindsym $mod+Tab exec --no-startup-id rofi -show window'
+  'bindsym $mod+Tab exec --no-startup-id i3-rofi --window'
   'bindsym $mod+Shift+w exec --no-startup-id chromium'
   'bindsym $mod+o exec --no-startup-id i3-obsidian-open-or-focus'
   'bindsym $mod+Shift+p exec --no-startup-id i3-pi-prompt'
   'bindsym $mod+Shift+Return exec --no-startup-id $term'
   'bindsym $mod+F10 exec --no-startup-id pavucontrol'
   'bindsym $mod+Mod1+e exec --no-startup-id i3-powermenu'
-  'bindsym $mod+Mod1+l exec --no-startup-id i3lock-color'
+  'bindsym $mod+Mod1+l exec --no-startup-id i3-lock'
   'bindsym $mod+Mod1+w exec --no-startup-id i3-wallpaper --random'
   'bindsym $mod+Ctrl+Shift+m exec --no-startup-id dunstctl close-all'
   'bindsym Ctrl+XF86AudioRaiseVolume exec --no-startup-id mic-volume-osd up'

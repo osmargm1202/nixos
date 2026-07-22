@@ -1,7 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+theme="$HOME/.config/rofi/i3-menu.rasi"
+base_theme_override='configuration {
+  font: "JetBrainsMono Nerd Font 12";
+  hover-select: true;
+  me-select-entry: "";
+  me-accept-entry: "MousePrimary";
+}
+window { width: 600px; }
+listview { lines: 13; }
+element { padding: 8px; cursor: pointer; }
+element-icon { size: 32px; }'
+
+case "${1:-}" in
+  --drun)
+    exec rofi -show drun -theme "$theme" -theme-str "$base_theme_override"
+    ;;
+  --window)
+    exec rofi -show window -theme "$theme" -theme-str "$base_theme_override"
+    ;;
+  --calc)
+    exec rofi -show calc -modes calc -theme "$theme" -theme-str "$base_theme_override"
+    ;;
+esac
+
 prompt="${1:-i3}"
 lines="${2:-14}"
-exec rofi -dmenu -i -p "$prompt" -show-icons \
-  -theme-str "listview { lines: $lines; }"
+exec rofi -dmenu -i -p "$prompt" -show-icons -theme "$theme" \
+  -theme-str "$base_theme_override listview { lines: $lines; }"

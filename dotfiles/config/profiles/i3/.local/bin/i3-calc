@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec rofi -show calc -modes calc
+exec i3-rofi --calc

@@ -10,10 +10,10 @@ fail() {
   exit 1
 }
 
-grep -Fq 'status_command bumblebee-status -m date time' "$I3" || fail 'Bumblebee date/time bar missing'
-grep -q 'exec --no-startup-id i3-wallpaper --restore' "$I3" || fail 'wallpaper restore missing'
+grep -Fq 'status_command bumblebee-status -m shortcut date time' "$I3" || fail 'Bumblebee caffeine/date/time bar missing'
+grep -Fq 'exec --no-startup-id i3-monitor-profile --apply' "$I3" || fail 'serialized monitor/wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
-grep -q 'exec --no-startup-id xss-lock.*i3lock-color --nofork' "$I3" || fail 'xss-lock must keep locker in foreground'
+grep -q 'exec --no-startup-id xss-lock.*i3-lock --nofork' "$I3" || fail 'xss-lock must keep themed locker in foreground'
 ! grep -Eq 'hypr-|xwinwrap|Videos/wallpapers/1\.mp4' "$I3" || fail 'nonportable command remains'
 grep -q 'terminal: "kitty"' "$ROFI" || fail 'Rofi terminal is not Kitty'
 grep -q 'modi: "drun,run,window,ssh,calc"' "$ROFI" || fail 'Rofi modes incomplete'
@@ -67,7 +67,7 @@ else
 fi
 printf '%s\n' "${ROFI_CHOICE:-}"
 STUB
-for command in systemctl i3-msg setxkbmap feh; do
+for command in systemctl i3-msg setxkbmap xkb-switch feh; do
   cat > "$TMP/bin/$command" <<'STUB'
 #!/usr/bin/env bash
 printf '%s %s\n' "$(basename "$0")" "$*" >> "$CALLS"
@@ -96,7 +96,7 @@ CALLS="$TMP/logout.calls" ROFI_CHOICE=Logout PATH="$TMP/bin:$PATH" "$BIN/i3-powe
 grep -Fxq 'i3-msg exit' "$TMP/logout.calls" || fail 'Logout action incorrect'
 
 CALLS="$TMP/keyboard.calls" ROFI_CHOICE=Latam PATH="$TMP/bin:$PATH" "$BIN/i3-keyboard-menu"
-grep -Fxq 'setxkbmap -layout latam' "$TMP/keyboard.calls" || fail 'Latam action incorrect'
+grep -Fxq 'xkb-switch -s latam' "$TMP/keyboard.calls" || fail 'Latam action incorrect'
 
 mkdir -p "$TMP/state/i3" "$TMP/wallpapers"
 printf 'image\n' > "$TMP/wallpapers/current.png"

@@ -12,8 +12,9 @@ fail() {
 
 grep -Eq '^[[:space:]]+pasystray[[:space:]]*$' "$PROFILE" ||
   fail 'PipeWire/PulseAudio-compatible pasystray package missing'
-grep -Fq 'exec --no-startup-id pasystray' "$CONFIG" ||
-  fail 'pasystray must start inside the i3 systray session'
+if grep -Fq 'exec --no-startup-id pasystray' "$CONFIG"; then
+  fail 'explicit pasystray duplicates its packaged XDG autostart'
+fi
 grep -Fq 'tray_output primary' "$CONFIG" || fail 'i3bar primary tray missing'
 
 printf 'PASS: i3 starts a volume control applet in its systray\n'

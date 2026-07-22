@@ -6,8 +6,8 @@ choice="$(printf '%s\n' \
   | i3-rofi 'i3' 16 || true)"
 
 case "$choice" in
-  Apps) exec rofi -show drun ;;
-  Windows) exec rofi -show window ;;
+  Apps) exec i3-rofi --drun ;;
+  Windows) exec i3-rofi --window ;;
   Terminal) exec kitty ;;
   Zen) exec i3-zen-new-window ;;
   Chromium) exec chromium ;;

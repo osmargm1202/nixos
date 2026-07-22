@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+state_file="$state_dir/caffeine"
+lock_file="$state_dir/caffeine.lock"
+mkdir -p "$state_dir"
+exec 9>"$lock_file"
+flock 9
+
+notify() {
+  notify-send -a i3-caffeine -t 1500 'Caffeine' "$1" 2>/dev/null || true
+}
+
+valid_state() {
+  [[ "${1:-}" =~ ^[0-9]+$ && "${2:-}" =~ ^[0-9]+$ &&
+     "${3:-}" =~ ^[0-9]+$ && "${4:-}" =~ ^[0-9]+$ &&
+     "${5:-}" =~ ^[0-9]+$ && "${6:-}" =~ ^[01]$ ]]
+}
+
+restore_settings() {
+  local timeout="$1" cycle="$2" standby="$3" suspend="$4" off="$5" dpms_enabled="$6"
+  local status=0
+  xset s "$timeout" "$cycle" || status=1
+  if [[ "$dpms_enabled" == 1 ]]; then
+    xset +dpms || status=1
+    xset dpms "$standby" "$suspend" "$off" || status=1
+  else
+    xset -dpms || status=1
+  fi
+  return "$status"
+}
+
+status() {
+  if [[ -f "$state_file" ]]; then
+    printf 'Caffeine ON\n'
+  else
+    printf 'Caffeine OFF\n'
+  fi
+}
+
+activate() {
+  local snapshot timeout cycle standby suspend off dpms_enabled temporary
+  snapshot="$(xset q)"
+  read -r timeout cycle < <(awk '/timeout:/ { print $2, $4; exit }' <<<"$snapshot")
+  read -r standby suspend off < <(awk '/Standby:/ { print $2, $4, $6; exit }' <<<"$snapshot")
+  [[ "$snapshot" == *'DPMS is Enabled'* ]] && dpms_enabled=1 || dpms_enabled=0
+  timeout="${timeout:-600}"
+  cycle="${cycle:-600}"
+  standby="${standby:-600}"
+  suspend="${suspend:-600}"
+  off="${off:-600}"
+  valid_state "$timeout" "$cycle" "$standby" "$suspend" "$off" "$dpms_enabled" || return 1
+
+  temporary="$(mktemp "$state_file.tmp.XXXXXX")"
+  printf '%s %s %s %s %s %s\n' "$timeout" "$cycle" "$standby" "$suspend" "$off" "$dpms_enabled" >"$temporary"
+  if xset s off && xset -dpms; then
+    mv -f "$temporary" "$state_file"
+    notify 'Enabled — screen blanking and automatic lock suspended'
+    return 0
+  fi
+  restore_settings "$timeout" "$cycle" "$standby" "$suspend" "$off" "$dpms_enabled" || true
+  rm -f "$temporary"
+  notify 'Could not enable caffeine mode'
+  return 1
+}
+
+deactivate() {
+  local timeout cycle standby suspend off dpms_enabled
+  if ! read -r timeout cycle standby suspend off dpms_enabled <"$state_file" ||
+     ! valid_state "$timeout" "$cycle" "$standby" "$suspend" "$off" "$dpms_enabled"; then
+    timeout=600 cycle=600 standby=600 suspend=600 off=600 dpms_enabled=1
+    notify 'Recovered corrupt caffeine state with safe defaults'
+  fi
+  if restore_settings "$timeout" "$cycle" "$standby" "$suspend" "$off" "$dpms_enabled"; then
+    rm -f "$state_file"
+    notify 'Disabled — normal screen locking restored'
+    return 0
+  fi
+  notify 'Could not restore normal screen locking'
+  return 1
+}
+
+case "${1:-toggle}" in
+  toggle)
+    if [[ -f "$state_file" ]]; then deactivate; else activate; fi
+    ;;
+  on)
+    [[ -f "$state_file" ]] || activate
+    ;;
+  off)
+    [[ ! -f "$state_file" ]] || deactivate
+    ;;
+  status) status ;;
+  *) printf 'usage: %s [toggle|on|off|status]\n' "${0##*/}" >&2; exit 2 ;;
+esac

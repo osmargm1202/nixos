@@ -1,7 +1,4 @@
 [Desktop Entry]
 Type=Application
 Name=Autorandr
-Comment=Restore the matching monitor profile after i3 login
-Exec=i3-monitor-profile --apply
-OnlyShowIn=i3;
-NoDisplay=true
+Hidden=true

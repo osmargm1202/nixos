@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper"
+wallpaper=''
+lock_image=''
+if [[ -f "$state_file" ]]; then
+  candidate="$(head -n1 "$state_file")"
+  if [[ -f "$candidate" ]]; then
+    wallpaper="$(readlink -f -- "$candidate")"
+  fi
+fi
+
+cleanup() {
+  [[ -z "$lock_image" ]] || rm -f -- "$lock_image"
+}
+trap cleanup EXIT
+
+args=(
+  --clock
+  --indicator
+  --radius=120
+  --ring-width=8
+  --inside-color=2e3440aa
+  --ring-color=88c0d0ff
+  --insidever-color=3b4252cc
+  --ringver-color=a3be8cff
+  --insidewrong-color=3b4252cc
+  --ringwrong-color=bf616aff
+  --line-color=00000000
+  --separator-color=00000000
+  --keyhl-color=ebcb8bff
+  --bshl-color=bf616aff
+  --time-color=eceff4ff
+  --date-color=d8dee9ff
+  --greeter-color=88c0d0ff
+  --time-font='Noto Sans'
+  --date-font='Noto Sans'
+  --greeter-font='Noto Sans'
+  --time-size=36
+  --date-size=18
+  --greeter-size=16
+  '--time-str=%I:%M %p'
+  '--date-str=%A %d/%m/%Y'
+  '--greeter-text=Sesión bloqueada'
+  --ignore-empty-password
+)
+
+if [[ -n "$wallpaper" ]] && command -v magick >/dev/null 2>&1; then
+  dimensions="$(xrandr --current 2>/dev/null | awk '
+    /^Screen / {
+      for (i = 1; i <= NF; i++) {
+        if ($i == "current") {
+          gsub(/,/, "", $(i + 3))
+          print $(i + 1) "x" $(i + 3)
+          exit
+        }
+      }
+    }
+  ')"
+  if [[ "$dimensions" =~ ^[0-9]+x[0-9]+$ ]]; then
+    lock_image="$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/i3-lock.XXXXXX.png")"
+    if magick "$wallpaper" -auto-orient -resize "${dimensions}^" -gravity center \
+      -extent "$dimensions" -blur 0x8 "$lock_image"; then
+      args+=(--image="$lock_image" --fill)
+    else
+      rm -f -- "$lock_image"
+      lock_image=''
+    fi
+  fi
+fi
+
+if [[ -z "$lock_image" ]]; then
+  args+=(--color=2e3440ff)
+fi
+
+i3lock-color "${args[@]}" "$@"

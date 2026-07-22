@@ -26,7 +26,7 @@ in
     windowManager.i3 = {
       enable = true;
       extraPackages = with pkgs; [
-        (bumblebee-status.override { plugins = p: [ p.date p.time ]; })
+        (bumblebee-status.override { plugins = p: [ p.shortcut p.date p.time ]; })
       ];
     };
   };
@@ -166,6 +166,7 @@ in
 
     # User controls.
     flameshot
+    imagemagick
     brightnessctl
     pamixer
     playerctl

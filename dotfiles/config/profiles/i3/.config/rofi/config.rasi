@@ -1,7 +1,7 @@
 configuration{
     modi: "drun,run,window,ssh,calc";
     icon-theme: "Numix-Circle";
-    font: "JetBrains Mono Regular 13";
+    font: "JetBrains Mono Regular 15.6";
     show-icons: true;
     terminal: "kitty";
     drun-display-format: "{icon} {name}";

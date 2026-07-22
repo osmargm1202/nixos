@@ -10,9 +10,9 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 
 - Apply the minimal design to every i3 output, not only Lenovo.
 - Remove Picom, Polybar, and Conky packages, startup commands, dotfile paths, helpers, tests, and profile artifacts.
-- Use i3's native bar with Bumblebee Status modules `date time` and theme `nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales.
+- Use i3's native bar with Bumblebee Status modules `shortcut date time` and theme `nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales. The shortcut is a clickable caffeine toggle.
 - Restore active daily Hyprland shortcut behavior with i3/X11 equivalents, but do not port `hypr-menu`, Waybar/SwayNC/NWG operations, unused helpers, autostart daemons, or theme tooling.
-- Keep `nm-applet`, `blueman-applet`, `udiskie`, and a PipeWire/PulseAudio volume applet in session startup.
+- Keep `nm-applet`, `blueman-applet`, `udiskie`, and one PipeWire/PulseAudio volume applet in session startup. Pasystray uses its packaged XDG autostart and must not also be launched explicitly by i3.
 - Use Dunst with popups, history/DND bindings, volume/microphone OSD, and an eight-second timeout for every urgency; no notification remains permanent.
 - Do not add SwayNC or an i3 notification-center clone.
 - Disable the G213 OpenRGB notification observer on Lenovo because that host has no G213.
@@ -22,6 +22,9 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
 - Use Rofi for clipboard selection from both `Mod+V` and the main menu.
 - Enable Autorandr for DRM hotplug and suspend/resume detection. Saved profiles remain runtime-owned under `~/.config/autorandr`; unmatched monitor sets fall back to a horizontal layout.
+- Use a neutral `i3-menu.rasi` with the same palette, dimensions, typography, padding and icon sizing as the active Hyprland Rofi menus; never deploy a `hypr-menu` artifact in i3.
+- `Mod+W` follows Hyprland behavior: launch Zen when absent, otherwise create a blank tab and focus its i3 window.
+- Use persisted wallpaper as the blurred/translucent i3 lock background and expose caffeine through the bar plus `Mod+Shift+C`.
 
 ## Session and Bar
 
@@ -29,16 +32,18 @@ Getty presents a normal login prompt on TTY1. After successful password authenti
 
 ```text
 bar {
-  status_command bumblebee-status -m date time -p date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -t nord-powerline
+  font pango:Noto Sans 14
+  height 36
+  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }
 ```
 
-The bar owns workspace buttons and the tray. `pasystray` provides interactive output volume control through PipeWire's PulseAudio compatibility layer. Bumblebee Status has only `date` and `time` modules. Date uses `es_DO.UTF-8` for the Spanish weekday; time uses `en_US.UTF-8` because `es_DO.UTF-8` does not provide a reliable AM/PM marker. Nord Powerline supplies the visual separators. Battery, network, CPU/load, memory/disk, and temperature are intentionally omitted.
+The 36px bar uses Noto Sans 14 for larger workspace labels and status text. Font Awesome and Symbols Nerd Font remain fallbacks for Nord Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
 
 ## Helper Scope
 
-Keep the existing i3-native helpers for Rofi, files, clipboard, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
+Keep the existing i3-native helpers for themed Rofi, persistent clipboard history, files, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, caffeine, lock styling, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
 
 The helper audit counted 55 executable Hyprland-profile helpers: 22 already matched, 15 portable gaps, and 18 compositor/panel-specific omissions. The approved daily scope closes active keyboard and menu behavior while leaving eight optional functions outside scope: battery alerts, Bluetooth auto-reconnect, stale/unbound smart-run, container autostart, Discord autostart, theme chooser, and webapp maker/remover.
 
@@ -54,7 +59,7 @@ Move compositor-independent `volume-osd` and `mic-volume-osd` to shared dotfiles
 
 ## Monitor Profiles
 
-`services.autorandr` installs the package, DRM hotplug rules, and suspend/resume hook. It selects profiles by EDID and uses Autorandr's virtual `horizontal` target when no saved profile matches. i3 also runs `i3-monitor-profile --apply` at login.
+`services.autorandr` installs the package, DRM hotplug rules, and suspend/resume hook. It selects profiles by EDID and uses Autorandr's virtual `horizontal` target when no saved profile matches. The packaged Autorandr XDG desktop is hidden in i3; i3 runs exactly one `i3-monitor-profile --apply` command at login so monitor selection and wallpaper restoration are serialized.
 
 `Mod+P`, `Mod+Ctrl+,`, and Devices → Displays open `i3-monitor-profile`. Its menu provides ARandR configuration, detected-profile apply, current-profile save, and saved-profile load. ARandR only edits the current XRandR layout; saving through the helper is what makes Autorandr restore it later.
 
@@ -68,7 +73,7 @@ Create `i3-wallpaper` with three operations:
 - `--restore`: apply the persisted file when valid, otherwise choose and persist a random image;
 - `--random`: choose, apply, and persist a random image from `${I3_WALLPAPER_DIR:-$HOME/.config/wallpapers}`.
 
-State lives at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`. Feh is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. i3 starts `i3-wallpaper --restore` once per session.
+State lives at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`. Feh is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. `i3-monitor-profile --apply` restores this wallpaper only after Autorandr finishes, preventing XRandR from clearing a concurrently applied background.
 
 Add executable Nautilus script:
 
@@ -110,15 +115,18 @@ Unrelated Hyprland helpers remain intact for Hyprland profiles. Omission from i3
 Static/TDD contracts must verify:
 
 - no Picom, Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile;
-- native i3bar invokes Bumblebee Status with only date/time modules, Nord Powerline, and the requested mixed-locale formats;
-- Rofi is plugin-wrapped and Mod+C invokes a working `i3-calc`;
+- native i3bar invokes Bumblebee Status with caffeine/date/time modules, Nord Powerline, larger Noto typography, clean date/time icons, and the requested mixed-locale formats;
+- Rofi is plugin-wrapped, uses the neutral Hyprland-parity theme everywhere, Mod+C invokes a working `i3-calc`, and Win+Alt+Space has a physical-keycode binding plus fallback;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have i3 equivalents;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
 - Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
 - XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
-- wallpaper set/restore/random behavior with mocked Feh and notifications;
+- wallpaper set/restore/random behavior with mocked Feh and notifications, serialized after Autorandr;
+- every lock path uses the persisted wallpaper with blur and translucent Nord styling;
+- clipboard empty/populated history behavior and themed Rofi invocation;
+- one Pasystray process source and functional caffeine state restoration;
 - Nautilus script delegates one selected path and rejects invalid selection;
 - Dunst paths are portable, progress bars enabled, history/DND bindings exist, and all urgency timeouts equal eight seconds;
 - clipboard helper, `Mod+V`, and main menu all resolve through Rofi;

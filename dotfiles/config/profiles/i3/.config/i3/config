@@ -2,7 +2,7 @@ set $mod Mod4
 set $term kitty
 set $browser i3-zen-new-window
 set $files sh -lc 'nautilus --new-window "$HOME" >/tmp/i3-nautilus.log 2>&1 || gtk-launch org.gnome.Nautilus.desktop >/tmp/i3-nautilus.log 2>&1 || xdg-open "$HOME" >/tmp/i3-nautilus.log 2>&1'
-set $launcher rofi -show drun -show-icons
+set $launcher i3-rofi --drun
 
 font pango:JetBrainsMono Nerd Font 11
 floating_modifier $mod
@@ -13,27 +13,29 @@ exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
-exec --no-startup-id pasystray
 exec --no-startup-id dunst
 exec --no-startup-id clipmenud
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-color --nofork --color=1a1b26 --ignore-empty-password
-exec --no-startup-id i3-wallpaper --restore
+exec --no-startup-id xss-lock --transfer-sleep-lock -- i3-lock --nofork
+exec --no-startup-id i3-caffeine-toggle off
+exec --no-startup-id i3-monitor-profile --apply
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id $term
 bindsym $mod+space exec --no-startup-id $launcher
-bindsym $mod+Escape exec --no-startup-id rofi -show window
-bindsym $mod+Tab exec --no-startup-id rofi -show window
-bindsym Mod1+Tab exec --no-startup-id rofi -show window
+bindsym $mod+Escape exec --no-startup-id i3-rofi --window
+bindsym $mod+Tab exec --no-startup-id i3-rofi --window
+bindsym Mod1+Tab exec --no-startup-id i3-rofi --window
 bindsym $mod+c exec --no-startup-id i3-calc
+bindsym $mod+Shift+c exec --no-startup-id i3-caffeine-toggle
 bindsym $mod+v exec --no-startup-id i3-clipboard
 bindsym $mod+m exec --no-startup-id i3-open-file open
 bindsym $mod+Ctrl+m exec --no-startup-id i3-open-file dir
 bindsym $mod+Shift+m exec --no-startup-id i3-open-file terminal
 bindsym $mod+d exec --no-startup-id i3-ssh-host
 bindsym $mod+slash exec --no-startup-id i3-hotkeys
-bindsym $mod+Mod1+space exec --no-startup-id i3-main-menu
+bindcode $mod+Mod1+65 exec --no-startup-id i3-main-menu
+bindsym $mod+F12 exec --no-startup-id i3-main-menu
 bindsym $mod+Mod1+w exec --no-startup-id i3-wallpaper --random
 bindsym $mod+p exec --no-startup-id i3-monitor-profile
 bindsym $mod+Ctrl+comma exec --no-startup-id i3-monitor-profile
@@ -44,7 +46,7 @@ bindsym $mod+Shift+p exec --no-startup-id i3-pi-prompt
 bindsym $mod+e exec --no-startup-id $files
 bindsym $mod+F10 exec --no-startup-id pavucontrol
 bindsym $mod+Mod1+e exec --no-startup-id i3-powermenu
-bindsym $mod+Mod1+l exec --no-startup-id i3lock-color --color=1a1b26 --ignore-empty-password
+bindsym $mod+Mod1+l exec --no-startup-id i3-lock
 bindsym $mod+Ctrl+r layout toggle split
 bindsym $mod+q kill
 bindsym $mod+Shift+q exec --no-startup-id xkill
@@ -59,7 +61,7 @@ bindsym $mod+Ctrl+Shift+m exec --no-startup-id dunstctl close-all
 bindsym Print exec --no-startup-id flameshot gui
 bindsym Ctrl+Print exec --no-startup-id flameshot full -c
 bindsym Mod1+Print exec --no-startup-id flameshot gui
-bindsym $mod+Shift+l exec --no-startup-id i3lock-color --color=1a1b26 --ignore-empty-password
+bindsym $mod+Shift+l exec --no-startup-id i3-lock
 bindsym $mod+Mod1+p exec --no-startup-id xset dpms force off
 bindsym $mod+Shift+o exec --no-startup-id systemctl suspend
 bindsym $mod+Mod1+o exec --no-startup-id systemctl poweroff
@@ -200,6 +202,8 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
-  status_command bumblebee-status -m date time -p date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -t nord-powerline
+  font pango:Noto Sans 14
+  height 36
+  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }

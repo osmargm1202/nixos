@@ -3,7 +3,7 @@ set -euo pipefail
 
 choice="$(printf '%s\n' Lock Suspend Hibernate Logout Reboot 'Power off' Cancel | i3-rofi Power 7 || true)"
 case "$choice" in
-  Lock) exec i3lock-color --color=1a1b26 --ignore-empty-password ;;
+  Lock) exec i3-lock ;;
   Suspend) exec systemctl suspend ;;
   Hibernate)
     if systemctl hibernate; then
