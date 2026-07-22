@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -u
+
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+found_live=0
+
+for socket in "$runtime_dir"/i3/ipc-socket.*; do
+  [ -S "$socket" ] || continue
+  if i3-msg -s "$socket" -t get_version >/dev/null 2>&1; then
+    found_live=1
+    if i3-msg -s "$socket" reload >/dev/null 2>&1; then
+      exit 0
+    fi
+  fi
+done
+
+if [[ "$found_live" -eq 1 ]]; then
+  printf 'warning: failed to reload every live i3 IPC socket\n' >&2
+  exit 1
+fi
+
+exit 0

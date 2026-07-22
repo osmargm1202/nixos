@@ -305,6 +305,7 @@ let
       ".local/bin/i3-main-menu"
       ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"
+      ".local/bin/i3-reload-after-switch"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
       ".local/bin/i3-performance-menu"
@@ -773,6 +774,14 @@ in
             $DRY_RUN_CMD mkdir -p "$HOME/.config/caelestia"
             $DRY_RUN_CMD cp "${dotfilesPath}/config/profiles/hyprlandqs-caelestia/.config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
           fi
+        ''
+      );
+
+      # Home Manager replaces the i3 config symlink during a live switch.
+      # Reload through IPC afterward so i3 re-establishes its keyboard grabs.
+      home.activation.reloadI3AfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+        lib.optionalString (profileName == "i3") ''
+          $DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch" || true
         ''
       );
 
