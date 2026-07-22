@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+helper="${I3_WALLPAPER_HELPER:-$HOME/.local/bin/i3-wallpaper}"
+if [[ -z "${I3_WALLPAPER_HELPER:-}" ]] && command -v i3-wallpaper >/dev/null 2>&1; then
+  helper="$(command -v i3-wallpaper)"
+fi
 mapfile -t selected <<<"${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}"
 files=()
 for path in "${selected[@]}"; do
@@ -13,4 +17,4 @@ if ((${#files[@]} != 1)); then
   exit 1
 fi
 
-exec i3-wallpaper --set "${files[0]}"
+exec "$helper" --set "${files[0]}"

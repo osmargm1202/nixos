@@ -14,6 +14,7 @@ exec --no-startup-id gnome-keyring-daemon --start --components=pkcs11,secrets,ss
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
+exec --no-startup-id pasystray
 exec --no-startup-id dunst
 exec --no-startup-id clipmenud
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-color --nofork --color=1a1b26 --ignore-empty-password
@@ -77,6 +78,8 @@ bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 bindsym XF86AudioNext exec --no-startup-id playerctl next
 bindsym XF86MonBrightnessUp exec --no-startup-id brightness-osd up
 bindsym XF86MonBrightnessDown exec --no-startup-id brightness-osd down
+bindsym XF86WLAN exec --no-startup-id i3-wifi-toggle
+bindsym XF86RFKill exec --no-startup-id i3-wifi-toggle
 
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
@@ -108,14 +111,10 @@ bindsym $mod+f fullscreen toggle
 bindsym $mod+Shift+f fullscreen toggle
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+Ctrl+c move position center
-bindsym $mod+s scratchpad show
-bindsym $mod+Shift+s move scratchpad
-bindsym $mod+Ctrl+s move container to workspace current
 bindsym $mod+grave focus right
 bindsym $mod+Shift+grave focus left
-bindsym $mod+Mod1+s layout stacking
 bindsym $mod+g layout tabbed
-bindsym $mod+Shift+g layout toggle split
+bindsym $mod+Shift+g layout default
 bindsym $mod+t layout toggle split
 bindsym $mod+r layout toggle split
 bindsym $mod+Ctrl+minus resize shrink width 20 px

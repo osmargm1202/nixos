@@ -17,8 +17,9 @@ grep -q 'exec --no-startup-id xss-lock.*i3lock-color --nofork' "$I3" || fail 'xs
 ! grep -Eq 'hypr-|xwinwrap|Videos/wallpapers/1\.mp4' "$I3" || fail 'nonportable command remains'
 grep -q 'terminal: "kitty"' "$ROFI" || fail 'Rofi terminal is not Kitty'
 grep -q 'modi: "drun,run,window,ssh,calc"' "$ROFI" || fail 'Rofi modes incomplete'
-grep -q 'scratchpad show' "$I3" || fail 'scratchpad show binding missing'
-grep -q 'move scratchpad' "$I3" || fail 'scratchpad move binding missing'
+grep -Fq 'bindsym $mod+g layout tabbed' "$I3" || fail 'grouped tabs binding missing'
+grep -Fq 'bindsym $mod+Shift+g layout default' "$I3" || fail 'normal layout binding missing'
+! grep -Eq 'scratchpad|layout stacking' "$I3" || fail 'removed scratchpad/stacking binding remains'
 
 BIN="$ROOT/config/profiles/i3/.local/bin"
 helpers=(

@@ -12,10 +12,13 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Remove Picom, Polybar, and Conky packages, startup commands, dotfile paths, helpers, tests, and profile artifacts.
 - Use i3's native `bar` with `status_command i3status`; show only a Spanish weekday/date and a separate 12-hour AM/PM time block.
 - Restore active daily Hyprland shortcut behavior with i3/X11 equivalents, but do not port `hypr-menu`, Waybar/SwayNC/NWG operations, unused helpers, autostart daemons, or theme tooling.
-- Keep `nm-applet`, `blueman-applet`, and `udiskie` in session startup.
+- Keep `nm-applet`, `blueman-applet`, `udiskie`, and a PipeWire/PulseAudio volume applet in session startup.
 - Use Dunst with popups, history/DND bindings, and volume/microphone OSD.
 - Do not add SwayNC or an i3 notification-center clone.
 - Disable the G213 OpenRGB notification observer on Lenovo because that host has no G213.
+- Expose only normal split and grouped/tabbed layouts: `Mod+G` enters grouped tabs and `Mod+Shift+G` returns to normal; do not reserve `Mod+S` for scratchpad or stacking.
+- Install the runtime-selected Colloid/Catppuccin GTK assets in i3 so Nautilus does not fall back to default icons.
+- Bind Lenovo XF86 audio, microphone, brightness, WLAN, and RFKill symbols; all helper commands must remain independently runnable.
 
 ## Session and Bar
 
@@ -28,7 +31,7 @@ bar {
 }
 ```
 
-The bar owns workspace buttons and the tray. A minimal i3status configuration has exactly two `tztime` blocks: Spanish `%A %d/%m/%Y` and English-locale `%I:%M %p`, separated by ` · `. This mixed-locale split is required because `es_DO.UTF-8` does not provide a reliable AM/PM marker. Battery, network, CPU/load, memory/disk, and temperature are intentionally omitted. No custom watcher or JSON helper is used.
+The bar owns workspace buttons and the tray. `pasystray` provides interactive output volume control through PipeWire's PulseAudio compatibility layer. A minimal i3status configuration has exactly two `tztime` blocks: Spanish `%A %d/%m/%Y` and English-locale `%I:%M %p`, separated by ` · `. This mixed-locale split is required because `es_DO.UTF-8` does not provide a reliable AM/PM marker. Battery, network, CPU/load, memory/disk, and temperature are intentionally omitted. No custom watcher or JSON helper is used.
 
 ## Helper Scope
 
@@ -98,6 +101,9 @@ Static/TDD contracts must verify:
 - native i3bar invokes `i3status`, owns the tray, and exposes only the requested mixed-locale date/time blocks;
 - Rofi is plugin-wrapped and Mod+C invokes a working `i3-calc`;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have i3 equivalents;
+- normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
+- Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
+- XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
 - wallpaper set/restore/random behavior with mocked Feh and notifications;

@@ -305,6 +305,7 @@ let
       ".local/bin/i3-rofi"
       ".local/bin/i3-ssh-host"
       ".local/bin/i3-wallpaper"
+      ".local/bin/i3-wifi-toggle"
       ".local/bin/i3-zen-new-window"
       ".local/share/nautilus/scripts/Set as Wallpaper"
     ];

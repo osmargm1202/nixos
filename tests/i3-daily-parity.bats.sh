@@ -32,8 +32,6 @@ required_bindings=(
   'bindsym $mod+Ctrl+c move position center'
   'bindsym $mod+r layout toggle split'
   'bindsym $mod+Ctrl+Mod1+r mode "resize"'
-  'bindsym $mod+s scratchpad show'
-  'bindsym $mod+Shift+s move scratchpad'
   'bindsym $mod+Ctrl+Left move left'
   'bindsym $mod+Ctrl+Right move right'
   'bindsym $mod+Home workspace number $ws1'

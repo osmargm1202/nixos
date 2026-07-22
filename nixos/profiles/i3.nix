@@ -150,6 +150,7 @@ in
     networkmanagerapplet
     blueman
     pavucontrol
+    pasystray
     polkit_gnome
     gnome-keyring
     dex
@@ -162,6 +163,15 @@ in
     brightnessctl
     pamixer
     playerctl
+
+    # Runtime-selected GTK/Nautilus appearance.
+    adwaita-icon-theme
+    hicolor-icon-theme
+    colloid-icon-theme
+    catppuccin-gtk
+    catppuccin-cursors.macchiatoTeal
+    catppuccin-cursors.latteTeal
+    gnome-themes-extra
 
     # Daily applications used by MIME defaults and bindings.
     kitty
