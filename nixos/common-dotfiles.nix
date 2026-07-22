@@ -143,7 +143,9 @@ let
     # automation own it; the default cursor theme is seeded once below.
     ".local/bin/kbd-layout-next"
     ".local/bin/memclean-dev"
+    ".local/bin/mic-volume-osd"
     ".local/bin/openrgb-autostart"
+    ".local/bin/volume-osd"
     ".local/bin/brightness-osd"
     ".local/bin/reset_config"
     ".local/bin/steam-workshop-image"
@@ -281,8 +283,6 @@ let
       ".local/bin/waybar-swap-usage"
       ".local/bin/waybar-time-ampm"
       ".local/bin/waybar-watch"
-      ".local/bin/mic-volume-osd"
-      ".local/bin/volume-osd"
     ];
 
     i3 = [
@@ -776,9 +776,8 @@ in
         };
       };
 
-      # Blinks the G213 keyboard areas on Discord/Steam notifications.
-      # The script exits 0 on hosts without a G213, so the unit is safe fleet-wide.
-      systemd.user.services.openrgb-notify = {
+      # Lenovo has no G213; avoid starting a detector that can only exit.
+      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";
