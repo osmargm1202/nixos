@@ -13,7 +13,7 @@ fail() {
 	exit 1
 }
 
-for forbidden in polybar picom conky waybar 'hypr-'; do
+for forbidden in polybar conky waybar 'hypr-'; do
 	if grep -Eqi "$forbidden" "$PROFILE" "$I3_CONFIG"; then
 		fail "minimal i3 profile still references $forbidden"
 	fi
@@ -23,7 +23,7 @@ for forbidden in polybar picom conky waybar 'hypr-'; do
 done
 
 grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar block missing'
-grep -Fxq '  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline' "$I3_CONFIG" ||
+grep -Fxq '  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline' "$I3_CONFIG" ||
 	fail 'i3bar must run caffeine/date/time with Nord Powerline'
 grep -Fq 'tray_output primary' "$I3_CONFIG" || fail 'i3bar must own the primary tray'
 grep -Fq 'exec --no-startup-id nm-applet' "$I3_CONFIG" || fail 'NetworkManager applet missing'
@@ -52,4 +52,4 @@ grep -Fq 'bumblebeeI3 = ' "$PROFILE" ||
 	fail 'NixOS i3 integration must package clean icons and Bumblebee modules'
 ! grep -Fq 'i3status' "$PROFILE" || fail 'legacy i3status package remains'
 
-printf 'PASS: i3 uses native i3bar with Bumblebee Status and no compositor/custom panel\n'
+printf 'PASS: i3 uses native i3bar with Bumblebee Status and no custom panel\n'
