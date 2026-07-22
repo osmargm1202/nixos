@@ -15,12 +15,18 @@ fail() {
 
 [ -x "$LOCK" ] || fail 'i3-lock helper missing or not executable'
 grep -Fq '".local/bin/i3-lock"' "$DOTFILES" || fail 'i3-lock not deployed'
-grep -Eq '^[[:space:]]+imagemagick[[:space:]]*$' "$PROFILE" || fail 'ImageMagick conversion dependency missing'
-grep -Fq -- '-blur 0x8' "$LOCK" || fail 'wallpaper preprocessing blur missing'
-grep -Fq -- '--inside-color=2e3440aa' "$LOCK" || fail 'lock indicator is not translucent'
-grep -Fq -- '--image="$lock_image"' "$LOCK" || fail 'lock does not use converted PNG wallpaper'
-if grep -Fq -- '--blur=8' "$LOCK"; then fail 'i3lock blur cannot blur an opaque supplied image'; fi
-grep -Fq -- '--clock' "$LOCK" || fail 'lock clock missing'
+grep -Fq '(i3lock-fancy.override {' "$PROFILE" || fail 'stock i3lock-fancy package missing'
+grep -Fq 'screenshotCommand = "${scrot}/bin/scrot -z";' "$PROFILE" || fail 'fast scrot screenshot command missing'
+grep -Fq 'name = "i3lock-color-fallback";' "$PROFILE" || fail 'collision-safe color fallback wrapper missing'
+grep -Eq '^[[:space:]]+i3lockColorFallback[[:space:]]*$' "$PROFILE" || fail 'color fallback wrapper not installed'
+if grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE"; then
+  fail 'standalone i3lock-color conflicts with i3lock-fancy bin/i3lock'
+fi
+grep -Fq "i3lock-fancy -t 'Ingrese su contraseña'" "$LOCK" || fail 'lock helper does not launch i3lock-fancy with Spanish prompt'
+grep -Fq 'exec i3lock-color-fallback --color=2e3440ff --ignore-empty-password' "$LOCK" || fail 'fancy preprocessing failure has no secure lock fallback'
+if grep -Eq 'magick|--clock|--inside-color|--image=' "$LOCK"; then
+  fail 'legacy custom lock implementation remains active'
+fi
 
 grep -Fq 'xss-lock --transfer-sleep-lock -- i3-lock --nofork' "$CONFIG" || fail 'idle lock bypasses themed helper'
 grep -Fq 'bindsym $mod+Mod1+l exec --no-startup-id i3-lock' "$CONFIG" || fail 'Mod+Alt+L bypasses themed helper'
@@ -30,36 +36,28 @@ grep -Fq 'Lock) exec i3-lock' "$POWER" || fail 'power menu bypasses themed helpe
 bash -n "$LOCK"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/bin" "$tmp/state/i3" "$tmp/images" "$tmp/runtime"
-image="$tmp/images/background.webp"
-printf 'webp fixture\n' >"$image"
-printf '%s\n' "$image" >"$tmp/state/i3/wallpaper"
-cat >"$tmp/bin/magick" <<'STUB'
+mkdir -p "$tmp/bin"
+cat >"$tmp/bin/i3lock-fancy" <<'STUB'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >"$MAGICK_CALLS"
-[[ "${MAGICK_FAIL:-0}" == 0 ]] || exit 7
-output="${!#}"
-printf 'converted png\n' >"$output"
+printf '%s\n' "$@" >"$LOCK_CALLS"
+[[ "${FANCY_FAIL:-0}" == 0 ]]
 STUB
-cat >"$tmp/bin/xrandr" <<'STUB'
+cat >"$tmp/bin/i3lock-color-fallback" <<'STUB'
 #!/usr/bin/env bash
-printf 'Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 16384 x 16384\n'
+printf '%s\n' "$@" >"$FALLBACK_CALLS"
 STUB
-cat >"$tmp/bin/i3lock-color" <<'STUB'
-#!/usr/bin/env bash
-for arg in "$@"; do
-  case "$arg" in --image=*) [[ -f "${arg#--image=}" ]] || exit 9 ;; esac
-done
-printf '%s\n' "$*" >"$LOCK_CALLS"
-STUB
-chmod +x "$tmp/bin/magick" "$tmp/bin/xrandr" "$tmp/bin/i3lock-color"
-export LOCK_CALLS="$tmp/calls" MAGICK_CALLS="$tmp/magick-calls"
-XDG_RUNTIME_DIR="$tmp/runtime" XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$LOCK" --nofork
-grep -Fq -- "$image" "$tmp/magick-calls" || fail 'persisted WebP was not converted'
-grep -Fq -- '-blur 0x8' "$tmp/magick-calls" || fail 'ImageMagick blur was not applied'
-grep -Eq -- '--image=.*\.png' "$tmp/calls" || fail 'converted PNG not passed to i3lock-color'
-grep -Fq -- '--nofork' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
-MAGICK_FAIL=1 XDG_RUNTIME_DIR="$tmp/runtime" XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$LOCK"
-grep -Fq -- '--color=2e3440ff' "$tmp/calls" || fail 'conversion failure did not fall back to secure color lock'
+chmod +x "$tmp/bin/i3lock-fancy" "$tmp/bin/i3lock-color-fallback"
+export LOCK_CALLS="$tmp/calls" FALLBACK_CALLS="$tmp/fallback-calls"
+PATH="$tmp/bin:$PATH" "$LOCK" --nofork
 
-printf 'PASS: every lock path uses blurred persisted wallpaper and translucent styling\n'
+grep -Fxq -- '-t' "$tmp/calls" || fail 'text option not passed to i3lock-fancy'
+grep -Fxq -- 'Ingrese su contraseña' "$tmp/calls" || fail 'Spanish unlock prompt not passed'
+grep -Fxq -- '--nofork' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
+[[ ! -e "$tmp/fallback-calls" ]] || fail 'fallback ran after successful fancy lock'
+
+FANCY_FAIL=1 PATH="$tmp/bin:$PATH" "$LOCK" --nofork
+grep -Fxq -- '--color=2e3440ff' "$tmp/fallback-calls" || fail 'fallback color missing'
+grep -Fxq -- '--ignore-empty-password' "$tmp/fallback-calls" || fail 'fallback does not ignore empty passwords'
+grep -Fxq -- '--nofork' "$tmp/fallback-calls" || fail 'fallback did not remain foregrounded for xss-lock'
+
+printf 'PASS: every lock path uses packaged i3lock-fancy with required dependencies\n'

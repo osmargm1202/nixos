@@ -8,6 +8,14 @@
 
 let
   i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
+  # Expose only a uniquely named fallback; installing i3lock-color directly
+  # would collide with i3lock-fancy's bin/i3lock symlink.
+  i3lockColorFallback = pkgs.writeShellApplication {
+    name = "i3lock-color-fallback";
+    text = ''
+      exec ${lib.getExe' pkgs.i3lock-color "i3lock-color"} "$@"
+    '';
+  };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
@@ -136,7 +144,10 @@ in
     xkill
     i3
     i3expo
-    i3lock-color
+    (i3lock-fancy.override {
+      screenshotCommand = "${scrot}/bin/scrot -z";
+    })
+    i3lockColorFallback
 
     # Launchers, notifications, wallpaper and X11 helpers.
     (rofi.override { plugins = [ rofi-calc ]; })
