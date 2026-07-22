@@ -8,6 +8,15 @@
 
 let
   i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
+  i3CleanIconset = ../../dotfiles/config/profiles/i3/.config/bumblebee-status/themes/icons/i3-clean.json;
+  bumblebeeI3 = (pkgs.bumblebee-status.override {
+    plugins = p: [ p.shortcut p.date p.time ];
+  }).overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
+      install -Dm644 ${i3CleanIconset} \
+        "$out/${pkgs.python3.sitePackages}/themes/icons/i3-clean.json"
+    '';
+  });
   # Expose only a uniquely named fallback; installing i3lock-color directly
   # would collide with i3lock-fancy's bin/i3lock symlink.
   i3lockColorFallback = pkgs.writeShellApplication {
@@ -34,9 +43,7 @@ in
     };
     windowManager.i3 = {
       enable = true;
-      extraPackages = with pkgs; [
-        (bumblebee-status.override { plugins = p: [ p.shortcut p.date p.time ]; })
-      ];
+      extraPackages = [ bumblebeeI3 ];
     };
   };
   services.displayManager.defaultSession = "none+i3";
@@ -125,6 +132,8 @@ in
       "x-scheme-handler/https" = [ "zen-browser.desktop" ];
     };
   };
+
+  environment.localBinInPath = true;
 
   environment.sessionVariables = {
     XDG_SESSION_TYPE = "x11";

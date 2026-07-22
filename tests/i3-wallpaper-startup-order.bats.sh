@@ -15,7 +15,7 @@ fail() {
 
 grep -Fq 'Hidden=true' "$AUTOSTART" || fail 'packaged Autorandr XDG autostart is not disabled'
 if grep -Fq 'Exec=' "$AUTOSTART"; then fail 'disabled Autorandr desktop still launches concurrently'; fi
-[[ "$(grep -Fc 'exec --no-startup-id i3-monitor-profile --apply' "$CONFIG")" -eq 1 ]] ||
+[[ "$(grep -Fc 'exec --no-startup-id $run i3-monitor-profile --apply' "$CONFIG")" -eq 1 ]] ||
   fail 'i3 must run exactly one serialized monitor/wallpaper restore'
 if grep -Fq 'exec --no-startup-id i3-wallpaper --restore' "$CONFIG"; then
   fail 'independent wallpaper startup races Autorandr'

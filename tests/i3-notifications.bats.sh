@@ -28,9 +28,9 @@ grep -Fq 'bindsym $mod+n exec --no-startup-id dunstctl history-pop' "$I3" ||
   fail 'Dunst history binding missing'
 grep -Fq 'bindsym $mod+Shift+n exec --no-startup-id dunstctl set-paused toggle' "$I3" ||
   fail 'Dunst DND binding missing'
-grep -Fq 'XF86AudioRaiseVolume exec --no-startup-id volume-osd up' "$I3" ||
+grep -Fq 'XF86AudioRaiseVolume exec --no-startup-id $run volume-osd up' "$I3" ||
   fail 'speaker OSD binding missing'
-grep -Fq 'XF86AudioMicMute exec --no-startup-id mic-volume-osd mute' "$I3" ||
+grep -Fq 'XF86AudioMicMute exec --no-startup-id $run mic-volume-osd mute' "$I3" ||
   fail 'microphone OSD binding missing'
 
 for helper in volume-osd mic-volume-osd; do

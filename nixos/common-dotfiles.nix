@@ -307,6 +307,7 @@ let
       ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"
       ".local/bin/i3-reload-after-switch"
+      ".local/bin/i3-run"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
       ".local/bin/i3-performance-menu"

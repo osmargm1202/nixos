@@ -29,14 +29,14 @@ grep -Fq 'theme="$HOME/.config/rofi/i3-menu.rasi"' "$BIN/i3-rofi" || fail 'i3-ro
 grep -Fq 'font: "JetBrainsMono Nerd Font 12"' "$BIN/i3-rofi" || fail 'i3-rofi font override differs from Hyprland'
 grep -Fq 'element-icon { size: 32px; }' "$BIN/i3-rofi" || fail 'i3-rofi icon sizing differs from Hyprland'
 grep -Fq 'listview { lines: 13; }' "$BIN/i3-rofi" || fail 'launcher/window/calc line count differs from Hyprland'
-grep -Fq 'set $launcher i3-rofi --drun' "$CONFIG" || fail 'Mod+Space does not use themed Rofi launcher'
-grep -Fq 'bindsym Mod1+Tab exec --no-startup-id i3-rofi --window' "$CONFIG" || fail 'Alt+Tab window selector is not themed'
+grep -Fq 'set $launcher $run i3-rofi --drun' "$CONFIG" || fail 'Mod+Space does not use themed Rofi launcher'
+grep -Fq 'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' "$CONFIG" || fail 'Alt+Tab window selector is not themed'
 grep -Fq 'Apps) exec i3-rofi --drun' "$MENU" || fail 'Apps menu bypasses themed Rofi'
 grep -Fq 'Windows) exec i3-rofi --window' "$MENU" || fail 'Windows menu bypasses themed Rofi'
 
-grep -Fq 'bindcode $mod+Mod1+65 exec --no-startup-id i3-main-menu' "$CONFIG" ||
+grep -Fq 'bindcode $mod+Mod1+65 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'physical Win+Alt+Space system menu binding missing'
-grep -Fq 'bindsym $mod+F12 exec --no-startup-id i3-main-menu' "$CONFIG" ||
+grep -Fq 'bindsym $mod+F12 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'system menu fallback binding missing'
 if grep -Rqi 'hypr-menu' "$ROFI_DIR"; then
   fail 'i3 must use neutral theme naming, not hypr-menu'

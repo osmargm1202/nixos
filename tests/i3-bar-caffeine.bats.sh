@@ -22,17 +22,17 @@ grep -Fq 'height 36' "$CONFIG" || fail 'larger i3bar height missing'
 [[ "$(grep -Fc 'pasystray' "$CONFIG")" -eq 0 ]] || fail 'explicit pasystray duplicates its XDG autostart'
 grep -Eq '^[[:space:]]+pasystray[[:space:]]*$' "$PROFILE" || fail 'pasystray package/autostart source missing'
 
-grep -Fq '(bumblebee-status.override { plugins = p: [ p.shortcut p.date p.time ]; })' "$PROFILE" ||
-  fail 'Bumblebee shortcut/date/time plugins missing'
+grep -Fq 'bumblebeeI3 = ' "$PROFILE" ||
+  fail 'Bumblebee clean iconset and shortcut/date/time plugins missing'
 grep -Fq 'status_command bumblebee-status -m shortcut date time' "$CONFIG" || fail 'caffeine bar button missing'
-grep -Fq 'shortcut.cmds="i3-caffeine-toggle"' "$CONFIG" || fail 'caffeine button command missing'
+grep -Fq 'shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle"' "$CONFIG" || fail 'portable caffeine button command missing'
 grep -Fq -- '-i i3-clean -t nord-powerline' "$CONFIG" || fail 'clean icons or Nord theme missing'
 [ -f "$ICONS" ] || fail 'calendar-safe Bumblebee iconset missing'
 jq -e '.date.prefix == "" and .time.prefix == ""' "$ICONS" >/dev/null || fail 'date/time icons still overlap text'
 
 [ -x "$HELPER" ] || fail 'i3-caffeine-toggle missing or not executable'
-grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
-grep -Fq 'exec --no-startup-id i3-caffeine-toggle off' "$CONFIG" || fail 'stale caffeine state is not reset at login'
+grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
+grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" || fail 'stale caffeine state is not reset at login'
 grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
 grep -Fq '".config/bumblebee-status"' "$DOTFILES" || fail 'Bumblebee iconset not deployed'
 grep -Fq 'flock 9' "$HELPER" || fail 'caffeine transitions are not serialized'

@@ -20,7 +20,7 @@ grep -Fq 'exec i3-rofi --calc' "$CALC" ||
   fail 'i3-calc must use the themed Rofi 2 calculator mode'
 grep -Fq 'rofi -show calc -modes calc' "$ROFI" ||
   fail 'i3-rofi must expose the calculator plugin mode'
-grep -Fq 'bindsym $mod+c exec --no-startup-id i3-calc' "$CONFIG" ||
+grep -Fq 'bindsym $mod+c exec --no-startup-id $run i3-calc' "$CONFIG" ||
   fail 'Mod+C must invoke i3-calc'
 grep -Fq '".local/bin/i3-calc"' "$DOTFILES" ||
   fail 'i3-calc is not deployed'

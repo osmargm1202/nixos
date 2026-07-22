@@ -23,9 +23,9 @@ grep -Fq 'matchEdid = true;' "$PROFILE" || fail 'autorandr must match physical m
 [ -f "$AUTOSTART" ] || fail 'i3 Autorandr autostart override missing'
 grep -Fq 'Hidden=true' "$AUTOSTART" || fail 'packaged Autorandr XDG startup must be disabled'
 if grep -Fq 'Exec=' "$AUTOSTART"; then fail 'disabled Autorandr desktop still executes'; fi
-grep -Fq 'exec --no-startup-id i3-monitor-profile --apply' "$CONFIG" ||
+grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply' "$CONFIG" ||
   fail 'i3 login profile restore missing'
-grep -Fq 'bindsym $mod+p exec --no-startup-id i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
+grep -Fq 'bindsym $mod+p exec --no-startup-id $run i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
 grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu does not open monitor profiles'
 
 [ -x "$HELPER" ] || fail 'i3-monitor-profile missing or not executable'

@@ -11,7 +11,7 @@ fail() {
 }
 
 grep -Fq 'status_command bumblebee-status -m shortcut date time' "$I3" || fail 'Bumblebee caffeine/date/time bar missing'
-grep -Fq 'exec --no-startup-id i3-monitor-profile --apply' "$I3" || fail 'serialized monitor/wallpaper restore missing'
+grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply' "$I3" || fail 'serialized monitor/wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3-lock --nofork' "$I3" || fail 'xss-lock must keep themed locker in foreground'
 ! grep -Eq 'hypr-|xwinwrap|Videos/wallpapers/1\.mp4' "$I3" || fail 'nonportable command remains'

@@ -37,16 +37,16 @@ Getty presents a normal login prompt on TTY1. After successful password authenti
 bar {
   font pango:Noto Sans 14
   height 36
-  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
+  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }
 ```
 
-The 36px bar uses Noto Sans 14 for larger workspace labels and status text. Font Awesome and Symbols Nerd Font remain fallbacks for Nord Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
+The 36px bar uses Noto Sans 14 for larger workspace labels and status text. Font Awesome and Symbols Nerd Font remain fallbacks for Nord Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text and is embedded in the Bumblebee package so bar startup never depends on Home Manager link timing. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
 
 ## Helper Scope
 
-Keep the existing i3-native helpers for themed Rofi, i3 Expo overview, persistent clipboard history, files, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, caffeine, lock routing, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
+Keep the existing i3-native helpers for themed Rofi, i3 Expo overview, persistent clipboard history, files, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, caffeine, lock routing, and config editing. Enable `environment.localBinInPath` for new login sessions and route every i3-launched user helper through `i3-run`, which prepends `~/.local/bin`; this keeps bindings and descendant menu calls working even in an older live i3 process whose inherited PATH is stale. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
 
 The helper audit counted 55 executable Hyprland-profile helpers: 22 already matched, 15 portable gaps, and 18 compositor/panel-specific omissions. The approved daily scope closes active keyboard and menu behavior while leaving eight optional functions outside scope: battery alerts, Bluetooth auto-reconnect, stale/unbound smart-run, container autostart, Discord autostart, theme chooser, and webapp maker/remover.
 
@@ -122,10 +122,10 @@ Unrelated Hyprland helpers remain intact for Hyprland profiles. Omission from i3
 Static/TDD contracts must verify:
 
 - no Picom, Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile;
-- native i3bar invokes Bumblebee Status with caffeine/date/time modules, Nord Powerline, larger Noto typography, clean date/time icons, and the requested mixed-locale formats;
+- native i3bar invokes Bumblebee Status with caffeine/date/time modules, Nord Powerline, larger Noto typography, package-embedded clean date/time icons, and the requested mixed-locale formats;
 - Rofi is plugin-wrapped, borderless, uses the neutral Hyprland-parity theme everywhere, Mod+C invokes a working `i3-calc`, and Win+Alt+Space has a physical-keycode binding plus fallback;
 - i3expo-ng is source/hash pinned, single-instance, receives `Mod+Escape`, while `Alt+Tab` remains Rofi and `Mod+Tab` is workspace back-and-forth;
-- active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have i3 equivalents;
+- active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have PATH-safe i3 equivalents through the deployed `i3-run`;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
 - Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
 - XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;

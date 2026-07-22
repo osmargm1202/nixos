@@ -23,7 +23,7 @@ fi
 
 grep -Fq 'export CM_LAUNCHER=rofi' "$CLIPBOARD" || fail 'clipmenu launcher is not Rofi'
 grep -Fq 'exec clipmenu -i -p Clipboard' "$CLIPBOARD" || fail 'clipboard helper does not execute clipmenu'
-grep -Fq 'bindsym $mod+v exec --no-startup-id i3-clipboard' "$CONFIG" || fail 'Mod+V does not open Rofi clipboard'
+grep -Fq 'bindsym $mod+v exec --no-startup-id $run i3-clipboard' "$CONFIG" || fail 'Mod+V does not open Rofi clipboard'
 grep -Fq 'Clipboard) exec i3-clipboard' "$MENU" || fail 'main menu does not open Rofi clipboard'
 bash -n "$CLIPBOARD"
 

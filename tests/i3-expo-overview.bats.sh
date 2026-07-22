@@ -46,9 +46,9 @@ grep -Fq 'is_ready' "$BIN/i3-expo-toggle" || fail 'toggle can signal before Expo
 [ -f "$EXPO_CONFIG" ] || fail 'i3expo runtime configuration missing'
 grep -Fq '".config/i3expo"' "$DOTFILES" || fail 'i3expo config not deployed'
 
-grep -Fq 'exec --no-startup-id i3-expo-daemon' "$CONFIG" || fail 'i3expo screenshot daemon not started'
-grep -Fq 'bindsym $mod+Escape exec --no-startup-id i3-expo-toggle' "$CONFIG" || fail 'Win+Escape does not open i3expo'
-grep -Fq 'bindsym Mod1+Tab exec --no-startup-id i3-rofi --window' "$CONFIG" || fail 'Alt+Tab must remain Rofi window selector'
+grep -Fq 'exec --no-startup-id $run i3-expo-daemon' "$CONFIG" || fail 'i3expo screenshot daemon not started'
+grep -Fq 'bindsym $mod+Escape exec --no-startup-id $run i3-expo-toggle' "$CONFIG" || fail 'Win+Escape does not open i3expo'
+grep -Fq 'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' "$CONFIG" || fail 'Alt+Tab must remain Rofi window selector'
 grep -Fq 'bindsym $mod+Tab workspace back_and_forth' "$CONFIG" || fail 'Win+Tab must switch to previous workspace'
 
 grep -Fq 'border: 0px;' "$THEME" || fail 'Rofi outer border remains visible'

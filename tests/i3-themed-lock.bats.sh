@@ -28,9 +28,9 @@ if grep -Eq 'magick|--clock|--inside-color|--image=' "$LOCK"; then
   fail 'legacy custom lock implementation remains active'
 fi
 
-grep -Fq 'xss-lock --transfer-sleep-lock -- i3-lock --nofork' "$CONFIG" || fail 'idle lock bypasses themed helper'
-grep -Fq 'bindsym $mod+Mod1+l exec --no-startup-id i3-lock' "$CONFIG" || fail 'Mod+Alt+L bypasses themed helper'
-grep -Fq 'bindsym $mod+Shift+l exec --no-startup-id i3-lock' "$CONFIG" || fail 'legacy lock shortcut bypasses helper'
+grep -Fq 'xss-lock --transfer-sleep-lock -- $run i3-lock --nofork' "$CONFIG" || fail 'idle lock bypasses PATH-safe themed helper'
+grep -Fq 'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock' "$CONFIG" || fail 'Mod+Alt+L bypasses themed helper'
+grep -Fq 'bindsym $mod+Shift+l exec --no-startup-id $run i3-lock' "$CONFIG" || fail 'legacy lock shortcut bypasses helper'
 grep -Fq 'Lock) exec i3-lock' "$POWER" || fail 'power menu bypasses themed helper'
 
 bash -n "$LOCK"
