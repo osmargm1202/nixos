@@ -77,7 +77,7 @@ pkgs.buildFHSEnv {
       # Clipboard / X11
       wl-clipboard
       xclip
-      xorg.xauth
+      xauth
       # Network
       openssh
       # Notifications

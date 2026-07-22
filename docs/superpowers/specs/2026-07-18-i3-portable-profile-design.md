@@ -39,15 +39,15 @@ Autologin implica que una persona con acceso físico obtiene la sesión local si
 
 El perfil declarará, directamente o mediante los módulos NixOS correspondientes:
 
-- `xorg.xorgserver`;
-- `xorg.xinit`;
-- `xorg.xauth`;
-- `xorg.xrdb`;
-- `xorg.xrandr`;
-- `xorg.xinput`;
-- `xorg.xset`;
-- `xorg.xsetroot`;
-- `xorg.setxkbmap`.
+- `xorg-server`;
+- `xinit`;
+- `xauth`;
+- `xrdb`;
+- `xrandr`;
+- `xinput`;
+- `xset`;
+- `xsetroot`;
+- `setxkbmap`.
 
 Stack principal:
 
@@ -57,7 +57,7 @@ Stack principal:
 - `dunst`;
 - `feh`;
 - `rofi-calc`, `clipmenu`;
-- `arandr`, `xorg.xkill`.
+- `arandr`, `xkill`.
 
 Integración diaria:
 

@@ -135,8 +135,8 @@ Set GTK portal defaults, Kitty terminal defaults, X11 session variables, and MIM
 Declare these packages in addition to the existing stack:
 
 ```nix
-xorg.xorgserver xorg.xinit xorg.xauth xorg.xrdb xorg.xrandr xorg.xinput
-xorg.xset xorg.xsetroot xorg.setxkbmap xorg.xkill
+xorg-server xinit xauth xrdb xrandr xinput
+xset xsetroot setxkbmap xkill
 feh rofi-calc clipmenu arandr udiskie usbutils desktop-file-utils
 kitty nautilus gnome-text-editor evince loupe file-roller chromium
 ```
