@@ -31,12 +31,10 @@ in
     };
   };
   services.displayManager.defaultSession = "none+i3";
-  services.getty.autologinUser = userName;
 
+  # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.fish.loginShellInit = lib.mkAfter ''
-    set -l i3_startx_marker "/run/user/"(id -u)"/i3-startx-attempted"
-    if test (tty) = /dev/tty1; and not set -q DISPLAY; and not test -e "$i3_startx_marker"
-      touch "$i3_startx_marker"
+    if test (tty) = /dev/tty1; and not set -q DISPLAY
       exec startx /etc/X11/xinit/xinitrc
     end
   '';

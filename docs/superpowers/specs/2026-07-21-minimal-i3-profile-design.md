@@ -13,16 +13,18 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Use i3's native bar with Bumblebee Status modules `date time` and theme `nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales.
 - Restore active daily Hyprland shortcut behavior with i3/X11 equivalents, but do not port `hypr-menu`, Waybar/SwayNC/NWG operations, unused helpers, autostart daemons, or theme tooling.
 - Keep `nm-applet`, `blueman-applet`, `udiskie`, and a PipeWire/PulseAudio volume applet in session startup.
-- Use Dunst with popups, history/DND bindings, and volume/microphone OSD.
+- Use Dunst with popups, history/DND bindings, volume/microphone OSD, and an eight-second timeout for every urgency; no notification remains permanent.
 - Do not add SwayNC or an i3 notification-center clone.
 - Disable the G213 OpenRGB notification observer on Lenovo because that host has no G213.
 - Expose only normal split and grouped/tabbed layouts: `Mod+G` enters grouped tabs and `Mod+Shift+G` returns to normal; do not reserve `Mod+S` for scratchpad or stacking.
 - Install the runtime-selected Colloid/Catppuccin GTK assets in i3 so Nautilus does not fall back to default icons.
 - Bind Lenovo XF86 audio, microphone, brightness, WLAN, and RFKill symbols; all helper commands must remain independently runnable.
+- Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
+- Use Rofi for clipboard selection from both `Mod+V` and the main menu.
 
 ## Session and Bar
 
-The existing getty autologin and `startx` flow remains unchanged. The i3 configuration adds one native bar:
+Getty presents a normal login prompt on TTY1. After successful password authentication, the Fish login shell runs `startx /etc/X11/xinit/xinitrc`; PAM uses the same password to unlock GNOME Keyring before X starts. Exiting i3 ends that login session and returns to getty. The i3 configuration adds one native bar:
 
 ```text
 bar {
@@ -76,7 +78,8 @@ Fix its configuration to:
 - use PATH-resolved `xdg-open` and `rofi`, never `/usr/bin` paths;
 - avoid user-specific `/home/osmar` icon paths;
 - enable progress bars for OSD value hints;
-- retain notification history and action support.
+- retain notification history and action support;
+- set low, normal, and critical urgency timeouts to eight seconds.
 
 Bindings:
 
@@ -108,7 +111,9 @@ Static/TDD contracts must verify:
 - obsolete panel/status helpers and dotfile paths are absent;
 - wallpaper set/restore/random behavior with mocked Feh and notifications;
 - Nautilus script delegates one selected path and rejects invalid selection;
-- Dunst paths are portable, progress bars enabled, and history/DND bindings exist;
+- Dunst paths are portable, progress bars enabled, history/DND bindings exist, and all urgency timeouts equal eight seconds;
+- clipboard helper, `Mod+V`, and main menu all resolve through Rofi;
+- all i3 outputs evaluate without getty autologin and the TTY1 startx/PAM keyring contract remains explicit;
 - shared OSD helpers remain valid for both desktops;
 - Lenovo excludes the G213 observer while other hosts retain it.
 
