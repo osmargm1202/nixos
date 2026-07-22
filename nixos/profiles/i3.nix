@@ -1,12 +1,21 @@
 {
   pkgs,
   lib,
+  inputs,
   userName ? "osmarg",
   ...
 }:
 
+let
+  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
+    zenBrowserFlakeSrc = inputs.zen-browser-flake;
+  };
+in
 {
-  imports = [ ./printer.nix ];
+  imports = [
+    ./printer.nix
+    ./vesktop.nix
+  ];
 
   services.xserver = {
     enable = true;
@@ -85,10 +94,17 @@
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
-      "text/html" = [ "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium.desktop" ];
+      "video/mp4" = [ "org.videolan.VLC.desktop" ];
+      "video/x-matroska" = [ "org.videolan.VLC.desktop" ];
+      "video/webm" = [ "org.videolan.VLC.desktop" ];
+      "video/quicktime" = [ "org.videolan.VLC.desktop" ];
+      "video/x-msvideo" = [ "org.videolan.VLC.desktop" ];
+      "video/mpeg" = [ "org.videolan.VLC.desktop" ];
+      "video/ogg" = [ "org.videolan.VLC.desktop" ];
+      "text/html" = [ "zen-browser.desktop" ];
+      "application/xhtml+xml" = [ "zen-browser.desktop" ];
+      "x-scheme-handler/http" = [ "zen-browser.desktop" ];
+      "x-scheme-handler/https" = [ "zen-browser.desktop" ];
     };
   };
 
@@ -150,6 +166,7 @@
     # Daily applications used by MIME defaults and bindings.
     kitty
     chromium
+    zenBrowser
     nautilus
     gnome-online-accounts-gtk
     gnome-text-editor

@@ -33,6 +33,7 @@
       "org.inkscape.Inkscape"
       "org.libreoffice.LibreOffice"
       "org.sqlitebrowser.sqlitebrowser"
+      "org.videolan.VLC"
       "com.github.johnfactotum.Foliate"
     ];
   };
