@@ -16,6 +16,8 @@ grep -Eq '^[[:space:]]+colloid-icon-theme[[:space:]]*$' "$PROFILE" ||
   fail 'i3 must install the Colloid icon theme selected by GTK/Nautilus'
 grep -Eq '^[[:space:]]+catppuccin-gtk[[:space:]]*$' "$PROFILE" ||
   fail 'i3 must install the selected Catppuccin GTK theme'
+grep -Eq '^[[:space:]]+lxappearance[[:space:]]*$' "$PROFILE" ||
+  fail 'i3 must install LXAppearance for interactive GTK theme selection'
 grep -Fq 'helper="${I3_WALLPAPER_HELPER:-$HOME/.local/bin/i3-wallpaper}"' "$SCRIPT" ||
   fail 'Nautilus action must not depend on its restricted PATH'
 grep -Fq 'exec "$helper" --set-active' "$SCRIPT" ||

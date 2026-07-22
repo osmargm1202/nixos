@@ -17,7 +17,7 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Do not add SwayNC or an i3 notification-center clone.
 - Disable the G213 OpenRGB notification observer on Lenovo because that host has no G213.
 - Expose only normal split and grouped/tabbed layouts: `Mod+G` enters grouped tabs and `Mod+Shift+G` returns to normal; do not reserve `Mod+S` for scratchpad or stacking.
-- Install the runtime-selected Colloid/Catppuccin GTK assets in i3 so Nautilus does not fall back to default icons. Nautilus main windows use normal i3 tiling and must not be forced floating.
+- Install LXAppearance plus the runtime-selected Colloid/Catppuccin GTK assets in i3 so GTK appearance can be changed interactively and Nautilus does not fall back to default icons. Nautilus main windows use normal i3 tiling and must not be forced floating.
 - Bind Lenovo XF86 audio, microphone, brightness, WLAN, and RFKill symbols; all helper commands must remain independently runnable.
 - Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
 - After Home Manager links a new generation during a live i3 switch, reload the running i3 instance through its IPC socket so keyboard grabs remain active; never restart i3 or reload Hyprland from activation.
@@ -130,7 +130,7 @@ Static/TDD contracts must verify:
 - i3expo-ng is source/hash pinned, single-instance, receives `Mod+Escape`, while `Alt+Tab` remains Rofi and `Mod+Tab` is workspace back-and-forth;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have PATH-safe i3 equivalents through the deployed `i3-run`;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
-- Nautilus's selected icon theme is installed, its main window is tiled, and its real-file wallpaper action resolves the helper outside Nautilus's restricted PATH;
+- LXAppearance and Nautilus's selected icon theme are installed, its main window is tiled, and its real-file wallpaper action resolves the helper outside Nautilus's restricted PATH;
 - XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;
 - `ffcast`, the UPower service/package, and power-profiles-daemon remain available for recording and energy management;
 - selected applets remain in startup;

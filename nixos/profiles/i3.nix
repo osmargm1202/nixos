@@ -199,6 +199,7 @@ in
     playerctl
 
     # Runtime-selected GTK/Nautilus appearance.
+    lxappearance
     adwaita-icon-theme
     hicolor-icon-theme
     colloid-icon-theme
