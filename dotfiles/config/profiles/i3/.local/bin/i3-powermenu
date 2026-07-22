@@ -5,9 +5,16 @@ choice="$(printf '%s\n' Lock Suspend Hibernate Logout Reboot 'Power off' Cancel 
 case "$choice" in
   Lock) exec i3lock-color --color=1a1b26 --ignore-empty-password ;;
   Suspend) exec systemctl suspend ;;
-  Hibernate) exec systemctl hibernate ;;
+  Hibernate)
+    if systemctl hibernate; then
+      exit 0
+    fi
+    notify-send 'Power' 'Hibernate is not available' 2>/dev/null || true
+    exec i3-powermenu
+    ;;
   Logout) exec i3-msg exit ;;
   Reboot) exec systemctl reboot ;;
   'Power off') exec systemctl poweroff ;;
+  Cancel) exec i3-main-menu ;;
   *) exit 0 ;;
 esac

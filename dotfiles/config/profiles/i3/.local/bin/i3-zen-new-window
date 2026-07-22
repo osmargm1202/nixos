@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for browser in zen-browser zen; do
+  if command -v "$browser" >/dev/null 2>&1; then
+    exec "$browser" --new-window about:blank
+  fi
+done
+
+if command -v flatpak >/dev/null 2>&1 && flatpak info app.zen_browser.zen >/dev/null 2>&1; then
+  exec flatpak run app.zen_browser.zen --new-window about:blank
+fi
+
+notify-send 'Zen Browser' 'Zen Browser is not installed' 2>/dev/null || true
+exit 1

@@ -8,10 +8,12 @@ ssh_config_hosts() {
 
 known_hosts() {
   [[ -f "$HOME/.ssh/known_hosts" ]] || return 0
-  awk -F'[ ,]' '$1 !~ /^\|/ && $1 != "" { print $1 }' "$HOME/.ssh/known_hosts" \
-    | sed 's/^\[//; s/\].*$//'
+  awk -F'[ ,]' '$1 !~ /^\|/ && $1 != "" { print $1 }' "$HOME/.ssh/known_hosts"
 }
 
 selection="$({ ssh_config_hosts; known_hosts; } | sort -u | sed '/^$/d' | i3-rofi 'SSH host' 14 || true)"
 [[ -n "$selection" ]] || exit 0
+if [[ "$selection" =~ ^\[([^]]+)\]:([0-9]+)$ ]]; then
+  exec kitty -e ssh -p "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}"
+fi
 exec kitty -e ssh "$selection"

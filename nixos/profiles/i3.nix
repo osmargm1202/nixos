@@ -131,13 +131,13 @@ in
     i3lock-color
 
     # Launchers, notifications, wallpaper and X11 helpers.
-    rofi
-    rofi-calc
+    (rofi.override { plugins = [ rofi-calc ]; })
     clipmenu
     dunst
     feh
     arandr
     xclip
+    xkb-switch
 
     # Desktop integration.
     xdg-utils

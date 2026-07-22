@@ -4,7 +4,7 @@ set -euo pipefail
 config="${I3_CONFIG_FILE:-$HOME/.config/i3/config}"
 list_bindings() {
   [[ -f "$config" ]] || return 0
-  awk '/^bindsym / {
+  awk '/^[[:space:]]*bindsym / {
     key=$2
     $1=""; $2=""
     sub(/^[[:space:]]+/, "")

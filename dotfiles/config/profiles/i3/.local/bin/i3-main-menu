@@ -2,20 +2,24 @@
 set -euo pipefail
 
 choice="$(printf '%s\n' \
-  Apps Windows Files Clipboard Displays Wi-Fi Bluetooth Audio Keyboard Performance 'Edit config' Power \
-  | i3-rofi 'i3' 12 || true)"
+  Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help 'Edit config' Power \
+  | i3-rofi 'i3' 16 || true)"
 
 case "$choice" in
   Apps) exec rofi -show drun ;;
   Windows) exec rofi -show window ;;
+  Terminal) exec kitty ;;
+  Zen) exec i3-zen-new-window ;;
+  Chromium) exec chromium ;;
   Files) exec i3-open-file open ;;
+  Obsidian) exec i3-obsidian-open-or-focus ;;
+  Calculator) exec i3-calc ;;
   Clipboard) exec i3-clipboard ;;
-  Displays) exec arandr ;;
-  Wi-Fi) exec nm-connection-editor ;;
-  Bluetooth) exec blueman-manager ;;
-  Audio) exec pavucontrol ;;
-  Keyboard) exec i3-keyboard-menu ;;
+  SSH) exec i3-ssh-host ;;
+  Devices) exec i3-devices-menu ;;
+  Wallpaper) exec i3-wallpaper --random ;;
   Performance) exec i3-performance-menu ;;
+  Help) exec i3-hotkeys ;;
   'Edit config') exec i3-config-editor ;;
   Power) exec i3-powermenu ;;
   *) exit 0 ;;

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' Displays Wi-Fi Bluetooth Audio Keyboard Storage Back | i3-rofi Devices 7 || true)"
+case "$choice" in
+  Displays) exec arandr ;;
+  Wi-Fi) exec nm-connection-editor ;;
+  Bluetooth) exec blueman-manager ;;
+  Audio) exec pavucontrol ;;
+  Keyboard) exec i3-keyboard-menu ;;
+  Storage) exec nautilus computer:/// ;;
+  Back) exec i3-main-menu ;;
+  *) exit 0 ;;
+esac

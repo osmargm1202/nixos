@@ -1,14 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ensure_layout_group() {
+  current="$(setxkbmap -query | awk '$1 == "layout:" { print $2; exit }')"
+  if [[ "$current" != "us,latam" ]]; then
+    setxkbmap -layout 'us,latam' -variant 'altgr-intl,' -option 'grp:ctrl_space_toggle'
+  fi
+}
+
 choice="$(printf '%s\n' Toggle US Latam Cancel | i3-rofi Keyboard 4 || true)"
 case "$choice" in
-  US) exec setxkbmap -layout us -variant altgr-intl ;;
-  Latam) exec setxkbmap -layout latam ;;
   Toggle)
-    current="$(setxkbmap -query | awk '$1 == "layout:" { print $2; exit }')"
-    if [[ "$current" == *latam* ]]; then
-      exec setxkbmap -layout us -variant altgr-intl
+    ensure_layout_group
+    exec xkb-switch -n
+    ;;
+  US)
+    if command -v xkb-switch >/dev/null 2>&1; then
+      ensure_layout_group
+      exec xkb-switch -s us
+    fi
+    exec setxkbmap -layout us -variant altgr-intl
+    ;;
+  Latam)
+    if command -v xkb-switch >/dev/null 2>&1; then
+      ensure_layout_group
+      exec xkb-switch -s latam
     fi
     exec setxkbmap -layout latam
     ;;
