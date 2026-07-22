@@ -1,0 +1,19 @@
+{
+  "providers": {
+    "omniroute": {
+      "baseUrl": "http://localhost:20128/v1",
+      "api": "openai-completions",
+      "apiKey": "$OMNIROUTE_API_KEY",
+      "models": [
+        {
+          "id": "auto",
+          "name": "OmniRoute Auto",
+          "reasoning": false,
+          "input": ["text", "image"],
+          "contextWindow": 128000,
+          "maxTokens": 8192
+        }
+      ]
+    }
+  }
+}
