@@ -11,7 +11,7 @@ fail() {
 }
 
 grep -q 'status_command i3status' "$I3" || fail 'native i3status bar missing'
-grep -q 'exec --no-startup-id i3-wallpaper-random --restore' "$I3" || fail 'wallpaper restore missing'
+grep -q 'exec --no-startup-id i3-wallpaper --restore' "$I3" || fail 'wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3lock-color --nofork' "$I3" || fail 'xss-lock must keep locker in foreground'
 ! grep -Eq 'hypr-|xwinwrap|Videos/wallpapers/1\.mp4' "$I3" || fail 'nonportable command remains'
@@ -30,7 +30,7 @@ helpers=(
   i3-powermenu
   i3-performance-menu
   i3-keyboard-menu
-  i3-wallpaper-random
+  i3-wallpaper
   i3-hotkeys
   i3-config-editor
 )
@@ -100,8 +100,8 @@ grep -Fxq 'setxkbmap -layout latam' "$TMP/keyboard.calls" || fail 'Latam action 
 mkdir -p "$TMP/state/i3" "$TMP/wallpapers"
 printf 'image\n' > "$TMP/wallpapers/current.png"
 printf '%s\n' "$TMP/wallpapers/current.png" > "$TMP/state/i3/wallpaper"
-CALLS="$TMP/wallpaper.calls" XDG_STATE_HOME="$TMP/state" I3_WALLPAPER_DIR="$TMP/wallpapers" PATH="$TMP/bin:$PATH" "$BIN/i3-wallpaper-random" --restore
-grep -Fxq "feh --no-fehbg --bg-fill $TMP/wallpapers/current.png" "$TMP/wallpaper.calls" || fail 'wallpaper restore incorrect'
+CALLS="$TMP/wallpaper.calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/state" I3_WALLPAPER_DIR="$TMP/wallpapers" PATH="$TMP/bin:$PATH" "$BIN/i3-wallpaper" --restore
+grep -Fxq "feh --bg-fill $TMP/wallpapers/current.png" "$TMP/wallpaper.calls" || fail 'wallpaper restore incorrect'
 
 CALLS="$TMP/profile.calls" ROFI_CHOICE=Balanced ROFI_INPUT="$TMP/profile-menu" PATH="$TMP/bin:$PATH" "$BIN/i3-performance-menu"
 grep -Fxq 'powerprofilesctl set balanced' "$TMP/profile.calls" || fail 'Balanced profile action incorrect'

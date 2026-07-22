@@ -17,7 +17,7 @@ exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
 exec --no-startup-id clipmenud
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-color --nofork --color=1a1b26 --ignore-empty-password
-exec --no-startup-id i3-wallpaper-random --restore
+exec --no-startup-id i3-wallpaper --restore
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
 
 bindsym $mod+Return exec --no-startup-id $term

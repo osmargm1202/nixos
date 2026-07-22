@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/.config/wallpapers}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+state_file="$state_dir/wallpaper"
+mode="${1:---random}"
+
+notify_error() {
+  command -v notify-send >/dev/null 2>&1 && notify-send 'i3 wallpaper' "$1" || true
+}
+
+canonical_image() {
+  local path="${1:-}"
+  [[ -f "$path" ]] || return 1
+  case "${path,,}" in
+    *.jpg|*.jpeg|*.png|*.webp) readlink -f -- "$path" ;;
+    *) return 1 ;;
+  esac
+}
+
+random_image() {
+  local -a images=()
+  mapfile -d '' images < <(
+    find "$wallpaper_dir" -type f \
+      \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+      -print0 2>/dev/null
+  )
+  ((${#images[@]} > 0)) || return 1
+  printf '%s\n' "${images[@]}" | shuf -n1
+}
+
+persist_and_apply() {
+  local wallpaper="$1" temporary
+  feh --bg-fill "$wallpaper"
+  mkdir -p "$state_dir"
+  temporary="$(mktemp "$state_file.tmp.XXXXXX")"
+  printf '%s\n' "$wallpaper" >"$temporary"
+  mv -f "$temporary" "$state_file"
+}
+
+wallpaper=''
+case "$mode" in
+  --set)
+    wallpaper="$(canonical_image "${2:-}")" || {
+      notify_error 'Selecciona un archivo JPG, JPEG, PNG o WEBP válido.'
+      exit 1
+    }
+    ;;
+  --restore)
+    if [[ -f "$state_file" ]]; then
+      wallpaper="$(canonical_image "$(head -n1 "$state_file")" || true)"
+    fi
+    if [[ -z "$wallpaper" ]]; then
+      wallpaper="$(random_image || true)"
+    fi
+    ;;
+  --random)
+    wallpaper="$(random_image || true)"
+    ;;
+  *)
+    printf 'usage: %s --set FILE|--restore|--random\n' "${0##*/}" >&2
+    exit 2
+    ;;
+esac
+
+if [[ -z "$wallpaper" ]]; then
+  notify_error "No hay imágenes en $wallpaper_dir"
+  exit 1
+fi
+
+persist_and_apply "$wallpaper"
