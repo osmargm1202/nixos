@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 POLICY='--force-webrtc-ip-handling-policy=default_public_and_private_interfaces'
+INPUT_VOLUME_POLICY='--disable-features=WebRtcAllowInputVolumeAdjustment'
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -67,7 +68,13 @@ grep -Fq 'Discord Flatpak com.discordapp.Discord is not installed' "$tmp/error" 
   || fail 'Discord wrapper missing installation error'
 
 grep -RFq -- "$POLICY" "$vesktop_out/bin" \
-  || fail 'Vesktop wrapper missing policy'
+  || fail 'Vesktop wrapper missing IP policy'
+grep -RFq -- "$INPUT_VOLUME_POLICY" "$vesktop_out/bin" \
+  || fail 'Vesktop wrapper permits automatic microphone gain changes'
+if grep -Eq 'wpctl[[:space:]]+set-volume[[:space:]]+@DEFAULT_AUDIO_SOURCE@|pactl[[:space:]]+set-source-volume' \
+  "$ROOT/nixos/packages/vesktop-webrtc.nix"; then
+  fail 'Vesktop policy must not force a microphone volume'
+fi
 
 grep -Fq './vesktop.nix' "$ROOT/nixos/profiles/common_hyprland.nix" \
   || fail 'common Hyprland profile does not import vesktop module'
@@ -91,7 +98,9 @@ exec_line="$(cd "$ROOT" && nix eval --raw \
 helper="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-start-discord"
 grep -Fq 'command -v Discord' "$helper" \
   || fail 'uppercase Discord fallback missing'
+# Verify the helper contains the literal variable reference.
+# shellcheck disable=SC2016
 [[ "$(grep -Fc '"$policy"' "$helper")" == 3 ]] \
   || fail 'not every Discord autostart branch carries policy'
 
-echo 'PASS: Discord and Vesktop wrappers enforce WebRTC policy'
+echo 'PASS: Discord and Vesktop wrappers enforce WebRTC policies'

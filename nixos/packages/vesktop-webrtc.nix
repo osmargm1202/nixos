@@ -10,7 +10,8 @@ symlinkJoin {
   nativeBuildInputs = [ makeWrapper ];
   postBuild = ''
     wrapProgram "$out/bin/vesktop" \
-      --add-flags "--force-webrtc-ip-handling-policy=default_public_and_private_interfaces"
+      --add-flags "--force-webrtc-ip-handling-policy=default_public_and_private_interfaces" \
+      --add-flags "--disable-features=WebRtcAllowInputVolumeAdjustment"
   '';
   meta.mainProgram = "vesktop";
 }

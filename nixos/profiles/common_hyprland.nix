@@ -318,8 +318,6 @@ in
     playerctl
     pavucontrol
 
-    # Communication
-
     # GNOME apps used as defaults
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,
     # gnome-disk-utility, gnome-logs, seahorse, gnome-font-viewer,
