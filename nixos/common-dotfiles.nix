@@ -286,6 +286,7 @@ let
     ];
 
     i3 = [
+      ".config/autostart/autorandr.desktop"
       ".config/dunst"
       ".config/i3"
       ".config/rofi"
@@ -296,6 +297,7 @@ let
       ".local/bin/i3-hotkeys"
       ".local/bin/i3-keyboard-menu"
       ".local/bin/i3-main-menu"
+      ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
@@ -474,6 +476,7 @@ let
   };
 
   localOnlyPaths = [
+    ".config/autorandr"
     ".config/fish/fish_variables"
     ".config/fish/functions/dir.txt"
     ".config/fish/insforge.env"

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILE="$ROOT/nixos/profiles/i3.nix"
+CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
+AUTOSTART="$ROOT/dotfiles/config/profiles/i3/.config/autostart/autorandr.desktop"
+HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-monitor-profile"
+DEVICES="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-devices-menu"
+DOTFILES="$ROOT/nixos/common-dotfiles.nix"
+MANIFEST="$ROOT/dotfiles/config/dotfiles.json"
+
+fail() {
+  printf 'FAIL: %s\n' "$*" >&2
+  exit 1
+}
+
+grep -Fq 'services.autorandr = {' "$PROFILE" || fail 'autorandr hotplug service missing'
+grep -Fq 'enable = true;' "$PROFILE" || fail 'autorandr service not enabled'
+grep -Fq 'defaultTarget = "horizontal";' "$PROFILE" || fail 'autorandr fallback must activate connected screens horizontally'
+grep -Fq 'matchEdid = true;' "$PROFILE" || fail 'autorandr must match physical monitor EDIDs'
+
+[ -f "$AUTOSTART" ] || fail 'i3 Autorandr autostart override missing'
+grep -Fq 'Exec=i3-monitor-profile --apply' "$AUTOSTART" || fail 'login profile restore missing'
+if grep -Fq 'exec --no-startup-id i3-monitor-profile --apply' "$CONFIG"; then
+  fail 'Autorandr must not run concurrently through Dex and an i3 exec'
+fi
+grep -Fq 'bindsym $mod+p exec --no-startup-id i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
+grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu does not open monitor profiles'
+
+[ -x "$HELPER" ] || fail 'i3-monitor-profile missing or not executable'
+grep -Fq 'autorandr --change --force --default horizontal --match-edid' "$HELPER" || fail 'EDID-aware detected profile restore command missing'
+grep -Fq 'autorandr --save "$profile" --force' "$HELPER" || fail 'runtime profile save command missing'
+grep -Fq 'Configure) exec arandr' "$HELPER" || fail 'ARandR GUI action missing'
+grep -Fq '".local/bin/i3-monitor-profile"' "$DOTFILES" || fail 'monitor helper not deployed'
+grep -Fq '".config/autostart/autorandr.desktop"' "$DOTFILES" || fail 'Autorandr autostart override not deployed'
+
+[[ "$(grep -Fc '".config/autorandr"' "$DOTFILES")" -eq 1 ]] ||
+  fail 'autorandr path must appear exactly once in Nix local-only inventory'
+grep -Fq '    ".config/autorandr"' "$DOTFILES" || fail 'Nix local-only protection missing'
+jq -e '.local_only.paths | index(".config/autorandr") != null' "$MANIFEST" >/dev/null ||
+  fail 'autorandr profiles must be protected as runtime-local data'
+
+bash -n "$HELPER"
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/bin"
+cat >"$tmp/bin/autorandr" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$AUTORANDR_CALLS"
+if [[ -n "${AUTORANDR_FAIL:-}" && "${1:-}" == "$AUTORANDR_FAIL" ]]; then
+  printf 'simulated autorandr failure\n' >&2
+  exit 7
+fi
+STUB
+cat >"$tmp/bin/i3-wallpaper" <<'STUB'
+#!/usr/bin/env bash
+exit 0
+STUB
+cat >"$tmp/bin/notify-send" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$NOTIFY_CALLS"
+STUB
+chmod +x "$tmp/bin/autorandr" "$tmp/bin/i3-wallpaper" "$tmp/bin/notify-send"
+export AUTORANDR_CALLS="$tmp/calls" NOTIFY_CALLS="$tmp/notifications"
+PATH="$tmp/bin:$PATH" "$HELPER" --save docked
+PATH="$tmp/bin:$PATH" "$HELPER" --apply
+PATH="$tmp/bin:$PATH" "$HELPER" --load docked
+grep -Fxq -- '--save docked --force' "$tmp/calls" || fail 'save did not persist named profile'
+grep -Fxq -- '--change --force --default horizontal --match-edid' "$tmp/calls" || fail 'apply did not detect by EDID and restore profile'
+grep -Fxq -- '--load docked --force' "$tmp/calls" || fail 'load did not restore named profile'
+
+before="$(wc -l <"$tmp/calls")"
+if PATH="$tmp/bin:$PATH" "$HELPER" --save 'bad name'; then
+  fail 'invalid profile name was accepted'
+fi
+[[ "$(wc -l <"$tmp/calls")" -eq "$before" ]] || fail 'invalid profile reached autorandr'
+if AUTORANDR_FAIL=--save PATH="$tmp/bin:$PATH" "$HELPER" --save broken; then
+  fail 'Autorandr save failure was hidden'
+fi
+grep -Fq 'Could not save broken: simulated autorandr failure' "$tmp/notifications" ||
+  fail 'save failure did not notify user'
+
+printf 'PASS: autorandr detects hotplug and restores runtime-owned i3 monitor profiles\n'

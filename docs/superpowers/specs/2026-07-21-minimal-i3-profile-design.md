@@ -21,6 +21,7 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - Bind Lenovo XF86 audio, microphone, brightness, WLAN, and RFKill symbols; all helper commands must remain independently runnable.
 - Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
 - Use Rofi for clipboard selection from both `Mod+V` and the main menu.
+- Enable Autorandr for DRM hotplug and suspend/resume detection. Saved profiles remain runtime-owned under `~/.config/autorandr`; unmatched monitor sets fall back to a horizontal layout.
 
 ## Session and Bar
 
@@ -37,7 +38,7 @@ The bar owns workspace buttons and the tray. `pasystray` provides interactive ou
 
 ## Helper Scope
 
-Keep the existing i3-native helpers for Rofi, files, clipboard, SSH, menus, power profiles, keyboard layout, hotkeys, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
+Keep the existing i3-native helpers for Rofi, files, clipboard, SSH, menus, power profiles, monitor profiles, keyboard layout, hotkeys, and config editing. Add daily equivalents for Zen, Obsidian, Pi prompt, calculator, devices, wallpaper, help, and direct power actions. Rofi must be built with the `rofi-calc` plugin and invoked through `i3-calc`; installing the plugin as a separate package is insufficient with Rofi 2.
 
 The helper audit counted 55 executable Hyprland-profile helpers: 22 already matched, 15 portable gaps, and 18 compositor/panel-specific omissions. The approved daily scope closes active keyboard and menu behavior while leaving eight optional functions outside scope: battery alerts, Bluetooth auto-reconnect, stale/unbound smart-run, container autostart, Discord autostart, theme chooser, and webapp maker/remover.
 
@@ -50,6 +51,14 @@ Remove:
 - `i3-wallpaper-random`, replaced by the narrower persistent wallpaper helper described below.
 
 Move compositor-independent `volume-osd` and `mic-volume-osd` to shared dotfiles so Hyprland and i3 use one implementation.
+
+## Monitor Profiles
+
+`services.autorandr` installs the package, DRM hotplug rules, and suspend/resume hook. It selects profiles by EDID and uses Autorandr's virtual `horizontal` target when no saved profile matches. i3 also runs `i3-monitor-profile --apply` at login.
+
+`Mod+P`, `Mod+Ctrl+,`, and Devices → Displays open `i3-monitor-profile`. Its menu provides ARandR configuration, detected-profile apply, current-profile save, and saved-profile load. ARandR only edits the current XRandR layout; saving through the helper is what makes Autorandr restore it later.
+
+`~/.config/autorandr` is real runtime state and is listed under dotfiles `local_only`; Nix/Home Manager must never create, replace, or symlink it. The user configures the desired layout in ARandR, then chooses **Save current** with a stable profile name such as `mobile` or `docked`.
 
 ## Persistent Wallpaper
 
@@ -113,6 +122,7 @@ Static/TDD contracts must verify:
 - Nautilus script delegates one selected path and rejects invalid selection;
 - Dunst paths are portable, progress bars enabled, history/DND bindings exist, and all urgency timeouts equal eight seconds;
 - clipboard helper, `Mod+V`, and main menu all resolve through Rofi;
+- Autorandr hotplug service, EDID matching, horizontal fallback, login restore, runtime profile save/load, and local-only ownership remain declared;
 - all i3 outputs evaluate without getty autologin and the TTY1 startx/PAM keyring contract remains explicit;
 - shared OSD helpers remain valid for both desktops;
 - Lenovo excludes the G213 observer while other hosts retain it.

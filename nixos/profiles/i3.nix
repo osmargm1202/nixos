@@ -32,6 +32,12 @@ in
   };
   services.displayManager.defaultSession = "none+i3";
 
+  services.autorandr = {
+    enable = true;
+    defaultTarget = "horizontal";
+    matchEdid = true;
+  };
+
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.fish.loginShellInit = lib.mkAfter ''
     if test (tty) = /dev/tty1; and not set -q DISPLAY

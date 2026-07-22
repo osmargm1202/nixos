@@ -35,8 +35,8 @@ bindsym $mod+d exec --no-startup-id i3-ssh-host
 bindsym $mod+slash exec --no-startup-id i3-hotkeys
 bindsym $mod+Mod1+space exec --no-startup-id i3-main-menu
 bindsym $mod+Mod1+w exec --no-startup-id i3-wallpaper --random
-bindsym $mod+p exec --no-startup-id arandr
-bindsym $mod+Ctrl+comma exec --no-startup-id arandr
+bindsym $mod+p exec --no-startup-id i3-monitor-profile
+bindsym $mod+Ctrl+comma exec --no-startup-id i3-monitor-profile
 bindsym $mod+w exec --no-startup-id i3-zen-new-window
 bindsym $mod+Shift+w exec --no-startup-id chromium
 bindsym $mod+o exec --no-startup-id i3-obsidian-open-or-focus

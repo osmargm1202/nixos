@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+notify() {
+  notify-send -a 'i3-displays' -t 1800 'Displays' "$1" 2>/dev/null || true
+}
+
+apply_profile() {
+  if autorandr --change --force --default horizontal --match-edid; then
+    i3-wallpaper --restore >/dev/null 2>&1 || true
+    notify 'Monitor profile restored'
+    return 0
+  fi
+  notify 'No monitor profile could be applied'
+  return 1
+}
+
+save_profile() {
+  local profile="${1:-}"
+  if [[ -z "$profile" ]]; then
+    profile="$(printf '' | i3-rofi 'Save monitor profile' 3 || true)"
+  fi
+  [[ -n "$profile" ]] || return 0
+  if [[ ! "$profile" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    notify 'Profile names may use letters, numbers, dot, underscore and dash'
+    return 2
+  fi
+  local error
+  if ! error="$(autorandr --save "$profile" --force 2>&1)"; then
+    notify "Could not save $profile: ${error:-unknown error}"
+    return 1
+  fi
+  notify "Saved profile: $profile"
+}
+
+load_profile() {
+  local profile="${1:-}"
+  if [[ -z "$profile" ]]; then
+    profile="$(autorandr 2>/dev/null \
+      | sed -E 's/^[[:space:]]+//; s/[[:space:]]+\(.*$//' \
+      | sed '/^$/d' \
+      | i3-rofi 'Load monitor profile' 10 || true)"
+  fi
+  [[ -n "$profile" ]] || return 0
+  local error
+  if ! error="$(autorandr --load "$profile" --force 2>&1)"; then
+    notify "Could not load $profile: ${error:-unknown error}"
+    return 1
+  fi
+  i3-wallpaper --restore >/dev/null 2>&1 || true
+  notify "Loaded profile: $profile"
+}
+
+case "${1:-}" in
+  --apply) apply_profile ;;
+  --save) save_profile "${2:-}" ;;
+  --load) load_profile "${2:-}" ;;
+  --list) exec autorandr ;;
+  '')
+    choice="$(printf '%s\n' Configure 'Apply detected' 'Save current' 'Load saved' Back \
+      | i3-rofi Displays 5 || true)"
+    case "$choice" in
+      Configure) exec arandr ;;
+      'Apply detected') apply_profile ;;
+      'Save current') save_profile ;;
+      'Load saved') load_profile ;;
+      Back) exec i3-devices-menu ;;
+      *) exit 0 ;;
+    esac
+    ;;
+  *)
+    printf 'usage: %s [--apply|--save NAME|--load NAME|--list]\n' "${0##*/}" >&2
+    exit 2
+    ;;
+esac

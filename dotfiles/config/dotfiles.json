@@ -159,6 +159,7 @@
   },
   "local_only": {
     "paths": [
+      ".config/autorandr",
       ".config/fish/fish_variables",
       ".config/fish/functions/dir.txt",
       ".config/fish/insforge.env",
