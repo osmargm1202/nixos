@@ -113,8 +113,6 @@
     xorg.xkill
     i3
     i3lock-color
-    polybar
-    picom
 
     # Launchers, notifications, wallpaper and X11 helpers.
     rofi

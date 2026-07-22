@@ -10,7 +10,7 @@ fail() {
   exit 1
 }
 
-grep -q 'exec --no-startup-id i3-polybar-launch' "$I3" || fail 'polybar launcher missing'
+grep -q 'status_command i3status' "$I3" || fail 'native i3status bar missing'
 grep -q 'exec --no-startup-id i3-wallpaper-random --restore' "$I3" || fail 'wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3lock-color --nofork' "$I3" || fail 'xss-lock must keep locker in foreground'
@@ -33,10 +33,6 @@ helpers=(
   i3-wallpaper-random
   i3-hotkeys
   i3-config-editor
-  i3-polybar-launch
-  i3-status-battery
-  i3-status-cpu-temp
-  i3-status-gpu-temp
 )
 for helper in "${helpers[@]}"; do
   [[ -x "$BIN/$helper" ]] || fail "$helper missing or not executable"
@@ -60,23 +56,6 @@ ROFI_INPUT="$TMP/rofi-input" I3_FILE_ROOT="$TMP/files" PATH="$TMP/bin:$PATH" "$B
 grep -q 'visible/file.txt' "$TMP/rofi-input" || fail 'visible file missing from picker'
 ! grep -q '.hidden/file.txt' "$TMP/rofi-input" || fail 'hidden file leaked into picker'
 
-mkdir -p "$TMP/power/BAT1" "$TMP/hwmon/hwmon0" "$TMP/empty"
-printf 'Battery\n' > "$TMP/power/BAT1/type"
-printf '73\n' > "$TMP/power/BAT1/capacity"
-printf 'Discharging\n' > "$TMP/power/BAT1/status"
-printf 'coretemp\n' > "$TMP/hwmon/hwmon0/name"
-printf '56000\n' > "$TMP/hwmon/hwmon0/temp1_input"
-
-battery="$(I3_POWER_SUPPLY_ROOT="$TMP/power" "$BIN/i3-status-battery")"
-[[ "$battery" == *73%* ]] || fail 'BAT1 was not auto-detected'
-cpu="$(I3_HWMON_ROOT="$TMP/hwmon" "$BIN/i3-status-cpu-temp")"
-[[ "$cpu" == *56* ]] || fail 'CPU temperature not detected'
-mkdir -p "$TMP/gpu-only/hwmon0"
-printf 'amdgpu\n' > "$TMP/gpu-only/hwmon0/name"
-printf '67000\n' > "$TMP/gpu-only/hwmon0/temp1_input"
-[[ -z "$(I3_HWMON_ROOT="$TMP/gpu-only" "$BIN/i3-status-cpu-temp")" ]] || fail 'GPU sensor was mislabeled as CPU'
-[[ -z "$(I3_POWER_SUPPLY_ROOT="$TMP/empty" "$BIN/i3-status-battery")" ]] || fail 'desktop battery output must be empty'
-
 cat > "$TMP/bin/i3-rofi" <<'STUB'
 #!/usr/bin/env bash
 [[ "${ROFI_CANCEL:-0}" == 0 ]] || exit 1
@@ -87,7 +66,7 @@ else
 fi
 printf '%s\n' "${ROFI_CHOICE:-}"
 STUB
-for command in systemctl i3-msg setxkbmap feh polybar polybar-msg; do
+for command in systemctl i3-msg setxkbmap feh; do
   cat > "$TMP/bin/$command" <<'STUB'
 #!/usr/bin/env bash
 printf '%s %s\n' "$(basename "$0")" "$*" >> "$CALLS"
@@ -128,11 +107,5 @@ CALLS="$TMP/profile.calls" ROFI_CHOICE=Balanced ROFI_INPUT="$TMP/profile-menu" P
 grep -Fxq 'powerprofilesctl set balanced' "$TMP/profile.calls" || fail 'Balanced profile action incorrect'
 grep -Fxq 'Balanced' "$TMP/profile-menu" || fail 'available Balanced profile missing'
 ! grep -Fxq 'Performance' "$TMP/profile-menu" || fail 'unavailable Performance profile was offered'
-
-CALLS="$TMP/polybar.calls" HOME="$TMP/home" PATH="$TMP/bin:$PATH" "$BIN/i3-polybar-launch"
-first="$(sed -n '1p' "$TMP/polybar.calls")"
-second="$(sed -n '2p' "$TMP/polybar.calls")"
-[[ "$first" == 'polybar-msg cmd quit' ]] || fail 'Polybar old process was not stopped first'
-[[ "$second" == "polybar --config=$TMP/home/.config/polybar/config.ini modern" ]] || fail 'Polybar launch action incorrect'
 
 printf 'PASS: i3 shell helper tests\n'

@@ -15,11 +15,9 @@ exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
-exec --no-startup-id picom --config ~/.config/picom/picom.conf -b
 exec --no-startup-id clipmenud
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-color --nofork --color=1a1b26 --ignore-empty-password
 exec --no-startup-id i3-wallpaper-random --restore
-exec --no-startup-id i3-polybar-launch
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
 
 bindsym $mod+Return exec --no-startup-id $term
@@ -147,3 +145,8 @@ client.focused          #7aa2f7 #1a1b26 #c0caf5 #7aa2f7 #1a1b26
 client.focused_inactive #1f2335 #1a1b26 #a9b1d6 #292e42 #1a1b26
 client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
+
+bar {
+  status_command i3status
+  tray_output primary
+}

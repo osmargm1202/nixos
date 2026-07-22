@@ -286,11 +286,8 @@ let
     ];
 
     i3 = [
-      ".config/conky"
       ".config/dunst"
       ".config/i3"
-      ".config/picom"
-      ".config/polybar"
       ".config/rofi"
       ".local/bin/i3-clipboard"
       ".local/bin/i3-config-editor"
@@ -299,13 +296,9 @@ let
       ".local/bin/i3-main-menu"
       ".local/bin/i3-open-file"
       ".local/bin/i3-performance-menu"
-      ".local/bin/i3-polybar-launch"
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"
       ".local/bin/i3-ssh-host"
-      ".local/bin/i3-status-battery"
-      ".local/bin/i3-status-cpu-temp"
-      ".local/bin/i3-status-gpu-temp"
       ".local/bin/i3-wallpaper-random"
     ];
 
