@@ -4,13 +4,13 @@
 
 Convert the shared i3 profile used by `lenovo-i3`, `orgm-i3`, `ero-i3`, `jarq-i3`, and generic `i3` into a minimal X11 desktop built around i3bar, date/time-only Bumblebee Status with Nord Powerline, and portable daily shortcut parity with Hyprland.
 
-The profile uses animated Picom compositing but no Polybar, Conky, Waybar, or Hyprland helpers. It keeps existing i3-native equivalents, Rofi, Kitty, Dunst, NetworkManager/Bluetooth/removable-disk tray applets, and a persistent Feh wallpaper workflow.
+The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It keeps existing i3-native equivalents, Rofi, Kitty, Dunst, NetworkManager/Bluetooth/removable-disk tray applets, and a persistent Feh wallpaper workflow.
 
 ## Decisions
 
 - Apply the minimal design to every i3 output, not only Lenovo.
-- Keep Polybar and Conky removed. Reintroduce Picom through a declarative systemd user service using `picom-pijulius`; do not restore a runtime-owned `~/.config/picom` tree.
-- Use i3's native transparent bar with Bumblebee Status modules `shortcut date time` and translucent theme `i3-nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales. The shortcut is a clickable caffeine toggle.
+- Remove Picom, Polybar, and Conky packages, startup commands, dotfile paths, helpers, tests, and profile artifacts.
+- Use i3's native bar with Bumblebee Status modules `shortcut date time` and theme `nord-powerline`; preserve Spanish `%A %d/%m/%Y` and 12-hour `%I:%M %p` formats with separate locales. The shortcut is a clickable caffeine toggle.
 - Restore active daily Hyprland shortcut behavior with i3/X11 equivalents, but do not port `hypr-menu`, Waybar/SwayNC/NWG operations, unused helpers, autostart daemons, or theme tooling.
 - Keep `nm-applet`, `blueman-applet`, `udiskie`, and one PipeWire/PulseAudio volume applet in session startup. Pasystray uses its packaged XDG autostart and must not also be launched explicitly by i3.
 - Use Dunst with popups, history/DND bindings, volume/microphone OSD, and an eight-second timeout for every urgency; no notification remains permanent.
@@ -37,17 +37,12 @@ Getty presents a normal login prompt on TTY1. After successful password authenti
 bar {
   font pango:Noto Sans, JetBrainsMono Nerd Font 18
   height 28
-  i3bar_command i3bar --transparency
-  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline
+  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }
 ```
 
-The 28px bar uses Noto Sans 18 with JetBrainsMono Nerd Font fallback, keeping workspace/status text large while Powerline triangles fill the bar height. `i3bar --transparency`, RGBA workspace colors, and the packaged translucent `i3-nord-powerline` theme expose Picom blur without fading text. Font Awesome and Symbols Nerd Font remain installed for status icons; JetBrainsMono Nerd Font renders the full-height Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text and is embedded in the Bumblebee package so bar startup never depends on Home Manager link timing. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
-
-## Picom Visual Effects
-
-NixOS owns a native libconfig file in the store and installs the animation-capable `picom-pijulius` package. The direct file is required because this nixpkgs pin serializes all Nix lists with square brackets, while Picom requires parentheses for lists of rule and animation groups. i3 explicitly starts the custom user service so manual `startx` sessions do not depend on `graphical-session.target` propagation. GLX, VSync, dual-Kawase background blur, 12px rounded corners, soft shadows, rule-based active/inactive transparency, menu transparency, fades, appear/disappear animations, and experimental geometry transitions are enabled. Fullscreen, desktop, and lock windows remain opaque, square, unblurred, and shadowless; lock open/close transitions are overridden to effectively instant so compositing never delays privacy. Dock windows keep square edges and no shadow while allowing blur through i3bar's RGBA surface.
+The 28px bar uses Noto Sans 18 with JetBrainsMono Nerd Font fallback, keeping workspace/status text large while Powerline triangles fill the bar height. Font Awesome and Symbols Nerd Font remain installed for status icons; JetBrainsMono Nerd Font renders the full-height Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text and is embedded in the Bumblebee package so bar startup never depends on Home Manager link timing. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
 
 ## Helper Scope
 
@@ -118,7 +113,7 @@ The global `openrgb-notify` user service is guarded with `hostName != "lenovo"`.
 
 ## Ownership and Cleanup
 
-Home Manager deploys only the retained i3, Rofi, Dunst, and helper paths. Keep the old i3 Picom, Polybar, and Conky dotfile directories absent: Picom configuration is generated in the Nix store and passed to the declarative user service, while Polybar and Conky remain removed.
+Home Manager deploys only the retained i3, Rofi, Dunst, and helper paths. Delete the i3 profile's Picom, Polybar, and Conky directories and remove their manifest entries where they are no longer owned.
 
 Unrelated Hyprland helpers remain intact for Hyprland profiles. Omission from i3 does not mean deletion from Hyprland.
 
@@ -126,9 +121,8 @@ Unrelated Hyprland helpers remain intact for Hyprland profiles. Omission from i3
 
 Static/TDD contracts must verify:
 
-- no Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile and no runtime Picom dotfile tree;
-- `picom-pijulius` provides GLX/VSync, blur, rounded corners, shadows, transparency, fades, appear/disappear and geometry animations with safe fullscreen/lock exceptions;
-- native transparent i3bar invokes Bumblebee Status with caffeine/date/time modules, translucent Nord Powerline, larger Noto typography, package-embedded themes/icons, and the requested mixed-locale formats;
+- no Picom, Polybar, Conky, Waybar, or `hypr-*` references in the i3 profile;
+- native i3bar invokes Bumblebee Status with caffeine/date/time modules, Nord Powerline, larger Noto typography, package-embedded clean date/time icons, and the requested mixed-locale formats;
 - Rofi is plugin-wrapped, borderless, uses the neutral Hyprland-parity theme everywhere, Mod+C invokes a working `i3-calc`, and Win+Alt+Space has a physical-keycode binding plus fallback;
 - i3expo-ng is source/hash pinned, single-instance, receives `Mod+Escape`, while `Alt+Tab` remains Rofi and `Mod+Tab` is workspace back-and-forth;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have PATH-safe i3 equivalents through the deployed `i3-run`;

@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 MODULE="$ROOT/nixos/common-dotfiles.nix"
 SCRIPT="$ROOT/dotfiles/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
+I3_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -19,6 +20,8 @@ grep -Fq 'helper="${I3_WALLPAPER_HELPER:-$HOME/.local/bin/i3-wallpaper}"' "$SCRI
   fail 'Nautilus action must not depend on its restricted PATH'
 grep -Fq 'exec "$helper" --set' "$SCRIPT" || fail 'Nautilus action does not call the absolute helper'
 [[ -x "$SCRIPT" ]] || fail 'Nautilus wallpaper action source is not executable'
+! grep -Eq 'for_window \[class="org\.gnome\.Nautilus"\].*floating enable' "$I3_CONFIG" ||
+  fail 'Nautilus must use normal i3 tiling'
 activation="$(awk '
   /home\.activation\.installI3NautilusScripts =/ { active = 1 }
   active { print }

@@ -9,15 +9,12 @@
 let
   i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
   i3CleanIconset = ../../dotfiles/config/profiles/i3/.config/bumblebee-status/themes/icons/i3-clean.json;
-  i3TranslucentTheme = ../../dotfiles/config/profiles/i3/.config/bumblebee-status/themes/i3-nord-powerline.json;
   bumblebeeI3 = (pkgs.bumblebee-status.override {
     plugins = p: [ p.shortcut p.date p.time ];
   }).overrideAttrs (old: {
     postInstall = (old.postInstall or "") + ''
       install -Dm644 ${i3CleanIconset} \
         "$out/${pkgs.python3.sitePackages}/themes/icons/i3-clean.json"
-      install -Dm644 ${i3TranslucentTheme} \
-        "$out/${pkgs.python3.sitePackages}/themes/i3-nord-powerline.json"
     '';
   });
   # Expose only a uniquely named fallback; installing i3lock-color directly
@@ -28,103 +25,6 @@ let
       exec ${lib.getExe' pkgs.i3lock-color "i3lock-color"} "$@"
     '';
   };
-  # The pinned NixOS Picom module serializes every list with square brackets,
-  # but libconfig requires parentheses for lists of rule/animation groups.
-  # Generate the native config directly until that module formatter is fixed.
-  picomConfig = pkgs.writeText "picom-i3.conf" ''
-    backend = "glx";
-    vsync = true;
-    use-damage = true;
-    detect-rounded-corners = true;
-    detect-client-opacity = true;
-    detect-transient = true;
-    transparent-clipping = false;
-
-    fading = true;
-    fade-delta = 5;
-    fade-in-step = 0.045;
-    fade-out-step = 0.045;
-
-    shadow = true;
-    shadow-radius = 20;
-    shadow-offset-x = -8;
-    shadow-offset-y = -8;
-    shadow-opacity = 0.35;
-    shadow-color = "#000000";
-
-    corner-radius = 12;
-    blur-method = "dual_kawase";
-    blur-strength = 7;
-    blur-background = true;
-    blur-background-frame = true;
-    blur-background-fixed = false;
-
-    animations = ({
-      triggers = [ "open", "show" ];
-      preset = "appear";
-      scale = 0.96;
-      duration = 0.18;
-    }, {
-      triggers = [ "close", "hide" ];
-      preset = "disappear";
-      scale = 0.96;
-      duration = 0.14;
-    }, {
-      triggers = [ "geometry" ];
-      preset = "geometry-change";
-      duration = 0.20;
-    });
-
-    rules = ({
-      match = "!focused && !group_focused";
-      opacity = 0.93;
-    }, {
-      match = "focused || group_focused";
-      opacity = 0.98;
-    }, {
-      match = "window_type = 'dock'";
-      opacity = 1.0;
-      blur-background = true;
-      corner-radius = 0;
-      shadow = false;
-    }, {
-      match = "fullscreen";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      blur-background = false;
-    }, {
-      match = "window_type = 'desktop'";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      blur-background = false;
-    }, {
-      match = "class_g = 'i3lock'";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      fade = false;
-      blur-background = false;
-      animations = ({
-        triggers = [ "open", "show" ];
-        preset = "appear";
-        scale = 1.0;
-        duration = 0.001;
-      }, {
-        triggers = [ "close", "hide" ];
-        preset = "disappear";
-        scale = 1.0;
-        duration = 0.001;
-      });
-    }, {
-      match = "window_type = 'tooltip' || window_type = 'popup_menu' || window_type = 'dropdown_menu'";
-      opacity = 0.92;
-      corner-radius = 8;
-      shadow = true;
-      blur-background = true;
-    });
-  '';
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
@@ -152,17 +52,6 @@ in
     enable = true;
     defaultTarget = "horizontal";
     matchEdid = true;
-  };
-
-  systemd.user.services.picom = {
-    description = "Picom composite manager for i3";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${lib.getExe pkgs.picom-pijulius} --config ${picomConfig}";
-      Restart = "on-failure";
-      RestartSec = 3;
-    };
   };
 
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
@@ -266,7 +155,6 @@ in
     setxkbmap
     xkill
     i3
-    picom-pijulius
     i3expo
     (i3lock-fancy.override {
       screenshotCommand = "${scrot}/bin/scrot -z -o";
