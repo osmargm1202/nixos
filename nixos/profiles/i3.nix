@@ -62,7 +62,10 @@ in
     gnomeSupport = true;
   };
   services.udisks2.enable = true;
-  services.upower.enable = true;
+  services.upower = {
+    enable = true;
+    package = pkgs.upower;
+  };
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gnome-online-accounts.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -177,8 +180,9 @@ in
     udiskie
     usbutils
 
-    # User controls.
+    # User controls and X11 screen recording.
     flameshot
+    ffcast
     imagemagick
     brightnessctl
     pamixer

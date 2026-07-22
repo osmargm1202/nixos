@@ -26,6 +26,7 @@ The profile must not use Picom, Polybar, Conky, Waybar, or Hyprland helpers. It 
 - `Mod+W` follows Hyprland behavior: launch Zen when absent, otherwise create a blank tab and focus its i3 window.
 - Use packaged `meskarune/i3lock-fancy` to capture and blur the live desktop with its lock icon and Spanish prompt; expose caffeine through the bar plus `Mod+Shift+C`.
 - Run the pinned `morrolinux/i3expo-ng` screenshot daemon once per i3 session. `Mod+Escape` signals its Expo overview, `Alt+Tab` remains the themed Rofi window selector, and `Mod+Tab` uses `workspace back_and_forth`.
+- Install `ffcast` for X11 region recording. Enable UPower with its stock package for power telemetry and keep power-profiles-daemon for profile management.
 
 ## Session and Bar
 
@@ -127,6 +128,7 @@ Static/TDD contracts must verify:
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
 - Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
 - XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;
+- `ffcast`, the UPower service/package, and power-profiles-daemon remain available for recording and energy management;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
 - wallpaper set/restore/random behavior with mocked Feh and notifications, serialized after Autorandr;
