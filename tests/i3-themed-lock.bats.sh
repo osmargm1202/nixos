@@ -16,13 +16,14 @@ fail() {
 [ -x "$LOCK" ] || fail 'i3-lock helper missing or not executable'
 grep -Fq '".local/bin/i3-lock"' "$DOTFILES" || fail 'i3-lock not deployed'
 grep -Fq '(i3lock-fancy.override {' "$PROFILE" || fail 'stock i3lock-fancy package missing'
-grep -Fq 'screenshotCommand = "${scrot}/bin/scrot -z";' "$PROFILE" || fail 'fast scrot screenshot command missing'
+grep -Fq 'screenshotCommand = "${scrot}/bin/scrot -z -o";' "$PROFILE" || fail 'overwrite-safe scrot screenshot command missing'
 grep -Fq 'name = "i3lock-color-fallback";' "$PROFILE" || fail 'collision-safe color fallback wrapper missing'
 grep -Eq '^[[:space:]]+i3lockColorFallback[[:space:]]*$' "$PROFILE" || fail 'color fallback wrapper not installed'
 if grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE"; then
   fail 'standalone i3lock-color conflicts with i3lock-fancy bin/i3lock'
 fi
 grep -Fq "i3lock-fancy -t 'Ingrese su contraseña'" "$LOCK" || fail 'lock helper does not launch i3lock-fancy with Spanish prompt'
+grep -Fq -- '-- scrot -z -o' "$LOCK" || fail 'live lock does not overwrite i3lock-fancy temporary screenshot'
 grep -Fq 'exec i3lock-color-fallback --color=2e3440ff --ignore-empty-password' "$LOCK" || fail 'fancy preprocessing failure has no secure lock fallback'
 if grep -Eq 'magick|--clock|--inside-color|--image=' "$LOCK"; then
   fail 'legacy custom lock implementation remains active'
@@ -53,6 +54,10 @@ PATH="$tmp/bin:$PATH" "$LOCK" --nofork
 grep -Fxq -- '-t' "$tmp/calls" || fail 'text option not passed to i3lock-fancy'
 grep -Fxq -- 'Ingrese su contraseña' "$tmp/calls" || fail 'Spanish unlock prompt not passed'
 grep -Fxq -- '--nofork' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
+grep -Fxq -- '--' "$tmp/calls" || fail 'custom screenshot separator missing'
+grep -Fxq -- 'scrot' "$tmp/calls" || fail 'Scrot screenshot command missing'
+grep -Fxq -- '-z' "$tmp/calls" || fail 'silent Scrot flag missing'
+grep -Fxq -- '-o' "$tmp/calls" || fail 'Scrot overwrite flag missing'
 [[ ! -e "$tmp/fallback-calls" ]] || fail 'fallback ran after successful fancy lock'
 
 FANCY_FAIL=1 PATH="$tmp/bin:$PATH" "$LOCK" --nofork

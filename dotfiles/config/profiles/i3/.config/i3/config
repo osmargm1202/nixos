@@ -204,8 +204,8 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
-  font pango:Noto Sans 14
-  height 36
+  font pango:Noto Sans, JetBrainsMono Nerd Font 18
+  height 28
   status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }

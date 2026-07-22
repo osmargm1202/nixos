@@ -16,8 +16,9 @@ fail() {
 
 grep -Eq '^[[:space:]]+noto-fonts[[:space:]]*$' "$COMMON" || fail 'Noto Sans font package missing'
 grep -Eq '^[[:space:]]+font-awesome[[:space:]]*$' "$COMMON" || fail 'Font Awesome package missing'
-grep -Fq 'font pango:Noto Sans 14' "$CONFIG" || fail 'larger modern bar font missing'
-grep -Fq 'height 36' "$CONFIG" || fail 'larger i3bar height missing'
+grep -Fq 'font pango:Noto Sans, JetBrainsMono Nerd Font 18' "$CONFIG" ||
+  fail 'bar font lacks full-height Nerd Font Powerline fallback'
+grep -Fq 'height 28' "$CONFIG" || fail 'Powerline-proportioned i3bar height missing'
 
 [[ "$(grep -Fc 'pasystray' "$CONFIG")" -eq 0 ]] || fail 'explicit pasystray duplicates its XDG autostart'
 grep -Eq '^[[:space:]]+pasystray[[:space:]]*$' "$PROFILE" || fail 'pasystray package/autostart source missing'

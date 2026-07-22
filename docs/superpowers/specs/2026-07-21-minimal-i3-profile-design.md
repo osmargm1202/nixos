@@ -35,14 +35,14 @@ Getty presents a normal login prompt on TTY1. After successful password authenti
 
 ```text
 bar {
-  font pango:Noto Sans 14
-  height 36
+  font pango:Noto Sans, JetBrainsMono Nerd Font 18
+  height 28
   status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t nord-powerline
   tray_output primary
 }
 ```
 
-The 36px bar uses Noto Sans 14 for larger workspace labels and status text. Font Awesome and Symbols Nerd Font remain fallbacks for Nord Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text and is embedded in the Bumblebee package so bar startup never depends on Home Manager link timing. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
+The 28px bar uses Noto Sans 18 with JetBrainsMono Nerd Font fallback, keeping workspace/status text large while Powerline triangles fill the bar height. Font Awesome and Symbols Nerd Font remain installed for status icons; JetBrainsMono Nerd Font renders the full-height Powerline separators. The `i3-clean` iconset removes date/time prefixes that overlap text and is embedded in the Bumblebee package so bar startup never depends on Home Manager link timing. Pasystray provides one interactive volume icon through its packaged XDG autostart. Bumblebee adds one clickable coffee shortcut before date/time; battery, network, CPU/load, memory/disk, and temperature remain omitted.
 
 ## Helper Scope
 
@@ -84,11 +84,11 @@ Add executable Nautilus script:
 ~/.local/share/nautilus/scripts/Set as Wallpaper
 ```
 
-It accepts exactly one local selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set`. Validation and persistence remain centralized in the helper.
+It accepts exactly one local selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set`. Validation and persistence remain centralized in the helper. Home Manager activation removes any stale copy for every profile, then installs it as a real executable file after `linkGeneration` only for i3. Nautilus 50 therefore reliably exposes **Scripts → Set as Wallpaper** in i3 without leaking a broken action into other profiles.
 
 ## Lock Screen
 
-`i3-lock` delegates every manual, idle, power-menu, and suspend-aware lock path to stock Nixpkgs `i3lock-fancy`. The package captures the X11 root window with Scrot, blurs it through ImageMagick, adds its adaptive lock icon and Spanish prompt, then invokes its wrapped `i3lock-color`. Its Nix closure supplies Bash, coreutils, fontconfig, Gawk, getopt, ImageMagick, Scrot, and `i3lock-color`; do not install standalone `i3lock-color`, because both packages expose `bin/i3lock`. A uniquely named `i3lock-color-fallback` wrapper provides a solid Nord lock if screenshot or ImageMagick preprocessing fails, including on the foregrounded `xss-lock --nofork` path.
+`i3-lock` delegates every manual, idle, power-menu, and suspend-aware lock path to stock Nixpkgs `i3lock-fancy`. The package captures the X11 root window with Scrot `-z -o`, blurs it through ImageMagick, adds its adaptive lock icon and Spanish prompt, then invokes its wrapped `i3lock-color`. The overwrite flag is mandatory because upstream creates the PNG with `mktemp` before invoking Scrot; without it, Scrot writes a suffixed file and fancy preprocessing falls through to the gray safety lock. Its Nix closure supplies Bash, coreutils, fontconfig, Gawk, getopt, ImageMagick, Scrot, and `i3lock-color`; do not install standalone `i3lock-color`, because both packages expose `bin/i3lock`. A uniquely named `i3lock-color-fallback` wrapper provides a solid Nord lock if screenshot or ImageMagick preprocessing fails, including on the foregrounded `xss-lock --nofork` path.
 
 ## Notifications
 
@@ -127,13 +127,13 @@ Static/TDD contracts must verify:
 - i3expo-ng is source/hash pinned, single-instance, receives `Mod+Escape`, while `Alt+Tab` remains Rofi and `Mod+Tab` is workspace back-and-forth;
 - active daily Zen/Chromium/Obsidian/Pi, notification, media, window, workspace, device, help, and power bindings have PATH-safe i3 equivalents through the deployed `i3-run`;
 - normal/grouped layout bindings are explicit and scratchpad/stacking bindings are absent;
-- Nautilus's selected icon theme is installed and its wallpaper action resolves the helper outside Nautilus's restricted PATH;
+- Nautilus's selected icon theme is installed and its real-file wallpaper action resolves the helper outside Nautilus's restricted PATH;
 - XF86 audio/mic/brightness/WLAN bindings and the tray volume applet remain declared;
 - `ffcast`, the UPower service/package, and power-profiles-daemon remain available for recording and energy management;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
 - wallpaper set/restore/random behavior with mocked Feh and notifications, serialized after Autorandr;
-- every lock path uses packaged `i3lock-fancy`, its fast Scrot capture, Spanish prompt, `--nofork` forwarding, and secure solid-color fallback without a standalone `i3lock-color` collision;
+- every lock path uses packaged `i3lock-fancy`, overwrite-safe Scrot capture, Spanish prompt, `--nofork` forwarding, and secure solid-color fallback without a standalone `i3lock-color` collision;
 - clipboard empty/populated history behavior and themed Rofi invocation;
 - one Pasystray process source and functional caffeine state restoration;
 - Nautilus script delegates one selected path and rejects invalid selection;

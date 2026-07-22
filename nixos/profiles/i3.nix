@@ -157,7 +157,7 @@ in
     i3
     i3expo
     (i3lock-fancy.override {
-      screenshotCommand = "${scrot}/bin/scrot -z";
+      screenshotCommand = "${scrot}/bin/scrot -z -o";
     })
     i3lockColorFallback
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if i3lock-fancy -t 'Ingrese su contraseña' "$@"; then
+if i3lock-fancy -t 'Ingrese su contraseña' "$@" -- scrot -z -o; then
   exit 0
 fi
 

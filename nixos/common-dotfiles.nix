@@ -317,7 +317,6 @@ let
       ".local/bin/i3-wallpaper"
       ".local/bin/i3-wifi-toggle"
       ".local/bin/i3-zen-new-window"
-      ".local/share/nautilus/scripts/Set as Wallpaper"
     ];
 
     labwc = [
@@ -784,6 +783,19 @@ in
       home.activation.reloadI3AfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
         lib.optionalString (profileName == "i3") ''
           $DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch" || true
+        ''
+      );
+
+      # Nautilus 50 reliably discovers real executable scripts, not a Home
+      # Manager symlink. Install this generated deployment after links settle.
+      home.activation.installI3NautilusScripts = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+        ''
+          target="$HOME/.local/share/nautilus/scripts/Set as Wallpaper"
+          $DRY_RUN_CMD rm -f "$target"
+        ''
+        + lib.optionalString (profileName == "i3") ''
+          source="${dotfilesPath}/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
+          $DRY_RUN_CMD install -Dm755 "$source" "$target"
         ''
       );
 
