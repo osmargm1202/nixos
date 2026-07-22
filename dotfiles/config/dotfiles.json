@@ -65,6 +65,7 @@
       ".pi/agent/AGENTS.md",
       ".pi/agent/RTK.md",
       ".pi/agent/ask.jsonc",
+      ".pi/agent/models.json",
       ".tmux.conf",
       ".local/bin/brightness-osd",
       ".local/bin/hypr-apps-menu",

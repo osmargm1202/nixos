@@ -159,6 +159,7 @@ let
     ".pi/agent/AGENTS.md"
     ".pi/agent/RTK.md"
     ".pi/agent/ask.jsonc"
+    ".pi/agent/models.json"
     ".pi/agent/subagents"
     ".pi/agent/subagents.json"
     ".tmux.conf"
