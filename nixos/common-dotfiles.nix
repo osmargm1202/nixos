@@ -32,6 +32,12 @@ let
     ${pkgs.desktop-file-utils}/bin/update-desktop-database "$dst" 2>/dev/null || true
   '';
 
+  migrateHomeManagerDotfileDirs = pkgs.writeShellApplication {
+    name = "migrate-home-manager-dotfile-dirs";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = builtins.readFile ./scripts/migrate-home-manager-dotfile-dirs.sh;
+  };
+
   # Python env for ~/.config/openrgb/lg213/main.py (notification RGB effects)
   lg213PythonEnv = pkgs.python3.withPackages (ps: [ ps.openrgb-python ]);
 
@@ -699,6 +705,12 @@ in
   home-manager.users.${userName} =
     { config, lib, pkgs, ... }:
     {
+      home.activation.migrateLegacyDotfileDirectories =
+        lib.hm.dag.entryBefore [ "removeConflictingDotfiles" ] ''
+          $DRY_RUN_CMD ${migrateHomeManagerDotfileDirs}/bin/migrate-home-manager-dotfile-dirs \
+            .config/kitty .config/yazi
+        '';
+
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         if [ -L "$HOME/.local/share/applications" ]; then
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"
