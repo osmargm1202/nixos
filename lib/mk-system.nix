@@ -44,12 +44,14 @@ let
         else if role == "server" then
           [
             hardware
+            ../nixos/ai/default.nix
             ../nixos/server.nix
             { networking.hostName = hostName; }
           ]
         else if role == "terminal" then
           [
             hardware
+            ../nixos/ai/default.nix
             ../nixos/terminal.nix
             { networking.hostName = hostName; }
           ]
