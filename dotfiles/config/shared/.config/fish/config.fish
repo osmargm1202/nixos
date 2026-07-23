@@ -176,7 +176,7 @@ end
 # nixpkgs del sistema (registry pineado en common.nix) — mismo store
 # path, sin descarga extra. OJO: exec directo (kitty -e app, scripts
 # bash) NO pasa por estos aliases; usar `fish -lc app` o `, app`.
-for app in ncdu fastfetch xclip podman-compose sops just figlet tmux nix-search-tv dolphin-emu pcsx2 rpcs3
+for app in ncdu fastfetch xclip podman-compose sops just figlet nix-search-tv dolphin-emu pcsx2 rpcs3
     alias $app="nix run nixpkgs#$app --"
 end
 # herdr: pineado al input del flake del sistema (no esta en nixpkgs)

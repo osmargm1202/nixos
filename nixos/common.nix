@@ -14,7 +14,7 @@
 
 let
   zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
-    exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 16 "$@"
+    exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 18 "$@"
   '';
 in
 {
@@ -244,6 +244,7 @@ in
     gtk3
     libnotify
     git
+    tmux
     age # dependencia de arranque de fish (load_private_env) — no mover a efimero
     uv
     python3
@@ -260,7 +261,7 @@ in
     # Daily-driver CLI. Project/dev tooling lives in per-project flakes
     # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
     # Efimeras via alias fish (nix run): btop fastfetch ncdu
-    # yazi sops just xclip figlet tmux nix-search-tv herdr + emuladores.
+    # yazi sops just xclip figlet nix-search-tv herdr + emuladores.
     # Compose provider: podman 5.x no longer ships built-in `compose`
     # subcommand; `docker compose` shim requires this plugin to exist.
     podman-compose
