@@ -4,7 +4,7 @@
 
 Convert the shared i3 profile used by `lenovo-i3`, `orgm-i3`, `ero-i3`, `jarq-i3`, and generic `i3` into a portable X11 desktop built around native i3bar, a NixOS-adapted i3blocks status, and daily shortcut parity with Hyprland.
 
-The profile uses animated Picom compositing but no Polybar, Conky, Waybar, or Hyprland helpers. It keeps existing i3-native equivalents, Rofi, Kitty, Dunst, NetworkManager/Bluetooth/removable-disk tray applets, and a persistent Feh wallpaper workflow.
+The profile uses animated Picom compositing but no Polybar, Conky, Waybar, or Hyprland helpers. It keeps existing i3-native equivalents, Rofi, Kitty, Dunst, NetworkManager/Bluetooth/removable-disk tray applets, and persistent Feh image plus XWinWrap/mpv video wallpapers.
 
 ## Decisions
 
@@ -79,14 +79,14 @@ Move compositor-independent `volume-osd` and `mic-volume-osd` to shared dotfiles
 
 Create `i3-wallpaper` with shared and per-monitor operations:
 
-- `--set FILE`: validate one local image, apply it to every active output, persist it as the shared fallback, and clear per-output overrides;
-- `--set-active FILE`: apply the image only to the output under the pointer, falling back to the focused-window center, primary output, then first active output;
-- `--set-output OUTPUT FILE`: apply an explicit output override;
+- `--set FILE`: validate one local image or video, apply it to every active output, persist it as the shared fallback, and clear per-output overrides;
+- `--set-active FILE`: apply the image or video only to the output under the pointer, falling back to the focused-window center, primary output, then first active output;
+- `--set-output OUTPUT FILE`: apply an explicit image/video output override;
 - `--restore`: rebuild the complete active-output image list in XRandR monitor order and persist any legacy/fallback migration;
 - `--random`: choose one random image for every output;
 - `--random-active`: choose a random image only for the pointer/focused output.
 
-Shared fallback state retains its compatibility mirror at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`; authoritative connector/default state is published as an atomic generation through `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpapers`, with connector files at `wallpapers/OUTPUT` and `.default` for shared fallback. A per-user `flock` serializes Autorandr, Nautilus, and keyboard invocations. Disconnected outputs retain their assignments and recover them when that connector returns. Existing single-file state migrates automatically. Feh receives one ordered image per active Xinerama output and is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. `i3-monitor-profile --apply` restores wallpapers only after Autorandr finishes, preventing XRandR from clearing a concurrently applied background.
+Shared fallback state retains its compatibility mirror at `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper`; authoritative connector/default image or video state is published as an atomic generation through `${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpapers`, with connector files at `wallpapers/OUTPUT` and `.default` for shared fallback. A per-user `flock` serializes Autorandr, Nautilus, and keyboard invocations. Disconnected outputs retain their assignments and recover them when that connector returns. Existing single-file state migrates automatically. Feh receives one ordered image per active Xinerama output and is invoked without `--no-fehbg`, so `~/.fehbg` remains a compatible secondary record. Video outputs receive a Nord placeholder underneath one isolated `setsid` XWinWrap/mpv process group per monitor. PID plus `/proc` starttime tracking prevents reused-PID kills; replacing media or restoring after Autorandr stops only validated managed groups and restarts videos at current XRandR geometry. `i3-monitor-profile --apply` restores wallpapers only after Autorandr finishes, preventing XRandR from clearing a concurrently applied background.
 
 Add executable Nautilus script:
 
@@ -94,7 +94,7 @@ Add executable Nautilus script:
 ~/.local/share/nautilus/scripts/Set as Wallpaper
 ```
 
-It accepts exactly one local selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set-active`. Pointer position selects the target monitor; focused-window geometry is the fallback. Validation, full-layout Feh application, and persistence remain centralized in the helper. Home Manager activation removes any stale copy for every profile, then installs it as a real executable file after `linkGeneration` only for i3. Nautilus 50 therefore reliably exposes **Scripts → Set as Wallpaper** in i3 without leaking a broken action into other profiles.
+It accepts exactly one local image or video selection from `NAUTILUS_SCRIPT_SELECTED_FILE_PATHS` and delegates to `i3-wallpaper --set-active`. Pointer position selects the target monitor; focused-window geometry is the fallback. Validation, full-layout Feh application, and persistence remain centralized in the helper. Home Manager activation removes any stale copy for every profile, then installs it as a real executable file after `linkGeneration` only for i3. Nautilus 50 therefore reliably exposes **Scripts → Set as Wallpaper** in i3 without leaking a broken action into other profiles.
 
 ## Lock Screen
 
@@ -143,7 +143,7 @@ Static/TDD contracts must verify:
 - `ffcast`, the UPower service/package, and power-profiles-daemon remain available for recording and energy management;
 - selected applets remain in startup;
 - obsolete panel/status helpers and dotfile paths are absent;
-- shared and per-output wallpaper set/restore/random behavior, pointer/focus output targeting, XRandR/Feh ordering, legacy migration, and serialization after Autorandr;
+- shared and per-output image/video wallpaper set/restore/random behavior, pointer/focus output targeting, XRandR/Feh ordering, XWinWrap/mpv lifecycle, legacy migration, and serialization after Autorandr;
 - every lock path uses packaged `i3lock-fancy`, overwrite-safe Scrot capture, Spanish prompt, `--nofork` forwarding, and secure solid-color fallback without a standalone `i3lock-color` collision;
 - clipboard empty/populated history behavior and themed Rofi invocation;
 - one Pasystray process source and functional caffeine state restoration;

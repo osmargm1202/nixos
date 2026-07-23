@@ -6,6 +6,9 @@ state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
 state_file="$state_dir/wallpaper"
 output_state_dir="$state_dir/wallpapers"
 layout_root="$state_dir/wallpaper-layouts"
+video_pid_dir="$state_dir/video-pids"
+video_log="$state_dir/video-wallpaper.log"
+video_placeholder="$state_dir/video-placeholder.ppm"
 mode="${1:---random}"
 active_outputs=()
 layout_wallpapers=()
@@ -14,11 +17,28 @@ notify_error() {
   command -v notify-send >/dev/null 2>&1 && notify-send 'i3 wallpaper' "$1" || true
 }
 
-canonical_image() {
+canonical_media() {
   local path="${1:-}"
   [[ -f "$path" ]] || return 1
   case "${path,,}" in
-    *.jpg|*.jpeg|*.png|*.webp) readlink -f -- "$path" ;;
+    *.jpg|*.jpeg|*.png|*.webp|*.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi)
+      readlink -f -- "$path"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+canonical_image() {
+  local path="${1:-}"
+  case "${path,,}" in
+    *.jpg|*.jpeg|*.png|*.webp) canonical_media "$path" ;;
+    *) return 1 ;;
+  esac
+}
+
+is_video() {
+  case "${1,,}" in
+    *.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -144,10 +164,10 @@ active_output() {
 current_default_wallpaper() {
   local wallpaper=''
   if [[ -f "$output_state_dir/.default" ]]; then
-    wallpaper="$(canonical_image "$(head -n1 "$output_state_dir/.default")" || true)"
+    wallpaper="$(canonical_media "$(head -n1 "$output_state_dir/.default")" || true)"
   fi
   if [[ -z "$wallpaper" && -f "$state_file" ]]; then
-    wallpaper="$(canonical_image "$(head -n1 "$state_file")" || true)"
+    wallpaper="$(canonical_media "$(head -n1 "$state_file")" || true)"
   fi
   [[ -n "$wallpaper" ]] || return 1
   printf '%s\n' "$wallpaper"
@@ -156,7 +176,7 @@ current_default_wallpaper() {
 wallpaper_for_output() {
   local output="$1" wallpaper=''
   if [[ "$output" != default && -f "$output_state_dir/$output" ]]; then
-    wallpaper="$(canonical_image "$(head -n1 "$output_state_dir/$output")" || true)"
+    wallpaper="$(canonical_media "$(head -n1 "$output_state_dir/$output")" || true)"
   fi
   if [[ -z "$wallpaper" ]]; then
     wallpaper="$(current_default_wallpaper || true)"
@@ -183,9 +203,111 @@ compose_layout() {
   done
 }
 
+geometry_for_output() {
+  local wanted="$1" line output word
+  command -v xrandr >/dev/null 2>&1 || return 1
+  while IFS= read -r line; do
+    [[ "$line" =~ ^([^[:space:]]+)[[:space:]]+connected([[:space:]]|$) ]] || continue
+    output="${BASH_REMATCH[1]}"
+    [[ "$wanted" == default || "$output" == "$wanted" ]] || continue
+    for word in $line; do
+      if [[ "$word" =~ ^[0-9]+x[0-9]+[+-][0-9]+[+-][0-9]+$ ]]; then
+        printf '%s\n' "$word"
+        return 0
+      fi
+    done
+  done < <(xrandr --query 2>/dev/null)
+  return 1
+}
+
+process_starttime() {
+  local pid="$1"
+  [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/stat" ]] || return 1
+  awk '{ print $22 }' "/proc/$pid/stat" 2>/dev/null
+}
+
+tracked_process_alive() {
+  local pid="$1" expected_start="$2" actual_start
+  actual_start="$(process_starttime "$pid" || true)"
+  [[ -n "$actual_start" && "$actual_start" == "$expected_start" ]]
+}
+
+process_group_alive() {
+  local group_leader="$1"
+  kill -0 -- "-$group_leader" 2>/dev/null
+}
+
+stop_video_wallpapers() {
+  local pid_file pid expected_start attempt
+  [[ -d "$video_pid_dir" ]] || return 0
+  shopt -s nullglob
+  for pid_file in "$video_pid_dir"/*; do
+    read -r pid expected_start <"$pid_file" 2>/dev/null || continue
+    tracked_process_alive "$pid" "$expected_start" || continue
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    for attempt in {1..10}; do
+      process_group_alive "$pid" || break
+      sleep 0.05
+    done
+    process_group_alive "$pid" && kill -KILL -- "-$pid" 2>/dev/null || true
+  done
+  shopt -u nullglob
+  rm -rf -- "$video_pid_dir"
+}
+
+ensure_video_placeholder() {
+  [[ -f "$video_placeholder" ]] && return 0
+  local temporary
+  temporary="$(mktemp "$video_placeholder.tmp.XXXXXX")"
+  printf 'P3\n1 1\n255\n26 27 38\n' >"$temporary"
+  mv -f -- "$temporary" "$video_placeholder"
+}
+
+start_video_wallpaper() {
+  local output="$1" video="$2" geometry xwinwrap_bin mpv_bin pid starttime
+  geometry="$(geometry_for_output "$output")" || return 1
+  xwinwrap_bin="${I3_XWINWRAP_BIN:-$(command -v xwinwrap || true)}"
+  mpv_bin="${I3_MPV_BIN:-$(command -v mpv || true)}"
+  [[ -x "$xwinwrap_bin" && -x "$mpv_bin" ]] || return 1
+  mkdir -p "$video_pid_dir"
+  (
+    # Long-lived wallpaper children must not inherit the transaction lock.
+    exec {wallpaper_lock_fd}>&-
+    exec setsid "$xwinwrap_bin" -g "$geometry" -fdt -ni -b -nf -ov -- \
+      "$mpv_bin" --wid=WID --loop-file=inf --no-audio --no-osc --no-osd-bar \
+      --no-input-default-bindings --panscan=1.0 --really-quiet "$video"
+  ) >>"$video_log" 2>&1 &
+  pid=$!
+  sleep 0.1
+  kill -0 "$pid" 2>/dev/null || return 1
+  starttime="$(process_starttime "$pid")" || return 1
+  atomic_write "$video_pid_dir/$output" "$pid $starttime"
+}
+
 apply_layout() {
+  local -a static_wallpapers=() video_indices=()
+  local index output wallpaper
   ((${#layout_wallpapers[@]} > 0)) || return 1
-  feh --bg-fill "${layout_wallpapers[@]}"
+  for index in "${!layout_wallpapers[@]}"; do
+    wallpaper="${layout_wallpapers[$index]}"
+    if is_video "$wallpaper"; then
+      ensure_video_placeholder
+      static_wallpapers+=("$video_placeholder")
+      video_indices+=("$index")
+    else
+      static_wallpapers+=("$wallpaper")
+    fi
+  done
+  feh --bg-fill "${static_wallpapers[@]}"
+  stop_video_wallpapers
+  for index in "${video_indices[@]}"; do
+    output="${active_outputs[$index]}"
+    if ! start_video_wallpaper "$output" "${layout_wallpapers[$index]}"; then
+      stop_video_wallpapers
+      notify_error "No se pudo iniciar el fondo de video en $output"
+      return 1
+    fi
+  done
 }
 
 atomic_write() {
@@ -204,7 +326,7 @@ copy_current_layout() {
     [[ -f "$source" ]] || continue
     name="${source##*/}"
     [[ "$name" == .default ]] || valid_output_name "$name" || continue
-    wallpaper="$(canonical_image "$(head -n1 "$source")" || true)"
+    wallpaper="$(canonical_media "$(head -n1 "$source")" || true)"
     [[ -n "$wallpaper" ]] && atomic_write "$destination/$name" "$wallpaper"
   done
   shopt -u nullglob dotglob
@@ -278,9 +400,9 @@ set_output() {
   commit_output_layout
 }
 
-require_image() {
-  canonical_image "${1:-}" || {
-    notify_error 'Selecciona un archivo JPG, JPEG, PNG o WEBP válido.'
+require_media() {
+  canonical_media "${1:-}" || {
+    notify_error 'Selecciona una imagen o video JPG, PNG, WEBP, MP4, MKV, WEBM, MOV, M4V o AVI válido.'
     return 1
   }
 }
@@ -294,11 +416,11 @@ flock -x "$wallpaper_lock_fd"
 load_active_outputs
 case "$mode" in
   --set)
-    wallpaper="$(require_image "${2:-}")" || exit 1
+    wallpaper="$(require_media "${2:-}")" || exit 1
     set_all "$wallpaper"
     ;;
   --set-active)
-    wallpaper="$(require_image "${2:-}")" || exit 1
+    wallpaper="$(require_media "${2:-}")" || exit 1
     output="$(active_output)" || {
       notify_error 'No se pudo detectar la pantalla activa.'
       exit 1
@@ -307,7 +429,7 @@ case "$mode" in
     ;;
   --set-output)
     output="${2:-}"
-    wallpaper="$(require_image "${3:-}")" || exit 1
+    wallpaper="$(require_media "${3:-}")" || exit 1
     set_output "$output" "$wallpaper"
     ;;
   --restore)

@@ -266,6 +266,8 @@ in
     clipmenu
     dunst
     feh
+    mpv
+    xwinwrap
     arandr
     xclip
     xdotool
