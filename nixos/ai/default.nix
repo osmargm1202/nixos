@@ -11,5 +11,6 @@
     ./rtk.nix
     ./pi.nix
     ./opencode.nix
+    ./omp.nix
   ];
 }
