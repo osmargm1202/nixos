@@ -273,8 +273,8 @@ start_video_wallpaper() {
   (
     # Long-lived wallpaper children must not inherit the transaction lock.
     exec {wallpaper_lock_fd}>&-
-    exec setsid "$xwinwrap_bin" -g "$geometry" -fdt -ni -b -nf -ov -- \
-      "$mpv_bin" --wid=WID --loop-file=inf --no-audio --no-osc --no-osd-bar \
+    exec setsid "$xwinwrap_bin" -g "$geometry" -ni -b -nf -ov -- \
+      "$mpv_bin" -wid WID --loop-file=inf --no-audio --no-osc --no-osd-bar \
       --no-input-default-bindings --panscan=1.0 --really-quiet "$video"
   ) >>"$video_log" 2>&1 &
   pid=$!

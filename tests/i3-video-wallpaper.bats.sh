@@ -34,7 +34,11 @@ done
 grep -Fq 'exec "$helper" --set-active' "$NAUTILUS" || fail 'Nautilus does not delegate active-output media'
 grep -Fq '*.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi' "$HELPER" || fail 'video extensions are not accepted'
 grep -Fq 'setsid "$xwinwrap_bin"' "$HELPER" || fail 'xwinwrap process group is not isolated'
-grep -Fq '"$mpv_bin" --wid=WID' "$HELPER" || fail 'mpv is not embedded into xwinwrap'
+grep -Fq '"$mpv_bin" -wid WID' "$HELPER" ||
+  fail 'mpv must use the xwinwrap-compatible split WID argument'
+if grep -Fq -- '-fdt' "$HELPER"; then
+  fail 'NixOS xwinwrap v4 does not support the -fdt option'
+fi
 
 mkdir -p "$TMP/bin" "$TMP/home" "$TMP/state" "$TMP/wallpapers"
 cat >"$TMP/bin/xrandr" <<'STUB'
@@ -103,8 +107,10 @@ run_wallpaper --set "$image"
 run_wallpaper --set-active "$video"
 [[ "$(cat "$TMP/state/i3/wallpapers/HDMI-1")" == "$video" ]] || fail 'video path was not persisted for HDMI'
 grep -Fq '<-g> <1920x1080+1920+0>' "$TMP/video.calls" || fail 'video used wrong HDMI geometry'
-grep -Fq '<-fdt> <-ni> <-b> <-nf> <-ov>' "$TMP/video.calls" || fail 'xwinwrap desktop flags incomplete'
-for option in '--wid=WID' '--loop-file=inf' '--no-audio' '--no-osc' '--no-osd-bar' '--no-input-default-bindings' '--panscan=1.0' '--really-quiet'; do
+grep -Fq '<-g> <1920x1080+1920+0> <-ni> <-b> <-nf> <-ov>' "$TMP/video.calls" ||
+  fail 'xwinwrap desktop flags incomplete'
+grep -Fq '<-wid> <WID>' "$TMP/video.calls" || fail 'xwinwrap did not receive a replaceable WID argument'
+for option in '--loop-file=inf' '--no-audio' '--no-osc' '--no-osd-bar' '--no-input-default-bindings' '--panscan=1.0' '--really-quiet'; do
   grep -Fq "<$option>" "$TMP/video.calls" || fail "mpv option missing: $option"
 done
 grep -Fq "<$video>" "$TMP/video.calls" || fail 'mpv did not receive selected video'
