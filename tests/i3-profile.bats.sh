@@ -10,11 +10,8 @@ fail() {
 }
 
 for host in orgm lenovo ero jarq; do
-  grep -Eq "^[[:space:]]*${host}-i3[[:space:]]*=[[:space:]]*mkHost" flake.nix \
-    || fail "missing ${host}-i3"
-  grep -A4 -E "^[[:space:]]*${host}-i3[[:space:]]*=" flake.nix \
-    | grep -q 'profile = ./nixos/profiles/i3.nix' \
-    || fail "${host}-i3 does not use i3.nix"
+  label="$(nix eval --raw ".#nixosConfigurations.${host}-i3.config.system.nixos.label" 2>/dev/null)"
+  [[ "$label" == 'i3' ]] || fail "${host}-i3 does not evaluate the i3 profile"
 done
 
 [[ "$(nix eval .#nixosConfigurations.orgm-i3.config.services.xserver.enable 2>/dev/null)" == true ]] \

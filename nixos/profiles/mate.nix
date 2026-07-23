@@ -56,8 +56,8 @@
 
   environment.systemPackages = with pkgs; [
     # MATE extras (core installed by desktopManager.mate)
-    mate.mate-applets
-    mate.mate-icon-theme-faenza
+    mate-applets
+    mate-icon-theme-faenza
 
     # Keyring plumbing
     gcr
@@ -77,5 +77,24 @@
     materia-theme
     numix-cursor-theme
     yaru-remix-theme
-  ] ++ mate.extraPackages;
+  ] ++ (with pkgs; [
+    # Explicitly enumerate former mate package set extras, now removed upstream.
+    atril
+    caja-extensions
+    eom
+    engrampa
+    mate-backgrounds
+    mate-calc
+    mate-indicator-applet
+    mate-media
+    mate-netbook
+    mate-power-manager
+    mate-screensaver
+    mate-system-monitor
+    mate-terminal
+    mate-user-guide
+    mate-utils
+    mozo
+    pluma
+  ]);
 }

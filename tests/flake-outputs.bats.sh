@@ -2,41 +2,52 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FLAKE="$REPO_DIR/flake.nix"
+EXPECTED="$REPO_DIR/tests/fixtures/nixos-configurations.txt"
 
 fail() {
-  echo "FAIL: $*" >&2
+  printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-assert_contains() {
-  local pattern="$1" name="$2"
-  grep -Eq -- "$pattern" "$FLAKE" || fail "$name"
+assert_eq() {
+  local actual="$1" expected="$2" name="$3"
+  [[ "$actual" == "$expected" ]] || fail "$name: expected '$expected', got '$actual'"
 }
 
-assert_not_contains() {
-  local pattern="$1" name="$2"
-  if grep -Eq -- "$pattern" "$FLAKE"; then
-    fail "$name"
-  fi
-}
+actual_names="$(
+  nix eval --json "$REPO_DIR#nixosConfigurations" --apply builtins.attrNames \
+    | jq -r '.[]'
+)"
 
-assert_not_contains '^[[:space:]]*jarq[[:space:]]*=[[:space:]]*mkHost' "plain jarq output must not exist; use jarq-gnome or jarq-cinnamon"
-assert_contains '^[[:space:]]*jarq-gnome[[:space:]]*=[[:space:]]*mkHost' "jarq-gnome output must exist"
-assert_contains '^[[:space:]]*jarq-cinnamon[[:space:]]*=[[:space:]]*mkHost' "jarq-cinnamon output must exist"
+diff -u "$EXPECTED" <(printf '%s\n' "$actual_names") \
+  || fail 'evaluated nixosConfigurations differ from the public baseline'
 
-awk '
-  /^[[:space:]]*jarq-gnome[[:space:]]*=[[:space:]]*mkHost/ { in_block = 1 }
-  in_block && /profile = \.\/nixos\/profiles\/gnome\.nix;/ { found = 1 }
-  in_block && /^[[:space:]]*};/ { in_block = 0 }
-  END { exit found ? 0 : 1 }
-' "$FLAKE" || fail "jarq-gnome must use gnome profile"
+if grep -qx 'TEMPLATE' <<<"$actual_names"; then
+  fail 'host templates must never be exported as nixosConfigurations'
+fi
 
-awk '
-  /^[[:space:]]*jarq-cinnamon[[:space:]]*=[[:space:]]*mkHost/ { in_block = 1 }
-  in_block && /profile = \.\/nixos\/profiles\/cinnamon\.nix;/ { found = 1 }
-  in_block && /^[[:space:]]*};/ { in_block = 0 }
-  END { exit found ? 0 : 1 }
-' "$FLAKE" || fail "jarq-cinnamon must use cinnamon profile"
+for mapping in \
+  'orgm orgm-hyprland' \
+  'lenovo lenovo-hyprland' \
+  'jarq jarq-hyprland'
+do
+  read -r alias target <<<"$mapping"
+  alias_drv="$(nix eval --raw "$REPO_DIR#nixosConfigurations.$alias.config.system.build.toplevel.drvPath")"
+  target_drv="$(nix eval --raw "$REPO_DIR#nixosConfigurations.$target.config.system.build.toplevel.drvPath")"
+  assert_eq "$alias_drv" "$target_drv" "$alias must remain an alias of $target"
+done
 
-echo "PASS: flake output tests"
+assert_eq \
+  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.ero-server.config.networking.hostName")" \
+  'ero' \
+  'ero-server hostname'
+assert_eq \
+  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.jarq-hyprland.config.system.nixos.label")" \
+  'hyprland' \
+  'jarq-hyprland profile label'
+assert_eq \
+  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.cinnamon.config.system.nixos.label")" \
+  'cinnamon' \
+  'generic cinnamon profile label'
+
+printf 'PASS: evaluated flake output baseline\n'
