@@ -157,6 +157,10 @@ end
 alias yazi='nix run nixpkgs#yazi --'
 alias y='yazi'
 
+if type -q zutty-fast
+    alias zutty='zutty-fast'
+end
+
 # Runner efimero: `, app [args...]` = nix run nixpkgs#app
 # Apps de uso esporadico no se instalan; se corren desde cache binario
 # (registry pineado al nixpkgs del sistema en common.nix).

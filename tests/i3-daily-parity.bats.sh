@@ -18,7 +18,7 @@ required_bindings=(
   'bindsym $mod+Shift+w exec --no-startup-id chromium'
   'bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus'
   'bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt'
-  'bindsym $mod+Shift+Return exec --no-startup-id $term'
+  'bindsym $mod+Shift+Return exec --no-startup-id zutty-fast'
   'bindsym $mod+F10 exec --no-startup-id pavucontrol'
   'bindsym $mod+Mod1+e exec --no-startup-id $run i3-powermenu'
   'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock'

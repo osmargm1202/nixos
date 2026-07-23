@@ -12,6 +12,11 @@
   ...
 }:
 
+let
+  zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
+    exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 16 "$@"
+  '';
+in
 {
   # Boot menu shows "Generation N <label>, built on <date>" -- date is
   # always automatic (build timestamp), this just pins the name part
@@ -250,6 +255,8 @@
     ntfs3g
     freerdp
     kitty
+    zutty
+    zuttyFast
     # Daily-driver CLI. Project/dev tooling lives in per-project flakes
     # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
     # Efimeras via alias fish (nix run): btop fastfetch ncdu

@@ -1,5 +1,6 @@
 local programs = {
   terminal = "kitty",
+  fastTerminal = "zutty-fast",
   fileManager = "sh -lc 'if command -v nautilus >/dev/null 2>&1; then nautilus --new-window; elif command -v xdg-open >/dev/null 2>&1; then xdg-open .; else kitty; fi'",
   app_launcher = "hypr-app-launcher",
   menu = "hypr-main-menu",
