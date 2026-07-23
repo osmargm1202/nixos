@@ -21,7 +21,7 @@ The profile uses animated Picom compositing but no Polybar, Conky, Waybar, or Hy
 - Bind Lenovo XF86 audio, microphone, brightness, WLAN, and RFKill symbols; all helper commands must remain independently runnable.
 - Require a normal username/password login on TTY1, then start i3 automatically through `startx`; PAM login owns GNOME Keyring startup/unlock and no getty autologin is permitted.
 - After Home Manager links a new generation during a live i3 switch, reload the running i3 instance through its IPC socket so keyboard grabs remain active; never restart i3 or reload Hyprland from activation.
-- Use Rofi for clipboard selection from both `Mod+V` and the main menu.
+- Use Rofi for clipboard selection from both `Mod+V` and the main menu; keep its dedicated menu compact at eight rows with 5px row padding and 24px icons.
 - Enable Autorandr for DRM hotplug and suspend/resume detection. Saved profiles remain runtime-owned under `~/.config/autorandr`; unmatched monitor sets fall back to a horizontal layout.
 - Use a neutral, borderless `i3-menu.rasi` with the same palette, dimensions, typography, padding and icon sizing as the active Hyprland Rofi menus; never deploy a `hypr-menu` artifact in i3.
 - `Mod+W` follows Hyprland behavior: launch Zen when absent, otherwise create a blank tab and focus its i3 window.

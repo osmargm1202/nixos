@@ -17,6 +17,9 @@ grep -Fq 'export CM_LAUNCHER=rofi' "$HELPER" || fail 'clipboard selector is not 
 grep -Fq 'clipmenu.6.$USER/line_cache' "$HELPER" || fail 'clipboard helper does not guard empty history'
 grep -Fq 'No clipboard history yet' "$HELPER" || fail 'empty history has no useful feedback'
 grep -Fq 'i3-menu.rasi' "$HELPER" || fail 'clipboard does not use i3 Rofi theme'
+grep -Fq 'listview { lines: 8; }' "$HELPER" || fail 'clipboard menu remains too tall'
+grep -Fq 'element { padding: 5px; cursor: pointer; }' "$HELPER" || fail 'clipboard rows remain too tall'
+grep -Fq 'element-icon { size: 24px; }' "$HELPER" || fail 'clipboard icons remain oversized'
 bash -n "$HELPER"
 
 tmp="$(mktemp -d)"

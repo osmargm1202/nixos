@@ -8,9 +8,9 @@ cache_file="$cache_base/clipmenu.6.$USER/line_cache"
 theme="$HOME/.config/rofi/i3-menu.rasi"
 theme_override='configuration { font: "JetBrainsMono Nerd Font 12"; }
 window { width: 600px; }
-listview { lines: 13; }
-element { padding: 8px; cursor: pointer; }
-element-icon { size: 32px; }'
+listview { lines: 8; }
+element { padding: 5px; cursor: pointer; }
+element-icon { size: 24px; }'
 
 if [[ ! -s "$cache_file" ]]; then
   notify-send 'Clipboard' 'No clipboard history yet — copia algo primero.' 2>/dev/null || true
