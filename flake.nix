@@ -86,7 +86,10 @@
       pkgs = nixpkgs.legacyPackages.${system};
       # Separate pkgs instance with allowUnfree for devShells (nix develop does not
       # inherit nixpkgs.config from NixOS modules — needs explicit config here).
-      pkgsDev = import nixpkgs { inherit system; config.allowUnfree = true; };
+      pkgsDev = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
       dotfilesOrgmSource = ./dotfiles;
       orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
         inherit dotfilesOrgmSource;
@@ -94,127 +97,25 @@
       orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
       braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
-      profiles = {
-        cinnamon = ./nixos/profiles/cinnamon.nix;
-        gnome = ./nixos/profiles/gnome.nix;
-        hyprland = ./nixos/profiles/hyprland.nix;
-        hyprlandqs-caelestia = ./nixos/profiles/hyprlandqs-caelestia.nix;
-        labwc = ./nixos/profiles/labwc.nix;
-        i3 = ./nixos/profiles/i3.nix;
-        xfce = ./nixos/profiles/xfce.nix;
-        mate = ./nixos/profiles/mate.nix;
+      configurationInventory = import ./configurations.nix;
+      systemBuilders = import ./lib/mk-system.nix {
+        inherit
+          inputs
+          nixpkgs
+          system
+          defaultHardware
+          ;
+        profiles = configurationInventory.profiles;
       };
-      getProfile =
-        profileName:
-        profiles.${profileName}
-          or (throw "Unknown ORGMOS profile '${profileName}'. Valid profiles: ${builtins.concatStringsSep ", " (builtins.attrNames profiles)}");
-      mkHost =
-        {
-          hostName,
-          hardware,
-          profile,
-          profileName,
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs userName profileName; };
-          modules = [
-            { nixpkgs.hostPlatform = system; }
-            ./nixos/binary-cache.nix
-            ./nixos/common.nix
-            ./nixos/ai/default.nix
-            hardware
-            profile
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
-      mkProfile =
-        {
-          profile,
-          profileName,
-          hostName ? "nixos",
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs userName profileName; };
-          modules = [
-            { nixpkgs.hostPlatform = system; }
-            ./nixos/binary-cache.nix
-            ./nixos/common.nix
-            ./nixos/ai/default.nix
-            defaultHardware
-            profile
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
-      mkGeneralHost =
-        {
-          hardware,
-          profile,
-          hostName,
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs userName; };
-          modules = [
-            { nixpkgs.hostPlatform = system; }
-            ./nixos/binary-cache.nix
-            ./nixos/common.nix
-            ./nixos/ai/default.nix
-            ./nixos/general.nix
-            hardware
-            (getProfile profile)
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
-      mkServerHost =
-        {
-          hardware,
-          hostName,
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs userName; };
-          modules = [
-            { nixpkgs.hostPlatform = system; }
-            ./nixos/binary-cache.nix
-            hardware
-            ./nixos/server.nix
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
-      mkMinimalHost =
-        {
-          hardware,
-          hostName,
-          extraModules ? [ ],
-          userName ? "osmarg",
-        }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs userName; profileName = "terminal"; };
-          modules = [
-            { nixpkgs.hostPlatform = system; }
-            ./nixos/binary-cache.nix
-            hardware
-            ./nixos/terminal.nix
-            { networking.hostName = hostName; }
-          ]
-          ++ extraModules;
-        };
+      inherit (systemBuilders)
+        mkHost
+        mkProfile
+        mkServerHost
+        mkMinimalHost
+        ;
     in
     {
-      lib = {
-        inherit mkGeneralHost mkServerHost mkMinimalHost;
-        mkTerminalHost = mkMinimalHost;
-      };
+      lib = systemBuilders;
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
@@ -251,178 +152,351 @@
           # Nix tooling
           nixfmt-rfc-style
           nil
-          statix       # lint anti-patterns
-          deadnix      # find dead Nix code
-          nix-output-monitor  # prettier nix build output (nom)
-          nvd          # diff derivations between generations
+          statix # lint anti-patterns
+          deadnix # find dead Nix code
+          nix-output-monitor # prettier nix build output (nom)
+          nvd # diff derivations between generations
           # Git
           git
-          lazygit      # TUI for git
+          lazygit # TUI for git
           # General
-          just         # command runner
-          typos        # spell check
+          just # command runner
+          typos # spell check
         ];
       };
 
-      nixosConfigurations = let configs = {
-        orgm-terminal = mkMinimalHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-        };
-        lenovo-terminal = mkMinimalHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-        };
-        ero-terminal = mkMinimalHost {
-          hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-        };
-        jarq-terminal = mkMinimalHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          userName = "jarq";
-        };
+      nixosConfigurations =
+        let
+          configs = {
+            orgm-terminal = mkMinimalHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+            };
+            lenovo-terminal = mkMinimalHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+            };
+            ero-terminal = mkMinimalHost {
+              hostName = "ero";
+              hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+            };
+            jarq-terminal = mkMinimalHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              userName = "jarq";
+            };
 
-        cinnamon = mkProfile { profile = ./nixos/profiles/cinnamon.nix; profileName = "cinnamon"; };
-        gnome    = mkProfile { profile = ./nixos/profiles/gnome.nix;    profileName = "gnome"; };
-        hyprland = mkProfile { profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland"; };
-        labwc    = mkProfile { profile = ./nixos/profiles/labwc.nix;    profileName = "labwc"; };
-        i3       = mkProfile { profile = ./nixos/profiles/i3.nix;       profileName = "i3"; };
-        xfce     = mkProfile { profile = ./nixos/profiles/xfce.nix;     profileName = "xfce"; };
-        mate     = mkProfile { profile = ./nixos/profiles/mate.nix;     profileName = "mate"; };
-        terminal = mkMinimalHost { hostName = "nixos"; hardware = defaultHardware; };
-        server   = mkServerHost  { hostName = "nixos"; hardware = defaultHardware; };
+            cinnamon = mkProfile {
+              profile = ./nixos/profiles/cinnamon.nix;
+              profileName = "cinnamon";
+            };
+            gnome = mkProfile {
+              profile = ./nixos/profiles/gnome.nix;
+              profileName = "gnome";
+            };
+            hyprland = mkProfile {
+              profile = ./nixos/profiles/hyprland.nix;
+              profileName = "hyprland";
+            };
+            labwc = mkProfile {
+              profile = ./nixos/profiles/labwc.nix;
+              profileName = "labwc";
+            };
+            i3 = mkProfile {
+              profile = ./nixos/profiles/i3.nix;
+              profileName = "i3";
+            };
+            xfce = mkProfile {
+              profile = ./nixos/profiles/xfce.nix;
+              profileName = "xfce";
+            };
+            mate = mkProfile {
+              profile = ./nixos/profiles/mate.nix;
+              profileName = "mate";
+            };
+            terminal = mkMinimalHost {
+              hostName = "nixos";
+              hardware = defaultHardware;
+            };
+            server = mkServerHost {
+              hostName = "nixos";
+              hardware = defaultHardware;
+            };
 
-        jarq-xfce = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/xfce.nix; profileName = "xfce"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
-        jarq-mate = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/mate.nix; profileName = "mate"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
-        jarq-i3 = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/i3.nix; profileName = "i3"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
-        jarq-labwc = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/labwc.nix; profileName = "labwc"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
-        jarq-hyprland = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
-        jarq-hyprlandqs-caelestia = mkHost {
-          hostName = "jarq"; hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia"; userName = "jarq";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ./nixos/hosts/jarq/default.nix ];
-        };
+            jarq-xfce = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/xfce.nix;
+              profileName = "xfce";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
+            jarq-mate = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/mate.nix;
+              profileName = "mate";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
+            jarq-i3 = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/i3.nix;
+              profileName = "i3";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
+            jarq-labwc = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/labwc.nix;
+              profileName = "labwc";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
+            jarq-hyprland = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprland.nix;
+              profileName = "hyprland";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
+            jarq-hyprlandqs-caelestia = mkHost {
+              hostName = "jarq";
+              hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprlandqs-caelestia.nix;
+              profileName = "hyprlandqs-caelestia";
+              userName = "jarq";
+              extraModules = [
+                ./nixos/hardware/gpu/intel.nix
+                ./nixos/hosts/jarq/default.nix
+              ];
+            };
 
-        orgm-gnome = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/gnome.nix; profileName = "gnome";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-cinnamon = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/cinnamon.nix; profileName = "cinnamon";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-hyprland = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-hyprlandqs-caelestia = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-labwc = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/labwc.nix; profileName = "labwc";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-i3 = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/i3.nix; profileName = "i3";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-xfce = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/xfce.nix; profileName = "xfce";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
-        orgm-mate = mkHost {
-          hostName = "orgm"; hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-          profile = ./nixos/profiles/mate.nix; profileName = "mate";
-          extraModules = [ ./nixos/hardware/gpu/nvidia.nix ./nixos/hosts/orgm/ms-7d43.nix ./nixos/gaming/default.nix ];
-        };
+            orgm-gnome = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/gnome.nix;
+              profileName = "gnome";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-cinnamon = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/cinnamon.nix;
+              profileName = "cinnamon";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-hyprland = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprland.nix;
+              profileName = "hyprland";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-hyprlandqs-caelestia = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprlandqs-caelestia.nix;
+              profileName = "hyprlandqs-caelestia";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-labwc = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/labwc.nix;
+              profileName = "labwc";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-i3 = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/i3.nix;
+              profileName = "i3";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-xfce = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/xfce.nix;
+              profileName = "xfce";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
+            orgm-mate = mkHost {
+              hostName = "orgm";
+              hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+              profile = ./nixos/profiles/mate.nix;
+              profileName = "mate";
+              extraModules = [
+                ./nixos/hardware/gpu/nvidia.nix
+                ./nixos/hosts/orgm/ms-7d43.nix
+                ./nixos/gaming/default.nix
+              ];
+            };
 
-        ero-labwc = mkHost {
-          hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-          profile = ./nixos/profiles/labwc.nix; profileName = "labwc";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ];
-        };
-        ero-i3 = mkHost {
-          hostName = "ero"; hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-          profile = ./nixos/profiles/i3.nix; profileName = "i3";
-          extraModules = [ ./nixos/hardware/gpu/intel.nix ];
-        };
-        ero-server = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./nixos/binary-cache.nix
-            ./nixos/hosts/ero/hardware-configuration.nix
-            ./nixos/server.nix
-            { networking.hostName = "ero"; }
-          ];
-        };
+            ero-labwc = mkHost {
+              hostName = "ero";
+              hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+              profile = ./nixos/profiles/labwc.nix;
+              profileName = "labwc";
+              extraModules = [ ./nixos/hardware/gpu/intel.nix ];
+            };
+            ero-i3 = mkHost {
+              hostName = "ero";
+              hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+              profile = ./nixos/profiles/i3.nix;
+              profileName = "i3";
+              extraModules = [ ./nixos/hardware/gpu/intel.nix ];
+            };
+            ero-server = nixpkgs.lib.nixosSystem {
+              inherit system;
+              specialArgs = { inherit inputs; };
+              modules = [
+                ./nixos/binary-cache.nix
+                ./nixos/hosts/ero/hardware-configuration.nix
+                ./nixos/server.nix
+                { networking.hostName = "ero"; }
+              ];
+            };
 
-        lenovo-labwc = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/labwc.nix; profileName = "labwc";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
+            lenovo-labwc = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/labwc.nix;
+              profileName = "labwc";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-gnome = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/gnome.nix;
+              profileName = "gnome";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-hyprland = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprland.nix;
+              profileName = "hyprland";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-hyprlandqs-caelestia = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/hyprlandqs-caelestia.nix;
+              profileName = "hyprlandqs-caelestia";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-i3 = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/i3.nix;
+              profileName = "i3";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-xfce = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/xfce.nix;
+              profileName = "xfce";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+            lenovo-mate = mkHost {
+              hostName = "lenovo";
+              hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+              profile = ./nixos/profiles/mate.nix;
+              profileName = "mate";
+              extraModules = [
+                ./nixos/hosts/lenovo/p14s-gen2i.nix
+                ./nixos/hosts/lenovo/audio.nix
+                ./nixos/gaming/steam.nix
+                ./nixos/gaming/emulators.nix
+              ];
+            };
+          };
+        in
+        configs
+        // {
+          # Perfil por defecto de cada host (coincide con el hostname,
+          # asi `nh os switch` sin -H usa esta configuracion)
+          lenovo = configs.lenovo-hyprland;
+          orgm = configs.orgm-hyprland;
+          jarq = configs.jarq-hyprland;
         };
-        lenovo-gnome = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/gnome.nix; profileName = "gnome";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-hyprland = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprland.nix; profileName = "hyprland";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-hyprlandqs-caelestia = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/hyprlandqs-caelestia.nix; profileName = "hyprlandqs-caelestia";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-i3 = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/i3.nix; profileName = "i3";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-xfce = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/xfce.nix; profileName = "xfce";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-        lenovo-mate = mkHost {
-          hostName = "lenovo"; hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-          profile = ./nixos/profiles/mate.nix; profileName = "mate";
-          extraModules = [ ./nixos/hosts/lenovo/p14s-gen2i.nix ./nixos/hosts/lenovo/audio.nix ./nixos/gaming/steam.nix ./nixos/gaming/emulators.nix ];
-        };
-      }; in configs // {
-        # Perfil por defecto de cada host (coincide con el hostname,
-        # asi `nh os switch` sin -H usa esta configuracion)
-        lenovo = configs.lenovo-hyprland;
-        orgm = configs.orgm-hyprland;
-        jarq = configs.jarq-hyprland;
-      };
     };
 }
