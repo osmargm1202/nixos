@@ -81,10 +81,8 @@
     # Explicitly enumerate former mate package set extras, now removed upstream.
     atril
     caja-extensions
-    caja-with-extensions
     eom
     engrampa
-    mate-applets
     mate-backgrounds
     mate-calc
     mate-indicator-applet

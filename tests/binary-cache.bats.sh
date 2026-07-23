@@ -17,7 +17,12 @@ assert_includes() {
 
 assert_any_path_suffix() {
   local json_path="$1" suffix="$2" target="$3"
-  jq -e "any(.[]; test(\"$suffix\"))" <<<"$json_path" >/dev/null || fail "$target"
+  jq -e --arg suffix "$suffix" '
+    any(.[];
+      (split("/")[-1] | sub("^[0-9a-z]{32}-"; "") ) as $pkg
+      | (($pkg == $suffix) or ($pkg | test("^" + $suffix + "-[0-9]")))
+    )
+  ' <<<"$json_path" >/dev/null || fail "$target"
 }
 
 [[ -f "$MODULE" ]] || fail "nixos/binary-cache.nix must exist"
