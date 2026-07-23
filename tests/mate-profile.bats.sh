@@ -15,9 +15,40 @@ fail() {
 
 packages="$(nix eval --json ".#nixosConfigurations.${MATE_OUTPUT}.config.environment.systemPackages")"
 
-jq -e 'any(.[]; test("mate-icon-theme-faenza"))' <<<"$packages" \
-  || fail "${MATE_OUTPUT} no longer installs mate-icon-theme-faenza"
-jq -e 'any(.[]; test("mate-utils"))' <<<"$packages" \
-  || fail "${MATE_OUTPUT} no longer installs mate-utils"
+# Convert to package name list (drop version suffix from derivation names)
+package_names="$(printf '%s\n' "$packages" | jq -r '.[] | split("/")[-1] | sub("^[0-9a-z]{32}-"; "") | sub("-[0-9][0-9a-zA-Z._+~:-]*$"; "")' )"
 
-echo "PASS: mate profile configuration evaluates and retains explicit mate packages"
+required=(
+  mate-applets
+  mate-icon-theme-faenza
+  atril
+  caja-extensions
+  caja-with-extensions
+  eom
+  engrampa
+  mate-backgrounds
+  mate-calc
+  mate-indicator-applet
+  mate-media
+  mate-netbook
+  mate-power-manager
+  mate-screensaver
+  mate-system-monitor
+  mate-terminal
+  mate-user-guide
+  mate-utils
+  mozo
+  pluma
+)
+
+for pkg in "${required[@]}"; do
+  grep -Fxq "$pkg" <<<"$package_names" || fail "${MATE_OUTPUT} missing expected package ${pkg}"
+done
+
+for excluded in mate-user-share caja; do
+  if grep -Fxq "$excluded" <<<"$package_names"; then
+    fail "${MATE_OUTPUT} unexpectedly includes ${excluded}"
+  fi
+done
+
+echo "PASS: mate profile configuration retains exact migrated package set"

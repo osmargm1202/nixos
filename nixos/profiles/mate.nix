@@ -80,7 +80,6 @@
   ] ++ (with pkgs; [
     # Explicitly enumerate former mate package set extras, now removed upstream.
     atril
-    caja
     caja-extensions
     caja-with-extensions
     eom
@@ -88,23 +87,14 @@
     mate-applets
     mate-backgrounds
     mate-calc
-    mate-common
-    mate-control-center
-    mate-desktop
-    mate-icon-theme
     mate-indicator-applet
     mate-media
-    mate-menus
     mate-netbook
-    mate-notification-daemon
-    mate-polkit
     mate-power-manager
     mate-screensaver
     mate-system-monitor
     mate-terminal
-    mate-tweak
     mate-user-guide
-    mate-user-share
     mate-utils
     mozo
     pluma
