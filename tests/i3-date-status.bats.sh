@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
+BLOCKS="$ROOT/dotfiles/config/profiles/i3/.config/i3blocks/config"
+HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3blocks-status"
 LEGACY="$ROOT/dotfiles/config/profiles/i3/.config/i3status"
 
 fail() {
@@ -12,24 +14,19 @@ fail() {
   exit 1
 }
 
-grep -Fq 'bumblebeeI3 = ' "$PROFILE" ||
-  fail 'Bumblebee Status must embed clean icons and caffeine/date/time modules'
-expected='status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline'
+grep -Fq 'extraPackages = [ pkgs.i3blocks ];' "$PROFILE" || fail 'i3blocks package missing'
+expected='status_command /run/current-system/sw/bin/i3blocks -c "$HOME/.config/i3blocks/config"'
 mapfile -t commands < <(grep -E '^[[:space:]]*status_command ' "$I3")
 [[ "${#commands[@]}" -eq 1 ]] || fail 'i3bar must declare exactly one status command'
 actual="${commands[0]}"
 actual="${actual#"${actual%%[![:space:]]*}"}"
-[[ "$actual" == "$expected" ]] || fail "unexpected Bumblebee command: $actual"
+[[ "$actual" == "$expected" ]] || fail "unexpected i3blocks command: $actual"
+grep -Fq '[time]' "$BLOCKS" || fail 'time block missing'
+grep -Fq "LC_TIME=es_DO.UTF-8 date '+%A %d/%m/%Y'" "$HELPER" || fail 'Spanish date format missing'
+grep -Fq "LC_TIME=en_US.UTF-8 date '+%I:%M %p'" "$HELPER" || fail '12-hour time format missing'
 
 [ ! -e "$LEGACY" ] || fail 'legacy i3status config must be removed'
-if grep -Fq '".config/i3status"' "$DOTFILES"; then
-  fail 'legacy i3status config is still deployed'
-fi
-if grep -Fq 'i3status' "$PROFILE"; then
-  fail 'legacy i3status package remains installed'
-fi
-if grep -Fq 'status_command i3status' "$I3"; then
-  fail 'legacy i3status command remains configured'
-fi
+! grep -Fq '".config/i3status"' "$DOTFILES" || fail 'legacy i3status config is still deployed'
+! grep -Fq 'status_command i3status' "$I3" || fail 'legacy i3status command remains configured'
 
-printf 'PASS: Bumblebee Status uses Nord Powerline with preserved date/time formats\n'
+printf 'PASS: i3blocks preserves Spanish date and 12-hour time formats\n'

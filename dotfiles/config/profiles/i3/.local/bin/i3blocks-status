@@ -1,0 +1,248 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+block="${1:-${BLOCK_NAME:-}}"
+button="${BLOCK_BUTTON:-0}"
+proc_root="${I3BLOCKS_PROC_ROOT:-/proc}"
+sys_root="${I3BLOCKS_SYS_ROOT:-/sys}"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+normal='#D8DEE9FF'
+green='#A3BE8CFF'
+yellow='#EBCB8BFF'
+orange='#D08770FF'
+red='#BF616AFF'
+
+emit() {
+  local full="$1" short="${2:-$1}" color="${3:-}"
+  printf '%s\n%s\n' "$full" "$short"
+  [[ -z "$color" ]] || printf '%s\n' "$color"
+}
+
+launch() {
+  i3-msg exec --no-startup-id "$*" >/dev/null 2>&1 || true
+}
+
+pango_escape() {
+  local value="$1"
+  value="${value//&/\&amp;}"
+  value="${value//</\&lt;}"
+  value="${value//>/\&gt;}"
+  printf '%s\n' "$value"
+}
+
+caffeine_block() {
+  [[ "$button" == 1 ]] && i3-caffeine-toggle toggle >/dev/null 2>&1 || true
+  if [[ -f "$state_root/caffeine" ]]; then
+    emit ON ON "$green"
+  else
+    emit OFF OFF "$normal"
+  fi
+}
+
+language_block() {
+  local layout
+  layout="$(xkb-switch -p 2>/dev/null || true)"
+  [[ -n "$layout" ]] || layout='--'
+  emit "${layout^^}"
+}
+
+brightness_block() {
+  case "$button" in
+    3) brightnessctl set 50% >/dev/null 2>&1 || true ;;
+    4) brightnessctl set 5%+ >/dev/null 2>&1 || true ;;
+    5) brightnessctl set 5%- >/dev/null 2>&1 || true ;;
+  esac
+  local brightness
+  brightness="$(brightnessctl -m 2>/dev/null | awk -F, 'NR == 1 { gsub(/%/, "", $4); print $4 }')"
+  [[ "$brightness" =~ ^[0-9]+$ ]] || return 0
+  emit "${brightness}%"
+}
+
+volume_block() {
+  case "$button" in
+    1) launch pavucontrol ;;
+    3) pamixer -t >/dev/null 2>&1 || true ;;
+    4) pamixer --allow-boost --set-limit 150 -i 3 >/dev/null 2>&1 || true ;;
+    5) pamixer --allow-boost --set-limit 150 -d 3 >/dev/null 2>&1 || true ;;
+  esac
+  local volume muted
+  volume="$(pamixer --get-volume 2>/dev/null || printf 0)"
+  muted="$(pamixer --get-mute 2>/dev/null || printf true)"
+  if [[ "$muted" == true ]]; then
+    emit MUTE MUTE "$orange"
+  else
+    emit "${volume}%" "${volume}%" "$normal"
+  fi
+}
+
+microphone_block() {
+  case "$button" in
+    1) launch pavucontrol ;;
+    3) pamixer --default-source -t >/dev/null 2>&1 || true ;;
+    4) pamixer --default-source --allow-boost --set-limit 150 -i 3 >/dev/null 2>&1 || true ;;
+    5) pamixer --default-source --allow-boost --set-limit 150 -d 3 >/dev/null 2>&1 || true ;;
+  esac
+  local volume muted
+  volume="$(pamixer --default-source --get-volume 2>/dev/null || printf 0)"
+  muted="$(pamixer --default-source --get-mute 2>/dev/null || printf true)"
+  if [[ "$muted" == true ]]; then
+    emit MUTE MUTE "$orange"
+  else
+    emit "${volume}%" "${volume}%" "$normal"
+  fi
+}
+
+disk_block() {
+  local mountpoint="${BLOCK_INSTANCE:-/}" available use color="$normal"
+  read -r available use < <(df -hP "$mountpoint" 2>/dev/null | awk 'NR == 2 { print $4, $5 }')
+  [[ -n "${available:-}" ]] || return 0
+  use="${use%%%}"
+  if [[ "$use" =~ ^[0-9]+$ ]]; then
+    ((use >= 90)) && color="$red"
+    ((use >= 80 && use < 90)) && color="$yellow"
+  fi
+  emit "$available" "$available" "$color"
+}
+
+network_block() {
+  local iface connection quality ipaddr icon color="$normal"
+  [[ "$button" == 1 ]] && launch nm-connection-editor
+  iface="$(ip route show default 2>/dev/null | awk 'NR == 1 { for (i=1; i<=NF; i++) if ($i == "dev") { print $(i+1); exit } }')"
+  if [[ -z "$iface" ]]; then
+    emit '󰤮 Offline' Offline "$red"
+    return
+  fi
+  ipaddr="$(ip -4 -o addr show dev "$iface" scope global 2>/dev/null | awk 'NR == 1 { sub(/\/.*/, "", $4); print $4 }')"
+  if [[ "$button" == 3 && -n "$ipaddr" ]]; then
+    printf '%s' "$ipaddr" | xclip -selection clipboard 2>/dev/null || true
+  fi
+  connection="$(nmcli -g GENERAL.CONNECTION device show "$iface" 2>/dev/null | head -n1)"
+  [[ -n "$connection" && "$connection" != -- ]] || connection="$iface"
+  connection="$(pango_escape "$connection")"
+  if [[ -d "$sys_root/class/net/$iface/wireless" ]]; then
+    icon=''
+    quality="$(awk -v iface="$iface:" '$1 == iface { printf "%d", $3 * 100 / 70 }' "$proc_root/net/wireless" 2>/dev/null)"
+    [[ "$quality" =~ ^[0-9]+$ ]] || quality=0
+    ((quality > 100)) && quality=100
+    ((quality < 35)) && color="$red"
+    ((quality >= 35 && quality < 60)) && color="$yellow"
+    emit "$icon $connection ${quality}%" "$icon ${quality}%" "$color"
+  else
+    icon=''
+    emit "$icon $connection" "$icon $iface" "$color"
+  fi
+}
+
+memory_block() {
+  awk -v normal="$normal" -v yellow="$yellow" -v red="$red" '
+    /^MemTotal:/ { total=$2 }
+    /^MemAvailable:/ { available=$2 }
+    END {
+      if (total <= 0) exit
+      used=total-available
+      pct=used*100/total
+      color=normal
+      if (pct >= 90) color=red
+      else if (pct >= 80) color=yellow
+      printf "%.1fG\n%.0f%%\n%s\n", used/1048576, pct, color
+    }
+  ' "$proc_root/meminfo" 2>/dev/null
+}
+
+read_cpu() {
+  local _ user nice system idle iowait irq softirq steal rest
+  read -r _ user nice system idle iowait irq softirq steal rest <"$proc_root/stat" || return 1
+  printf '%s %s\n' "$((user + nice + system + idle + iowait + irq + softirq + steal))" "$((idle + iowait))"
+}
+
+cpu_block() {
+  local total1 idle1 total2 idle2 delta idle_delta usage color="$normal"
+  read -r total1 idle1 < <(read_cpu) || return 0
+  sleep 0.15
+  read -r total2 idle2 < <(read_cpu) || return 0
+  delta=$((total2 - total1))
+  idle_delta=$((idle2 - idle1))
+  if ((delta <= 0)); then
+    emit -- -- "$normal"
+    return
+  fi
+  usage=$(((100 * (delta - idle_delta) + delta / 2) / delta))
+  ((usage >= 90)) && color="$red"
+  ((usage >= 75 && usage < 90)) && color="$yellow"
+  emit "${usage}%" "${usage}%" "$color"
+}
+
+temperature_block() {
+  local file raw celsius max=0 color="$normal"
+  while IFS= read -r -d '' file; do
+    read -r raw <"$file" 2>/dev/null || continue
+    [[ "$raw" =~ ^[0-9]+$ ]] || continue
+    celsius=$((raw >= 1000 ? raw / 1000 : raw))
+    ((celsius > 0 && celsius < 130 && celsius > max)) && max=$celsius
+  done < <(find "$sys_root/class/thermal" -maxdepth 2 -type f -name temp -print0 2>/dev/null)
+  if ((max == 0)) && command -v sensors >/dev/null 2>&1; then
+    max="$(sensors 2>/dev/null | awk '
+      match($0, /\+[0-9]+(\.[0-9]+)?°C/) {
+        value=substr($0, RSTART+1, RLENGTH-3)+0
+        if (value > max && value < 130) max=value
+      }
+      END { printf "%d", max }
+    ')"
+  fi
+  ((max > 0)) || return 0
+  ((max >= 90)) && color="$red"
+  ((max >= 75 && max < 90)) && color="$yellow"
+  emit "${max}°C" "${max}°" "$color"
+}
+
+battery_block() {
+  local -a supplies
+  local battery='' supply type capacity status icon color="$normal"
+  shopt -s nullglob
+  supplies=("$sys_root"/class/power_supply/*)
+  shopt -u nullglob
+  for supply in "${supplies[@]}"; do
+    [[ -f "$supply/type" ]] || continue
+    read -r type <"$supply/type" 2>/dev/null || continue
+    if [[ "${type,,}" == battery ]]; then
+      battery="$supply"
+      break
+    fi
+  done
+  [[ -n "$battery" ]] || return 0
+  read -r capacity <"$battery/capacity" 2>/dev/null || return 0
+  read -r status <"$battery/status" 2>/dev/null || status='Unknown'
+  [[ "$capacity" =~ ^[0-9]+$ ]] || return 0
+  if ((capacity < 20)); then icon=''; color="$red"
+  elif ((capacity < 40)); then icon=''; color="$orange"
+  elif ((capacity < 60)); then icon=''; color="$yellow"
+  elif ((capacity < 80)); then icon=''; color="$normal"
+  else icon=''; color="$green"
+  fi
+  [[ "$status" == Charging ]] && icon=''
+  emit "$icon ${capacity}%" "${capacity}%" "$color"
+}
+
+time_block() {
+  [[ "$button" == 1 ]] && launch gsimplecal
+  local day clock
+  day="$(LC_TIME=es_DO.UTF-8 date '+%A %d/%m/%Y')"
+  clock="$(LC_TIME=en_US.UTF-8 date '+%I:%M %p')"
+  emit " $day   $clock" "$day $clock" "$normal"
+}
+
+case "$block" in
+  caffeine) caffeine_block ;;
+  language) language_block ;;
+  brightness) brightness_block ;;
+  volume) volume_block ;;
+  microphone) microphone_block ;;
+  disk) disk_block ;;
+  network) network_block ;;
+  memory) memory_block ;;
+  cpu) cpu_block ;;
+  temperature) temperature_block ;;
+  battery) battery_block ;;
+  time) time_block ;;
+  *) exit 0 ;;
+esac

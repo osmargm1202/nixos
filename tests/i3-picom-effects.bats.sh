@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-THEME="$ROOT/dotfiles/config/profiles/i3/.config/bumblebee-status/themes/i3-nord-powerline.json"
+BLOCKS="$ROOT/dotfiles/config/profiles/i3/.config/i3blocks/config"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -83,16 +83,9 @@ grep -Fq 'background #1a1b268f' "$CONFIG" || fail 'i3bar background is not suffi
 ! grep -Eq 'for_window \[class="org\.gnome\.Nautilus"\].*floating enable' "$CONFIG" ||
   fail 'Nautilus is still forced floating'
 
-[[ -f "$THEME" ]] || fail 'translucent Bumblebee theme missing'
-jq -e '
-  (.cycle | length) > 0 and
-  all(.cycle[]; (.bg | test("^#[0-9A-Fa-f]{6}B3$"))) and
-  .defaults.warning.bg == "#D08770B3" and
-  .defaults.critical.bg == "#BF616AB3" and
-  .defaults["separator-block-width"] == 0
-' "$THEME" >/dev/null || fail 'Bumblebee theme backgrounds are not translucent RGBA colors'
-
-grep -Fq 'i3TranslucentTheme = ' "$PROFILE" || fail 'Bumblebee package does not embed translucent theme'
-grep -Fq 'i3-nord-powerline.json' "$PROFILE" || fail 'translucent theme is not packaged'
+[[ -f "$BLOCKS" ]] || fail 'translucent i3blocks config missing'
+grep -Fq 'background=#3B4252B3' "$BLOCKS" || fail 'i3blocks backgrounds are not translucent RGBA colors'
+grep -Fq 'background=#434C5EB3' "$BLOCKS" || fail 'alternating Nord i3blocks background missing'
+! grep -Eqi 'bumblebee|i3-nord-powerline' "$PROFILE" "$CONFIG" || fail 'obsolete Bumblebee theme integration remains'
 
 printf 'PASS: i3 tiles Nautilus and uses animated blurred translucent Picom visuals\n'

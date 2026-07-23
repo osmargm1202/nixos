@@ -8,18 +8,6 @@
 
 let
   i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
-  i3CleanIconset = ../../dotfiles/config/profiles/i3/.config/bumblebee-status/themes/icons/i3-clean.json;
-  i3TranslucentTheme = ../../dotfiles/config/profiles/i3/.config/bumblebee-status/themes/i3-nord-powerline.json;
-  bumblebeeI3 = (pkgs.bumblebee-status.override {
-    plugins = p: [ p.shortcut p.date p.time ];
-  }).overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      install -Dm644 ${i3CleanIconset} \
-        "$out/${pkgs.python3.sitePackages}/themes/icons/i3-clean.json"
-      install -Dm644 ${i3TranslucentTheme} \
-        "$out/${pkgs.python3.sitePackages}/themes/i3-nord-powerline.json"
-    '';
-  });
   # Expose only a uniquely named fallback; installing i3lock-color directly
   # would collide with i3lock-fancy's bin/i3lock symlink.
   i3lockColorFallback = pkgs.writeShellApplication {
@@ -143,7 +131,7 @@ in
     };
     windowManager.i3 = {
       enable = true;
-      extraPackages = [ bumblebeeI3 ];
+      extraPackages = [ pkgs.i3blocks ];
     };
   };
   services.displayManager.defaultSession = "none+i3";
@@ -310,7 +298,9 @@ in
     pamixer
     playerctl
 
-    # Runtime-selected GTK/Nautilus appearance.
+    # Runtime-selected GTK/Nautilus appearance and status interactions.
+    gsimplecal
+    lm_sensors
     lxappearance
     adwaita-icon-theme
     hicolor-icon-theme

@@ -207,7 +207,7 @@ bar {
   i3bar_command i3bar --transparency
   font pango:Noto Sans, JetBrainsMono Nerd Font 18
   height 28
-  status_command bumblebee-status -m shortcut date time -p shortcut.cmds="$HOME/.local/bin/i3-caffeine-toggle" shortcut.labels="" date.format="%A %d/%m/%Y" date.locale="es_DO.UTF-8" time.format="%I:%M %p" time.locale="en_US.UTF-8" -i i3-clean -t i3-nord-powerline
+  status_command /run/current-system/sw/bin/i3blocks -c "$HOME/.config/i3blocks/config"
   tray_output primary
 
   colors {

@@ -288,8 +288,8 @@ let
 
     i3 = [
       ".config/autostart/autorandr.desktop"
-      ".config/bumblebee-status"
       ".config/dunst"
+      ".config/i3blocks"
       ".config/i3"
       ".config/i3expo"
       ".config/rofi"
@@ -316,6 +316,7 @@ let
       ".local/bin/i3-ssh-host"
       ".local/bin/i3-wallpaper"
       ".local/bin/i3-wifi-toggle"
+      ".local/bin/i3blocks-status"
       ".local/bin/i3-zen-new-window"
     ];
 
