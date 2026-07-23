@@ -51,8 +51,13 @@ fi
 mate_applets_profile="$(grep -o 'mate-applets' "$MATE_PROFILE" | wc -l)"
 [[ "$mate_applets_profile" -eq 1 ]] || fail "mate.nix explicit mate-applets should appear exactly once"
 
-# Preserve explicit additions as a set and ensure each is present in the built system.
+# Preserve exact migrated additions as explicit entries in profile (no duplicate lines).
 for pkg in "${explicit_additions[@]}"; do
+  explicit_count="$(grep -Ecx "^[[:space:]]*${pkg}[[:space:]]*$" "$MATE_PROFILE")"
+  if [[ "$explicit_count" -ne 1 ]]; then
+    fail "${MATE_OUTPUT} profile expected explicit ${pkg} exactly once, found ${explicit_count}"
+  fi
+
   present="$(grep -Fx -c "$pkg" <<<"$package_names")"
   if [[ "$present" -lt 1 ]]; then
     fail "${MATE_OUTPUT} missing migrated package ${pkg}"
@@ -60,16 +65,20 @@ for pkg in "${explicit_additions[@]}"; do
 done
 
 for excluded in mate-user-share caja; do
+  if grep -Eq "^[[:space:]]*${excluded}[[:space:]]*$" "$MATE_PROFILE"; then
+    fail "${MATE_OUTPUT} profile explicitly lists excluded package ${excluded}"
+  fi
   if grep -Fxq "$excluded" <<<"$package_names"; then
     fail "${MATE_OUTPUT} unexpectedly includes ${excluded}"
   fi
+
 done
 
 if grep -q 'caja-with-extensions' "$MATE_PROFILE"; then
   fail "${MATE_OUTPUT} profile explicitly lists redundant caja-with-extensions"
 fi
 
-if grep -q 'mate-applets' "$MATE_PROFILE" && [[ "$mate_applets_profile" -ne 1 ]]; then
+if [[ "$mate_applets_profile" -ne 1 ]]; then
   fail "mate.nix should contain exactly one mate-applets explicit package line"
 fi
 echo "PASS: mate profile configuration retains strict migrated package set"
