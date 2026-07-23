@@ -96,6 +96,8 @@
       };
       orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
       braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
+      engram = pkgs.callPackage ./nixos/packages/engram.nix { };
+      rtk = pkgs.callPackage ./nixos/packages/rtk.nix { };
       defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
       configurationInventory = import ./configurations.nix;
       systemBuilders = import ./lib/mk-system.nix {
@@ -135,6 +137,8 @@
 
       packages.${system} = {
         inherit
+          engram
+          rtk
           orgmWallpaper
           orgmThemes
           braveOrigin

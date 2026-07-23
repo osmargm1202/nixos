@@ -8,7 +8,6 @@ let
     hyprlandqs-caelestia = ./nixos/profiles/hyprlandqs-caelestia.nix;
     i3 = ./nixos/profiles/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
-    mate = ./nixos/profiles/mate.nix;
     xfce = ./nixos/profiles/xfce.nix;
   };
 
@@ -97,7 +96,6 @@ in
     hyprland = desktop { profileName = "hyprland"; };
     i3 = desktop { profileName = "i3"; };
     labwc = desktop { profileName = "labwc"; };
-    mate = desktop { profileName = "mate"; };
     xfce = desktop { profileName = "xfce"; };
     terminal = terminal { };
     server = server { };
@@ -111,13 +109,6 @@ in
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "xfce";
-      userName = "jarq";
-      extraModules = jarqExtra;
-    };
-    jarq-mate = desktop {
-      hostName = "jarq";
-      hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-      profileName = "mate";
       userName = "jarq";
       extraModules = jarqExtra;
     };
@@ -196,13 +187,6 @@ in
       profileName = "xfce";
       extraModules = orgmExtra;
     };
-    orgm-mate = desktop {
-      hostName = "orgm";
-      hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-      profileName = "mate";
-      extraModules = orgmExtra;
-    };
-
     ero-terminal = terminal {
       hostName = "ero";
       hardware = ./nixos/hosts/ero/hardware-configuration.nix;
@@ -262,12 +246,6 @@ in
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "xfce";
-      extraModules = lenovoExtra;
-    };
-    lenovo-mate = desktop {
-      hostName = "lenovo";
-      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-      profileName = "mate";
       extraModules = lenovoExtra;
     };
   };

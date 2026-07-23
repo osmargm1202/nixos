@@ -43,7 +43,10 @@ let
 
   orgmDotfilesUpdateScript = pkgs.writeShellApplication {
     name = "orgm-dotfiles-update";
-    runtimeInputs = with pkgs; [ git openssh ];
+    runtimeInputs = with pkgs; [
+      git
+      openssh
+    ];
     text = ''
       cd "${dotfilesRepoPath}"
       git fetch origin "${dotfilesBranch}"
@@ -85,6 +88,7 @@ let
     ".config/fish/functions/check_recording.fish"
     ".config/fish/functions/check_webcam.fish"
     ".config/fish/functions/claude.fish"
+    ".config/fish/functions/codex.fish"
     ".config/fish/functions/clear-op.fish"
     ".config/fish/functions/clipboard_clear.fish"
     ".config/fish/functions/clipboard_copy.fish"
@@ -399,10 +403,10 @@ let
       ".local/bin/volume-osd"
     ];
 
-    xfce     = [];
-    mate     = [];
-    gnome    = [];
-    cinnamon = [];
+    xfce = [ ];
+    mate = [ ];
+    gnome = [ ];
+    cinnamon = [ ];
   };
 
   # Host-specific shared paths (fish host config, desktop files, icons).
@@ -426,7 +430,8 @@ let
     ero = [
       ".config/fish/age-host.fish"
       ".config/fish/host-ero.fish"
-    ] ++ hostIconSubdirs;
+    ]
+    ++ hostIconSubdirs;
     lenovo = [
       ".config/fish/age-host.fish"
       ".config/fish/host-lenovo.fish"
@@ -435,7 +440,8 @@ let
       ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
       ".local/share/applications/webapps.json"
-    ] ++ hostIconSubdirs;
+    ]
+    ++ hostIconSubdirs;
     orgm = [
       ".config/fish/age-host.fish"
       ".config/fish/host-orgm.fish"
@@ -445,18 +451,30 @@ let
       ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
       ".local/share/applications/webapps.json"
-    ] ++ hostIconSubdirs;
+    ]
+    ++ hostIconSubdirs;
     jarq = [
       ".config/fish/age-host.fish"
       ".config/fish/host-jarq.fish"
-    ] ++ hostIconSubdirs;
+    ]
+    ++ hostIconSubdirs;
   };
 
   # Host+profile paths — host-specific overrides per profile (monitor configs, etc.)
   # Source: dotfiles/config/hosts/<host>/<path>
   hostProfilePaths = {
-    ero    = { hyprland = []; i3 = []; labwc = []; hyprlandqs-caelestia = []; };
-    jarq   = { hyprland = []; i3 = []; labwc = []; hyprlandqs-caelestia = []; };
+    ero = {
+      hyprland = [ ];
+      i3 = [ ];
+      labwc = [ ];
+      hyprlandqs-caelestia = [ ];
+    };
+    jarq = {
+      hyprland = [ ];
+      i3 = [ ];
+      labwc = [ ];
+      hyprlandqs-caelestia = [ ];
+    };
     lenovo = {
       hyprland = [
         ".config/DankMaterialShell"
@@ -468,8 +486,8 @@ let
         ".config/hypr/lua/monitors/lenovo.lua"
         ".config/rofi/hypr-menu.env"
       ];
-      i3 = [];
-      labwc = [];
+      i3 = [ ];
+      labwc = [ ];
     };
     orgm = {
       hyprland = [
@@ -485,8 +503,8 @@ let
         ".config/orgm-hypr/display-targets.json"
         ".config/rofi/hypr-menu.env"
       ];
-      i3 = [];
-      labwc = [];
+      i3 = [ ];
+      labwc = [ ];
     };
   };
 
@@ -581,44 +599,44 @@ let
     ".config/vesktop/settings/quickcss.css"
   ];
 
-  currentProfilePaths = profileSpecificPaths.${profileName} or [];
-  pathsForHost        = hostPaths.${hostName} or [];
-  pathsForHostProfile = (hostProfilePaths.${hostName} or {}).${profileName} or [];
+  currentProfilePaths = profileSpecificPaths.${profileName} or [ ];
+  pathsForHost = hostPaths.${hostName} or [ ];
+  pathsForHostProfile = (hostProfilePaths.${hostName} or { }).${profileName} or [ ];
 
   # Priority: hostProfilePaths > hostPaths > profilePaths > sharedPaths
   # Pass 1 — drop lower-priority paths that equal or sit below higher-priority paths
   higherThanShared = currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
   higherThanProfile = pathsForHost ++ pathsForHostProfile;
 
-  pass1SharedPaths = lib.filter (sp:
-    !builtins.any (hp: sp == hp || lib.hasPrefix (hp + "/") sp) higherThanShared
+  pass1SharedPaths = lib.filter (
+    sp: !builtins.any (hp: sp == hp || lib.hasPrefix (hp + "/") sp) higherThanShared
   ) sharedPaths;
 
-  pass1ProfilePaths = lib.filter (pp:
-    !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) higherThanProfile
+  pass1ProfilePaths = lib.filter (
+    pp: !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) higherThanProfile
   ) currentProfilePaths;
 
-  pass1HostPaths = lib.filter (hp:
-    !builtins.any (hpp: hp == hpp || lib.hasPrefix (hpp + "/") hp) pathsForHostProfile
+  pass1HostPaths = lib.filter (
+    hp: !builtins.any (hpp: hp == hpp || lib.hasPrefix (hpp + "/") hp) pathsForHostProfile
   ) pathsForHost;
 
   # Pass 2 — drop any path that has child paths in the combined list
   pass1All = pass1SharedPaths ++ pass1ProfilePaths ++ pass1HostPaths ++ pathsForHostProfile;
 
-  filteredSharedPaths = lib.filter (sp:
-    !builtins.any (other: lib.hasPrefix (sp + "/") other) pass1All
+  filteredSharedPaths = lib.filter (
+    sp: !builtins.any (other: lib.hasPrefix (sp + "/") other) pass1All
   ) pass1SharedPaths;
 
-  filteredProfilePaths = lib.filter (pp:
-    !builtins.any (other: lib.hasPrefix (pp + "/") other) pass1All
+  filteredProfilePaths = lib.filter (
+    pp: !builtins.any (other: lib.hasPrefix (pp + "/") other) pass1All
   ) pass1ProfilePaths;
 
-  filteredHostPaths = lib.filter (hp:
-    !builtins.any (other: lib.hasPrefix (hp + "/") other) pass1All
+  filteredHostPaths = lib.filter (
+    hp: !builtins.any (other: lib.hasPrefix (hp + "/") other) pass1All
   ) pass1HostPaths;
 
-  filteredHostProfilePaths = lib.filter (hpp:
-    !builtins.any (other: lib.hasPrefix (hpp + "/") other) pass1All
+  filteredHostProfilePaths = lib.filter (
+    hpp: !builtins.any (other: lib.hasPrefix (hpp + "/") other) pass1All
   ) pathsForHostProfile;
 in
 {
@@ -683,7 +701,10 @@ in
   # after login and re-runs daily. Neither blocks boot or home-manager.
   systemd.services.orgm-dotfiles-update = {
     description = "Fetch latest ORGM dotfiles (non-blocking)";
-    after = [ "network-online.target" "orgm-dotfiles-repo.service" ];
+    after = [
+      "network-online.target"
+      "orgm-dotfiles-repo.service"
+    ];
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
@@ -703,13 +724,19 @@ in
   };
 
   home-manager.users.${userName} =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     {
       home.activation.migrateLegacyDotfileDirectories =
-        lib.hm.dag.entryBefore [ "removeConflictingDotfiles" ] ''
-          $DRY_RUN_CMD ${migrateHomeManagerDotfileDirs}/bin/migrate-home-manager-dotfile-dirs \
-            .config/kitty .config/yazi
-        '';
+        lib.hm.dag.entryBefore [ "removeConflictingDotfiles" ]
+          ''
+            $DRY_RUN_CMD ${migrateHomeManagerDotfileDirs}/bin/migrate-home-manager-dotfile-dirs \
+              .config/kitty .config/yazi
+          '';
 
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         if [ -L "$HOME/.local/share/applications" ]; then
@@ -737,7 +764,9 @@ in
         done
 
         declare -a managed_paths=(
-          ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (filteredSharedPaths ++ filteredProfilePaths ++ filteredHostPaths ++ filteredHostProfilePaths)}
+          ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (
+            filteredSharedPaths ++ filteredProfilePaths ++ filteredHostPaths ++ filteredHostProfilePaths
+          )}
         )
         for p in "''${managed_paths[@]}"; do
           target="$HOME/$p"
