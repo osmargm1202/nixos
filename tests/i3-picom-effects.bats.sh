@@ -38,6 +38,8 @@ grep -Fq 'blur-background = true;' <<<"$picom_config" || fail 'background blur m
 # must therefore be emitted directly with parentheses or Picom cannot parse them.
 grep -Fq 'animations = ({' <<<"$picom_config" || fail 'animations are not a libconfig group list'
 grep -Fq 'rules = ({' <<<"$picom_config" || fail 'rules are not a libconfig group list'
+grep -A1 -F 'rules = ({' <<<"$picom_config" | grep -Fq 'animations = ({' ||
+  fail 'default Picom window rule does not animate every window'
 ! grep -Eq '^[[:space:]]+(animations|rules) = \[$' <<<"$picom_config" ||
   fail 'composite Picom lists use invalid square-bracket serialization'
 for preset in appear disappear geometry-change; do

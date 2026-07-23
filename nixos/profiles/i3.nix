@@ -46,23 +46,24 @@ let
     blur-background-frame = true;
     blur-background-fixed = false;
 
-    animations = ({
-      triggers = [ "open", "show" ];
-      preset = "appear";
-      scale = 0.96;
-      duration = 0.18;
-    }, {
-      triggers = [ "close", "hide" ];
-      preset = "disappear";
-      scale = 0.96;
-      duration = 0.14;
-    }, {
-      triggers = [ "geometry" ];
-      preset = "geometry-change";
-      duration = 0.20;
-    });
 
     rules = ({
+      animations = ({
+        triggers = [ "open", "show" ];
+        preset = "appear";
+        scale = 0.96;
+        duration = 0.18;
+      }, {
+        triggers = [ "close", "hide" ];
+        preset = "disappear";
+        scale = 0.96;
+        duration = 0.14;
+      }, {
+        triggers = [ "geometry" ];
+        preset = "geometry-change";
+        duration = 0.20;
+      });
+    }, {
       match = "!focused && !group_focused";
       opacity = 0.84;
     }, {

@@ -19,7 +19,6 @@
   "enabledPlugins": {
     "claude-mem@thedotmack": true,
     "context-mode@context-mode": true,
-    "superpowers@superpowers-dev": true,
     "caveman@caveman": true,
     "claude-awareness@osmargm1202": true,
     "claude-notify@osmargm1202-notify": true,
@@ -27,12 +26,6 @@
     "warp@claude-code-warp": true
   },
   "extraKnownMarketplaces": {
-    "superpowers-dev": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers"
-      }
-    },
     "caveman": {
       "source": {
         "source": "github",
