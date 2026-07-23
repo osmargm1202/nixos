@@ -11,8 +11,6 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
-  dotfilesOrgmSource = ../../dotfiles;
-  orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
@@ -282,7 +280,6 @@ in
     hyprpaperPkg
     mpvpaper
     matugen
-    orgmThemes
     ffmpeg
     steamcmd
     python3Minimal

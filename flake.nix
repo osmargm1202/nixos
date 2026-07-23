@@ -90,11 +90,6 @@
         inherit system;
         config.allowUnfree = true;
       };
-      dotfilesOrgmSource = ./dotfiles;
-      orgmWallpaper = pkgs.callPackage ./nixos/packages/orgm-wallpaper.nix {
-        inherit dotfilesOrgmSource;
-      };
-      orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { inherit dotfilesOrgmSource; };
       braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
       engram = pkgs.callPackage ./nixos/packages/engram.nix { };
       rtk = pkgs.callPackage ./nixos/packages/rtk.nix { };
@@ -139,14 +134,10 @@
         inherit
           engram
           rtk
-          orgmWallpaper
-          orgmThemes
           braveOrigin
           ;
-        "orgm-wallpaper" = orgmWallpaper;
-        "orgm-themes" = orgmThemes;
         "brave-origin" = braveOrigin;
-        default = orgmWallpaper;
+        default = braveOrigin;
       };
 
       # Dev shell for hacking on this NixOS repo. Enter with `nix develop`.
