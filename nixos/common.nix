@@ -241,6 +241,7 @@
     git
     age # dependencia de arranque de fish (load_private_env) — no mover a efimero
     uv
+    python3
     fd
     jq
     android-tools
