@@ -127,11 +127,11 @@ run_block() {
 [[ "$(run_block memory | head -n1)" == '5.7G' ]] || fail 'memory block output incorrect'
 [[ "$(run_block battery | head -n1)" == *'73%'* ]] || fail 'non-BAT battery discovery failed'
 [[ "$(run_block disk | head -n1)" == '75G' ]] || fail 'disk block output incorrect'
-[[ "$(run_block network | head -n1)" == ' Cafe &amp; &lt;Lab&gt; 70%' ]] ||
+[[ "$(run_block network | head -n1)" == '  Cafe &amp; &lt;Lab&gt; 70%' ]] ||
   fail 'network output is not portable and Pango-safe'
 [[ "$(run_block temperature | head -n1)" == '86°C' ]] || fail 'temperature block output incorrect'
 [[ "$(CPU_STAT_FILE="$TMP/proc/stat" run_block cpu | head -n1)" == '67%' ]] || fail 'CPU block output incorrect'
-[[ "$(run_block time | head -n1)" == ' miércoles 22/07/2026   04:30 PM' ]] ||
+[[ "$(run_block time | head -n1)" == '  miércoles 22/07/2026    04:30 PM' ]] ||
   fail 'time block output incorrect'
 [[ "$(VOLUME=47 run_block volume | head -n1)" == '47%' ]] || fail 'volume block output incorrect'
 [[ "$(VOLUME=47 run_block microphone | head -n1)" == '47%' ]] || fail 'microphone block output incorrect'

@@ -109,7 +109,7 @@ network_block() {
   [[ "$button" == 1 ]] && launch nm-connection-editor
   iface="$(ip route show default 2>/dev/null | awk 'NR == 1 { for (i=1; i<=NF; i++) if ($i == "dev") { print $(i+1); exit } }')"
   if [[ -z "$iface" ]]; then
-    emit '󰤮 Offline' Offline "$red"
+    emit '󰤮  Offline' Offline "$red"
     return
   fi
   ipaddr="$(ip -4 -o addr show dev "$iface" scope global 2>/dev/null | awk 'NR == 1 { sub(/\/.*/, "", $4); print $4 }')"
@@ -126,10 +126,10 @@ network_block() {
     ((quality > 100)) && quality=100
     ((quality < 35)) && color="$red"
     ((quality >= 35 && quality < 60)) && color="$yellow"
-    emit "$icon $connection ${quality}%" "$icon ${quality}%" "$color"
+    emit "$icon  $connection ${quality}%" "$icon  ${quality}%" "$color"
   else
     icon=''
-    emit "$icon $connection" "$icon $iface" "$color"
+    emit "$icon  $connection" "$icon  $iface" "$color"
   fi
 }
 
@@ -220,7 +220,7 @@ battery_block() {
   else icon=''; color="$green"
   fi
   [[ "$status" == Charging ]] && icon=''
-  emit "$icon ${capacity}%" "${capacity}%" "$color"
+  emit "$icon  ${capacity}%" "${capacity}%" "$color"
 }
 
 time_block() {
@@ -228,7 +228,7 @@ time_block() {
   local day clock
   day="$(LC_TIME=es_DO.UTF-8 date '+%A %d/%m/%Y')"
   clock="$(LC_TIME=en_US.UTF-8 date '+%I:%M %p')"
-  emit " $day   $clock" "$day $clock" "$normal"
+  emit "  $day    $clock" "$day $clock" "$normal"
 }
 
 case "$block" in

@@ -4,75 +4,75 @@
 
 command=$HOME/.local/bin/i3blocks-status "$BLOCK_NAME"
 separator=false
-separator_block_width=0
+separator_block_width=9
 markup=pango
 color=#D8DEE9FF
 background=#3B4252B3
 align=center
 
 [caffeine]
-label=
+label=  
 interval=5
-min_width= OFF
+min_width=  OFF
 background=#3B4252B3
 
 [language]
-label=
+label=  
 interval=2
-min_width= LATAM
+min_width=  LATAM
 background=#434C5EB3
 
 [brightness]
-label=
+label=  
 interval=2
-min_width= 100%
+min_width=  100%
 background=#3B4252B3
 
 [volume]
-label=
+label=  
 interval=1
-min_width= 100%
+min_width=  100%
 background=#434C5EB3
 
 [microphone]
-label=
+label=  
 interval=2
-min_width= 100%
+min_width=  100%
 background=#3B4252B3
 
 [disk]
-label=
+label=  
 instance=/
 interval=30
-min_width= 100G
+min_width=  100G
 background=#434C5EB3
 
 [network]
 interval=5
-min_width= Network 100%
+min_width=  Network 100%
 background=#3B4252B3
 
 [memory]
-label=
+label=  
 interval=2
-min_width= 99.9G
+min_width=  99.9G
 background=#434C5EB3
 
 [cpu]
-label=
+label=  
 interval=2
-min_width= 100%
+min_width=  100%
 background=#3B4252B3
 
 [temperature]
-label=
+label=  
 interval=5
-min_width= 100°C
+min_width=  100°C
 background=#434C5EB3
 
 [battery]
 interval=15
-min_width= 100%
+min_width=  100%
 background=#3B4252B3
 
 [time]

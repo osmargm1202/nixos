@@ -205,7 +205,7 @@ client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
   i3bar_command i3bar --transparency
-  font pango:Noto Sans, JetBrainsMono Nerd Font 18
+  font pango:Noto Sans, Symbols Nerd Font Mono 14
   height 28
   status_command /run/current-system/sw/bin/i3blocks -c "$HOME/.config/i3blocks/config"
   tray_output primary
