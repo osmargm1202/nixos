@@ -7,7 +7,6 @@
 }:
 
 let
-  i3expo = pkgs.callPackage ../packages/i3expo-ng.nix { };
   # Expose only a uniquely named fallback; installing i3lock-color directly
   # would collide with i3lock-fancy's bin/i3lock symlink.
   i3lockColorFallback = pkgs.writeShellApplication {
@@ -255,7 +254,6 @@ in
     xkill
     i3
     picom-pijulius
-    i3expo
     (i3lock-fancy.override {
       screenshotCommand = "${scrot}/bin/scrot -z -o";
     })

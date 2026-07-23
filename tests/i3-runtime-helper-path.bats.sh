@@ -32,7 +32,6 @@ grep -Fq 'set $run $HOME/.local/bin/i3-run' "$CONFIG" || fail 'i3 runner variabl
 
 for command in \
   'bindsym $mod+space exec --no-startup-id $run i3-rofi --drun' \
-  'bindsym $mod+Escape exec --no-startup-id $run i3-expo-toggle' \
   'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' \
   'bindsym $mod+c exec --no-startup-id $run i3-calc' \
   'bindsym $mod+w exec --no-startup-id $run i3-zen-new-window' \
