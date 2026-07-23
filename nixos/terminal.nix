@@ -24,10 +24,10 @@ in
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
+      ./ai/default.nix
       ./tailscale.nix
       ./clean.nix
     ];
-
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.${userName} = {

@@ -62,6 +62,7 @@ let
 in
 {
   imports = [
+    ./ai/default.nix
     ./tailscale.nix
     ./clean.nix
   ];
