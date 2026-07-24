@@ -301,6 +301,7 @@ let
       ".config/dunst"
       ".config/i3blocks"
       ".config/i3"
+      ".config/xlogout"
       ".config/rofi"
       ".local/bin/i3-caffeine-toggle"
       ".local/bin/i3-calc"

@@ -21,6 +21,9 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock --nofork
 exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-monitor-profile --apply
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
+exec_always --no-startup-id autotiling
+exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
+exec --no-startup-id i3swallowd
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id zutty-fast
@@ -46,7 +49,7 @@ bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus
 bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
 bindsym $mod+e exec --no-startup-id $files
 bindsym $mod+F10 exec --no-startup-id pavucontrol
-bindsym $mod+Mod1+e exec --no-startup-id $run i3-powermenu
+bindsym $mod+Mod1+e exec --no-startup-id xlogout
 bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock
 bindsym $mod+Ctrl+r layout toggle split
 bindsym $mod+q kill
@@ -58,6 +61,7 @@ bindsym Ctrl+Mod1+Delete exec --no-startup-id i3-msg exit
 bindsym $mod+n exec --no-startup-id dunstctl history-pop
 bindsym $mod+Shift+n exec --no-startup-id dunstctl set-paused toggle
 bindsym $mod+Ctrl+Shift+m exec --no-startup-id dunstctl close-all
+bindsym $mod+s scratchpad show
 
 bindsym Print exec --no-startup-id flameshot gui
 bindsym Ctrl+Print exec --no-startup-id flameshot full -c
@@ -156,22 +160,22 @@ bindsym $mod+Page_Up workspace next
 bindsym $mod+u workspace prev
 bindsym $mod+i workspace next
 
-bindsym $mod+Shift+1 move container to workspace number $ws1
-bindsym $mod+Shift+2 move container to workspace number $ws2
-bindsym $mod+Shift+3 move container to workspace number $ws3
-bindsym $mod+Shift+4 move container to workspace number $ws4
-bindsym $mod+Shift+5 move container to workspace number $ws5
-bindsym $mod+Shift+6 move container to workspace number $ws6
-bindsym $mod+Shift+7 move container to workspace number $ws7
-bindsym $mod+Shift+8 move container to workspace number $ws8
-bindsym $mod+Shift+9 move container to workspace number $ws9
-bindsym $mod+Shift+0 move container to workspace number $ws10
-bindsym $mod+Ctrl+Home move container to workspace number $ws1
-bindsym $mod+Ctrl+End move container to workspace number $ws10
-bindsym $mod+Ctrl+Page_Down move container to workspace prev
-bindsym $mod+Ctrl+Page_Up move container to workspace next
-bindsym $mod+Ctrl+u move container to workspace prev
-bindsym $mod+Ctrl+i move container to workspace next
+bindsym $mod+Shift+1 move container to workspace number $ws1; workspace number $ws1
+bindsym $mod+Shift+2 move container to workspace number $ws2; workspace number $ws2
+bindsym $mod+Shift+3 move container to workspace number $ws3; workspace number $ws3
+bindsym $mod+Shift+4 move container to workspace number $ws4; workspace number $ws4
+bindsym $mod+Shift+5 move container to workspace number $ws5; workspace number $ws5
+bindsym $mod+Shift+6 move container to workspace number $ws6; workspace number $ws6
+bindsym $mod+Shift+7 move container to workspace number $ws7; workspace number $ws7
+bindsym $mod+Shift+8 move container to workspace number $ws8; workspace number $ws8
+bindsym $mod+Shift+9 move container to workspace number $ws9; workspace number $ws9
+bindsym $mod+Shift+0 move container to workspace number $ws10; workspace number $ws10
+bindsym $mod+Ctrl+Home move container to workspace number $ws1; workspace number $ws1
+bindsym $mod+Ctrl+End move container to workspace number $ws10; workspace number $ws10
+bindsym $mod+Ctrl+Page_Down move container to workspace prev; workspace prev
+bindsym $mod+Ctrl+Page_Up move container to workspace next; workspace next
+bindsym $mod+Ctrl+u move container to workspace prev; workspace prev
+bindsym $mod+Ctrl+i move container to workspace next; workspace next
 
 mode "resize" {
   bindsym h resize shrink width 10 px or 10 ppt

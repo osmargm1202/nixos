@@ -28,7 +28,7 @@ grep -Fq 'Calculator) exec i3-calc' "$MAIN" || fail 'Calculator dispatch missing
 grep -Fq 'Zen) exec i3-zen-new-window' "$MAIN" || fail 'Zen dispatch missing'
 grep -Fq 'Wallpaper) exec i3-wallpaper --random' "$MAIN" || fail 'Wallpaper dispatch missing'
 grep -Fq 'Help) exec i3-hotkeys' "$MAIN" || fail 'Help dispatch missing'
-grep -Fq 'Power) exec i3-powermenu' "$MAIN" || fail 'Power dispatch missing'
+grep -Fq 'Power) exec xlogout' "$MAIN" || fail 'Power dispatch missing'
 
 for entry in Displays Wi-Fi Bluetooth Audio Keyboard Storage Back; do
   grep -Fq "$entry" "$DEVICES" || fail "devices menu entry missing: $entry"

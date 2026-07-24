@@ -20,7 +20,7 @@ required_bindings=(
   'bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt'
   'bindsym $mod+Shift+Return exec --no-startup-id zutty-fast'
   'bindsym $mod+F10 exec --no-startup-id pavucontrol'
-  'bindsym $mod+Mod1+e exec --no-startup-id $run i3-powermenu'
+  'bindsym $mod+Mod1+e exec --no-startup-id xlogout'
   'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock'
   'bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random'
   'bindsym $mod+Ctrl+Shift+m exec --no-startup-id dunstctl close-all'

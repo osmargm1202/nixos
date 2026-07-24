@@ -21,6 +21,6 @@ case "$choice" in
   Performance) exec i3-performance-menu ;;
   Help) exec i3-hotkeys ;;
   'Edit config') exec i3-config-editor ;;
-  Power) exec i3-powermenu ;;
+  Power) exec xlogout ;;
   *) exit 0 ;;
 esac

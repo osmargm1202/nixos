@@ -116,6 +116,7 @@ let
   zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
+  ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
 in
 {
   imports = [
@@ -259,6 +260,10 @@ in
       screenshotCommand = "${scrot}/bin/scrot -z -o";
     })
     i3lockColorFallback
+    ngcbgI3Tools.autotiling
+    ngcbgI3Tools.rootbtnd
+    ngcbgI3Tools.i3swallow
+    ngcbgI3Tools.xlogout
 
     # Launchers, notifications, wallpaper and X11 helpers.
     (rofi.override { plugins = [ rofi-calc ]; })
