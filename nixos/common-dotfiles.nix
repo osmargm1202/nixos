@@ -317,6 +317,8 @@ let
       ".local/bin/i3-run"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
+      ".local/bin/i3-polybar"
+      ".local/bin/i3-polybar-theme"
       ".local/bin/i3-performance-menu"
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"

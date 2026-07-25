@@ -13,7 +13,7 @@ fail() {
 	exit 1
 }
 
-for forbidden in polybar conky waybar 'hypr-'; do
+for forbidden in conky waybar 'hypr-'; do
 	if grep -Eqi "$forbidden" "$PROFILE" "$I3_CONFIG"; then
 		fail "minimal i3 profile still references $forbidden"
 	fi
@@ -22,17 +22,15 @@ for forbidden in polybar conky waybar 'hypr-'; do
 	fi
 done
 
-! grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar must not accompany the Eww bar'
+! grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar must not accompany Polybar'
 ! grep -Eq 'i3bar_command|status_command|tray_output' "$I3_CONFIG" ||
-  fail 'i3bar configuration remains after switching to Eww'
-grep -Fq 'systemd.user.services.eww-widgets-sync' "$PROFILE" ||
-  fail 'Eww upstream synchronization service missing'
-grep -Fq 'systemd.user.services.eww-widgets-bar' "$PROFILE" ||
-  fail 'Eww bar service missing'
-grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$I3_CONFIG" ||
-  fail 'i3 does not start the Eww bar after exporting X11 variables'
+  fail 'i3bar configuration remains after switching to Polybar'
+grep -Eq '^[[:space:]]+polybar[[:space:]]*$' "$PROFILE" ||
+  fail 'NixOS i3 integration must install Polybar'
+grep -Fq 'exec_always --no-startup-id $run i3-polybar start' "$I3_CONFIG" ||
+  fail 'i3 does not start Polybar'
 
-for path in .config/conky .config/picom .config/polybar; do
+for path in .config/conky .config/picom; do
 	[ ! -e "$I3_ROOT/$path" ] || fail "$path must be removed from i3 dotfiles"
 	if grep -Fq "\"$path\"" "$DOTFILES_MODULE"; then
 		fail "$path must not be deployed for i3"
@@ -47,13 +45,13 @@ for helper in i3-polybar-launch i3-status-battery i3-status-cpu-temp i3-status-g
 done
 
 jq -e '
-  all(.shared.paths[]; . != ".config/conky" and . != ".config/picom" and . != ".config/polybar")
+  all(.shared.paths[]; . != ".config/conky" and . != ".config/picom")
 ' "$MANIFEST" >/dev/null || fail 'obsolete i3 desktop paths remain in dotfiles manifest'
 
-grep -Eq '^[[:space:]]+eww[[:space:]]*$' "$PROFILE" ||
-  fail 'NixOS i3 integration must install Eww'
+! grep -Fqi 'eww' "$PROFILE" "$I3_CONFIG" "$DOTFILES_MODULE" ||
+  fail 'Eww integration remains'
 ! grep -Fqi 'i3blocks' "$PROFILE" "$I3_CONFIG" "$DOTFILES_MODULE" ||
   fail 'i3blocks integration remains'
 ! grep -Eqi 'bumblebee|i3status' "$PROFILE" || fail 'legacy status provider remains'
 
-printf 'PASS: i3 uses the upstream Eww bar without native i3bar\n'
+printf 'PASS: i3 uses Polybar without native i3bar or Eww\n'

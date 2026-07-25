@@ -79,8 +79,8 @@ done
 
 grep -Fq 'exec --no-startup-id systemctl --user start picom.service' "$CONFIG" ||
   fail 'i3 does not explicitly start Picom'
-grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$CONFIG" ||
-  fail 'i3 does not explicitly start the Eww bar with its X11 environment'
+grep -Fq 'exec_always --no-startup-id $run i3-polybar start' "$CONFIG" ||
+  fail 'i3 does not explicitly start Polybar'
 ! grep -Eq 'i3bar_command|status_command|tray_output' "$CONFIG" ||
   fail 'native i3bar configuration remains'
 ! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" ||

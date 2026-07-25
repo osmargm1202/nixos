@@ -15,6 +15,7 @@ grep -Eq '^[[:space:]]+pasystray[[:space:]]*$' "$PROFILE" ||
 if grep -Fq 'exec --no-startup-id pasystray' "$CONFIG"; then
   fail 'explicit pasystray duplicates its packaged XDG autostart'
 fi
-grep -Fq 'tray_output primary' "$CONFIG" || fail 'i3bar primary tray missing'
+grep -Fq 'tray-position = right' "$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-polybar" ||
+  fail 'Zorin Polybar tray integration missing'
 
 printf 'PASS: i3 starts a volume control applet in its systray\n'

@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/polybar-themes"
+selection_file="$state_root/current"
+
+[[ "${1:-}" == select ]] || {
+  printf 'usage: i3-polybar-theme select\n' >&2
+  exit 2
+}
+
+choice="$(printf '%s\n' \
+  'Zorin (Panels)' \
+  Blocks \
+  Colorblocks \
+  Cuts \
+  Docky \
+  Forest \
+  Grayblocks \
+  Hack \
+  Material \
+  Pwidgets \
+  Shades \
+  Shapes \
+  | i3-rofi 'Polybar theme' 12 || true)"
+
+case "$choice" in
+  'Zorin (Panels)') theme=panels ;;
+  Blocks) theme=blocks ;;
+  Colorblocks) theme=colorblocks ;;
+  Cuts) theme=cuts ;;
+  Docky) theme=docky ;;
+  Forest) theme=forest ;;
+  Grayblocks) theme=grayblocks ;;
+  Hack) theme=hack ;;
+  Material) theme=material ;;
+  Pwidgets) theme=pwidgets ;;
+  Shades) theme=shades ;;
+  Shapes) theme=shapes ;;
+  *) exit 0 ;;
+esac
+
+install -d "$state_root"
+temporary_file="$(mktemp "$selection_file.tmp.XXXXXX")"
+printf '%s\n' "$theme" > "$temporary_file"
+mv "$temporary_file" "$selection_file"
+exec "$HOME/.local/bin/i3-polybar" start --no-sync

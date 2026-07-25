@@ -24,7 +24,7 @@ exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
 exec --no-startup-id i3swallowd
-exec --no-startup-id sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'
+exec_always --no-startup-id $run i3-polybar start
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id zutty-fast

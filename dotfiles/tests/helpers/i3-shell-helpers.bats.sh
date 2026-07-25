@@ -10,8 +10,8 @@ fail() {
   exit 1
 }
 
-grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$I3" ||
-  fail 'Eww status bar service missing'
+grep -Fq 'exec_always --no-startup-id $run i3-polybar start' "$I3" ||
+  fail 'Polybar launcher missing'
 grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply' "$I3" || fail 'serialized monitor/wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3-lock --nofork' "$I3" || fail 'xss-lock must keep themed locker in foreground'

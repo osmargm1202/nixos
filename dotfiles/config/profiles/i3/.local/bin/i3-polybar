@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}/polybar"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/polybar-themes"
+upstream="$config_root/upstream"
+simple="$upstream/simple"
+panels_runtime="$state_root/panels"
+revision_file="$state_root/upstream-revision"
+selection_file="$state_root/current"
+font_destination="$HOME/.local/share/fonts/adi1090x-polybar-themes"
+upstream_url="https://github.com/adi1090x/polybar-themes.git"
+themes=(blocks colorblocks cuts docky forest grayblocks hack material panels pwidgets shades shapes)
+
+fail() {
+  printf 'i3-polybar: %s\n' "$*" >&2
+  exit 1
+}
+
+managed_link() {
+  local target="$1" source="$2"
+
+  if [[ -e "$target" || -L "$target" ]]; then
+    [[ -L "$target" && "$(readlink "$target")" == "$source" ]] ||
+      fail "$target exists and is not managed by the upstream Polybar checkout"
+  fi
+  ln -sfn "$source" "$target"
+}
+
+cleanup_eww() {
+  local eww_root="${XDG_CONFIG_HOME:-$HOME/.config}/eww"
+  local eww_upstream="$eww_root/upstream"
+
+  [[ -d "$eww_upstream/.git" ]] || return 0
+  [[ "$(git -C "$eww_upstream" remote get-url origin 2>/dev/null || true)" == \
+    "https://github.com/Saimoomedits/eww-widgets.git" ]] || return 0
+
+  pkill -x eww 2>/dev/null || true
+  if [[ -L "$eww_root/bar" && "$(readlink "$eww_root/bar")" == "upstream/eww/bar" ]]; then
+    rm "$eww_root/bar"
+  fi
+  rm -rf "$eww_upstream"
+  rmdir "$eww_root" 2>/dev/null || true
+}
+
+sync_upstream() {
+  local revision previous_revision theme
+
+  install -d "$config_root" "$state_root"
+  if [[ -d "$upstream/.git" ]]; then
+    if ! git -C "$upstream" fetch --depth 1 origin master; then
+      printf '%s\n' 'i3-polybar: unable to refresh themes; using the existing checkout' >&2
+    else
+      git -C "$upstream" reset --hard FETCH_HEAD
+    fi
+  elif [[ -e "$upstream" ]]; then
+    fail "$upstream exists but is not the adi1090x/polybar-themes checkout"
+  else
+    git clone --depth 1 --branch master "$upstream_url" "$upstream"
+  fi
+
+  [[ -d "$simple" ]] || fail "upstream checkout has no simple theme collection"
+  revision="$(git -C "$upstream" rev-parse HEAD)"
+  previous_revision="$(cat "$revision_file" 2>/dev/null || true)"
+  if [[ "$revision" != "$previous_revision" || ! -d "$panels_runtime" ]]; then
+    rm -rf "$panels_runtime"
+    cp -a "$simple/panels" "$panels_runtime"
+    install -d "$font_destination"
+    cp -a "$upstream/fonts/." "$font_destination"
+    fc-cache -f "$font_destination"
+    printf '%s\n' "$revision" > "$revision_file"
+  fi
+
+  for theme in "${themes[@]}"; do
+    if [[ "$theme" == panels ]]; then
+      managed_link "$config_root/$theme" "$panels_runtime"
+    else
+      managed_link "$config_root/$theme" "upstream/simple/$theme"
+    fi
+  done
+
+  cleanup_eww
+}
+
+selected_theme() {
+  local theme
+  theme="$(cat "$selection_file" 2>/dev/null || printf panels)"
+  for candidate in "${themes[@]}"; do
+    [[ "$theme" == "$candidate" ]] && {
+      printf '%s\n' "$theme"
+      return
+    }
+  done
+  printf '%s\n' panels
+}
+
+render_zorin() {
+  local config="$config_root/panels/config.ini"
+  local battery="" adapter="" interface="" supply type
+
+  cp "$config_root/panels/panel/zorin.ini" "$config"
+  sed -i \
+    -e 's/^tray-position = none$/tray-position = right/' \
+    -e 's#^click-left = ~/.config/polybar/panels/scripts/style-switch.sh --zorin$#click-left = $HOME/.local/bin/i3-polybar-theme select#' \
+    -e 's#^click-right = ~/.config/polybar/panels/scripts/style-switch.sh --zorin$#click-right = $HOME/.local/bin/i3-polybar-theme select#' \
+    -e 's#^click-left  = termite &$#click-left  = kitty \&#' \
+    -e 's#^click-left  = firefox &$#click-left  = $HOME/.local/bin/i3-zen-new-window \&#' \
+    -e 's#^click-left  = thunar &$#click-left  = nautilus --new-window "$HOME" \&#' \
+    -e 's#^click-left  = xfce4-settings &$#click-left  = lxappearance \&#' \
+    "$config"
+
+  for supply in /sys/class/power_supply/*; do
+    [[ -r "$supply/type" ]] || continue
+    type="$(<"$supply/type")"
+    case "$type" in
+      Battery) battery="${supply##*/}" ;;
+      Mains) adapter="${supply##*/}" ;;
+    esac
+  done
+  if [[ -n "$battery" ]]; then
+    sed -i -e "s/^battery = BAT1$/battery = $battery/" -e "s/^adapter = ACAD$/adapter = ${adapter:-AC}/" "$config"
+  else
+    sed -i 's/modules-right = style network alsa battery date sysmenu/modules-right = style network alsa date sysmenu/' "$config"
+  fi
+
+  interface="$(ip route show default 2>/dev/null | awk 'NR == 1 { for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit } }')"
+  if [[ -n "$interface" ]]; then
+    sed -i "s/^interface = wlan0$/interface = $interface/" "$config"
+  else
+    sed -i 's/modules-right = style network alsa battery date sysmenu/modules-right = style alsa battery date sysmenu/' "$config"
+    sed -i 's/modules-right = style network alsa date sysmenu/modules-right = style alsa date sysmenu/' "$config"
+  fi
+}
+
+launch_theme() {
+  local theme="$1"
+
+  pkill -x polybar 2>/dev/null || true
+  while pgrep -u "$UID" -x polybar >/dev/null; do sleep 0.1; done
+
+  case "$theme" in
+    panels)
+      render_zorin
+      polybar -q main -c "$config_root/panels/config.ini" &
+      ;;
+    hack | cuts)
+      polybar -q top -c "$config_root/$theme/config.ini" &
+      polybar -q bottom -c "$config_root/$theme/config.ini" &
+      ;;
+    pwidgets)
+      bash "$config_root/pwidgets/launch.sh" --main
+      ;;
+    *)
+      polybar -q main -c "$config_root/$theme/config.ini" &
+      ;;
+  esac
+}
+
+case "${1:-start}" in
+  sync)
+    sync_upstream
+    ;;
+  start)
+    if [[ "${2:-}" != --no-sync ]]; then
+      sync_upstream
+    fi
+    launch_theme "$(selected_theme)"
+    ;;
+  *)
+    fail "usage: i3-polybar [sync|start [--no-sync]]"
+    ;;
+esac
