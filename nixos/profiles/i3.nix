@@ -130,10 +130,7 @@ in
       enable = true;
       generateScript = true;
     };
-    windowManager.i3 = {
-      enable = true;
-      extraPackages = [ pkgs.i3blocks ];
-    };
+    windowManager.i3.enable = true;
   };
   services.displayManager.defaultSession = "none+i3";
 
@@ -153,6 +150,73 @@ in
       RestartSec = 3;
     };
   };
+  # Keep the widget source at its upstream remote until local i3-specific
+  # changes justify maintaining a fork.
+  systemd.user.services.eww-widgets-sync = {
+    description = "Synchronize Saimoomedits Eww widgets";
+    wantedBy = [ "graphical-session.target" ];
+    before = [ "eww-widgets-bar.service" ];
+    path = with pkgs; [
+      coreutils
+      git
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -euo pipefail
+
+      config_root="$HOME/.config/eww"
+      upstream="$config_root/upstream"
+      bar_dir="$config_root/bar"
+
+      install -d "$config_root"
+      if [ -d "$upstream/.git" ]; then
+        if ! git -C "$upstream" fetch --depth 1 origin main; then
+          echo "warning: unable to refresh Eww widgets; using the existing checkout" >&2
+        else
+          git -C "$upstream" reset --hard FETCH_HEAD
+        fi
+      elif [ -e "$upstream" ]; then
+        echo "$upstream exists but is not the Saimoomedits Eww repository" >&2
+        exit 1
+      else
+        git clone --depth 1 --branch main https://github.com/Saimoomedits/eww-widgets.git "$upstream"
+      fi
+
+      if [ -e "$bar_dir" ] && [ ! -L "$bar_dir" ]; then
+        echo "$bar_dir exists and is not the managed upstream bar symlink" >&2
+        exit 1
+      fi
+      if [ -L "$bar_dir" ] && [ "$(readlink "$bar_dir")" != "upstream/eww/bar" ]; then
+        echo "$bar_dir does not point at the managed upstream bar" >&2
+        exit 1
+      fi
+      ln -sfn upstream/eww/bar "$bar_dir"
+
+      install -d "$HOME/.local/bin/eww"
+      ln -sfn "${lib.getExe pkgs.eww}" "$HOME/.local/bin/eww/eww"
+    '';
+  };
+
+  systemd.user.services.eww-widgets-bar = {
+    description = "Saimoomedits Eww bar";
+    wantedBy = [ "graphical-session.target" ];
+    after = [ "eww-widgets-sync.service" ];
+    requires = [ "eww-widgets-sync.service" ];
+    path = [ pkgs.eww ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      WorkingDirectory = "%h/.config/eww/bar";
+    };
+    script = ''
+      eww --config "$HOME/.config/eww/bar" daemon
+      eww --config "$HOME/.config/eww/bar" open bar
+    '';
+  };
+
 
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.fish.loginShellInit = lib.mkAfter ''
@@ -205,7 +269,6 @@ in
   };
 
   xdg.mime = {
-    enable = true;
     defaultApplications = {
       "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
@@ -255,6 +318,7 @@ in
     setxkbmap
     xkill
     i3
+    eww
     picom-pijulius
     (i3lock-fancy.override {
       screenshotCommand = "${scrot}/bin/scrot -z -o";
@@ -302,6 +366,7 @@ in
     imagemagick
     brightnessctl
     pamixer
+    alsa-utils
     playerctl
 
     # Runtime-selected GTK/Nautilus appearance and status interactions.

@@ -24,6 +24,7 @@ exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
 exec --no-startup-id i3swallowd
+exec --no-startup-id sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id zutty-fast
@@ -204,22 +205,3 @@ client.focused          #7aa2f7 #1a1b26 #c0caf5 #7aa2f7 #1a1b26
 client.focused_inactive #1f2335 #1a1b26 #a9b1d6 #292e42 #1a1b26
 client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
-
-bar {
-  i3bar_command i3bar --transparency
-  font pango:Noto Sans, Symbols Nerd Font Mono 14
-  height 28
-  status_command /run/current-system/sw/bin/i3blocks -c "$HOME/.config/i3blocks/config"
-  tray_output primary
-
-  colors {
-    background #1a1b268f
-    statusline #c0caf5ff
-    separator  #00000000
-    focused_workspace  #7aa2f7cc #7aa2f7cc #1a1b26ff
-    active_workspace   #292e42b3 #292e42b3 #c0caf5ff
-    inactive_workspace #1f233599 #1f233599 #a9b1d6ff
-    urgent_workspace   #f7764ecc #f7764ecc #ffffffff
-    binding_mode       #e0af68cc #e0af68cc #1a1b26ff
-  }
-}

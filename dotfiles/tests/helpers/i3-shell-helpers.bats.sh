@@ -10,7 +10,8 @@ fail() {
   exit 1
 }
 
-grep -Fq 'status_command /run/current-system/sw/bin/i3blocks' "$I3" || fail 'i3blocks status bar missing'
+grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$I3" ||
+  fail 'Eww status bar service missing'
 grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply' "$I3" || fail 'serialized monitor/wallpaper restore missing'
 grep -q 'exec --no-startup-id clipmenud' "$I3" || fail 'clipmenud missing'
 grep -q 'exec --no-startup-id xss-lock.*i3-lock --nofork' "$I3" || fail 'xss-lock must keep themed locker in foreground'
@@ -34,7 +35,6 @@ helpers=(
   i3-wallpaper
   i3-hotkeys
   i3-config-editor
-  i3blocks-status
 )
 for helper in "${helpers[@]}"; do
   [[ -x "$BIN/$helper" ]] || fail "$helper missing or not executable"

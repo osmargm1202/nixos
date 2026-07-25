@@ -22,13 +22,15 @@ for forbidden in polybar conky waybar 'hypr-'; do
 	fi
 done
 
-grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar block missing'
-grep -Fxq '  status_command /run/current-system/sw/bin/i3blocks -c "$HOME/.config/i3blocks/config"' "$I3_CONFIG" ||
-	fail 'i3bar must run the portable i3blocks config'
-grep -Fq 'tray_output primary' "$I3_CONFIG" || fail 'i3bar must own the primary tray'
-grep -Fq 'exec --no-startup-id nm-applet' "$I3_CONFIG" || fail 'NetworkManager applet missing'
-grep -Fq 'exec --no-startup-id blueman-applet' "$I3_CONFIG" || fail 'Bluetooth applet missing'
-grep -Fq 'exec --no-startup-id udiskie --tray' "$I3_CONFIG" || fail 'removable-disk applet missing'
+! grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar must not accompany the Eww bar'
+! grep -Eq 'i3bar_command|status_command|tray_output' "$I3_CONFIG" ||
+  fail 'i3bar configuration remains after switching to Eww'
+grep -Fq 'systemd.user.services.eww-widgets-sync' "$PROFILE" ||
+  fail 'Eww upstream synchronization service missing'
+grep -Fq 'systemd.user.services.eww-widgets-bar' "$PROFILE" ||
+  fail 'Eww bar service missing'
+grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$I3_CONFIG" ||
+  fail 'i3 does not start the Eww bar after exporting X11 variables'
 
 for path in .config/conky .config/picom .config/polybar; do
 	[ ! -e "$I3_ROOT/$path" ] || fail "$path must be removed from i3 dotfiles"
@@ -48,8 +50,10 @@ jq -e '
   all(.shared.paths[]; . != ".config/conky" and . != ".config/picom" and . != ".config/polybar")
 ' "$MANIFEST" >/dev/null || fail 'obsolete i3 desktop paths remain in dotfiles manifest'
 
-grep -Fq 'extraPackages = [ pkgs.i3blocks ];' "$PROFILE" ||
-	fail 'NixOS i3 integration must install i3blocks'
+grep -Eq '^[[:space:]]+eww[[:space:]]*$' "$PROFILE" ||
+  fail 'NixOS i3 integration must install Eww'
+! grep -Fqi 'i3blocks' "$PROFILE" "$I3_CONFIG" "$DOTFILES_MODULE" ||
+  fail 'i3blocks integration remains'
 ! grep -Eqi 'bumblebee|i3status' "$PROFILE" || fail 'legacy status provider remains'
 
-printf 'PASS: i3 uses native i3bar with i3blocks and no custom panel\n'
+printf 'PASS: i3 uses the upstream Eww bar without native i3bar\n'

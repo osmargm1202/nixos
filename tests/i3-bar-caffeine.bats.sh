@@ -2,11 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMMON="$ROOT/nixos/common.nix"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-BLOCKS="$ROOT/dotfiles/config/profiles/i3/.config/i3blocks/config"
-STATUS_HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3blocks-status"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-caffeine-toggle"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
@@ -15,26 +12,14 @@ fail() {
   exit 1
 }
 
-grep -Eq '^[[:space:]]+noto-fonts[[:space:]]*$' "$COMMON" || fail 'Noto Sans font package missing'
-grep -Eq '^[[:space:]]+font-awesome[[:space:]]*$' "$COMMON" || fail 'Font Awesome package missing'
-grep -Fq 'font pango:Noto Sans, JetBrainsMono Nerd Font 18' "$CONFIG" ||
-  fail 'bar font lacks Nerd Font status icon fallback'
-grep -Fq 'height 28' "$CONFIG" || fail 'larger i3bar height missing'
-
-[[ "$(grep -Fc 'pasystray' "$CONFIG")" -eq 0 ]] || fail 'explicit pasystray duplicates its XDG autostart'
-grep -Eq '^[[:space:]]+pasystray[[:space:]]*$' "$PROFILE" || fail 'pasystray package/autostart source missing'
-
-grep -Fq 'status_command /run/current-system/sw/bin/i3blocks' "$CONFIG" || fail 'i3blocks status command missing'
-grep -Fq '[caffeine]' "$BLOCKS" || fail 'caffeine i3block missing'
-grep -Fq 'i3-caffeine-toggle toggle' "$STATUS_HELPER" || fail 'clickable caffeine dispatcher missing'
-grep -Fq 'background=#3B4252B3' "$BLOCKS" || fail 'translucent Nord i3blocks background missing'
-[ ! -e "$ROOT/dotfiles/config/profiles/i3/.config/bumblebee-status" ] || fail 'Bumblebee profile artifacts remain'
+! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" "$DOTFILES" ||
+  fail 'i3blocks integration remains after replacing the bar'
 
 [ -x "$HELPER" ] || fail 'i3-caffeine-toggle missing or not executable'
 grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
 grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" || fail 'stale caffeine state is not reset at login'
 grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
-grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config not deployed'
+! grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config is still deployed'
 grep -Fq 'flock 9' "$HELPER" || fail 'caffeine transitions are not serialized'
 grep -Fq 'mktemp "$state_file.tmp.XXXXXX"' "$HELPER" || fail 'caffeine state is not written atomically'
 grep -Fq 'valid_state' "$HELPER" || fail 'corrupt caffeine state is not validated'

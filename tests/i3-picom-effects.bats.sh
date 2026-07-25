@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-BLOCKS="$ROOT/dotfiles/config/profiles/i3/.config/i3blocks/config"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -80,14 +79,12 @@ done
 
 grep -Fq 'exec --no-startup-id systemctl --user start picom.service' "$CONFIG" ||
   fail 'i3 does not explicitly start Picom'
-grep -Fq 'i3bar_command i3bar --transparency' "$CONFIG" || fail 'i3bar transparency mode missing'
-grep -Fq 'background #1a1b268f' "$CONFIG" || fail 'i3bar background is not sufficiently translucent'
-! grep -Eq 'for_window \[class="org\.gnome\.Nautilus"\].*floating enable' "$CONFIG" ||
-  fail 'Nautilus is still forced floating'
-
-[[ -f "$BLOCKS" ]] || fail 'translucent i3blocks config missing'
-grep -Fq 'background=#3B4252B3' "$BLOCKS" || fail 'i3blocks backgrounds are not translucent RGBA colors'
-grep -Fq 'background=#434C5EB3' "$BLOCKS" || fail 'alternating Nord i3blocks background missing'
+grep -Fq "sh -c 'dbus-update-activation-environment --systemd DISPLAY XAUTHORITY && systemctl --user start eww-widgets-bar.service'" "$CONFIG" ||
+  fail 'i3 does not explicitly start the Eww bar with its X11 environment'
+! grep -Eq 'i3bar_command|status_command|tray_output' "$CONFIG" ||
+  fail 'native i3bar configuration remains'
+! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" ||
+  fail 'i3blocks integration remains'
 ! grep -Eqi 'bumblebee|i3-nord-powerline' "$PROFILE" "$CONFIG" || fail 'obsolete Bumblebee theme integration remains'
 
 printf 'PASS: i3 tiles Nautilus and uses animated blurred translucent Picom visuals\n'
