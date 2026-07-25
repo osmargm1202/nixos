@@ -36,6 +36,8 @@ grep -Fq 'Windows) exec i3-rofi --window' "$MENU" || fail 'Windows menu bypasses
 
 grep -Fq 'bindcode $mod+Mod1+65 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'physical Win+Alt+Space system menu binding missing'
+grep -Fq 'bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
+  fail 'symbolic Win+Alt+Space fallback binding missing'
 grep -Fq 'bindsym $mod+F12 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'system menu fallback binding missing'
 if grep -Rqi 'hypr-menu' "$ROFI_DIR"; then

@@ -3,7 +3,7 @@ set -euo pipefail
 
 choice="$(printf '%s\n' \
   Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper 'Polybar theme' Performance Help 'Edit config' Power \
-  | i3-rofi 'i3' 17 || true)
+  | i3-rofi 'i3' 17 || true)"
 
 case "$choice" in
   Apps) exec i3-rofi --drun ;;
