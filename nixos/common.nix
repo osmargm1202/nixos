@@ -33,7 +33,10 @@ in
   hardware.enableRedistributableFirmware = true;
 
   # Solo los locales que uso.
-  i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "es_DO.UTF-8/UTF-8" ];
+  i18n.supportedLocales = [
+    "en_US.UTF-8/UTF-8"
+    "es_DO.UTF-8/UTF-8"
+  ];
 
   # GC lo maneja nh.clean (semanal, keep 3 + 30d) en clean.nix.
   # nix.gc no se activa para no conflictuar con nh clean.
@@ -45,6 +48,7 @@ in
       ./flatpak.nix
       ./common-dotfiles.nix
       ./webapps.nix
+      ./zen-browser.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
@@ -90,7 +94,9 @@ in
 
   # Zen 7.0.10 pinned from nixpkgs-zen70. Host-specific overrides in each
   # host file only when hardware needs a different kernel.
-  boot.kernelPackages = lib.mkDefault inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
+  boot.kernelPackages =
+    lib.mkDefault
+      inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
 
   boot.plymouth = {
     enable = true;

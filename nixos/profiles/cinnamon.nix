@@ -40,6 +40,7 @@ in
   imports = [
     ./sddm.nix
     ./printer.nix
+    ./vesktop.nix
   ];
 
   services.xserver.enable = true;
@@ -56,13 +57,14 @@ in
   services.libinput.enable = true;
   services.dbus.enable = true;
   services.gvfs.enable = true;
-  services.udisks2.enable = true;
-  services.power-profiles-daemon.enable = true;
   services.gnome = {
     gnome-keyring.enable = true;
     gnome-online-accounts.enable = true;
     gcr-ssh-agent.enable = true;
+    glib-networking.enable = true;
   };
+
+  services.upower.enable = true;
 
   services.pulseaudio.enable = false;
 
@@ -113,10 +115,6 @@ in
       "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-rar" = [ "org.gnome.FileRoller.desktop" ];
-      "text/html" = [ "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium.desktop" ];
     };
   };
 

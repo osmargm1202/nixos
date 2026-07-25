@@ -1,8 +1,6 @@
 {
   pkgs,
   lib,
-  inputs,
-  userName ? "osmarg",
   ...
 }:
 
@@ -113,9 +111,6 @@ let
       blur-background = true;
     });
   '';
-  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
-    zenBrowserFlakeSrc = inputs.zen-browser-flake;
-  };
   ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
 in
 {
@@ -217,7 +212,6 @@ in
     '';
   };
 
-
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.fish.loginShellInit = lib.mkAfter ''
     if test (tty) = /dev/tty1; and not set -q DISPLAY
@@ -289,10 +283,6 @@ in
       "video/x-msvideo" = [ "org.videolan.VLC.desktop" ];
       "video/mpeg" = [ "org.videolan.VLC.desktop" ];
       "video/ogg" = [ "org.videolan.VLC.desktop" ];
-      "text/html" = [ "zen-browser.desktop" ];
-      "application/xhtml+xml" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/http" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/https" = [ "zen-browser.desktop" ];
     };
   };
 
@@ -384,7 +374,6 @@ in
     # Daily applications used by MIME defaults and bindings.
     kitty
     chromium
-    zenBrowser
     nautilus
     gnome-online-accounts-gtk
     gnome-text-editor

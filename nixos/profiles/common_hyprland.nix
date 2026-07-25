@@ -11,10 +11,6 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
-  zenBrowser = pkgs.callPackage ../packages/zen-browser.nix {
-    zenBrowserFlakeSrc = inputs.zen-browser-flake;
-  };
-  psdZen = pkgs.callPackage ../packages/psd-zen.nix { };
   # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
@@ -136,11 +132,6 @@ in
         text/x-python=org.gnome.TextEditor.desktop
         application/json=org.gnome.TextEditor.desktop
         application/x-shellscript=org.gnome.TextEditor.desktop
-        text/html=zen-browser.desktop
-        application/xhtml+xml=zen-browser.desktop
-        x-scheme-handler/http=zen-browser.desktop
-        x-scheme-handler/https=zen-browser.desktop
-        x-scheme-handler/chrome=zen-browser.desktop
         application/pdf=org.gnome.Evince.desktop
         image/png=org.gnome.Loupe.desktop
         image/jpeg=org.gnome.Loupe.desktop
@@ -161,71 +152,6 @@ in
           $DRY_RUN_CMD cp ${mimeAppsDefaults} "$mime_cfg"
         fi
       '';
-
-      xdg.configFile."psd/psd.conf".text = ''
-        BROWSERS=(zen chromium)
-      '';
-
-      systemd.user.services.psd = {
-        Unit = {
-          Description = "Profile-sync-daemon";
-          Wants = [ "psd-resync.service" ];
-          RequiresMountsFor = [ "/home/" ];
-        };
-        Service = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          # Explicit PATH -- without it, psd's rsync/grep/awk/uname calls
-          # race the session's PATH import at early boot and fail silently
-          # (systemd retries until it wins the race), which can leave the
-          # "unsync" step never running cleanly before shutdown.
-          Environment = "PATH=${
-            lib.makeBinPath [
-              pkgs.rsync
-              pkgs.gnugrep
-              pkgs.gawk
-              pkgs.coreutils
-              pkgs.util-linux
-              pkgs.procps
-              pkgs.psmisc
-            ]
-          }";
-          ExecStart = "${psdZen}/bin/profile-sync-daemon startup";
-          ExecStop = "${psdZen}/bin/profile-sync-daemon unsync";
-          TimeoutStopSec = 60;
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
-
-      systemd.user.services.psd-resync = {
-        Unit = {
-          Description = "Timed resync";
-          After = [ "psd.service" ];
-          BindsTo = [ "psd.service" ];
-        };
-        Service = {
-          Type = "oneshot";
-          Environment = "PATH=${
-            lib.makeBinPath [
-              pkgs.rsync
-              pkgs.gnugrep
-              pkgs.gawk
-              pkgs.coreutils
-              pkgs.util-linux
-              pkgs.procps
-              pkgs.psmisc
-            ]
-          }";
-          ExecStart = "${psdZen}/bin/profile-sync-daemon resync";
-        };
-      };
-
-      systemd.user.timers.psd-resync = {
-        Unit.Description = "Timer for profile-sync-daemon - 1Hour";
-        Unit.BindsTo = [ "psd.service" ];
-        Timer.OnUnitActiveSec = "1h";
-        Install.WantedBy = [ "timers.target" ];
-      };
     };
 
   xdg.mime = {
@@ -239,11 +165,6 @@ in
       "text/x-python" = [ "org.gnome.TextEditor.desktop" ];
       "application/json" = [ "org.gnome.TextEditor.desktop" ];
       "application/x-shellscript" = [ "org.gnome.TextEditor.desktop" ];
-      "text/html" = [ "zen-browser.desktop" ];
-      "application/xhtml+xml" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/http" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/https" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/chrome" = [ "zen-browser.desktop" ];
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
       "image/png" = [ "org.gnome.Loupe.desktop" ];
       "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
@@ -287,10 +208,6 @@ in
     hyprpicker
     hyprsunset
     hyprpolkitagent
-
-    # Browser
-    zenBrowser
-    psdZen
 
     # Portal / XDG
     xdg-utils
