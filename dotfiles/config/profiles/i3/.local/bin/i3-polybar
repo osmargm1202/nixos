@@ -5,8 +5,10 @@ config_root="${XDG_CONFIG_HOME:-$HOME/.config}/polybar"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/polybar-themes"
 upstream="$config_root/upstream"
 simple="$upstream/simple"
-panels_runtime="$state_root/panels"
+themes_runtime="$state_root/themes"
 revision_file="$state_root/upstream-revision"
+font_scale_file="$state_root/font-scale-version"
+font_scale_version=2
 selection_file="$state_root/current"
 font_destination="$HOME/.local/share/fonts/adi1090x-polybar-themes"
 upstream_url="https://github.com/adi1090x/polybar-themes.git"
@@ -18,11 +20,15 @@ fail() {
 }
 
 managed_link() {
-  local target="$1" source="$2"
+  local target="$1" source="$2" legacy_source="${3:-}" actual_source
 
   if [[ -e "$target" || -L "$target" ]]; then
-    [[ -L "$target" && "$(readlink "$target")" == "$source" ]] ||
+    [[ -L "$target" ]] || fail "$target exists and is not managed by the upstream Polybar checkout"
+    actual_source="$(readlink "$target")"
+    if [[ "$actual_source" != "$source" && \
+      ( -z "$legacy_source" || "$actual_source" != "$legacy_source" ) ]]; then
       fail "$target exists and is not managed by the upstream Polybar checkout"
+    fi
   fi
   ln -sfn "$source" "$target"
 }
@@ -42,6 +48,31 @@ cleanup_eww() {
   rm -rf "$eww_upstream"
   rmdir "$eww_root" 2>/dev/null || true
 }
+scale_font_file() {
+  local config="$1" temporary_file line
+
+  temporary_file="$(mktemp "$config.tmp.XXXXXX")"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^([[:space:]]*font-[0-9]+[[:space:]]*=[[:space:]]*.*)(pixelsize|size)=([0-9]+)(.*)$ ]]; then
+      printf '%s%s=%s%s\n' \
+        "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "$((BASH_REMATCH[3] + 2))" "${BASH_REMATCH[4]}"
+    else
+      printf '%s\n' "$line"
+    fi
+  done < "$config" > "$temporary_file"
+  mv "$temporary_file" "$config"
+}
+
+scale_theme_fonts() {
+  local theme_dir="$1" config
+
+  shopt -s globstar nullglob
+  for config in "$theme_dir"/**/*.ini; do
+    scale_font_file "$config"
+  done
+  shopt -u globstar nullglob
+}
+
 
 sync_upstream() {
   local revision previous_revision theme
@@ -62,20 +93,26 @@ sync_upstream() {
   [[ -d "$simple" ]] || fail "upstream checkout has no simple theme collection"
   revision="$(git -C "$upstream" rev-parse HEAD)"
   previous_revision="$(cat "$revision_file" 2>/dev/null || true)"
-  if [[ "$revision" != "$previous_revision" || ! -d "$panels_runtime" ]]; then
-    rm -rf "$panels_runtime"
-    cp -a "$simple/panels" "$panels_runtime"
+  if [[ "$revision" != "$previous_revision" || ! -d "$themes_runtime" || \
+    "$(cat "$font_scale_file" 2>/dev/null || true)" != "$font_scale_version" ]]; then
+    rm -rf "$themes_runtime"
+    install -d "$themes_runtime"
+    for theme in "${themes[@]}"; do
+      cp -a "$simple/$theme" "$themes_runtime/$theme"
+      scale_theme_fonts "$themes_runtime/$theme"
+    done
     install -d "$font_destination"
     cp -a "$upstream/fonts/." "$font_destination"
     fc-cache -f "$font_destination"
     printf '%s\n' "$revision" > "$revision_file"
+    printf '%s\n' "$font_scale_version" > "$font_scale_file"
   fi
 
   for theme in "${themes[@]}"; do
     if [[ "$theme" == panels ]]; then
-      managed_link "$config_root/$theme" "$panels_runtime"
+      managed_link "$config_root/$theme" "$themes_runtime/$theme" "$state_root/panels"
     else
-      managed_link "$config_root/$theme" "upstream/simple/$theme"
+      managed_link "$config_root/$theme" "$themes_runtime/$theme" "upstream/simple/$theme"
     fi
   done
 

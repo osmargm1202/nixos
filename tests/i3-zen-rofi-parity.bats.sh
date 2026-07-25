@@ -34,10 +34,8 @@ grep -Fq 'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' "$CONFIG"
 grep -Fq 'Apps) exec i3-rofi --drun' "$MENU" || fail 'Apps menu bypasses themed Rofi'
 grep -Fq 'Windows) exec i3-rofi --window' "$MENU" || fail 'Windows menu bypasses themed Rofi'
 
-grep -Fq 'bindcode $mod+Mod1+65 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
-  fail 'physical Win+Alt+Space system menu binding missing'
 grep -Fq 'bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
-  fail 'symbolic Win+Alt+Space fallback binding missing'
+  fail 'Win+Alt+Space system menu binding missing'
 grep -Fq 'bindsym $mod+F12 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'system menu fallback binding missing'
 if grep -Rqi 'hypr-menu' "$ROFI_DIR"; then

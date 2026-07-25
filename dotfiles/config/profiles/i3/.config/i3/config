@@ -39,7 +39,6 @@ bindsym $mod+Ctrl+m exec --no-startup-id $run i3-open-file dir
 bindsym $mod+Shift+m exec --no-startup-id $run i3-open-file terminal
 bindsym $mod+d exec --no-startup-id $run i3-ssh-host
 bindsym $mod+slash exec --no-startup-id $run i3-hotkeys
-bindcode $mod+Mod1+65 exec --no-startup-id $run i3-main-menu
 bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu
 bindsym $mod+F12 exec --no-startup-id $run i3-main-menu
 bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random

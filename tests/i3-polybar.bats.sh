@@ -29,6 +29,11 @@ grep -Fq 'git clone --depth 1 --branch master' "$LAUNCHER" ||
 grep -Fq 'tray-position = right' "$LAUNCHER" || fail 'Zorin tray is not enabled'
 grep -Fq 'i3-polybar-theme select' "$LAUNCHER" || fail 'Zorin style control does not open the theme selector'
 grep -Fq 'current' "$LAUNCHER" || fail 'selected theme is not persisted'
+grep -Fq 'themes_runtime="$state_root/themes"' "$LAUNCHER" ||
+  fail 'scaled runtime Polybar theme tree missing'
+grep -Fq 'scale_font_file()' "$LAUNCHER" || fail 'Polybar font scaling is not applied'
+grep -Fq 'BASH_REMATCH[3] + 2' "$LAUNCHER" || fail 'Polybar font increase must be two points'
+grep -Fq 'font-scale-version' "$LAUNCHER" || fail 'font scale changes do not rebuild runtime themes'
 grep -Fq 'Polybar theme' "$SELECTOR" || fail 'selector does not use the existing Rofi UI'
 grep -Fq 'Zorin (Panels)' "$SELECTOR" || fail 'Zorin is not the default Panels choice'
 
