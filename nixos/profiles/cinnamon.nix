@@ -1,7 +1,46 @@
-{ pkgs, lib, ... }:
-
 {
-  imports = [ ./sddm.nix ./printer.nix ];
+  inputs,
+  pkgs,
+  lib,
+  userName,
+  ...
+}:
+
+let
+  extensionUuids = [
+    "cinnamon-maximus@fmete"
+    "BlurCinnamon@klangman"
+    "centered-cinnamon-dock@mostlynick3"
+  ];
+
+  cinnamonRiceExtensions = pkgs.runCommand "cinnamon-rice-extensions" { } ''
+    mkdir -p "$out/share/cinnamon/extensions"
+    for uuid in ${lib.escapeShellArgs extensionUuids}; do
+      cp -R \
+        "${inputs.cinnamon-spices-extensions}/$uuid/files/$uuid" \
+        "$out/share/cinnamon/extensions/$uuid"
+    done
+  '';
+
+  graphiteNord = pkgs.graphite-gtk-theme.override {
+    themeVariants = [ "blue" ];
+    colorVariants = [ "dark" ];
+    sizeVariants = [ "compact" ];
+    tweaks = [
+      "nord"
+      "rimless"
+    ];
+  };
+
+  nordzyDark = pkgs.nordzy-icon-theme.override {
+    nordzy-themes = [ "default" ];
+  };
+in
+{
+  imports = [
+    ./sddm.nix
+    ./printer.nix
+  ];
 
   services.xserver.enable = true;
 
@@ -82,9 +121,6 @@
   };
 
   environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-    MOZ_ENABLE_WAYLAND = "1";
-    GDK_BACKEND = "wayland,x11";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     TERMINAL = "kitty";
   };
@@ -99,6 +135,12 @@
     celluloid
     file-roller
 
+    # Reproducible Cinnamon rice.
+    graphiteNord
+    nordzyDark
+    ulauncher
+    cinnamonRiceExtensions
+
     # Gnome-keyring / desktop plumbing.
     gcr
     gnome-keyring
@@ -110,4 +152,16 @@
     xdg-desktop-portal-xapp
     xdg-desktop-portal-gtk
   ];
+
+  home-manager.users.${userName} = {
+    dconf.settings."org/cinnamon".enabled-extensions = extensionUuids;
+    dconf.settings."org/cinnamon/desktop/interface" = {
+      gtk-theme = "Graphite-blue-Dark-compact-nord";
+      icon-theme = "Nordzy-dark";
+    };
+    dconf.settings."org/cinnamon/theme".name = "Graphite-blue-Dark-compact-nord";
+
+    xdg.configFile."autostart/ulauncher.desktop".source =
+      "${pkgs.ulauncher}/share/applications/ulauncher.desktop";
+  };
 }

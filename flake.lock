@@ -113,6 +113,22 @@
         "type": "github"
       }
     },
+    "cinnamon-spices-extensions": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784660668,
+        "narHash": "sha256-w8ATcNjfNL9Hr7C4zdRGflCl7/Z+FU9Iy6YhKxrxzUo=",
+        "owner": "linuxmint",
+        "repo": "cinnamon-spices-extensions",
+        "rev": "30c94550db64967ecde6f33287edbf252237e170",
+        "type": "github"
+      },
+      "original": {
+        "owner": "linuxmint",
+        "repo": "cinnamon-spices-extensions",
+        "type": "github"
+      }
+    },
     "dgop": {
       "inputs": {
         "nixpkgs": [
@@ -1123,6 +1139,7 @@
     "root": {
       "inputs": {
         "caelestia-shell": "caelestia-shell",
+        "cinnamon-spices-extensions": "cinnamon-spices-extensions",
         "dgop": "dgop",
         "dms": "dms",
         "herdr": "herdr",

@@ -12,6 +12,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+    cinnamon-spices-extensions = {
+      url = "github:linuxmint/cinnamon-spices-extensions";
+      flake = false;
+    };
     hyprland = {
       # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
       url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
