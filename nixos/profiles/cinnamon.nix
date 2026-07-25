@@ -57,12 +57,31 @@ in
   services.libinput.enable = true;
   services.dbus.enable = true;
   services.gvfs.enable = true;
+  services.udisks2.enable = true;
+  services.power-profiles-daemon.enable = true;
   services.gnome = {
     gnome-keyring.enable = true;
     gnome-online-accounts.enable = true;
     gcr-ssh-agent.enable = true;
     glib-networking.enable = true;
   };
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      cinnamon = prev.cinnamon.overrideAttrs (old: {
+        postInstall = (old.postInstall or "") + ''
+          substituteInPlace "$out/share/cinnamon/cinnamon-settings/bin/Spices.py" \
+            --replace-fail \
+            "totalSize = int(response.headers.get('content-length'))" \
+            "totalSize = int(response.headers.get('content-length') or 0)"
+          substituteInPlace "$out/share/cinnamon/cinnamon-settings/bin/Spices.py" \
+            --replace-fail \
+            "fraction = count * blockSize / float((totalSize / blockSize + 1) * blockSize)" \
+            "fraction = 0 if totalSize <= 0 else count * blockSize / float((totalSize / blockSize + 1) * blockSize)"
+        '';
+      });
+    })
+  ];
 
   services.upower.enable = true;
 
