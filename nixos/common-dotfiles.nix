@@ -135,6 +135,7 @@ let
     ".config/fish/private-env.fish.age"
     ".config/helix"
     ".config/kitty/kitty.conf"
+    ".config/clipcat"
     ".config/mpv"
     ".config/nvim"
     ".config/openrgb/lg213"
@@ -298,6 +299,7 @@ let
 
     i3 = [
       ".config/autostart/autorandr.desktop"
+      ".config/gtk-3.0"
       ".config/dunst"
       ".config/i3"
       ".config/xlogout"
@@ -317,8 +319,6 @@ let
       ".local/bin/i3-run"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
-      ".local/bin/i3-polybar"
-      ".local/bin/i3-polybar-theme"
       ".local/bin/i3-performance-menu"
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"
@@ -531,7 +531,6 @@ let
     ".pi/agent/orgm.json"
     ".pi/agent/pi-crash.log"
     ".pi/agent/settings.json"
-    ".config/gtk-3.0"
     ".config/gtk-4.0/settings.ini"
     ".config/gtk-4.0/orgm-hypr-settings.ini"
     ".config/xsettingsd/xsettingsd.conf"
@@ -750,7 +749,7 @@ in
           .config/qt5ct .config/qt6ct \
           .config/quickshell .config/gtk-4.0 \
           .config/Kvantum \
-          .config/i3 .config/polybar .config/picom \
+          .config/i3 .config/picom \
           .config/labwc \
           .config/conky \
           .icons \

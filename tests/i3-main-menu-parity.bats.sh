@@ -22,7 +22,6 @@ done
 for entry in Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help Power; do
   grep -Fq "$entry" "$MAIN" || fail "main menu entry missing: $entry"
 done
-grep -Fq "'Polybar theme'" "$MAIN" || fail 'main menu entry missing: Polybar theme'
 
 grep -Fq 'Devices) exec i3-devices-menu' "$MAIN" || fail 'Devices submenu dispatch missing'
 grep -Fq 'Calculator) exec i3-calc' "$MAIN" || fail 'Calculator dispatch missing'
@@ -30,8 +29,6 @@ grep -Fq 'Zen) exec i3-zen-new-window' "$MAIN" || fail 'Zen dispatch missing'
 grep -Fq 'Wallpaper) exec i3-wallpaper --random' "$MAIN" || fail 'Wallpaper dispatch missing'
 grep -Fq 'Help) exec i3-hotkeys' "$MAIN" || fail 'Help dispatch missing'
 grep -Fq 'Power) exec xlogout' "$MAIN" || fail 'Power dispatch missing'
-grep -Fq "'Polybar theme') exec i3-polybar-theme select" "$MAIN" ||
-  fail 'Polybar theme selector dispatch missing'
 
 for entry in Displays Wi-Fi Bluetooth Audio Keyboard Storage Back; do
   grep -Fq "$entry" "$DEVICES" || fail "devices menu entry missing: $entry"

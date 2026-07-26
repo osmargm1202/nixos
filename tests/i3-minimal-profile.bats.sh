@@ -9,49 +9,42 @@ I3_ROOT="$ROOT/dotfiles/config/profiles/i3"
 I3_CONFIG="$I3_ROOT/.config/i3/config"
 
 fail() {
-	printf 'FAIL: %s\n' "$*" >&2
-	exit 1
+  printf 'FAIL: %s\n' "$*" >&2
+  exit 1
 }
 
-for forbidden in conky waybar 'hypr-'; do
-	if grep -Eqi "$forbidden" "$PROFILE" "$I3_CONFIG"; then
-		fail "minimal i3 profile still references $forbidden"
-	fi
-	if grep -REqi "$forbidden" "$I3_ROOT"; then
-		fail "minimal i3 dotfile tree still references $forbidden"
-	fi
+for forbidden in conky waybar 'hypr-' polybar eww i3blocks; do
+  if grep -Eqi "$forbidden" "$PROFILE" "$I3_CONFIG"; then
+    fail "i3 profile still references $forbidden"
+  fi
+  if grep -REqi "$forbidden" "$I3_ROOT"; then
+    fail "i3 dotfile tree still references $forbidden"
+  fi
 done
 
-! grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar must not accompany Polybar'
-! grep -Eq 'i3bar_command|status_command|tray_output' "$I3_CONFIG" ||
-  fail 'i3bar configuration remains after switching to Polybar'
-grep -Eq '^[[:space:]]+polybar[[:space:]]*$' "$PROFILE" ||
-  fail 'NixOS i3 integration must install Polybar'
-grep -Fq 'exec_always --no-startup-id $run i3-polybar start' "$I3_CONFIG" ||
-  fail 'i3 does not start Polybar'
+grep -Eq '^[[:space:]]+i3status[[:space:]]*$' "$PROFILE" ||
+  fail 'NixOS i3 integration must install i3status'
+grep -Fq 'bar {' "$I3_CONFIG" || fail 'native i3bar is missing'
+grep -Fq 'status_command i3status' "$I3_CONFIG" || fail 'native i3bar must use default i3status'
+! grep -Eq 'i3bar_command|tray_output|font pango:.*bar' "$I3_CONFIG" ||
+  fail 'i3bar must not carry custom bar settings'
 
-for path in .config/conky .config/picom; do
-	[ ! -e "$I3_ROOT/$path" ] || fail "$path must be removed from i3 dotfiles"
-	if grep -Fq "\"$path\"" "$DOTFILES_MODULE"; then
-		fail "$path must not be deployed for i3"
-	fi
+for path in .config/conky .config/picom .config/polybar; do
+  [ ! -e "$I3_ROOT/$path" ] || fail "$path must be removed from i3 dotfiles"
+  if grep -Fq "\"$path\"" "$DOTFILES_MODULE"; then
+    fail "$path must not be deployed for i3"
+  fi
 done
 
-for helper in i3-polybar-launch i3-status-battery i3-status-cpu-temp i3-status-gpu-temp; do
-	[ ! -e "$I3_ROOT/.local/bin/$helper" ] || fail "$helper must be removed"
-	if grep -Fq "\".local/bin/$helper\"" "$DOTFILES_MODULE"; then
-		fail "$helper must not be deployed"
-	fi
+for helper in i3-polybar i3-polybar-theme i3-gh0stzk-theme i3-polybar-launch i3-status-battery i3-status-cpu-temp i3-status-gpu-temp; do
+  [ ! -e "$I3_ROOT/.local/bin/$helper" ] || fail "$helper must be removed"
+  if grep -Fq "\".local/bin/$helper\"" "$DOTFILES_MODULE"; then
+    fail "$helper must not be deployed"
+  fi
 done
 
 jq -e '
-  all(.shared.paths[]; . != ".config/conky" and . != ".config/picom")
+  all(.shared.paths[]; . != ".config/conky" and . != ".config/picom" and . != ".config/polybar")
 ' "$MANIFEST" >/dev/null || fail 'obsolete i3 desktop paths remain in dotfiles manifest'
 
-! grep -Fqi 'eww' "$PROFILE" "$I3_CONFIG" "$DOTFILES_MODULE" ||
-  fail 'Eww integration remains'
-! grep -Fqi 'i3blocks' "$PROFILE" "$I3_CONFIG" "$DOTFILES_MODULE" ||
-  fail 'i3blocks integration remains'
-! grep -Eqi 'bumblebee|i3status' "$PROFILE" || fail 'legacy status provider remains'
-
-printf 'PASS: i3 uses Polybar without native i3bar or Eww\n'
+printf 'PASS: i3 uses only its native i3bar with default i3status\n'

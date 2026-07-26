@@ -145,6 +145,18 @@ in
       RestartSec = 3;
     };
   };
+  systemd.user.services.i3-clipcat = {
+    description = "Clipcat clipboard history for i3";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
+      Restart = "on-failure";
+      RestartSec = 3;
+    };
+  };
+
+
 
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.fish.loginShellInit = lib.mkAfter ''
@@ -242,7 +254,13 @@ in
     setxkbmap
     xkill
     i3
-    polybar
+    i3status
+    clipcat
+    yazi
+    ueberzugpp
+    ffmpegthumbnailer
+    mediainfo
+    poppler-utils
     fontconfig
     git
     gnused
@@ -261,7 +279,7 @@ in
     # Launchers, notifications, wallpaper and X11 helpers.
     (rofi.override { plugins = [ rofi-calc ]; })
     networkmanager_dmenu
-    clipmenu
+    # Clipboard history is supplied by the persistent Clipcat user service.
     dunst
     feh
     mpv

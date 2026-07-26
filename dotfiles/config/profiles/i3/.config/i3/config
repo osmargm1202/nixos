@@ -16,7 +16,7 @@ exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
 exec --no-startup-id systemctl --user start picom.service
-exec --no-startup-id clipmenud
+exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock --nofork
 exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-monitor-profile --apply
@@ -24,7 +24,6 @@ exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
 exec --no-startup-id i3swallowd
-exec_always --no-startup-id $run i3-polybar start
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id zutty-fast
@@ -205,3 +204,7 @@ client.focused          #7aa2f7 #1a1b26 #c0caf5 #7aa2f7 #1a1b26
 client.focused_inactive #1f2335 #1a1b26 #a9b1d6 #292e42 #1a1b26
 client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
+
+bar {
+  status_command i3status
+}

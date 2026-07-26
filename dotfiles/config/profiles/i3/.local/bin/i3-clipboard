@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export CM_LAUNCHER=rofi
-export CM_HISTLENGTH=20
-cache_base="${CM_DIR:-${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}}"
-cache_file="$cache_base/clipmenu.6.$USER/line_cache"
+runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required for Clipcat}"
+config_template="$HOME/.config/clipcat/clipcat-menu.toml"
+runtime_config="$runtime_dir/clipcat-menu.toml"
 theme="$HOME/.config/rofi/i3-menu.rasi"
 theme_override='configuration { font: "JetBrainsMono Nerd Font 12"; }
 window { width: 600px; }
@@ -12,9 +11,10 @@ listview { lines: 8; }
 element { padding: 5px; cursor: pointer; }
 element-icon { size: 24px; }'
 
-if [[ ! -s "$cache_file" ]]; then
-  notify-send 'Clipboard' 'No clipboard history yet — copia algo primero.' 2>/dev/null || true
-  exit 0
+if ! systemctl --user is-active --quiet i3-clipcat.service; then
+  systemctl --user start i3-clipcat.service
 fi
 
-exec clipmenu -i -p Clipboard -theme "$theme" -theme-str "$theme_override"
+sed "s|@RUNTIME_SOCKET@|$runtime_dir/clipcat/grpc.sock|" "$config_template" > "$runtime_config"
+exec clipcat-menu --config "$runtime_config" --finder rofi \
+  --rofi-extra-arguments "-theme,$theme,-theme-str,$theme_override"

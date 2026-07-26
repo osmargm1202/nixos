@@ -79,10 +79,8 @@ done
 
 grep -Fq 'exec --no-startup-id systemctl --user start picom.service' "$CONFIG" ||
   fail 'i3 does not explicitly start Picom'
-grep -Fq 'exec_always --no-startup-id $run i3-polybar start' "$CONFIG" ||
-  fail 'i3 does not explicitly start Polybar'
-! grep -Eq 'i3bar_command|status_command|tray_output' "$CONFIG" ||
-  fail 'native i3bar configuration remains'
+grep -Fq 'bar {' "$CONFIG" || fail 'native i3bar configuration missing'
+grep -Fq 'status_command i3status' "$CONFIG" || fail 'native i3bar does not use i3status'
 ! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" ||
   fail 'i3blocks integration remains'
 ! grep -Eqi 'bumblebee|i3-nord-powerline' "$PROFILE" "$CONFIG" || fail 'obsolete Bumblebee theme integration remains'

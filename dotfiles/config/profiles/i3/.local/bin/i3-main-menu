@@ -2,8 +2,8 @@
 set -euo pipefail
 
 choice="$(printf '%s\n' \
-  Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper 'Polybar theme' Performance Help 'Edit config' Power \
-  | i3-rofi 'i3' 17 || true)"
+  Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help 'Edit config' Power \
+  | i3-rofi 'i3' 16 || true)"
 
 case "$choice" in
   Apps) exec i3-rofi --drun ;;
@@ -18,7 +18,6 @@ case "$choice" in
   SSH) exec i3-ssh-host ;;
   Devices) exec i3-devices-menu ;;
   Wallpaper) exec i3-wallpaper --random ;;
-  'Polybar theme') exec i3-polybar-theme select ;;
   Performance) exec i3-performance-menu ;;
   Help) exec i3-hotkeys ;;
   'Edit config') exec i3-config-editor ;;
