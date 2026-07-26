@@ -7,12 +7,13 @@ upstream="$config_root/upstream"
 simple="$upstream/simple"
 themes_runtime="$state_root/themes"
 revision_file="$state_root/upstream-revision"
-font_scale_file="$state_root/font-scale-version"
-font_scale_version=2
+render_version_file="$state_root/render-version"
+render_version=9
 selection_file="$state_root/current"
 font_destination="$HOME/.local/share/fonts/adi1090x-polybar-themes"
 upstream_url="https://github.com/adi1090x/polybar-themes.git"
 themes=(blocks colorblocks cuts docky forest grayblocks hack material panels pwidgets shades shapes)
+panel_styles=(budgie deepin elementary elementary_dark gnome kde kde_dark liri mint ubuntu_gnome ubuntu_unity xubuntu zorin)
 
 fail() {
   printf 'i3-polybar: %s\n' "$*" >&2
@@ -63,15 +64,52 @@ scale_font_file() {
   mv "$temporary_file" "$config"
 }
 
-scale_theme_fonts() {
-  local theme_dir="$1" config
+prepare_theme() {
+  local theme="$1" theme_dir="$2" config
 
   shopt -s globstar nullglob
   for config in "$theme_dir"/**/*.ini; do
     scale_font_file "$config"
   done
   shopt -u globstar nullglob
+  if [[ "$theme" == pwidgets ]]; then
+    sed -i 's#killall -q polybar#pkill -x polybar 2>/dev/null || true#' "$theme_dir/launch.sh"
+  fi
+  enable_tray_module "$theme" "$theme_dir"
 }
+enable_tray_module() {
+  local theme="$1" theme_dir="$2" config module_list
+
+  case "$theme" in
+    pwidgets) config="$theme_dir/main.ini"; module_list='modules-center' ;;
+    cuts | hack) config="$theme_dir/config.ini"; module_list='modules-right' ;;
+    *) config="$theme_dir/config.ini"; module_list='modules-right' ;;
+  esac
+
+  sed -i '/^tray-/d' "$config"
+  case "$theme" in
+    pwidgets)
+      sed -i '/^\[bar\/top\]$/,/^\[bar\// { /^modules-center = / s/$/ i3-tray/ }' "$config"
+      ;;
+    cuts | hack)
+      sed -i '/^\[bar\/top\]$/,/^\[bar\// { /^modules-right = / s/$/ i3-tray/ }' "$config"
+      ;;
+    *)
+      sed -i '/^\[bar\/main\]$/,/^\[bar\// { /^modules-right = / s/$/ i3-tray/ }' "$config"
+      ;;
+  esac
+  grep -Eq "^${module_list} = .*i3-tray$" "$config" ||
+    fail "cannot add the system tray to $theme"
+  cat >> "$config" <<'EOF'
+
+[module/i3-tray]
+type = internal/tray
+format-margin = 4pt
+tray-spacing = 4pt
+tray-size = 75%
+EOF
+}
+
 
 
 sync_upstream() {
@@ -94,18 +132,18 @@ sync_upstream() {
   revision="$(git -C "$upstream" rev-parse HEAD)"
   previous_revision="$(cat "$revision_file" 2>/dev/null || true)"
   if [[ "$revision" != "$previous_revision" || ! -d "$themes_runtime" || \
-    "$(cat "$font_scale_file" 2>/dev/null || true)" != "$font_scale_version" ]]; then
+    "$(cat "$render_version_file" 2>/dev/null || true)" != "$render_version" ]]; then
     rm -rf "$themes_runtime"
     install -d "$themes_runtime"
     for theme in "${themes[@]}"; do
       cp -a "$simple/$theme" "$themes_runtime/$theme"
-      scale_theme_fonts "$themes_runtime/$theme"
+      prepare_theme "$theme" "$themes_runtime/$theme"
     done
     install -d "$font_destination"
     cp -a "$upstream/fonts/." "$font_destination"
     fc-cache -f "$font_destination"
     printf '%s\n' "$revision" > "$revision_file"
-    printf '%s\n' "$font_scale_version" > "$font_scale_file"
+    printf '%s\n' "$render_version" > "$render_version_file"
   fi
 
   for theme in "${themes[@]}"; do
@@ -120,7 +158,7 @@ sync_upstream() {
 }
 
 selected_theme() {
-  local theme
+  local theme panel_style
   theme="$(cat "$selection_file" 2>/dev/null || printf panels)"
   for candidate in "${themes[@]}"; do
     [[ "$theme" == "$candidate" ]] && {
@@ -128,18 +166,27 @@ selected_theme() {
       return
     }
   done
+  if [[ "$theme" == panels:* ]]; then
+    panel_style="${theme#panels:}"
+    for candidate in "${panel_styles[@]}"; do
+      [[ "$panel_style" == "$candidate" ]] && {
+        printf '%s\n' "$theme"
+        return
+      }
+    done
+  fi
   printf '%s\n' panels
 }
 
-render_zorin() {
-  local config="$config_root/panels/config.ini"
+render_panel() {
+  local style="$1" config="$config_root/panels/config.ini"
   local battery="" adapter="" interface="" supply type
 
-  cp "$config_root/panels/panel/zorin.ini" "$config"
+  [[ -f "$config_root/panels/panel/$style.ini" ]] || fail "unknown panels style: $style"
+  cp "$config_root/panels/panel/$style.ini" "$config"
   sed -i \
-    -e 's/^tray-position = none$/tray-position = right/' \
-    -e 's#^click-left = ~/.config/polybar/panels/scripts/style-switch.sh --zorin$#click-left = $HOME/.local/bin/i3-polybar-theme select#' \
-    -e 's#^click-right = ~/.config/polybar/panels/scripts/style-switch.sh --zorin$#click-right = $HOME/.local/bin/i3-polybar-theme select#' \
+    -e '/^click-left = .*style-switch\.sh --/c\click-left = $HOME/.local/bin/i3-polybar-theme select' \
+    -e '/^click-right = .*style-switch\.sh --/c\click-right = $HOME/.local/bin/i3-polybar-theme select' \
     -e 's#^click-left  = termite &$#click-left  = kitty \&#' \
     -e 's#^click-left  = firefox &$#click-left  = $HOME/.local/bin/i3-zen-new-window \&#' \
     -e 's#^click-left  = thunar &$#click-left  = nautilus --new-window "$HOME" \&#' \
@@ -167,6 +214,7 @@ render_zorin() {
     sed -i 's/modules-right = style network alsa battery date sysmenu/modules-right = style alsa battery date sysmenu/' "$config"
     sed -i 's/modules-right = style network alsa date sysmenu/modules-right = style alsa date sysmenu/' "$config"
   fi
+  enable_tray_module panels "$config_root/panels"
 }
 
 launch_theme() {
@@ -177,7 +225,11 @@ launch_theme() {
 
   case "$theme" in
     panels)
-      render_zorin
+      render_panel zorin
+      polybar -q main -c "$config_root/panels/config.ini" &
+      ;;
+    panels:*)
+      render_panel "${theme#panels:}"
       polybar -q main -c "$config_root/panels/config.ini" &
       ;;
     hack | cuts)

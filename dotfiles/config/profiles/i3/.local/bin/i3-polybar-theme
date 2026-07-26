@@ -11,6 +11,18 @@ selection_file="$state_root/current"
 
 choice="$(printf '%s\n' \
   'Zorin (Panels)' \
+  'Budgie (Panels)' \
+  'Deepin (Panels)' \
+  'Elementary (Panels)' \
+  'Elementary Dark (Panels)' \
+  'GNOME (Panels)' \
+  'KDE (Panels)' \
+  'KDE Dark (Panels)' \
+  'Liri (Panels)' \
+  'Mint (Panels)' \
+  'Ubuntu GNOME (Panels)' \
+  'Ubuntu Unity (Panels)' \
+  'Xubuntu (Panels)' \
   Blocks \
   Colorblocks \
   Cuts \
@@ -22,10 +34,22 @@ choice="$(printf '%s\n' \
   Pwidgets \
   Shades \
   Shapes \
-  | i3-rofi 'Polybar theme' 12 || true)"
+  | i3-rofi 'Polybar theme' 24 || true)"
 
 case "$choice" in
-  'Zorin (Panels)') theme=panels ;;
+  'Zorin (Panels)') theme=panels:zorin ;;
+  'Budgie (Panels)') theme=panels:budgie ;;
+  'Deepin (Panels)') theme=panels:deepin ;;
+  'Elementary (Panels)') theme=panels:elementary ;;
+  'Elementary Dark (Panels)') theme=panels:elementary_dark ;;
+  'GNOME (Panels)') theme=panels:gnome ;;
+  'KDE (Panels)') theme=panels:kde ;;
+  'KDE Dark (Panels)') theme=panels:kde_dark ;;
+  'Liri (Panels)') theme=panels:liri ;;
+  'Mint (Panels)') theme=panels:mint ;;
+  'Ubuntu GNOME (Panels)') theme=panels:ubuntu_gnome ;;
+  'Ubuntu Unity (Panels)') theme=panels:ubuntu_unity ;;
+  'Xubuntu (Panels)') theme=panels:xubuntu ;;
   Blocks) theme=blocks ;;
   Colorblocks) theme=colorblocks ;;
   Cuts) theme=cuts ;;
