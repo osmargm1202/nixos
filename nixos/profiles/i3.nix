@@ -285,7 +285,6 @@ in
     mpv
     xwinwrap
     arandr
-    xclip
     xdotool
     xkb-switch
 
