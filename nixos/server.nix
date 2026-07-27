@@ -3,6 +3,7 @@
   lib,
   pkgs,
   inputs,
+  userName,
   ...
 }:
 
@@ -11,16 +12,9 @@ let
   sshAuthorizedKeys = [
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD3E7OGvfciRdntcDX3SpWlnu5pBw+RycYPIQO4a7h6Zz5WeUc8gB2YbUXZPdQFTVbvjZnAjMqQGhi89GG3K+xlbAZyXl69fL8+75dbicbzygPK3UJi/57zEIANp1u1EF3+w5WBXBXkIKBUbu5IsNAClYr3jX/yQEl1MOZ+o1q1MwAGFS9eJNnyNEroN9cnoFKXmXIS1INKSoPjDL4CE0dWaenQySkNGJY7gRe3w+/YMR4B6vx5G4JfuRBoegF/O0+x7aEPN2RL1MCNzZ6LAM9KwIC72BVyIW1lDsUv6+UzN/S0LGrAV11KcxaEDFtnenX7L5o2i04jd8BAxZLlDvuz4802qIfiHqC8Q/ez9LNIdXLFTPMe04u6HOSxgJVP3Mfh31ZjVmRKUn93oUQwQYmyAq4TvtyNmGQVDOMLboQsU48lMx4k8HObGm4SuUbLNkIOVqnnnax+XhOuylPou9lV77Wtonxj2lgbKufvbnULIdp5+TXPGGPl/+/mLvKCvKoETGFEkQx7hTJg3rwbt/wcpVLyp3lfzKZQt84cD42qQW1bK4/3C4DDZLZ8XVmSVucM8PEFKPE5uSubF6j1tN/J8CFnhvGGgjRihX8GVhL8UbiVeutTowf/eooQsx2/tymWMF6F3nHXOi4qODR6JI26eMLDBfK0wThHMsFYxJnYaQ== osmarg@orgm"
   ];
-  hasSSHKeys = sshAuthorizedKeys != [ ];
 
-  allowPiholeDNS = true;
-  allowedTCPPorts = [
-    sshPort
-    80
-    443
-  ]
-  ++ lib.optionals allowPiholeDNS [ 53 ];
-  allowedUDPPorts = lib.optionals allowPiholeDNS [ 53 ];
+  allowedTCPPorts = [ sshPort ];
+  allowedUDPPorts = [ ];
 
   fail2ban = {
     enable = true;
@@ -31,7 +25,7 @@ let
 
   autoUpgrade = {
     enable = false;
-    flake = "/home/osmarg/Hobby/nixos#ero-server";
+    flake = "/home/${userName}/Hobby/nixos#${config.networking.hostName}-server";
     dates = "Sun 04:00";
     randomizedDelaySec = "45min";
     allowReboot = false;
@@ -48,13 +42,13 @@ let
     repositoryFile = "/run/secrets/restic-repository";
     passwordFile = "/run/secrets/restic-password";
     paths = [
-      "/home/osmarg"
+      "/home/${userName}"
       "/var/lib/docker/volumes"
     ];
     exclude = [
-      "/home/osmarg/.cache"
-      "/home/osmarg/**/node_modules"
-      "/home/osmarg/**/.venv"
+      "/home/${userName}/.cache"
+      "/home/${userName}/**/node_modules"
+      "/home/${userName}/**/.venv"
       "/var/lib/docker/overlay2"
       "/var/lib/docker/tmp"
     ];
@@ -62,7 +56,6 @@ let
 in
 {
   imports = [
-    ./ai/default.nix
     ./tailscale.nix
     ./clean.nix
   ];
@@ -80,7 +73,7 @@ in
     ];
     trusted-users = [
       "root"
-      "osmarg"
+      userName
     ];
   };
   nix.gc = {
@@ -99,10 +92,6 @@ in
       inherit allowedTCPPorts allowedUDPPorts;
       checkReversePath = "loose";
     };
-    nameservers = [
-      "1.1.1.1"
-      "9.9.9.9"
-    ];
   };
 
   services.resolved.enable = false;
@@ -111,9 +100,9 @@ in
   i18n.defaultLocale = "en_US.UTF-8";
 
   users.mutableUsers = true;
-  users.users.osmarg = {
+  users.users.${userName} = {
     isNormalUser = true;
-    description = "osmar";
+    description = userName;
     shell = pkgs.fish;
     extraGroups = [
       "wheel"
@@ -127,15 +116,15 @@ in
   programs.fish.enable = true;
   programs.git.enable = true;
 
-  security.sudo.wheelNeedsPassword = true;
+  security.sudo.wheelNeedsPassword = false;
 
   services.openssh = {
     enable = true;
     ports = [ sshPort ];
     openFirewall = false;
     settings = {
-      PasswordAuthentication = !hasSSHKeys;
-      KbdInteractiveAuthentication = !hasSSHKeys;
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
       X11Forwarding = false;
     };

@@ -100,6 +100,16 @@ in
     terminal = terminal { };
     server = server { };
 
+    jarq-server = server {
+      hostName = "jarq";
+      hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
+      userName = "osmarg";
+      extraModules = [
+        ./nixos/hardware/gpu/intel.nix
+        ./nixos/hosts/jarq/server.nix
+        ./server/modules
+      ];
+    };
     jarq-terminal = terminal {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;

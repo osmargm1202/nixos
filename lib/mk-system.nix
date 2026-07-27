@@ -43,7 +43,6 @@ let
           ]
         else if role == "server" then
           [
-            ../nixos/ai/default.nix
             hardware
             ../nixos/server.nix
             { networking.hostName = hostName; }
