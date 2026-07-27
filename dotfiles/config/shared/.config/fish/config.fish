@@ -25,7 +25,9 @@ if test -f $host_config
     source $host_config
 end
 
-type -q load_private_env; and load_private_env
+if status is-interactive
+    type -q load_private_env; and load_private_env
+end
 
 if test -f ~/.config/fish/insforge.env
     source ~/.config/fish/insforge.env
