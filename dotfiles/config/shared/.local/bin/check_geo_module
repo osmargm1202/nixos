@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+if pgrep -x geoclue >/dev/null; then
+  printf '%s\n' '{"text":"󰆤", "tooltip":"Geopositioning", "alt":"Geo"}'
+fi

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+printf '\n'
+lsd -Alg
+printf '\n\n'

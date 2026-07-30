@@ -23,8 +23,12 @@ grep -Fq 'matchEdid = true;' "$PROFILE" || fail 'autorandr must match physical m
 [ -f "$AUTOSTART" ] || fail 'i3 Autorandr autostart override missing'
 grep -Fq 'Hidden=true' "$AUTOSTART" || fail 'packaged Autorandr XDG startup must be disabled'
 if grep -Fq 'Exec=' "$AUTOSTART"; then fail 'disabled Autorandr desktop still executes'; fi
-grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply' "$CONFIG" ||
-  fail 'i3 login profile restore missing'
+grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply --quiet' "$CONFIG" ||
+  fail 'i3 login profile restore must not notify'
+grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" ||
+  fail 'i3 login must keep the display awake while idle'
+grep -Fq 'exec --no-startup-id $run i3-start-discord-background' "$CONFIG" ||
+  fail 'Discord login launch must use the background launcher'
 grep -Fq 'bindsym $mod+p exec --no-startup-id $run i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
 grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu does not open monitor profiles'
 
@@ -67,6 +71,10 @@ export AUTORANDR_CALLS="$tmp/calls" NOTIFY_CALLS="$tmp/notifications"
 PATH="$tmp/bin:$PATH" "$HELPER" --save docked
 PATH="$tmp/bin:$PATH" "$HELPER" --apply
 PATH="$tmp/bin:$PATH" "$HELPER" --load docked
+notification_count="$(wc -l <"$tmp/notifications")"
+PATH="$tmp/bin:$PATH" "$HELPER" --apply --quiet
+[[ "$(wc -l <"$tmp/notifications")" -eq "$notification_count" ]] ||
+  fail 'quiet apply emitted a startup notification'
 grep -Fxq -- '--save docked --force' "$tmp/calls" || fail 'save did not persist named profile'
 grep -Fxq -- '--change --force --default horizontal --match-edid' "$tmp/calls" || fail 'apply did not detect by EDID and restore profile'
 grep -Fxq -- '--load docked --force' "$tmp/calls" || fail 'load did not restore named profile'

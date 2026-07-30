@@ -121,13 +121,9 @@ entries() {
       entry 'Brightness +/-' 'Brillo' 'brightness-osd up/down'
       ;;
     system)
-      entry 'Win+P' 'Pantallas' 'nwg-displays'
-      entry 'Win+Ctrl+,' 'Pantallas' 'nwg-displays'
-      entry 'Win+Alt+E' 'Power menu' 'nwg-bar'
+      entry 'Win+Alt+E' 'Power menu' 'hypr-power-menu'
       entry 'Win+Alt+L' 'Lock' 'hyprlock'
-      entry 'Win+N' 'Notificaciones' 'swaync-client -t -sw'
-      entry 'Win+Ctrl+Shift+M' 'Limpiar notificaciones' 'swaync-client -C'
-      entry 'Win+Alt+W' 'Selector de wallpapers' 'skwd wall toggle'
+      entry 'Win+Alt+W' 'Fondo aleatorio' 'hypr-wallpaper random'
       entry 'Win+Shift+W' 'Chromium' 'chromium'
       entry 'Ctrl+Space' 'Cambiar teclado' 'hyprctl switchxkblayout all next'
       entry 'Win+Shift+E' 'Salir Hyprland' 'exit'

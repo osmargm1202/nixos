@@ -63,15 +63,15 @@
       "format": "{}",
       "tooltip": true,
       "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e fish -lc btop"
+      "on-click-right": "kitty --class memclean-dev -e bash -c 'memclean-dev dry-run; printf \"\\n\"; read -r -p \"enter...\"'",
+      "on-click-middle": "kitty -e bash -ic btop"
     },
 
     "custom/nixclean": {
       "format": "󰃢",
       "tooltip": true,
       "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
-      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
+      "on-click": "kitty --class nixclean -e bash -c 'nixclean; printf \"\\n\"; read -r -p \"enter...\"'"
     },
 
     "bluetooth": {
@@ -86,11 +86,11 @@
       "on-click": "blueman-manager"
     },
 
-    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e fish -lc btop" },
-    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e fish -lc btop" },
-    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e fish -lc btop" },
-    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e fish -lc btop" },
-    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e fish -lc btop" },
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e bash -ic btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total} total", "on-click": "kitty -e bash -ic btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e bash -ic btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e bash -ic btop" },
+    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e bash -ic btop" },
 
     "group/system": {
       "orientation": "horizontal",
@@ -129,7 +129,7 @@
       "modules": [{ "type": "audio-in" }, { "type": "screenshare" }]
     },
     "tray": { "icon-size": 21, "spacing": 10 },
-    "custom/logout_menu": { "format": "⏻", "tooltip": false, "on-click": "fish -c wlogout_uniqe" }
+    "custom/logout_menu": { "format": "⏻", "tooltip": false, "on-click": "wlogout_uniqe" }
   },
   {
     "name": "bottom_bar",
@@ -153,11 +153,11 @@
       "player-icons": { "default": "󰎈" }, "status-icons": { "paused": "󰏤" },
       "max-length": 45, "on-click": "playerctl play-pause", "on-click-right": "playerctl next", "on-click-middle": "playerctl previous"
     },
-    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e fish -lc btop" },
-    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e fish -lc btop" },
-    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e fish -lc btop" },
-    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e fish -lc btop" },
-    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e fish -lc btop" },
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e bash -ic btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total} total", "on-click": "kitty -e bash -ic btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e bash -ic btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e bash -ic btop" },
+    "custom/swap": { "exec": "waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e bash -ic btop" },
     "group/usage": {
       "orientation": "horizontal",
       "modules": ["cpu", "memory", "temperature", "disk#ssd", "custom/swap"]
@@ -188,15 +188,15 @@
       "format": "{}",
       "tooltip": true,
       "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e fish -lc btop"
+      "on-click-right": "kitty --class memclean-dev -e bash -c 'memclean-dev dry-run; printf \"\\n\"; read -r -p \"enter...\"'",
+      "on-click-middle": "kitty -e bash -ic btop"
     },
 
     "custom/nixclean": {
       "format": "󰃢",
       "tooltip": true,
       "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
-      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
+      "on-click": "kitty --class nixclean -e bash -c 'nixclean; printf \"\\n\"; read -r -p \"enter...\"'"
     },
 
     "custom/kbd_layout": {

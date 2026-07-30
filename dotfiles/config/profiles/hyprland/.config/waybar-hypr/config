@@ -43,7 +43,7 @@
     "custom/menu": {
       "format": "",
       "tooltip": true,
-      "tooltip-format": "Abrir menú ORGM-HYPR",
+      "tooltip-format": "Abrir menú principal",
       "on-click": "hypr-main-menu"
     },
     "custom/ws_1": {
@@ -149,52 +149,13 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Selector de wallpapers",
-      "on-click": "skwd wall toggle"
-    },
-    "custom/usb_devices": {
-      "exec": "hypr-usb-menu status",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "hypr-usb-menu open",
-      "on-click-right": "hypr-usb-menu nickname"
-    },
-    "custom/memclean": {
-      "exec": "memclean-dev status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e fish -lc btop"
-    },
-    "custom/nixclean": {
-      "format": "󰃢",
-      "tooltip": true,
-      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
-      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
-    },
-    "custom/headset_reconnect": {
-      "format": "󰋋",
-      "tooltip": true,
-      "tooltip-format": "Reconectar headset USB",
-      "on-click": "hypr-bluetooth-reconnect"
+      "on-click": "hypr-wallpaper random"
     },
     "custom/hardware_fetch": {
       "format": "󰌢",
       "tooltip": true,
       "tooltip-format": "Hardware / Fastfetch",
-      "on-click": "kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i'"
-    },
-    "custom/pi_status": {
-      "exec": "waybar-pi-status",
-      "return-type": "json",
-      "interval": 900,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "kitty --title pi-update -e fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
+      "on-click": "kitty --title hardware-fastfetch -e bash -ic 'fastfetch --config \"$HOME/.config/fastfetch/hardware.jsonc\"; printf \"\\n\"; exec bash -i'"
     },
     "bluetooth": {
       "format": "󰂯",
@@ -212,29 +173,29 @@
     "cpu": {
       "format": " {usage}%",
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "memory": {
       "format": " {percentage}%",
       "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "temperature": {
       "format": " {temperatureC}°C",
       "critical-threshold": 85,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "disk#ssd": {
       "path": "/",
       "format": "󰋊 SSD {percentage_used}%",
       "tooltip-format": "{used} used / {total} total",
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "custom/swap": {
       "exec": "waybar-swap-usage",
       "interval": 5,
       "tooltip": false,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "group/system": {
       "orientation": "horizontal",
@@ -266,8 +227,8 @@
         ]
       },
       "on-click": "pamixer -t",
-      "on-click-middle": "hypr-audio-device-menu output",
-      "on-click-right": "pavucontrol",
+      "on-click-middle": "kitty -e pulsemixer",
+      "on-click-right": "kitty -e pulsemixer",
       "max-volume": 150
     },
     "pulseaudio/slider": {
@@ -281,8 +242,8 @@
       "format-source": "󰍬",
       "format-source-muted": "󰍭",
       "on-click": "pamixer --default-source -t",
-      "on-click-middle": "hypr-audio-device-menu input",
-      "on-click-right": "pavucontrol",
+      "on-click-middle": "kitty -e pulsemixer",
+      "on-click-right": "kitty -e pulsemixer",
       "max-volume": 150
     },
     "pulseaudio/slider#microphone": {
@@ -444,7 +405,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "custom/metric_gpu": {
       "exec": "waybar-metric-widget gpu",
@@ -454,7 +415,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "custom/metric_ram": {
       "exec": "waybar-metric-widget ram",
@@ -464,7 +425,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "custom/metric_ssd": {
       "exec": "waybar-metric-widget ssd",
@@ -474,7 +435,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "custom/metric_swap": {
       "exec": "waybar-metric-widget swap",
@@ -484,7 +445,7 @@
       "markup": "pango",
       "escape": false,
       "tooltip": true,
-      "on-click": "kitty -e fish -lc btop"
+      "on-click": "kitty -e bash -ic btop"
     },
     "group/usage": {
       "orientation": "horizontal",
@@ -532,8 +493,8 @@
     "custom/menu": {
       "format": "󰍜",
       "tooltip": true,
-      "tooltip-format": "Herramientas / Tweaks",
-      "on-click": "hypr-tweaks-menu",
+      "tooltip-format": "Menú principal",
+      "on-click": "hypr-main-menu",
       "on-click-right": "hypr-main-menu"
     },
     "custom/power_profile": {
@@ -572,59 +533,17 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Selector de wallpapers",
-      "on-click": "skwd wall toggle"
+      "on-click": "hypr-wallpaper random"
     },
 
-    "custom/usb_devices": {
-      "exec": "hypr-usb-menu status",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "hypr-usb-menu open",
-      "on-click-right": "hypr-usb-menu nickname"
-    },
-
-    "custom/headset_reconnect": {
-      "format": "󰋋",
-      "tooltip": true,
-      "tooltip-format": "Reconectar headset USB",
-      "on-click": "hypr-bluetooth-reconnect"
-    },
-
-    "custom/memclean": {
-      "exec": "memclean-dev status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
-      "on-click-middle": "kitty -e fish -lc btop"
-    },
-
-    "custom/nixclean": {
-      "format": "󰃢",
-      "tooltip": true,
-      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
-      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
-    },
 
     "custom/hardware_fetch": {
       "format": "󰌢",
       "tooltip": true,
       "tooltip-format": "Hardware / Fastfetch",
-      "on-click": "kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i'"
+      "on-click": "kitty --title hardware-fastfetch -e bash -ic 'fastfetch --config \"$HOME/.config/fastfetch/hardware.jsonc\"; printf \"\\n\"; exec bash -i'"
     },
 
-    "custom/pi_status": {
-      "exec": "waybar-pi-status",
-      "return-type": "json",
-      "interval": 900,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "kitty --title pi-update -e fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
-    },
 
     "custom/hypr_config_editor": {
       "format": "",

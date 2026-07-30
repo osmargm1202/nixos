@@ -16,46 +16,10 @@
       url = "github:linuxmint/cinnamon-spices-extensions";
       flake = false;
     };
-    hyprland = {
-      # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
-      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-    };
-    hyprdeck = {
-      # Lua tab-group plugin for Hyprland's Lua config API.
-      url = "github:chpock/hyprdeck";
-      flake = false;
-    };
-    hyprland-scroll-overview = {
-      # Native Hyprland plugin (compiled .so) -- must follow our exact
-      # Hyprland rev or the plugin ABI hash check fails at load time.
-      url = "github:yayuuu/hyprland-scroll-overview";
-      inputs.hyprland.follows = "hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprpaper = {
-      # Keep hyprpaper IPC compatible with latest Hyprland/hyprctl.
-      url = "github:hyprwm/hyprpaper";
-    };
-    nwg-dock-hyprland-src = {
-      # Track upstream git so dock focus behavior can follow Hyprland changes.
-      url = "github:nwg-piotr/nwg-dock-hyprland";
-      flake = false;
-    };
-    waybar-source-target-src = {
-      # PulseAudio source-slider support merged after the 0.15.0 tag.
-      # PR: https://github.com/Alexays/Waybar/pull/4908
-      url = "github:Alexays/Waybar/d2a082933a1dfcc3e518f94b046c8caf328db011";
-      flake = false;
-    };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
       url = "github:osmargm1202/shell";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    skwd-wall = {
-      # Osmar fork of the standalone selector; it carries the matching
-      # skwd-daemon package and user service.
-      url = "github:osmargm1202/skwd-wall";
     };
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";

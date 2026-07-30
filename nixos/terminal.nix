@@ -42,7 +42,7 @@ in
   nix.settings.trusted-users = [ "root" userName ];
 
   # Mismo pin de registry que common.nix: `nix run nixpkgs#app` (aliases
-  # fish de apps efimeras) comparte el store del sistema.
+  # Bash de apps efimeras) comparte el store del sistema.
   nix.registry = lib.mkIf (inputs != null) {
     nixpkgs.flake = inputs.nixpkgs;
     herdr.flake = inputs.herdr;
@@ -87,9 +87,16 @@ in
     "kernel.unprivileged_userns_clone" = 1;
   };
 
-  programs.fish.enable = true;
-  programs.zoxide.enable = true;
-  programs.starship.enable = true;
+  programs.bash = {
+    enable = true;
+    completion.enable = true;
+    blesh.enable = true;
+    loginShellInit = ''
+      if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+        . "$HOME/.bashrc"
+      fi
+    '';
+  };
   programs.git = {
     enable = true;
     config.user.name = "osmar";
@@ -128,7 +135,7 @@ in
     isNormalUser = true;
     uid = 1000;
     description = userName;
-    shell = pkgs.fish;
+    shell = pkgs.bashInteractive;
     group = userName;
     subUidRanges = [ { startUid = 100000; count = 65536; } ];
     subGidRanges = [ { startGid = 100000; count = 65536; } ];
@@ -162,7 +169,9 @@ in
     gnumake
     ntfs3g
     # shell + tooling
-    fish
+    bashInteractive
+    bash-completion
+    blesh
     zellij
     fzf
     fd
@@ -173,8 +182,9 @@ in
     delta
     eza
     zoxide
+    starship
     trash-cli
-    # monitors (btop/fastfetch/ncdu: efimeras via alias fish)
+    # monitors (btop/fastfetch/ncdu: efimeras via aliases Bash)
     htop
     # editors
     helix

@@ -64,6 +64,16 @@ printf 'feh' >>"$CALLS"
 printf ' <%s>' "$@" >>"$CALLS"
 printf '\n' >>"$CALLS"
 STUB
+cat >"$TMP/bin/ffmpeg" <<'STUB'
+#!/usr/bin/env bash
+input=''
+previous=''
+for argument in "$@"; do
+  [[ "$previous" == -i ]] && input="$argument"
+  previous="$argument"
+done
+cp -- "$input" "${!#}"
+STUB
 cat >"$TMP/bin/notify-send" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${NOTIFY_CALLS:-/dev/null}"
@@ -101,6 +111,10 @@ grep -Fxq "feh <--bg-fill> <$shared> <$shared>" "$TMP/calls" ||
 [[ -L "$TMP/state/i3/wallpapers" ]] || fail 'shared state is not an atomic generation pointer'
 [[ "$(cat "$TMP/state/i3/wallpapers/.default")" == "$shared" ]] || fail 'generation default missing'
 [[ ! -e "$TMP/state/i3/wallpapers/eDP-1" ]] || fail 'shared mode did not clear output override'
+lock_image="$TMP/state/i3/lock_screen.png"
+[[ "$(cat "$TMP/state/i3/lock_screen")" == "$lock_image" ]] ||
+  fail 'wallpaper did not publish a PNG lock image pointer'
+cmp -s "$shared" "$lock_image" || fail 'lock image is not the applied wallpaper snapshot'
 grep -Fq 'exec {wallpaper_lock_fd}<"$state_dir"' "$HELPER" ||
   fail 'wallpaper lock does not use non-truncating directory descriptor'
 grep -Fq 'flock -x "$wallpaper_lock_fd"' "$HELPER" || fail 'wallpaper transactions are not serialized'

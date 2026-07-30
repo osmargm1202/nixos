@@ -2,8 +2,8 @@
 # Shared Rofi helpers for Hyprland menus. Source this file; do not execute it.
 
 hypr_rofi_load_env() {
-  HYPR_ROFI_THEME="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-  HYPR_ROFI_ENV="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+  HYPR_ROFI_THEME="${HYPR_ROFI_THEME:-$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi}"
+  HYPR_ROFI_ENV="${HYPR_ROFI_ENV:-$HOME/.config/orgm-hypr/rofi/hypr-menu.env}"
 
   if [ -f "$HYPR_ROFI_ENV" ]; then
     # shellcheck disable=SC1090

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+archive=${1:?"usage: archive-preview <archive>"}
+case $archive in
+  *.tar.gz|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.txz|*.zip|*.rar|*.7z)
+    exec ouch list --tree --no "$archive"
+    ;;
+esac
+exit 1

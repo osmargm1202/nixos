@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+if ! pidof wlogout >/dev/null; then
+  exec wlogout
+fi

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+quiet=0
+
 notify() {
-  notify-send -a 'i3-displays' -t 1800 'Displays' "$1" 2>/dev/null || true
+  ((quiet)) || notify-send -a 'i3-displays' -t 1800 'Displays' "$1" 2>/dev/null || true
 }
 
 restore_wallpaper() {
@@ -58,7 +60,14 @@ load_profile() {
 }
 
 case "${1:-}" in
-  --apply) apply_profile ;;
+  --apply)
+    case "${2:-}" in
+      '') ;;
+      --quiet) quiet=1 ;;
+      *) printf 'usage: %s [--apply [--quiet]|--save NAME|--load NAME|--list]\n' "${0##*/}" >&2; exit 2 ;;
+    esac
+    apply_profile
+    ;;
   --save) save_profile "${2:-}" ;;
   --load) load_profile "${2:-}" ;;
   --list) exec autorandr ;;
@@ -75,7 +84,7 @@ case "${1:-}" in
     esac
     ;;
   *)
-    printf 'usage: %s [--apply|--save NAME|--load NAME|--list]\n' "${0##*/}" >&2
+    printf 'usage: %s [--apply [--quiet]|--save NAME|--load NAME|--list]\n' "${0##*/}" >&2
     exit 2
     ;;
 esac

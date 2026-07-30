@@ -38,7 +38,6 @@ local utilities = {
   { class = "^(pavucontrol)$", size = "760 520" },
   { class = "^(blueman-manager)$", size = "760 520" },
   { class = "^(nm-connection-editor)$", size = "820 560" },
-  { class = "^(nwg-displays)$", size = "980 640" },
   { class = "^(org.gnome.FileRoller)$", size = "820 560" },
 }
 

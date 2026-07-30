@@ -25,7 +25,7 @@ let
 
       LOG_TAG="tailscale-peer-monitor"
       STATE_DIR="''${STATE_DIRECTORY:-/var/lib/tailscale-peer-monitor}"
-      EVENT_FILE="$STATE_DIR/events.tsv"
+      EVENT_FILE="$STATE_DIR/events-v2.tsv"
       STATE_FILE="$STATE_DIR/peer-status.tsv"
 
       collect_peers() {
@@ -58,6 +58,8 @@ let
         local host="$1"
         local ip="$2"
         local state="$3"
+        local event_id
+        local event_tmp
         local message
 
         if [ "$state" = "online" ]; then
@@ -66,8 +68,16 @@ let
           message="''${host} (''${ip}) se desconectó"
         fi
 
+        event_id="$(date +%s%N)"
         printf '%s\n' "$message" | systemd-cat -t "$LOG_TAG" -p info || true
-        printf '%s\t%s\t%s\n' "$host" "$ip" "$state" >> "$EVENT_FILE"
+        printf '%s\t%s\t%s\t%s\n' "$event_id" "$host" "$ip" "$state" >> "$EVENT_FILE"
+
+        if [ "$(wc -l < "$EVENT_FILE")" -gt 1000 ]; then
+          event_tmp="$(mktemp "$STATE_DIR/events.XXXXXX")"
+          tail -n 1000 "$EVENT_FILE" > "$event_tmp"
+          chmod 0644 "$event_tmp"
+          mv "$event_tmp" "$EVENT_FILE"
+        fi
       }
 
       main() {
@@ -79,9 +89,9 @@ let
         if ! current="$(collect_peers)"; then
           return
         fi
-
-        mkdir -p "$STATE_DIR" "$(dirname "$EVENT_FILE")"
+        mkdir -p "$STATE_DIR"
         touch "$EVENT_FILE"
+        chmod 0644 "$EVENT_FILE"
         if [ ! -f "$STATE_FILE" ]; then
           printf '%s\n' "$current" > "$STATE_FILE"
           return
@@ -131,47 +141,66 @@ let
       set -euo pipefail
 
       LOG_TAG="tailscale-peer-notifier"
-      EVENT_FILE="/var/lib/tailscale-peer-monitor/events.tsv"
+      EVENT_FILE="/var/lib/tailscale-peer-monitor/events-v2.tsv"
       STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/tailscale-peer-monitor"
-      OFFSET_FILE="$STATE_DIR/notification-offset"
+      CURSOR_FILE="$STATE_DIR/last-event-id"
 
       mkdir -p "$STATE_DIR"
+      [ -r "$EVENT_FILE" ] || exit 0
 
-      if [ -r "$EVENT_FILE" ]; then
-        total_lines="$(wc -l < "$EVENT_FILE")"
-        offset=0
-        if [ -f "$OFFSET_FILE" ]; then
-          read -r offset < "$OFFSET_FILE" || offset=0
-        fi
+      latest_event="$(tail -n 1 "$EVENT_FILE")"
+      [ -n "$latest_event" ] || exit 0
+      IFS=$'\t' read -r latest_event_id _ <<< "$latest_event"
 
-        if ! [[ "$offset" =~ ^[0-9]+$ ]] || [ "$total_lines" -lt "$offset" ]; then
-          offset=0
-        fi
-
-        if [ "$total_lines" -gt "$offset" ]; then
-          start_line=$((offset + 1))
-          events="$(tail -n "+$start_line" "$EVENT_FILE")"
-          while IFS=$'\t' read -r host ip state; do
-            [ -z "''${host:-}" ] && continue
-
-            if [ "$state" = "online" ]; then
-              title="Tailscale: equipo en línea"
-              message="''${host} (''${ip}) volvió en línea"
-            else
-              title="Tailscale: equipo desconectado"
-              message="''${host} (''${ip}) se desconectó"
-            fi
-
-            if notify-send -a Tailscale -u normal "$title" "$message"; then
-              offset=$((offset + 1))
-              printf '%s\n' "$offset" > "$OFFSET_FILE"
-            else
-              printf '%s\n' "No se pudo mostrar: $message" | systemd-cat -t "$LOG_TAG" -p warning || true
-              break
-            fi
-          done <<< "$events"
-        fi
+      if [ ! -f "$CURSOR_FILE" ]; then
+        printf '%s\n' "$latest_event_id" > "$CURSOR_FILE"
+        exit 0
       fi
+
+      read -r last_event_id < "$CURSOR_FILE" || last_event_id=""
+      if ! [[ "$last_event_id" =~ ^[0-9]+$ ]]; then
+        printf '%s\n' "$latest_event_id" > "$CURSOR_FILE"
+        exit 0
+      fi
+
+      cursor_found=false
+      while IFS=$'\t' read -r event_id _; do
+        if [ "$event_id" = "$last_event_id" ]; then
+          cursor_found=true
+          break
+        fi
+      done < "$EVENT_FILE"
+
+      if [ "$cursor_found" != true ]; then
+        printf '%s\n' "Cursor de eventos expiró; se omiten eventos históricos." | systemd-cat -t "$LOG_TAG" -p info || true
+        printf '%s\n' "$latest_event_id" > "$CURSOR_FILE"
+        exit 0
+      fi
+
+      after_cursor=false
+      while IFS=$'\t' read -r event_id host ip state; do
+        if [ "$after_cursor" = false ]; then
+          if [ "$event_id" = "$last_event_id" ]; then
+            after_cursor=true
+          fi
+          continue
+        fi
+
+        if [ "$state" = "online" ]; then
+          title="Tailscale: equipo en línea"
+          message="''${host} (''${ip}) volvió en línea"
+        else
+          title="Tailscale: equipo desconectado"
+          message="''${host} (''${ip}) se desconectó"
+        fi
+
+        if notify-send -a Tailscale -u normal "$title" "$message"; then
+          printf '%s\n' "$event_id" > "$CURSOR_FILE"
+        else
+          printf '%s\n' "No se pudo mostrar: $message" | systemd-cat -t "$LOG_TAG" -p warning || true
+          exit 1
+        fi
+      done < "$EVENT_FILE"
     '';
   };
 in

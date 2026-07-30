@@ -3,7 +3,7 @@
 let
   # Emuladores efimeros: closures de GBs que no vale la pena tener
   # instalados. Se lanzan con `nix run` (cache binario, mismo nixpkgs
-  # del sistema via registry pin) desde el launcher o el alias fish.
+  # del sistema via registry pin) desde el launcher o el alias Bash.
   mkEphemeralEmulator =
     {
       name,

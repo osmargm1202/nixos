@@ -5,14 +5,6 @@
 }:
 
 let
-  # Expose only a uniquely named fallback; installing i3lock-color directly
-  # would collide with i3lock-fancy's bin/i3lock symlink.
-  i3lockColorFallback = pkgs.writeShellApplication {
-    name = "i3lock-color-fallback";
-    text = ''
-      exec ${lib.getExe' pkgs.i3lock-color "i3lock-color"} "$@"
-    '';
-  };
   # The pinned NixOS Picom module serializes every list with square brackets,
   # but libconfig requires parentheses for lists of rule/animation groups.
   # Generate the native config directly until that module formatter is fixed.
@@ -128,6 +120,15 @@ in
     windowManager.i3.enable = true;
   };
   services.displayManager.defaultSession = "none+i3";
+  # Suspend when the lid closes, but never suspend merely because the session
+  # has been idle.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchDocked = "suspend";
+    IdleAction = "ignore";
+  };
+
 
   services.autorandr = {
     enable = true;
@@ -159,10 +160,10 @@ in
 
 
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
-  programs.fish.loginShellInit = lib.mkAfter ''
-    if test (tty) = /dev/tty1; and not set -q DISPLAY
+  programs.bash.loginShellInit = lib.mkAfter ''
+    if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then
       exec startx /etc/X11/xinit/xinitrc
-    end
+    fi
   '';
 
   services.libinput.enable = true;
@@ -267,10 +268,7 @@ in
     iproute2
     procps
     picom-pijulius
-    (i3lock-fancy.override {
-      screenshotCommand = "${scrot}/bin/scrot -z -o";
-    })
-    i3lockColorFallback
+    i3lock-color
     ngcbgI3Tools.autotiling
     ngcbgI3Tools.rootbtnd
     ngcbgI3Tools.i3swallow
@@ -310,7 +308,7 @@ in
     # User controls and X11 screen recording.
     flameshot
     ffcast
-    imagemagick
+    ffmpeg
     brightnessctl
     pamixer
     playerctl

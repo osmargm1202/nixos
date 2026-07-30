@@ -35,12 +35,11 @@ else \
   echo "No es un repositorio Git"; \
 fi; \
 printf '\n===== SHELLS Y HERRAMIENTAS =====\n'; \
-for c in bash fish zsh git docker podman distrobox tmux nvim vim code python python3 node npm pnpm bun go rustc cargo; do \
+for c in bash zsh git docker podman distrobox tmux nvim vim code python python3 node npm pnpm bun go rustc cargo; do \
   command -v "$c" >/dev/null 2>&1 && echo "$c: $(command -v "$c")"; \
 done; \
 printf '\n===== VERSIONES =====\n'; \
 bash --version 2>/dev/null | head -n1; \
-fish --version 2>/dev/null; \
 zsh --version 2>/dev/null; \
 git --version 2>/dev/null; \
 docker --version 2>/dev/null; \

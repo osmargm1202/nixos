@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+waiting=$(dunstctl count waiting)
+displayed=$(dunstctl count displayed)
+enabled='{ "text": "󰂜", "tooltip": "notifications <span color='"'"'#a6da95'"'"'>on</span>", "class": "on" }'
+disabled='{ "text": "󰪑", "tooltip": "notifications <span color='"'"'#ee99a0'"'"'>off</span>", "class": "off" }'
+
+if [[ $displayed != 0 ]]; then
+  enabled="{ \"text\": \"󰂚${displayed}\", \"tooltip\": \"${displayed} notifications\", \"class\": \"on\" }"
+fi
+if [[ $waiting != 0 ]]; then
+  disabled="{ \"text\": \"󰂛${waiting}\", \"tooltip\": \"(silent) ${waiting} notifications\", \"class\": \"off\" }"
+fi
+
+if dunstctl is-paused | rg -q false; then
+  printf '%s\n' "$enabled"
+else
+  printf '%s\n' "$disabled"
+fi

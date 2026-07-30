@@ -56,8 +56,8 @@ function M.setup(programs)
   hl.bind("Print",                          hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'), { description = "Screenshot region" })
   hl.bind("CTRL + Print",                   hl.dsp.exec_cmd("grim - | swappy -f -"),               { description = "Screenshot full screen" })
   hl.bind("ALT + Print",                    hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'), { description = "Screenshot region (alt)" })
-  hl.bind(mainMod .. " + Print",            hl.dsp.exec_cmd("fish -c record_screen_mp4"),           { description = "Record screen (mp4)" })
-  hl.bind(mainMod .. " + SHIFT + Print",    hl.dsp.exec_cmd("fish -c record_screen_gif"),           { description = "Record screen (gif)" })
+  hl.bind(mainMod .. " + Print",            hl.dsp.exec_cmd("record_screen_mp4"),           { description = "Record screen (mp4)" })
+  hl.bind(mainMod .. " + SHIFT + Print",    hl.dsp.exec_cmd("record_screen_gif"),           { description = "Record screen (gif)" })
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab",           hl.dsp.focus({ last = true }),                    { description = "Switch to last window" })

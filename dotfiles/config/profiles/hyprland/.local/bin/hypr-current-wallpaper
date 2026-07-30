@@ -1,15 +1,15 @@
 #!/bin/sh
 set -eu
 
-runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
-cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}"
-current="${cache_dir}/skwd-wall/wallpaper/current.jpg"
+runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
+current="${state_dir}/current"
 fallback="${HOME}/.config/wallpapers/xnm1-background.png"
 out="${runtime_dir}/hypr-current-wallpaper"
 
 wallpaper="$fallback"
-if [ -f "$current" ]; then
-  wallpaper="$current"
+if [ -s "$current" ] && [ -f "$(cat "$current")" ]; then
+  wallpaper="$(cat "$current")"
 fi
 
 ln -sfn "$wallpaper" "$out"

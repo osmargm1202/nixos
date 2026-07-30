@@ -7,14 +7,14 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 
 choice="$(printf '%s\n' \
   '󰀻 App launcher' \
-  '󰣆 Web App Maker' \
+  '󰆍 Zutty Fast' \
   '󰖟 Zen new window' \
   '󰠮 Obsidian' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Apps' || true)"
 
 case "$choice" in
   *'App launcher') hypr_rofi_drun ;;
-  *'Web App Maker') exec hypr-webapp-maker ;;
+  *'Zutty Fast') exec zutty-fast ;;
   *'Zen new window') exec hypr-zen-new-window ;;
   *'Obsidian') exec hypr-obsidian-open-or-focus ;;
   *) exec hypr-main-menu ;;

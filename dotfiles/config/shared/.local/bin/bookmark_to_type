@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+[[ -r .bookmarks ]] || exit 0
+rofi -dmenu -p bookmarks < .bookmarks | tr -d '\n' | wtype -

@@ -1,3 +1,9 @@
+local home = os.getenv("HOME") or ""
+local path = os.getenv("PATH") or "/run/current-system/sw/bin"
+if home ~= "" then
+  path = path .. ":" .. home .. "/.local/bin"
+end
+
 local env = {
   NIXOS_OZONE_WL = "1",
   MOZ_ENABLE_WAYLAND = "1",
@@ -12,6 +18,8 @@ local env = {
   SDL_VIDEODRIVER = "wayland",
   CLUTTER_BACKEND = "wayland",
   TERMINAL = "kitty",
+  -- Binds and Waybar invoke managed helpers by name.
+  PATH = path,
 }
 
 for key, value in pairs(env) do

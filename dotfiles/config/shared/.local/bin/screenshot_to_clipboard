@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+output_dir="$HOME/Pictures/Screenshots"
+mkdir -p "$output_dir"
+screenshot="$output_dir/screenshot-$(date '+%Y-%m-%d--%H:%M:%S').png"
+geometry=$(slurp) || exit 0
+[[ -n $geometry ]] || exit 0
+grim -g "$geometry" "$screenshot"
+
+if [[ -e $screenshot ]]; then
+  wl-copy --type image/png < "$screenshot"
+  notification_id=$(find "$output_dir" -mindepth 1 -maxdepth 1 -printf . | wc -c)
+  dunstify -i "$screenshot" -r "$notification_id" Screenshots 'Screenshot was taken' -t 2000
+fi

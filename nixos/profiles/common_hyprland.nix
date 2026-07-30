@@ -2,21 +2,13 @@
   config,
   pkgs,
   lib,
-  inputs,
   userName ? "osmarg",
   ...
 }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  hyprlandPkgs = inputs.hyprland.packages.${system};
-  hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
-  # brave-origin removido del closure (~404 MB); nix file conservado.
   sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
   hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
-  scrollOverviewSo = pkgs.runCommand "scrolloverview.so" { } ''
-    cp ${inputs.hyprland-scroll-overview.packages.${system}.default}/lib/libscrolloverview.so $out
-  '';
 in
 {
   imports = [
@@ -28,25 +20,9 @@ in
   services.xserver.enable = false;
   services.displayManager.defaultSession = "hyprland";
 
-  environment.etc = lib.mkMerge [
-    (lib.mkIf hasSddmKwinOutputConfig {
-      "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
-    })
-    {
-      # Tab-group Lua plugin source, exposed at a stable path so hyprland.lua
-      # can `package.path`+`require` it without a manual git clone. Inert
-      # unless a profile's hyprland.lua requires it (see lua/hyprdeck.lua).
-      "hyprdeck".source = inputs.hyprdeck;
-
-      # Compiled Hyprland plugin (niri-style scroll overview). Built via
-      # inputs.hyprland-scroll-overview.inputs.hyprland.follows = "hyprland"
-      # in flake.nix so it's linked against our exact Hyprland rev -- the
-      # plugin ABI hash check fails at load time otherwise. Exposed at a
-      # stable path so each profile's autostart.lua can `hyprctl plugin load`
-      # it without depending on the store path directly.
-      "scrolloverview.so".source = scrollOverviewSo;
-    }
-  ];
+  environment.etc = lib.mkIf hasSddmKwinOutputConfig {
+    "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
+  };
   systemd.tmpfiles.rules = lib.optionals hasSddmKwinOutputConfig [
     "d /var/lib/sddm/.config 0755 sddm sddm -"
     "C /var/lib/sddm/.config/kwinoutputconfig.json 0644 sddm sddm - /etc/sddm/kwinoutputconfig-${config.networking.hostName}.json"
@@ -55,8 +31,8 @@ in
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    package = hyprlandPkgs.hyprland;
-    portalPackage = hyprlandPkgs.xdg-desktop-portal-hyprland;
+    package = pkgs.hyprland;
+    portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
 
   security.polkit = {
@@ -79,9 +55,6 @@ in
 
   services.power-profiles-daemon.enable = true;
   services.gnome.gnome-online-accounts.enable = true;
-  # UPower DBus daemon — caelestia/quickshell BatteryMonitor reads battery via
-  # Quickshell.Services.UPower; without it the shell reports "no battery".
-  services.upower.enable = true;
 
   services.dbus.enable = true;
   services.udisks2.enable = true;
@@ -96,7 +69,7 @@ in
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      hyprlandPkgs.xdg-desktop-portal-hyprland
+      xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
     ];
     config = {
@@ -195,25 +168,17 @@ in
   };
 
   environment.systemPackages = with pkgs; [
-    # Hyprland-native stack
-    hyprlandPkgs.hyprland
+    # Native NixOS Hyprland stack. This avoids a flake-pinned compositor build.
+    hyprland
     xwayland
-    hyprpaperPkg
-    mpvpaper
-    matugen
-    ffmpeg
-    steamcmd
-    python3Minimal
-    hypridle
-    hyprpicker
-    hyprsunset
+    hyprpaper
     hyprpolkitagent
 
     # Portal / XDG
     xdg-utils
     desktop-file-utils
     xdg-desktop-portal
-    hyprlandPkgs.xdg-desktop-portal-hyprland
+    xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
 
     # Clipboard / screenshots / wlroots-compatible tools
@@ -267,5 +232,12 @@ in
     dconf
     glib
     gnome-keyring
+  ];
+
+  assertions = [
+    {
+      assertion = lib.versionAtLeast pkgs.hyprland.version "0.55.1";
+      message = "The native nixpkgs Hyprland package must be newer than 0.55.";
+    }
   ];
 }

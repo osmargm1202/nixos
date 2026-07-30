@@ -6,24 +6,16 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 choice="$(printf '%s\n' \
+  '󰍹 Displays' \
   '󰖩 WiFi' \
   '󰂯 Bluetooth' \
-  '󰕓 USB devices' \
-  '󰕓 USB nicknames' \
-  '󰋋 Headset reconnect' \
-  '󰍹 Displays' \
-  ' Audio output' \
-  '󰍬 Audio input' \
+  '󰕾 Audio mixer' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Devices' || true)"
 
 case "$choice" in
-  *'WiFi') exec hypr-wifi-menu ;;
-  *'Bluetooth') exec hypr-bluetooth-menu ;;
-  *'USB devices') exec hypr-usb-menu open ;;
-  *'USB nicknames') exec hypr-usb-menu nickname ;;
-  *'Headset reconnect') exec hypr-bluetooth-reconnect ;;
-  *'Displays') exec hypr-display-targets menu ;;
-  *'Audio output') exec hypr-audio-device-menu output ;;
-  *'Audio input') exec hypr-audio-device-menu input ;;
+  *'Displays') exec nwg-displays ;;
+  *'WiFi') exec kitty -e nmtui ;;
+  *'Bluetooth') exec kitty -e bluetui ;;
+  *'Audio mixer') exec kitty -e pulsemixer ;;
   *) exec hypr-main-menu ;;
 esac

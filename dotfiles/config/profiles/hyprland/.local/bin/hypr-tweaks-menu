@@ -9,15 +9,13 @@ choice="$(printf '%s\n' \
   '󰸉 Wallpaper selector' \
   '󰹹 Transitions' \
   '󰌌 Keyboard layout next' \
-  '󰍛 Free memory' \
   '󰒓 Hypr config editor' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
 case "$choice" in
-  *'Wallpaper selector') exec skwd wall toggle ;;
+  *'Wallpaper selector') exec hypr-wallpaper random ;;
   *'Transitions') exec hypr-transition-menu ;;
   *'Keyboard layout next') exec kbd-layout-next ;;
-  *'Free memory') exec memclean-dev clean ;;
   *'Hypr config editor') exec hypr-config-editor ;;
   *) exec hypr-main-menu ;;
 esac

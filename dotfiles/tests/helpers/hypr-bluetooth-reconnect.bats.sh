@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/config/shared/.local/bin/hypr-bluetooth-reconnect"
+SCRIPT="$ROOT/config/profiles/hyprland/.local/bin/hypr-bluetooth-reconnect"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -24,7 +24,16 @@ chmod +x "$TMP/bin/notify-send"
 export CALLS
 PATH="$TMP/bin:$PATH" HYPR_HEADSET_RECONNECT_CMD='printf usb-reset' "$SCRIPT"
 
-grep -q 'kitty .*fish -lc.*printf usb-reset' "$CALLS" || {
+for ((attempt = 0; attempt < 50; attempt++)); do
+  [[ -f $CALLS ]] && break
+  sleep 0.02
+done
+[[ -f $CALLS ]] || {
+  echo "FAIL: kitty did not receive the USB reset command" >&2
+  exit 1
+}
+
+grep -q 'kitty .*bash -lc.*printf usb-reset' "$CALLS" || {
   echo "FAIL: expected visible terminal USB reset command" >&2
   cat "$CALLS" >&2
   exit 1

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+if pgrep -x wl-screenrec >/dev/null; then
+  printf '%s\n' '{"text":"", "tooltip":"Recording", "alt":"Recording"}'
+fi

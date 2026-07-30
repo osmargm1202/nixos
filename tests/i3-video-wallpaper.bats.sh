@@ -63,6 +63,16 @@ printf 'feh' >>"$FEH_CALLS"
 printf ' <%s>' "$@" >>"$FEH_CALLS"
 printf '\n' >>"$FEH_CALLS"
 STUB
+cat >"$TMP/bin/ffmpeg" <<'STUB'
+#!/usr/bin/env bash
+input=''
+previous=''
+for argument in "$@"; do
+  [[ "$previous" == -i ]] && input="$argument"
+  previous="$argument"
+done
+cp -- "$input" "${!#}"
+STUB
 cat >"$TMP/bin/xwinwrap" <<'STUB'
 #!/usr/bin/env bash
 printf '%s' "$$" >>"$VIDEO_CALLS"
@@ -102,6 +112,10 @@ run_wallpaper() {
 }
 
 run_wallpaper --set "$image"
+lock_image="$TMP/state/i3/lock_screen.png"
+[[ "$(cat "$TMP/state/i3/lock_screen")" == "$lock_image" ]] ||
+  fail 'still wallpaper did not publish a lock image pointer'
+cmp -s "$image" "$lock_image" || fail 'JPG wallpaper was not converted for i3lock'
 : >"$TMP/feh.calls"
 : >"$TMP/video.calls"
 run_wallpaper --set-active "$video"

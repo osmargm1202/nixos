@@ -12,7 +12,6 @@ choice="$(printf '%s\n' \
   ' Clipboard' \
   ' Hypr config' \
   '󰃭 Calculator' \
-  '󰣆 Web App Maker' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
 
 case "$choice" in
@@ -22,6 +21,5 @@ case "$choice" in
   *'Clipboard') exec hypr-rofi-clipboard ;;
   *'Hypr config') exec hypr-config-editor ;;
   *'Calculator') exec hypr-rofi-calc ;;
-  *'Web App Maker') exec hypr-webapp-maker ;;
   *) exec hypr-main-menu ;;
 esac

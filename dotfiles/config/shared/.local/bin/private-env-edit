@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+helpers="${XDG_CONFIG_HOME:-$HOME/.config}/bash/private-env-helpers.bash"
+[[ -r $helpers ]] || {
+  printf 'private-env-edit: helper not found: %s\n' "$helpers" >&2
+  exit 1
+}
+# shellcheck source=/dev/null
+. "$helpers"
+private-env-edit "$@"

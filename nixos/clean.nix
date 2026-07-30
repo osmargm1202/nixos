@@ -5,9 +5,8 @@
   ...
 }:
 
-# Recurring cleanup automation (the old interactive `nixclean` fish
-# function, systemd-ized). Imported by common.nix, terminal.nix and
-# server.nix; every job is guarded so hosts without flatpak/desktop
+# Recurring cleanup automation for interactive `nixclean`, systemd-ized.
+# Imported by common.nix, terminal.nix and server.nix; every job is guarded so hosts without flatpak/desktop
 # caches just skip those steps.
 #
 # Weekly (root):  nix generations keep-3 + GC (nh clean all), journal 30d

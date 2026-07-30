@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This runs once at session start. It never installs a persistent i3 rule, so
+# later Discord windows and dialogs retain their normal placement.
+discord >/dev/null 2>&1 &
+
+for _ in {1..100}; do
+  if read -r window_id < <(xdotool search --onlyvisible --class '^Discord$' 2>/dev/null); then
+    exec i3-msg "[id=${window_id}] move scratchpad" >/dev/null 2>&1
+  fi
+  sleep 0.1
+done

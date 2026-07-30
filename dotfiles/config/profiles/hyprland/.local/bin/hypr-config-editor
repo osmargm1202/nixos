@@ -5,8 +5,8 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-repo="${HYPR_CONFIG_EDITOR_REPO:-$HOME/Hobby/dotfiles}"
-hypr_root="${HYPR_CONFIG_EDITOR_ROOT:-$repo/config/shared/.config/hypr}"
+repo="${HYPR_CONFIG_EDITOR_REPO:-$HOME/Hobby/nixos/dotfiles}"
+hypr_root="${HYPR_CONFIG_EDITOR_ROOT:-$repo/config/profiles/hyprland/.config/hypr}"
 
 notify() {
   notify-send "Hypr config" "$1" 2>/dev/null || true
@@ -42,7 +42,7 @@ action="$(printf '%s\n' 'Editar con nvim' 'Abrir con app por defecto' 'Cancelar'
 
 case "$action" in
   *'nvim')
-    kitty --class hypr-config-editor -e fish -lc 'nvim "$argv[1]"' -- "$file"
+    kitty --class hypr-config-editor -e nvim -- "$file"
     ;;
   *'defecto')
     xdg-open "$file"

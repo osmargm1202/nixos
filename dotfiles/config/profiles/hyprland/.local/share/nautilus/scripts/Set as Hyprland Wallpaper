@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mapfile -t selected <<<"${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}"
+files=()
+for path in "${selected[@]}"; do
+  [[ -n "$path" ]] && files+=("$path")
+done
+
+if ((${#files[@]} != 1)); then
+  command -v notify-send >/dev/null 2>&1 &&
+    notify-send 'Set as Hyprland Wallpaper' 'Selecciona exactamente una imagen local.' || true
+  exit 1
+fi
+
+helper="${HYPR_WALLPAPER_HELPER:-$HOME/.local/bin/hypr-wallpaper}"
+if [[ ! -x "$helper" ]]; then
+  command -v notify-send >/dev/null 2>&1 &&
+    notify-send 'Set as Hyprland Wallpaper' "No se encontró $helper." || true
+  exit 127
+fi
+
+exec "$helper" set "${files[0]}"

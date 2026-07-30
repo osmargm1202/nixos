@@ -8,9 +8,9 @@ __pycache__/
 *.py[cod]
 
 # plaintext secrets; only *.age encrypted files belong in git
-config/**/.config/fish/private-env.fish
-config/**/.config/fish/private-env.fish.tmp
-config/**/.config/fish/*.decrypted
+config/**/.config/bash/private-env.bash
+config/**/.config/bash/private-env.bash.tmp
+config/**/.config/bash/*.decrypted
 
 # Legacy stow/runtime leftovers kept local after chezmoi migration.
 config/dms/

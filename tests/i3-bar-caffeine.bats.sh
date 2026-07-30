@@ -17,16 +17,64 @@ fail() {
 
 [ -x "$HELPER" ] || fail 'i3-caffeine-toggle missing or not executable'
 grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
-grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" || fail 'stale caffeine state is not reset at login'
+grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" || fail 'i3 login does not keep displays awake'
 grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
 ! grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config is still deployed'
 grep -Fq 'flock 9' "$HELPER" || fail 'caffeine transitions are not serialized'
 grep -Fq 'mktemp "$state_file.tmp.XXXXXX"' "$HELPER" || fail 'caffeine state is not written atomically'
 grep -Fq 'valid_state' "$HELPER" || fail 'corrupt caffeine state is not validated'
+WRAPPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3status-localized"
+STATUS_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/i3status.conf"
+[ -x "$WRAPPER" ] || fail 'i3status wrapper missing or not executable'
+grep -Fq 'interval = 1' "$STATUS_CONFIG" || fail 'status bar does not refresh caffeine promptly'
+! grep -Fq 'order += "load"' "$STATUS_CONFIG" || fail 'load average remains instead of CPU percentage'
+grep -Fq '"click_events":true' "$WRAPPER" || fail 'i3bar click events are not enabled'
+
+python3 - "$WRAPPER" <<'PY'
+import importlib.machinery
+import importlib.util
+import sys
+
+loader = importlib.machinery.SourceFileLoader("i3status_localized", sys.argv[1])
+spec = importlib.util.spec_from_loader(loader.name, loader)
+wrapper = importlib.util.module_from_spec(spec)
+loader.exec_module(wrapper)
+GIB_KIB = 1024 * 1024
+blocks = {block["name"]: block for block in wrapper.resource_blocks(76, 100 * GIB_KIB, 49 * GIB_KIB, 20 * 1024**3, True)}
+assert blocks["caffeine"]["full_text"] == "Café: ON"
+assert blocks["cpu"] == {"name": "cpu", "full_text": "CPU: 76%", "color": wrapper.CPU_WARNING}
+assert blocks["memory"] == {"name": "memory", "full_text": "RAM: 49.00 GiB", "color": wrapper.RAM_WARNING}
+assert blocks["disk"]["full_text"] == "SDD: 20 GiB"
+
+blocks = {block["name"]: block for block in wrapper.resource_blocks(90, 100 * GIB_KIB, 10 * GIB_KIB, 20 * 1024**3, False)}
+assert blocks["cpu"]["color"] == wrapper.CPU_WARNING
+blocks = {block["name"]: block for block in wrapper.resource_blocks(91, 100 * GIB_KIB, 10 * GIB_KIB, 20 * 1024**3, False)}
+assert blocks["cpu"]["color"] == wrapper.CRITICAL
+assert blocks["memory"]["color"] == wrapper.CRITICAL
+assert blocks["memory"]["full_text"] == "RAM: 10.00 GiB"
+PY
 bash -n "$HELPER"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/status-bin"
+cat >"$tmp/status-bin/i3status" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' '{"version":1}' '[' '[{"name":"tztime","full_text":"Wednesday 29 - July - 2026"}]'
+sleep 1
+STUB
+cat >"$tmp/status-bin/i3-caffeine-toggle" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$CAFFEINE_CLICK_CALLS"
+STUB
+chmod +x "$tmp/status-bin/i3status" "$tmp/status-bin/i3-caffeine-toggle"
+export CAFFEINE_CLICK_CALLS="$tmp/click-calls"
+mkdir -p "$tmp/home/.local/bin"
+ln -s "$tmp/status-bin/i3-caffeine-toggle" "$tmp/home/.local/bin/i3-caffeine-toggle"
+printf '[\n{"name":"caffeine","button":1}\n' |
+  HOME="$tmp/home" PATH="$tmp/status-bin:$PATH" "$WRAPPER" >"$tmp/status-output"
+grep -Fq '"click_events":true' "$tmp/status-output" || fail 'wrapper did not advertise click events'
+grep -Fxq 'toggle' "$tmp/click-calls" || fail 'caffeine bar click did not toggle mode'
 mkdir -p "$tmp/bin"
 cat >"$tmp/bin/xset" <<'STUB'
 #!/usr/bin/env bash

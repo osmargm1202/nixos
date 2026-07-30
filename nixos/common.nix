@@ -71,11 +71,11 @@ in
   nix.settings.auto-optimise-store = true;
 
   # Pin `nixpkgs` del registry al input del sistema: `nix run nixpkgs#app`
-  # (función fish `,`) comparte el store del sistema en vez de bajar
+  # (función Bash `,`) comparte el store del sistema en vez de bajar
   # nixpkgs-unstable — sin eval remoto, casi siempre instantáneo.
   nix.registry = lib.mkIf (inputs != null) {
     nixpkgs.flake = inputs.nixpkgs;
-    # herdr no esta en nixpkgs; pin para `nix run herdr` (alias fish)
+    # herdr no esta en nixpkgs; pin para `nix run herdr` (alias Bash)
     herdr.flake = inputs.herdr;
   };
   nix.settings.extra-substituters = [ "https://hyprland.cachix.org" ];
@@ -144,14 +144,22 @@ in
 
   #virtualisation.docker.enable = true;
 
-  programs.fish.enable = true;
-  programs.zoxide.enable = true;
-  programs.starship.enable = true;
+  programs.bash = {
+    enable = true;
+    completion.enable = true;
+    blesh.enable = true;
+    loginShellInit = ''
+      if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+        . "$HOME/.bashrc"
+      fi
+    '';
+  };
   programs.git = {
     enable = true;
     config.user.name = "osmar";
     config.user.email = "osmargm1202@gmail.com";
   };
+
 
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -208,7 +216,7 @@ in
     uid = 1000;
     group = userName;
     description = userName;
-    shell = pkgs.fish;
+    shell = pkgs.bashInteractive;
     subUidRanges = [
       {
         startUid = 100000;
@@ -246,12 +254,16 @@ in
     vim
     gh
     fzf
+    bash-completion
+    blesh
+    starship
+    zoxide
     nextcloud-client
     gtk3
     libnotify
     git
     tmux
-    age # dependencia de arranque de fish (load_private_env) — no mover a efimero
+    age # dependencia de arranque de Bash (load_private_env) — no mover a efimero
     uv
     python3
     fd
@@ -265,10 +277,9 @@ in
     zutty
     zuttyFast
     # Daily-driver CLI. Project/dev tooling lives in per-project flakes
-    # (fish `flakeinit` + nix develop) or ad-hoc `nix shell`.
-    # Efimeras via alias fish (nix run): btop fastfetch ncdu
-    # yazi sops just figlet nix-search-tv herdr + emuladores.
-    # Compose provider: podman 5.x no longer ships built-in `compose`
+    # (`nix develop`) or ad-hoc `nix shell`. Efimeras via aliases Bash:
+    # btop fastfetch ncdu yazi sops just xclip figlet nix-search-tv herdr
+    # + emuladores. Compose provider: podman 5.x no longer ships built-in
     # subcommand; `docker compose` shim requires this plugin to exist.
     podman-compose
     bat

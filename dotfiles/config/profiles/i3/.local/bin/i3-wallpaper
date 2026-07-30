@@ -10,6 +10,7 @@ video_pid_dir="$state_dir/video-pids"
 video_log="$state_dir/video-wallpaper.log"
 video_placeholder="$state_dir/video-placeholder.ppm"
 mode="${1:---random}"
+lock_background_bin="${I3_LOCK_BACKGROUND_BIN:-${BASH_SOURCE[0]%/*}/i3-lock-background}"
 active_outputs=()
 layout_wallpapers=()
 
@@ -284,6 +285,16 @@ start_video_wallpaper() {
   atomic_write "$video_pid_dir/$output" "$pid $starttime"
 }
 
+update_lock_background() {
+  local wallpaper
+  for wallpaper in "${layout_wallpapers[@]}"; do
+    is_video "$wallpaper" && continue
+    "$lock_background_bin" "$wallpaper"
+    return
+  done
+  "$lock_background_bin" --clear
+}
+
 apply_layout() {
   local -a static_wallpapers=() video_indices=()
   local index output wallpaper
@@ -308,6 +319,7 @@ apply_layout() {
       return 1
     fi
   done
+  update_lock_background || notify_error 'No se pudo actualizar el fondo de bloqueo'
 }
 
 atomic_write() {

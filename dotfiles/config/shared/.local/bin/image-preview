@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+image=${1:?"usage: image-preview <image>"}
+term_width=$(( $(tput cols) - 1 ))
+term_height=$(( $(tput lines) - 1 ))
+(( term_width > 0 )) || term_width=1
+(( term_height > 0 )) || term_height=1
+exec chafa "$image" --size="${term_width}x${term_height}"

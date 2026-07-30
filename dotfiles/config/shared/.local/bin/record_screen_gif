@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+process=wl-screenrec
+output_dir="$HOME/Pictures/Records"
+icon="$HOME/.config/bash/icons/camera_gif_icon.png"
+if pgrep -x "$process" >/dev/null; then
+  exec pkill -INT -x "$process"
+fi
+
+geometry=$(slurp) || exit 0
+[[ -n $geometry ]] || exit 0
+mkdir -p "$output_dir"
+record_name="record-$(date '+%Y-%m-%d--%H:%M:%S')"
+# Keep the former changing replacement id without parsing filenames through ls.
+notification_id=$(find "$output_dir" -mindepth 1 -maxdepth 1 -printf . | wc -c)
+dunstify -i "$icon" -r "$notification_id" 'Recording Started  (GIF)' -t 2000
+wl-screenrec -g "$geometry" -f "$output_dir/$record_name.mp4" --encode-resolution 1920x1080
+ffmpeg -i "$output_dir/$record_name.mp4" "$output_dir/$record_name.gif"
+rm -f "$output_dir/$record_name.mp4"
+printf 'file://%s\n' "$output_dir/$record_name.gif" | wl-copy -t text/uri-list
+dunstify -i "$icon" -r "$notification_id" 'Recording Stopped 󰙧 (GIF)' -t 2000

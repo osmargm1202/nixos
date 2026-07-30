@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+import json
+import os
+import subprocess
+import sys
+import threading
+from pathlib import Path
+
+NORMAL = "#c0caf5"
+CPU_WARNING = "#ff9e64"
+RAM_WARNING = "#e0af68"
+CRITICAL = "#f7768e"
+CAFFEINE_ON = "#9ece6a"
+CAFFEINE_OFF = "#565f89"
+GIB = 1024**3
+
+TRANSLATIONS = (
+    ("Monday ", "Lunes "),
+    ("Tuesday ", "Martes "),
+    ("Wednesday ", "Miércoles "),
+    ("Thursday ", "Jueves "),
+    ("Friday ", "Viernes "),
+    ("Saturday ", "Sábado "),
+    ("Sunday ", "Domingo "),
+    (" - January - ", " - Enero - "),
+    (" - February - ", " - Febrero - "),
+    (" - March - ", " - Marzo - "),
+    (" - April - ", " - Abril - "),
+    (" - May - ", " - Mayo - "),
+    (" - June - ", " - Junio - "),
+    (" - July - ", " - Julio - "),
+    (" - August - ", " - Agosto - "),
+    (" - September - ", " - Septiembre - "),
+    (" - October - ", " - Octubre - "),
+    (" - November - ", " - Noviembre - "),
+    (" - December - ", " - Diciembre - "),
+)
+
+
+def caffeine_enabled():
+    state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+    return (state_home / "i3" / "caffeine").is_file()
+
+
+def resource_blocks(cpu_percent, mem_total_kib, mem_available_kib, disk_available_bytes, caffeine_on):
+    cpu_color = CRITICAL if cpu_percent > 90 else CPU_WARNING if cpu_percent >= 75 else NORMAL
+    memory_used_percent = 100 * (mem_total_kib - mem_available_kib) / mem_total_kib
+    ram_color = CRITICAL if memory_used_percent >= 90 else RAM_WARNING if memory_used_percent > 50 else NORMAL
+    return [
+        {
+            "name": "caffeine",
+            "full_text": f"Café: {'ON' if caffeine_on else 'OFF'}",
+            "color": CAFFEINE_ON if caffeine_on else CAFFEINE_OFF,
+        },
+        {
+            "name": "cpu",
+            "full_text": f"CPU: {cpu_percent:d}%",
+            "color": cpu_color,
+        },
+        {
+            "name": "memory",
+            "full_text": f"RAM: {mem_available_kib * 1024 / GIB:.2f} GiB",
+            "color": ram_color,
+        },
+        {
+            "name": "disk",
+            "full_text": f"SDD: {disk_available_bytes / GIB:.0f} GiB",
+            "color": NORMAL,
+        },
+    ]
+
+
+def cpu_sample():
+    with open("/proc/stat", encoding="ascii") as stat_file:
+        fields = [int(value) for value in stat_file.readline().split()[1:]]
+    return sum(fields), fields[3] + fields[4]
+
+
+def memory_sample():
+    values = {}
+    with open("/proc/meminfo", encoding="ascii") as meminfo:
+        for line in meminfo:
+            key, value, *_ = line.split()
+            if key in {"MemTotal:", "MemAvailable:"}:
+                values[key] = int(value)
+    return values["MemTotal:"], values["MemAvailable:"]
+
+
+def disk_available_bytes():
+    filesystem = os.statvfs("/")
+    return filesystem.f_bavail * filesystem.f_frsize
+
+
+class CpuUsage:
+    def __init__(self):
+        self.previous_total, self.previous_idle = cpu_sample()
+
+    def percent(self):
+        total, idle = cpu_sample()
+        total_delta = total - self.previous_total
+        idle_delta = idle - self.previous_idle
+        self.previous_total, self.previous_idle = total, idle
+        if total_delta <= 0:
+            return 0
+        return round(100 * (total_delta - idle_delta) / total_delta)
+
+
+def localize(block):
+    if "full_text" not in block:
+        return block
+    block = block.copy()
+    for english, spanish in TRANSLATIONS:
+        block["full_text"] = block["full_text"].replace(english, spanish)
+    return block
+
+
+def decorate(blocks, cpu_usage):
+    localized = [localize(block) for block in blocks]
+    regular = [block for block in localized if block.get("name") != "tztime"]
+    clock = [block for block in localized if block.get("name") == "tztime"]
+    total_kib, available_kib = memory_sample()
+    return regular + resource_blocks(
+        cpu_usage.percent(),
+        total_kib,
+        available_kib,
+        disk_available_bytes(),
+        caffeine_enabled(),
+    ) + clock
+
+
+def handle_clicks():
+    toggle = Path.home() / ".local" / "bin" / "i3-caffeine-toggle"
+    for line in sys.stdin:
+        event = line.strip().lstrip(",")
+        if not event or event in {"[", "]"}:
+            continue
+        try:
+            click = json.loads(event)
+        except json.JSONDecodeError:
+            continue
+        if click.get("name") == "caffeine" and click.get("button") == 1:
+            subprocess.Popen([str(toggle), "toggle"])
+
+
+def main():
+    threading.Thread(target=handle_clicks, daemon=True).start()
+    status = subprocess.Popen(
+        ["i3status", "-c", str(Path.home() / ".config" / "i3" / "i3status.conf")],
+        env={**os.environ, "LC_TIME": "C"},
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    cpu_usage = CpuUsage()
+    wrote_header = False
+    wrote_array = False
+    first_update = True
+
+    assert status.stdout is not None
+    for raw_line in status.stdout:
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("{") and not wrote_header:
+            print('{"version":1,"click_events":true}', flush=True)
+            wrote_header = True
+        elif line == "[" and not wrote_array:
+            print("[", flush=True)
+            wrote_array = True
+        elif line != "]":
+            blocks = decorate(json.loads(line.lstrip(",")), cpu_usage)
+            prefix = "" if first_update else ","
+            print(f"{prefix}{json.dumps(blocks, ensure_ascii=False, separators=(',', ':'))}", flush=True)
+            first_update = False
+
+    status.wait()
+    return status.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())

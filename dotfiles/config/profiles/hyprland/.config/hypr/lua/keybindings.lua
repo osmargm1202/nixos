@@ -1,6 +1,5 @@
 local M = {}
 
-local hyprdeck = require("lua.hyprdeck")
 
 local function dispatch(cmd)
   return hl.dsp.exec_cmd("hyprctl dispatch " .. cmd)
@@ -15,7 +14,7 @@ function M.setup(programs)
 
   -- Help / launchers.
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keybindings-help"))
-  hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("skwd wall toggle"))
+  hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("hypr-wallpaper random"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("chromium"))
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(program("fastTerminal", "zutty-fast")))
@@ -35,20 +34,16 @@ function M.setup(programs)
   hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hypr-rofi-window"))
   hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))
   hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("hypr-rofi-ssh-host"))
-  hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(program("display_settings", "nwg-displays")))
-  hl.bind(mainMod .. " + CTRL + comma", hl.dsp.exec_cmd(program("display_settings", "nwg-displays")))
-  hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(program("power_menu", "fish -c wlogout_uniqe")))
+  hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(program("power_menu", "wlogout_uniqe")))
   hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(program("lock", "hyprlock")))
-  hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
-  hl.bind(mainMod .. " + CTRL + SHIFT + M", hl.dsp.exec_cmd("swaync-client -C"))
   hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("hypr-rofi-clipboard"))
   hl.bind(mainMod .. " + F10", hl.dsp.exec_cmd("pavucontrol"))
   hl.bind("CTRL + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 
   -- Scratchpad equivalent: special workspace.
   hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-  hl.bind(mainMod .. " + SHIFT + S", hyprdeck.hyd.dsp.window.move({ workspace = "special:magic", follow = false }))
-  hl.bind(mainMod .. " + CTRL + S", hyprdeck.hyd.dsp.window.move({ workspace = "current" }))
+  hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic", follow = false }))
+  hl.bind(mainMod .. " + CTRL + S", hl.dsp.window.move({ workspace = "current" }))
 
   -- Media keys.
   hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("volume-osd up"), { repeating = true, locked = true })
@@ -66,15 +61,13 @@ function M.setup(programs)
   hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'))
   hl.bind("CTRL + Print", hl.dsp.exec_cmd("grim - | swappy -f -"))
   hl.bind("ALT + Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'))
-  hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("fish -c record_screen_mp4"))
-  hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("fish -c record_screen_gif"))
+  hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("record_screen_mp4"))
+  hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("record_screen_gif"))
 
   -- Window/session controls.
-  hl.bind(mainMod .. " + Tab", hyprdeck.hyd.dsp.focus({ last = true }))
+  hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
   hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"))
-  hl.bind("ALT + Tab", function()
-    hl.plugin.scrolloverview.overview("toggle")
-  end)
+  hl.bind("ALT + Tab", hl.dsp.exec_cmd("hypr-rofi-window"))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("hypr-kill-windows"))
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())
@@ -84,7 +77,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + Space", hl.dsp.window.float({ action = "toggle" }))
   hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit"))
-  hl.bind(mainMod .. " + C", hl.dsp.window.center())
+  hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())
   hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
 
   -- Group navigation (tabbed windows): Win+` next, Win+Shift+` back
@@ -103,39 +96,39 @@ function M.setup(programs)
   local dirs = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
   local moveDirs = { left = "l", down = "d", up = "u", right = "r", h = "l", j = "d", k = "u", l = "r" }
   for key, dir in pairs(dirs) do
-    hl.bind(mainMod .. " + " .. key, hyprdeck.hyd.dsp.focus({ direction = dir }))
+    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ direction = dir }))
   end
 
 
   for key, dir in pairs(moveDirs) do
-    hl.bind(mainMod .. " + CTRL + " .. key, hyprdeck.hyd.dsp.window.move({ direction = dir }))
+    hl.bind(mainMod .. " + CTRL + " .. key, hl.dsp.window.move({ direction = dir }))
   end
 
   -- Workspaces.
-  hl.bind(mainMod .. " + Home", hyprdeck.hyd.dsp.focus({ workspace = 1 }))
-  hl.bind(mainMod .. " + End", hyprdeck.hyd.dsp.focus({ workspace = 10 }))
-  hl.bind(mainMod .. " + CTRL + Home", hyprdeck.hyd.dsp.window.move({ workspace = 1 }))
-  hl.bind(mainMod .. " + CTRL + End", hyprdeck.hyd.dsp.window.move({ workspace = 10 }))
-  hl.bind(mainMod .. " + Page_Down", hyprdeck.hyd.dsp.focus({ workspace = "r-1" }))
-  hl.bind(mainMod .. " + Page_Up", hyprdeck.hyd.dsp.focus({ workspace = "r+1" }))
-  hl.bind(mainMod .. " + U", hyprdeck.hyd.dsp.focus({ workspace = "r-1" }))
-  hl.bind(mainMod .. " + I", hyprdeck.hyd.dsp.focus({ workspace = "r+1" }))
-  hl.bind(mainMod .. " + CTRL + Page_Down", hyprdeck.hyd.dsp.window.move({ workspace = "r-1" }))
-  hl.bind(mainMod .. " + CTRL + Page_Up", hyprdeck.hyd.dsp.window.move({ workspace = "r+1" }))
-  hl.bind(mainMod .. " + CTRL + U", hyprdeck.hyd.dsp.window.move({ workspace = "r-1" }))
-  hl.bind(mainMod .. " + CTRL + I", hyprdeck.hyd.dsp.window.move({ workspace = "r+1" }))
+  hl.bind(mainMod .. " + Home", hl.dsp.focus({ workspace = 1 }))
+  hl.bind(mainMod .. " + End", hl.dsp.focus({ workspace = 10 }))
+  hl.bind(mainMod .. " + CTRL + Home", hl.dsp.window.move({ workspace = 1 }))
+  hl.bind(mainMod .. " + CTRL + End", hl.dsp.window.move({ workspace = 10 }))
+  hl.bind(mainMod .. " + Page_Down", hl.dsp.focus({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + Page_Up", hl.dsp.focus({ workspace = "r+1" }))
+  hl.bind(mainMod .. " + U", hl.dsp.focus({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + I", hl.dsp.focus({ workspace = "r+1" }))
+  hl.bind(mainMod .. " + CTRL + Page_Down", hl.dsp.window.move({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + CTRL + Page_Up", hl.dsp.window.move({ workspace = "r+1" }))
+  hl.bind(mainMod .. " + CTRL + U", hl.dsp.window.move({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + CTRL + I", hl.dsp.window.move({ workspace = "r+1" }))
 
   for i = 1, 10 do
     local key = i % 10
-    hl.bind(mainMod .. " + " .. key, hyprdeck.hyd.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. key, hyprdeck.hyd.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
   end
 
   -- Mouse.
   hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
   hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
-  hl.bind(mainMod .. " + mouse:274", hyprdeck.hyd.dsp.focus({ workspace = "r-1" }))
-  hl.bind(mainMod .. " + mouse:275", hyprdeck.hyd.dsp.focus({ workspace = "r+1" }))
+  hl.bind(mainMod .. " + mouse:274", hl.dsp.focus({ workspace = "r-1" }))
+  hl.bind(mainMod .. " + mouse:275", hl.dsp.focus({ workspace = "r+1" }))
 end
 
 return M

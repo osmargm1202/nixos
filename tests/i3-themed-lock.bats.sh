@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 POWER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-powermenu"
 LOCK="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-lock"
+LOCK_BACKGROUND="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-lock-background"
+WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 
@@ -13,56 +15,67 @@ fail() {
   exit 1
 }
 
-[ -x "$LOCK" ] || fail 'i3-lock helper missing or not executable'
+[[ -x "$LOCK" ]] || fail 'i3-lock helper missing or not executable'
+[[ -x "$LOCK_BACKGROUND" ]] || fail 'i3-lock-background helper missing or not executable'
 grep -Fq '".local/bin/i3-lock"' "$DOTFILES" || fail 'i3-lock not deployed'
-grep -Fq '(i3lock-fancy.override {' "$PROFILE" || fail 'stock i3lock-fancy package missing'
-grep -Fq 'screenshotCommand = "${scrot}/bin/scrot -z -o";' "$PROFILE" || fail 'overwrite-safe scrot screenshot command missing'
-grep -Fq 'name = "i3lock-color-fallback";' "$PROFILE" || fail 'collision-safe color fallback wrapper missing'
-grep -Eq '^[[:space:]]+i3lockColorFallback[[:space:]]*$' "$PROFILE" || fail 'color fallback wrapper not installed'
-if grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE"; then
-  fail 'standalone i3lock-color conflicts with i3lock-fancy bin/i3lock'
+grep -Fq '".local/bin/i3-lock-background"' "$DOTFILES" || fail 'i3-lock-background not deployed'
+grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE" || fail 'i3lock-color package missing'
+grep -Eq '^[[:space:]]+ffmpeg[[:space:]]*$' "$PROFILE" || fail 'ffmpeg package missing'
+if grep -Eq 'i3lock-fancy|screenshotCommand' "$PROFILE"; then
+  fail 'ImageMagick-based i3lock-fancy remains installed'
 fi
-grep -Fq "i3lock-fancy -t 'Ingrese su contraseña'" "$LOCK" || fail 'lock helper does not launch i3lock-fancy with Spanish prompt'
-grep -Fq -- '-- scrot -z -o' "$LOCK" || fail 'live lock does not overwrite i3lock-fancy temporary screenshot'
-grep -Fq 'exec i3lock-color-fallback --color=2e3440ff --ignore-empty-password' "$LOCK" || fail 'fancy preprocessing failure has no secure lock fallback'
-if grep -Eq 'magick|--clock|--inside-color|--image=' "$LOCK"; then
-  fail 'legacy custom lock implementation remains active'
+grep -Fq 'lock_background_bin=' "$WALLPAPER" || fail 'wallpaper does not locate lock background helper'
+grep -Fq 'update_lock_background ||' "$WALLPAPER" || fail 'wallpaper does not refresh lock background after applying'
+grep -Fq 'i3lock-color -i "$lock_image" -e "$@"' "$LOCK" || fail 'lock helper does not use saved PNG'
+grep -Fq 'exec i3lock-color -c 2e3440 -e "$@"' "$LOCK" || fail 'lock helper has no solid-color fallback'
+if grep -Eq 'i3lock-fancy|scrot|magick|--image|--color|--ignore-empty-password' "$LOCK"; then
+  fail 'ImageMagick screenshot lock remains active'
 fi
 
-grep -Fq 'xss-lock --transfer-sleep-lock -- $run i3-lock --nofork' "$CONFIG" || fail 'idle lock bypasses PATH-safe themed helper'
-grep -Fq 'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock' "$CONFIG" || fail 'Mod+Alt+L bypasses themed helper'
+grep -Fq 'xss-lock --transfer-sleep-lock -- $run i3-lock -n' "$CONFIG" || fail 'idle lock bypasses PATH-safe helper'
+grep -Fq 'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock' "$CONFIG" || fail 'Mod+Alt+L bypasses helper'
 grep -Fq 'bindsym $mod+Shift+l exec --no-startup-id $run i3-lock' "$CONFIG" || fail 'legacy lock shortcut bypasses helper'
-grep -Fq 'Lock) exec i3-lock' "$POWER" || fail 'power menu bypasses themed helper'
+grep -Fq 'Lock) exec i3-lock' "$POWER" || fail 'power menu bypasses helper'
 
-bash -n "$LOCK"
+bash -n "$LOCK" "$LOCK_BACKGROUND" "$WALLPAPER"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/bin"
-cat >"$tmp/bin/i3lock-fancy" <<'STUB'
+mkdir -p "$tmp/bin" "$tmp/state"
+cat >"$tmp/bin/i3lock-color" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$@" >"$LOCK_CALLS"
-[[ "${FANCY_FAIL:-0}" == 0 ]]
 STUB
-cat >"$tmp/bin/i3lock-color-fallback" <<'STUB'
+
+cat >"$tmp/bin/ffmpeg" <<'STUB'
 #!/usr/bin/env bash
-printf '%s\n' "$@" >"$FALLBACK_CALLS"
+input=''
+previous=''
+for argument in "$@"; do
+  [[ "$previous" == -i ]] && input="$argument"
+  previous="$argument"
+done
+cp -- "$input" "${!#}"
 STUB
-chmod +x "$tmp/bin/i3lock-fancy" "$tmp/bin/i3lock-color-fallback"
-export LOCK_CALLS="$tmp/calls" FALLBACK_CALLS="$tmp/fallback-calls"
-PATH="$tmp/bin:$PATH" "$LOCK" --nofork
+chmod +x "$tmp/bin/i3lock-color" "$tmp/bin/ffmpeg"
+source_image="$tmp/current wallpaper.png"
+printf 'saved wallpaper\n' >"$source_image"
+lock_image="$tmp/state/i3/lock_screen.png"
+PATH="$tmp/bin:$PATH" XDG_STATE_HOME="$tmp/state" "$LOCK_BACKGROUND" "$source_image"
+cmp -s "$source_image" "$lock_image" || fail 'lock image was not saved atomically'
 
-grep -Fxq -- '-t' "$tmp/calls" || fail 'text option not passed to i3lock-fancy'
-grep -Fxq -- 'Ingrese su contraseña' "$tmp/calls" || fail 'Spanish unlock prompt not passed'
-grep -Fxq -- '--nofork' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
-grep -Fxq -- '--' "$tmp/calls" || fail 'custom screenshot separator missing'
-grep -Fxq -- 'scrot' "$tmp/calls" || fail 'Scrot screenshot command missing'
-grep -Fxq -- '-z' "$tmp/calls" || fail 'silent Scrot flag missing'
-grep -Fxq -- '-o' "$tmp/calls" || fail 'Scrot overwrite flag missing'
-[[ ! -e "$tmp/fallback-calls" ]] || fail 'fallback ran after successful fancy lock'
+export LOCK_CALLS="$tmp/calls"
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$LOCK" -n
+grep -Fxq -- '-i' "$tmp/calls" || fail 'saved lock image option missing'
+grep -Fxq -- "$lock_image" "$tmp/calls" || fail 'saved lock image not passed to i3lock-color'
+grep -Fxq -- '-e' "$tmp/calls" || fail 'empty-password safeguard missing'
+grep -Fxq -- '-n' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
+[[ ! -e "$tmp/fallback-calls" ]] || fail 'unexpected fallback state'
 
-FANCY_FAIL=1 PATH="$tmp/bin:$PATH" "$LOCK" --nofork
-grep -Fxq -- '--color=2e3440ff' "$tmp/fallback-calls" || fail 'fallback color missing'
-grep -Fxq -- '--ignore-empty-password' "$tmp/fallback-calls" || fail 'fallback does not ignore empty passwords'
-grep -Fxq -- '--nofork' "$tmp/fallback-calls" || fail 'fallback did not remain foregrounded for xss-lock'
+XDG_STATE_HOME="$tmp/state" "$LOCK_BACKGROUND" --clear
+[[ ! -e "$tmp/state/i3/lock_screen" ]] || fail 'lock pointer was not cleared'
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$LOCK" -n
+grep -Fxq -- '-c' "$tmp/calls" || fail 'solid-color fallback option missing'
+grep -Fxq -- '2e3440' "$tmp/calls" || fail 'solid-color fallback missing'
+grep -Fxq -- '-n' "$tmp/calls" || fail 'fallback did not remain foregrounded for xss-lock'
 
-printf 'PASS: every lock path uses packaged i3lock-fancy with required dependencies\n'
+printf 'PASS: every lock path uses a pre-generated background without ImageMagick\n'

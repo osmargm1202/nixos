@@ -103,7 +103,7 @@ in
   users.users.${userName} = {
     isNormalUser = true;
     description = userName;
-    shell = pkgs.fish;
+    shell = pkgs.bashInteractive;
     extraGroups = [
       "wheel"
       "docker"
@@ -113,7 +113,16 @@ in
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
 
-  programs.fish.enable = true;
+  programs.bash = {
+    enable = true;
+    completion.enable = true;
+    blesh.enable = true;
+    loginShellInit = ''
+      if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+        . "$HOME/.bashrc"
+      fi
+    '';
+  };
   programs.git.enable = true;
 
   security.sudo.wheelNeedsPassword = false;
@@ -206,7 +215,9 @@ in
       duf
       eza
       fd
-      fish
+      bashInteractive
+      bash-completion
+      blesh
       fzf
       git
       gum
@@ -236,6 +247,7 @@ in
       wget
       yq-go
       zoxide
+      starship
     ]
     ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ];
 

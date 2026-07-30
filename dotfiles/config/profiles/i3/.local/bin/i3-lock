@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+lock_state="$state_dir/lock_screen"
 
-if i3lock-fancy -t 'Ingrese su contraseña' "$@" -- scrot -z -o; then
-  exit 0
+if [[ -r "$lock_state" ]]; then
+  IFS= read -r lock_image <"$lock_state" || lock_image=''
+  if [[ -n "$lock_image" && -f "$lock_image" ]]; then
+    exec i3lock-color -i "$lock_image" -e "$@"
+  fi
 fi
 
-# Screenshot or ImageMagick failure must never leave session unlocked.
-exec i3lock-color-fallback --color=2e3440ff --ignore-empty-password "$@"
+exec i3lock-color -c 2e3440 -e "$@"

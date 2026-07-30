@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Pick a Tailscale peer listed as "host user" in hosts.conf and connect to it.
+set -o pipefail
+
+hosts_file="$HOME/.config/orgm-hosts/hosts.conf"
+if [[ ! -s $hosts_file ]]; then
+  printf 'sshgo: no hosts in %s\n' "$hosts_file" >&2
+  exit 1
+fi
+for command_name in tailscale jq gum ssh; do
+  if ! command -v "$command_name" >/dev/null; then
+    printf 'sshgo: missing dependency: %s\n' "$command_name" >&2
+    exit 1
+  fi
+done
+
+if ! status_json=$(tailscale status --json); then
+  printf 'sshgo: tailscale status failed\n' >&2
+  exit 1
+fi
+
+rows=()
+while read -r host user _; do
+  [[ -n ${host:-} && -n ${user:-} ]] || continue
+  peer=$(jq -c --arg host "$host" '.Peer[]? | select(.HostName | ascii_downcase == ($host | ascii_downcase))' <<<"$status_json")
+  if [[ -z $peer ]]; then
+    rows+=("$host $user ❓ unknown (not in tailnet)")
+  elif [[ $(jq -r '.Online' <<<"$peer") == true ]]; then
+    rows+=("$host $user 🟢 online")
+  else
+    rows+=("$host $user 🔴 offline (last seen $(jq -r '.LastSeen' <<<"$peer"))")
+  fi
+done < "$hosts_file"
+
+(( ${#rows[@]} > 0 )) || exit 0
+choice=$(printf '%s\n' "${rows[@]}" | gum choose) || exit 0
+[[ -n $choice ]] || exit 0
+read -r chosen_host chosen_user _ <<<"$choice"
+chosen_ip=$(jq -r --arg host "$chosen_host" '.Peer[]? | select(.HostName | ascii_downcase == ($host | ascii_downcase)) | .TailscaleIPs[0] // empty' <<<"$status_json")
+
+if [[ -n $chosen_ip ]]; then
+  exec ssh "$chosen_user@$chosen_ip"
+fi
+exec ssh "$chosen_user@$chosen_host"

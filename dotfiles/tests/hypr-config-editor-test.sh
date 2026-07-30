@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$ROOT/config/shared/.local/bin/hypr-config-editor"
+SCRIPT="$ROOT/config/profiles/hyprland/.local/bin/hypr-config-editor"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -73,8 +73,8 @@ if grep -Fxq 'hyprland.conf' "$TMP/inputs"; then
   cat "$TMP/inputs" >&2
   exit 1
 fi
-grep -Fxq -- "--class hypr-config-editor -e fish -lc nvim \"\$argv[1]\" -- $HYPR_ROOT/lua/input.lua" "$TMP/kitty.args" || {
-  echo 'FAIL: nvim option should open selected file through fish so the distrobox nvim wrapper is available' >&2
+grep -Fxq -- "--class hypr-config-editor -e nvim -- $HYPR_ROOT/lua/input.lua" "$TMP/kitty.args" || {
+  echo 'FAIL: nvim option should launch the selected file directly' >&2
   cat "$TMP/kitty.args" >&2
   exit 1
 }

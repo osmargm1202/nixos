@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+if ! command -v hypr-usb-menu >/dev/null; then
+  printf 'hypr-usb-menu no está instalado\n' >&2
+  exit 1
+fi
+exec hypr-usb-menu reconnect "$@"

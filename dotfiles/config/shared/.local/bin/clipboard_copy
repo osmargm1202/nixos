@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Copy stdin using the compositor-native clipboard first, then X11 fallback.
+set -o pipefail
+
+payload=$(cat)
+[[ -n $payload ]] || exit 1
+
+copy_with() {
+  printf '%s\n' "$payload" | "$@"
+}
+
+if [[ ${XDG_SESSION_TYPE:-} == x11 ]]; then
+  copy_with env DISPLAY="${DISPLAY:-}" XAUTHORITY="${XAUTHORITY:-}" xclip -selection clipboard ||
+    copy_with env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" wl-copy
+else
+  copy_with env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" wl-copy ||
+    copy_with env DISPLAY="${DISPLAY:-}" XAUTHORITY="${XAUTHORITY:-}" xclip -selection clipboard
+fi

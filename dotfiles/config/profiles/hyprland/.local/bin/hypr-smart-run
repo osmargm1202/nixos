@@ -2,7 +2,7 @@
 set -euo pipefail
 
 browser="${BROWSER:-chromium}"
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+theme="${HYPR_ROFI_THEME:-$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi}"
 menu=$'!a ChatGPT\n!c Claude\n!g Google\n!y YouTube'
 
 input="${*:-}"

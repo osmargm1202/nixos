@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+orgm_sudo() {
+  if [[ -x /run/wrappers/bin/sudo ]]; then
+    /run/wrappers/bin/sudo "$@"
+  elif command -v sudo >/dev/null; then
+    command sudo "$@"
+  else
+    printf 'nixclean: sudo not found\n' >&2
+    return 127
+  fi
+}
+
+orgm_sudo nh clean all --keep 3 --keep-since 30d
+orgm_sudo nix store optimise
+orgm_sudo journalctl --vacuum-time=30d
+flatpak uninstall --unused --assumeyes --noninteractive
+exec trash-empty 30 -f

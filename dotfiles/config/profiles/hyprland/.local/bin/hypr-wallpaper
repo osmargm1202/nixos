@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Nautilus starts scripts with a restricted environment; retain the system
+# profile so the Hyprland and Hyprpaper commands remain reachable.
+export PATH="/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH"
+
+hyprctl_bin="${HYPRCTL_BIN:-hyprctl}"
+hyprpaper_bin="${HYPRPAPER_BIN:-hyprpaper}"
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
+state_file="$state_dir/current"
+runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+runtime_link="$runtime_dir/hypr-current-wallpaper"
+default_dir="${HYPR_WALLPAPER_DIR:-$HOME/.config/wallpapers}"
+fallback="$HOME/.config/wallpapers/xnm1-background.png"
+
+usage() {
+  cat >&2 <<'EOF'
+usage: hypr-wallpaper set IMAGE
+       hypr-wallpaper restore
+       hypr-wallpaper random [DIRECTORY]
+EOF
+  exit 2
+}
+
+is_image() {
+  case "${1,,}" in
+    *.avif|*.bmp|*.gif|*.jpeg|*.jpg|*.png|*.webp) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+ensure_hyprpaper() {
+  if "$hyprctl_bin" hyprpaper listactive >/dev/null 2>&1; then
+    return 0
+  fi
+
+  "$hyprpaper_bin" >/dev/null 2>&1 &
+  for _ in {1..30}; do
+    if "$hyprctl_bin" hyprpaper listactive >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.1
+  done
+
+  printf '%s\n' 'hypr-wallpaper: hyprpaper IPC is unavailable' >&2
+  return 1
+}
+
+apply() {
+  local wallpaper="$1"
+  [[ -f "$wallpaper" ]] || {
+    printf 'hypr-wallpaper: no existe: %s\n' "$wallpaper" >&2
+    return 1
+  }
+  is_image "$wallpaper" || {
+    printf 'hypr-wallpaper: formato no admitido: %s\n' "$wallpaper" >&2
+    return 1
+  }
+
+  ensure_hyprpaper
+  "$hyprctl_bin" hyprpaper wallpaper ", $wallpaper, cover" >/dev/null
+
+  mkdir -p "$state_dir"
+  printf '%s\n' "$wallpaper" >"$state_file"
+  ln -sfn "$wallpaper" "$runtime_link"
+}
+
+random() {
+  local directory="$1" selected
+  [[ -d "$directory" ]] || {
+    printf 'hypr-wallpaper: directorio no existe: %s\n' "$directory" >&2
+    return 1
+  }
+
+  selected="$(find "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
+  [[ -n "$selected" ]] || {
+    printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$directory" >&2
+    return 1
+  }
+  apply "$selected"
+}
+
+case "${1:-}" in
+  set)
+    [[ $# -eq 2 ]] || usage
+    apply "$2"
+    ;;
+  restore)
+    [[ $# -eq 1 ]] || usage
+    if [[ -s "$state_file" ]] && [[ -f "$(<"$state_file")" ]]; then
+      apply "$(<"$state_file")"
+    else
+      apply "$fallback"
+    fi
+    ;;
+  random)
+    [[ $# -le 2 ]] || usage
+    random "${2:-$default_dir}"
+    ;;
+  *) usage ;;
+esac

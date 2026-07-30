@@ -22,8 +22,8 @@ assert_present 'nextcloud --background' "$ROOT/dotfiles/config/profiles/hyprland
 assert_present 'spawn-at-startup "nextcloud"' "$ROOT/dotfiles/config/profiles/hyprland/.config/niri/00-startup.kdl"
 assert_present 'nextcloud --background' "$ROOT/dotfiles/config/profiles/labwc/.config/labwc/autostart"
 
-assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/shared/.config/fish/age.fish"
-assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/hosts/lenovo/.config/fish/age-host.fish"
-assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/hosts/orgm/.config/fish/age-host.fish"
+assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/shared/.config/bash/age.bash"
+assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/hosts/lenovo/.config/bash/age-host.bash"
+assert_present 'Nextcloud/Documentos/keys/age.txt' "$ROOT/dotfiles/config/hosts/orgm/.config/bash/age-host.bash"
 
 printf 'PASS: Nextcloud client package and desktop autostarts restored\n'

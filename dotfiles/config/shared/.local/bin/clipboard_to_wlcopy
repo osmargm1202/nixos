@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+clip=$(cliphist list | rofi -dmenu -p 'clipboard copy') || exit 0
+[[ -n $clip ]] || exit 0
+printf '%s\n' "$clip" | cliphist decode | wl-copy
+dunstify Clipboard "Clip '$clip' was copied" -t 2000

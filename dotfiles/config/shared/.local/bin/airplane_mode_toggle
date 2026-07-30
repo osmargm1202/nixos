@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+backup_file="$HOME/.cache/airplane_backup"
+if [[ -e $backup_file ]]; then
+  wifi_status=$(sed -n 's/^wifi:\(on\|off\)$/\1/p' "$backup_file")
+  bluetooth_status=$(sed -n 's/^bluetooth:\(on\|off\)$/\1/p' "$backup_file")
+  [[ $wifi_status == on ]] && rfkill unblock wifi
+  [[ $bluetooth_status == on ]] && rfkill unblock bluetooth
+  rm -f "$backup_file"
+else
+  mkdir -p "${backup_file%/*}"
+  {
+    if rfkill list wifi | grep -qi 'Soft blocked: no'; then printf 'wifi:on\n'; else printf 'wifi:off\n'; fi
+    if rfkill list bluetooth | grep -qi 'Soft blocked: no'; then printf 'bluetooth:on\n'; else printf 'bluetooth:off\n'; fi
+  } > "$backup_file"
+  rfkill block wifi
+  rfkill block bluetooth
+fi

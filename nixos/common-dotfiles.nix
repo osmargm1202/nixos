@@ -64,75 +64,18 @@ let
     ".config/delta"
     ".config/dolphinrc"
     ".config/fastfetch"
-    # Fish — listed individually so host-specific files (host-orgm.fish etc.)
-    # can coexist without the directory-level symlink being dropped by the filter.
-    ".config/fish/age.fish"
-    ".config/fish/completions/aichat.fish"
-    ".config/fish/completions/ftdv.fish"
-    ".config/fish/conf.d/command-separator.fish"
-    ".config/fish/conf.d/fnm.fish"
-    ".config/fish/config.fish"
-    ".config/fish/functions/aichat_fish.fish"
-    ".config/fish/functions/airplane_mode_toggle.fish"
-    ".config/fish/functions/archive-preview.fish"
-    ".config/fish/functions/autostart.fish"
-    ".config/fish/functions/back-op.fish"
-    ".config/fish/functions/backtrack-op.fish"
-    ".config/fish/functions/bluetooth_toggle.fish"
-    ".config/fish/functions/bookmark_add.fish"
-    ".config/fish/functions/bookmark_delete.fish"
-    ".config/fish/functions/bookmark_to_type.fish"
-    ".config/fish/functions/check_airplane_mode.fish"
-    ".config/fish/functions/check_geo_module.fish"
-    ".config/fish/functions/check_night_mode.fish"
-    ".config/fish/functions/check_recording.fish"
-    ".config/fish/functions/check_webcam.fish"
-    ".config/fish/functions/claude.fish"
-    ".config/fish/functions/codex.fish"
-    ".config/fish/functions/clear-op.fish"
-    ".config/fish/functions/clipboard_clear.fish"
-    ".config/fish/functions/clipboard_copy.fish"
-    ".config/fish/functions/clipboard_delete_item.fish"
-    ".config/fish/functions/clipboard_to_type.fish"
-    ".config/fish/functions/clipboard_to_wlcopy.fish"
-    ".config/fish/functions/dir-preview.fish"
-    ".config/fish/functions/dunst_pause.fish"
-    ".config/fish/functions/fetch_music_player_data.fish"
-    ".config/fish/functions/file-preview.fish"
-    ".config/fish/functions/fish_bind_count.fish"
-    ".config/fish/functions/fish_default_mode_prompt.fish"
-    ".config/fish/functions/fish_helix_command.fish"
-    ".config/fish/functions/fish_helix_key_bindings.fish"
-    ".config/fish/functions/fish_user_key_bindings.fish"
-    ".config/fish/functions/flakeinit.fish"
-    ".config/fish/functions/fzf-cd-preview-widget.fish"
-    ".config/fish/functions/fzf-file-preview-widget.fish"
-    ".config/fish/functions/fzf_key_bindings.fish"
-    ".config/fish/functions/fzf-ps-widget.fish"
-    ".config/fish/functions/image-preview.fish"
-    ".config/fish/functions/kitty_launch.fish"
-    ".config/fish/functions/list-op.fish"
-    ".config/fish/functions/load_private_env.fish"
-    ".config/fish/functions/night_mode_temp_down.fish"
-    ".config/fish/functions/night_mode_temp_up.fish"
-    ".config/fish/functions/night_mode_toggle.fish"
-    ".config/fish/functions/private-env-decrypt.fish"
-    ".config/fish/functions/private-env-edit.fish"
-    ".config/fish/functions/private-env-encrypt.fish"
-    ".config/fish/functions/record_screen_gif.fish"
-    ".config/fish/functions/record_screen_mp4.fish"
-    ".config/fish/functions/screenshot_edit.fish"
-    ".config/fish/functions/screenshot_to_clipboard.fish"
-    ".config/fish/functions/sshgo.fish"
-    ".config/fish/functions/switch-preview.fish"
-    ".config/fish/functions/tre.fish"
-    ".config/fish/functions/unbindheadset.fish"
-    ".config/fish/functions/wifi_toggle.fish"
-    ".config/fish/functions/wlogout_uniqe.fish"
-    ".config/fish/icons/camera_gif_icon.png"
-    ".config/fish/icons/camera_mp4_icon.png"
-    ".config/fish/icons/rec_icon.png"
-    ".config/fish/private-env.fish.age"
+    # Bash is listed file-by-file so host-specific files can coexist with the
+    # shared configuration without a directory-level symlink collision.
+    ".bashrc"
+    ".blerc"
+    ".config/bash/age.bash"
+    ".config/bash/config.bash"
+    ".config/bash/private-env-helpers.bash"
+    ".config/bash/private-env.bash.age"
+    ".config/bash/completions.bash"
+    ".config/bash/functions.bash"
+    ".config/bash/fzf-widgets.bash"
+    ".config/bash/icons"
     ".config/helix"
     ".config/kitty/kitty.conf"
     ".config/clipcat"
@@ -161,6 +104,51 @@ let
     ".local/bin/reset_config"
     ".local/bin/steam-workshop-image"
     ".local/bin/windows-rdp"
+    ".local/bin/aichat-rewrite"
+    ".local/bin/airplane_mode_toggle"
+    ".local/bin/archive-preview"
+    ".local/bin/autostart"
+    ".local/bin/bluetooth_toggle"
+    ".local/bin/bookmark_add"
+    ".local/bin/bookmark_delete"
+    ".local/bin/bookmark_to_type"
+    ".local/bin/check_airplane_mode"
+    ".local/bin/check_geo_module"
+    ".local/bin/check_night_mode"
+    ".local/bin/check_recording"
+    ".local/bin/check_webcam"
+    ".local/bin/clear-op"
+    ".local/bin/clipboard_clear"
+    ".local/bin/clipboard_copy"
+    ".local/bin/clipboard_delete_item"
+    ".local/bin/clipboard_to_type"
+    ".local/bin/clipboard_to_wlcopy"
+    ".local/bin/claude"
+    ".local/bin/codex"
+    ".local/bin/dir-preview"
+    ".local/bin/dunst_pause"
+    ".local/bin/fetch_music_player_data"
+    ".local/bin/file-preview"
+    ".local/bin/flakeinit"
+    ".local/bin/image-preview"
+    ".local/bin/kitty_launch"
+    ".local/bin/list-op"
+    ".local/bin/night_mode_temp_down"
+    ".local/bin/night_mode_temp_up"
+    ".local/bin/night_mode_toggle"
+    ".local/bin/nixclean"
+    ".local/bin/private-env-decrypt"
+    ".local/bin/private-env-edit"
+    ".local/bin/private-env-encrypt"
+    ".local/bin/record_screen_gif"
+    ".local/bin/record_screen_mp4"
+    ".local/bin/screenshot_edit"
+    ".local/bin/screenshot_to_clipboard"
+    ".local/bin/sshgo"
+    ".local/bin/switch-preview"
+    ".local/bin/unbindheadset"
+    ".local/bin/wifi_toggle"
+    ".local/bin/wlogout_uniqe"
     ".local/share/icons/hicolor/256x256/apps"
     ".local/share/applications/windows-rdp.desktop"
     ".local/share/icons/nixos.svg"
@@ -177,19 +165,15 @@ let
   ];
 
   # Profile-specific paths — only symlinked when matching profile is active.
-  # Currently sourced from dotfiles/config/shared/<path>; move to
-  # dotfiles/config/profiles/<profile>/<path> when dotfiles repo is reorganised.
+  # Source: dotfiles/config/profiles/<profile>/<path>.
   profileSpecificPaths = {
     hyprland = [
-      ".config/Kvantum/catppuccin-macchiato-teal-standard#"
       ".config/dunst"
-      ".config/fuzzel"
       ".config/hypr/hypridle.conf"
       ".config/hypr/hyprland.lua"
       ".config/hypr/hyprlock.conf"
       ".config/hypr/lua/autostart.lua"
       ".config/hypr/lua/environment.lua"
-      ".config/hypr/lua/hyprdeck.lua"
       ".config/hypr/lua/input.lua"
       ".config/hypr/lua/keybindings.lua"
       ".config/hypr/lua/layout.lua"
@@ -202,50 +186,18 @@ let
       ".config/hypr/noctalia/noctalia-colors.conf"
       ".config/hypr/scripts/pi-walker-prompt.sh"
       ".config/hypr/scripts/walker-window-switch.sh"
-      ".config/niri/00-startup.kdl"
-      ".config/niri/10-workspace.kdl"
-      ".config/niri/30-input.kdl"
-      ".config/niri/40-layout.kdl"
-      ".config/niri/50-visuals.kdl"
-      ".config/niri/60-animations.kdl"
-      ".config/niri/70-window-rules.kdl"
-      ".config/niri/80-binds.kdl"
-      ".config/niri/90-overview.kdl"
-      ".config/niri/95-other.kdl"
-      ".config/niri/config.kdl"
-      ".config/niri/dms/alttab.kdl"
-      ".config/niri/dms/colors.kdl"
-      ".config/niri/dms/empty_binds.kdl"
-      ".config/niri/dms/empty_cursor.kdl"
-      ".config/niri/dms/empty_windowrules.kdl"
-      ".config/niri/dms/layout.kdl"
-      ".config/niri/dms/wpblur.kdl"
-      ".config/nwg-dock-hyprland/style.css"
       ".config/orgm-hypr/notify-focus.json"
       ".config/orgm-hypr/themes.json"
       ".config/orgm-theme"
       ".config/qt5ct/colors/caelestia.colors"
       ".config/qt6ct/colors/caelestia.colors"
 
+      ".config/waybar-hypr"
       ".config/rofi"
       ".config/swappy"
-      ".config/swaync/config.json"
-      ".config/swaync/style.css"
-      ".config/waybar-hypr/config"
-      ".config/waybar-hypr/style.css"
-      ".config/waybar-hypr/kbd-layout.sh"
-      ".config/waybar-hypr/macchiato.css"
-      ".config/waybar-hypr/orgm.png"
-      ".config/waybar-hypr/orgm-hypr.png"
-      ".config/waybar-hypr/icons"
-      ".config/wlogout"
-      ".config/wofi"
       ".local/bin/hypr-apps-menu"
       ".local/bin/hypr-battery-alerts"
       ".local/bin/hypr-app-launcher"
-      ".local/bin/hypr-audio-device-menu"
-      ".local/bin/hypr-bluetooth-menu"
-      ".local/bin/hypr-bluetooth-reconnect"
       ".local/bin/hypr-config-editor"
       ".local/bin/hypr-current-wallpaper"
       ".local/bin/hypr-devices-menu"
@@ -258,9 +210,7 @@ let
       ".local/bin/hypr-kill-windows"
       ".local/bin/hypr-lock"
       ".local/bin/hypr-main-menu"
-      ".local/bin/hypr-nwg-dock"
       ".local/bin/hypr-obsidian-open-or-focus"
-      ".local/bin/hypr-performance-menu"
       ".local/bin/hypr-pi-prompt"
       ".local/bin/hypr-power-menu"
       ".local/bin/hypr-rofi-calc"
@@ -280,12 +230,8 @@ let
       ".local/bin/hypr-tools-menu"
       ".local/bin/hypr-transition-menu"
       ".local/bin/hypr-tweaks-menu"
-      ".local/bin/hypr-video-timer"
-      ".local/bin/hypr-usb-menu"
-      ".local/bin/hypr-webapp-maker"
-      ".local/bin/hypr-webapp-remover"
-      ".local/bin/hypr-wifi-menu"
       ".local/bin/hypr-workspace-button"
+      ".local/bin/hypr-wallpaper"
       ".local/bin/hypr-zen-new-window"
       ".local/bin/waybar-date-es"
       ".local/bin/waybar-day-month-es"
@@ -312,6 +258,7 @@ let
       ".local/bin/i3-hotkeys"
       ".local/bin/i3-keyboard-menu"
       ".local/bin/i3-lock"
+      ".local/bin/i3-lock-background"
       ".local/bin/i3-main-menu"
       ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"
@@ -323,9 +270,11 @@ let
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"
       ".local/bin/i3-ssh-host"
+      ".local/bin/i3-start-discord-background"
       ".local/bin/i3-wallpaper"
       ".local/bin/i3-wifi-toggle"
       ".local/bin/i3-zen-new-window"
+      ".local/bin/i3status-localized"
     ];
 
     labwc = [
@@ -374,7 +323,6 @@ let
       ".local/bin/hypr-kill-windows"
       ".local/bin/hypr-lock"
       ".local/bin/hypr-current-wallpaper"
-      ".local/bin/hypr-nwg-dock"
       ".local/bin/hypr-qs-menu"
       ".local/bin/hypr-obsidian-open-or-focus"
       ".local/bin/hypr-performance-menu"
@@ -407,7 +355,7 @@ let
     cinnamon = [ ];
   };
 
-  # Host-specific shared paths (fish host config, desktop files, icons).
+  # Host-specific shared paths (Bash host config, desktop files, icons).
   # Source: dotfiles/config/hosts/<host>/<path>
   # Subdirectories of .local/share/icons that are host-specific.
   # .local/share/icons itself is intentionally NOT listed — doing so would
@@ -426,13 +374,12 @@ let
 
   hostPaths = {
     ero = [
-      ".config/fish/age-host.fish"
-      ".config/fish/host-ero.fish"
+      ".config/bash/host-ero.bash"
     ]
     ++ hostIconSubdirs;
     lenovo = [
-      ".config/fish/age-host.fish"
-      ".config/fish/host-lenovo.fish"
+      ".config/bash/age-host.bash"
+      ".config/bash/host-lenovo.bash"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
       ".local/share/applications/opencode.desktop"
@@ -441,8 +388,8 @@ let
     ]
     ++ hostIconSubdirs;
     orgm = [
-      ".config/fish/age-host.fish"
-      ".config/fish/host-orgm.fish"
+      ".config/bash/age-host.bash"
+      ".config/bash/host-orgm.bash"
       ".local/share/applications/claude-code-url-handler.desktop"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
@@ -452,8 +399,8 @@ let
     ]
     ++ hostIconSubdirs;
     jarq = [
-      ".config/fish/age-host.fish"
-      ".config/fish/host-jarq.fish"
+      ".config/bash/age-host.bash"
+      ".config/bash/host-jarq.bash"
     ]
     ++ hostIconSubdirs;
   };
@@ -478,7 +425,6 @@ let
         ".config/DankMaterialShell"
         ".config/hypr/lua/monitors/lenovo.lua"
         ".config/niri/20-output.kdl"
-        ".config/rofi/hypr-menu.env"
       ];
       hyprlandqs-caelestia = [
         ".config/hypr/lua/monitors/lenovo.lua"
@@ -494,7 +440,6 @@ let
         ".config/niri/20-output.kdl"
         ".config/niri/dms/outputs.kdl"
         ".config/orgm-hypr/display-targets.json"
-        ".config/rofi/hypr-menu.env"
       ];
       hyprlandqs-caelestia = [
         ".config/hypr/lua/monitors/orgm.lua"
@@ -508,11 +453,8 @@ let
 
   localOnlyPaths = [
     ".config/autorandr"
-    ".config/fish/fish_variables"
-    ".config/fish/functions/dir.txt"
-    ".config/fish/insforge.env"
-    ".config/fish/pdd"
-    ".config/fish/private-env.fish"
+    ".config/bash/insforge.env"
+    ".config/bash/private-env.bash"
     ".gtkrc-2.0"
     ".config/gtk-4.0/gtk-dark.css"
     ".config/gtk-4.0/gtk.css"
@@ -554,7 +496,6 @@ let
     ".config/rofi/orgm-hypr-theme.rasi"
     ".config/kitty/orgm-hypr-theme.conf"
     ".config/waybar-hypr/orgm-hypr-theme.css"
-    ".config/nwg-dock-hyprland/orgm-hypr-theme.css"
     ".config/helix/themes/orgm-hypr.toml"
     ".config/kitty/current-theme.conf"
     ".config/kitty/skwd-theme.conf"
@@ -564,7 +505,6 @@ let
     ".config/rofi/orgm-current.rasi"
     ".config/waybar/orgm-current.css"
     ".config/waybar-hypr/orgm-current.css"
-    ".config/nwg-dock-hyprland/orgm-current.css"
     ".config/swaync/orgm-current.css"
     ".config/qt5ct/colors/orgm-current.colors"
     ".config/qt6ct/colors/orgm-current.colors"
@@ -590,24 +530,58 @@ let
     ".config/rofi/orgm-current.rasi"
     ".config/waybar/orgm-current.css"
     ".config/waybar-hypr/orgm-current.css"
-    ".config/nwg-dock-hyprland/orgm-current.css"
     ".config/swaync/orgm-current.css"
     ".config/hypr/scheme/current.conf"
     ".config/vesktop/settings/quickcss.css"
   ];
 
-  currentProfilePaths = profileSpecificPaths.${profileName} or [ ];
+  # Hyprland's compositor, Waybar, and helper commands stay materialized
+  # across profile switches. They are inert outside a Hyprland session, but
+  # preserving them prevents i3 activation from deleting the configured menus,
+  # top bar, and command surface required by the next Hyprland login.
+  persistentHyprlandPaths = lib.filter (
+    path:
+      lib.hasPrefix ".config/hypr/" path
+      || lib.hasPrefix ".config/orgm-hypr/" path
+      || path == ".config/waybar-hypr"
+      || lib.hasPrefix ".local/bin/hypr-" path
+      || lib.hasPrefix ".local/bin/waybar-" path
+  ) (profileSpecificPaths.hyprland or [ ]);
+  # Keep the Rofi theme required by Hyprland helpers separate from the active
+  # profile's general Rofi configuration, which i3 owns at ~/.config/rofi.
+  persistentHyprlandRofiFiles = [
+    {
+      target = ".config/orgm-hypr/rofi/hypr-menu.rasi";
+      source = ".config/rofi/hypr-menu.rasi";
+    }
+    {
+      target = ".config/orgm-hypr/rofi/hypr-menu.env";
+      source = ".config/rofi/hypr-menu.env";
+    }
+    {
+      target = ".config/orgm-hypr/rofi/orgm-current.rasi";
+      source = ".config/rofi/orgm-current.rasi";
+    }
+  ];
+  currentProfilePaths = lib.filter (
+    path: !builtins.elem path persistentHyprlandPaths
+  ) (profileSpecificPaths.${profileName} or [ ]);
   pathsForHost = hostPaths.${hostName} or [ ];
   pathsForHostProfile = (hostProfilePaths.${hostName} or { }).${profileName} or [ ];
 
-  # Priority: hostProfilePaths > hostPaths > profilePaths > sharedPaths
-  # Pass 1 — drop lower-priority paths that equal or sit below higher-priority paths
-  higherThanShared = currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
+  # Priority: hostProfilePaths > hostPaths > profilePaths > sharedPaths.
+  # Persistent Hyprland paths are profile sources with the same priority as
+  # the active profile, so host-specific monitor files can still override them.
+  higherThanShared = persistentHyprlandPaths ++ currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
   higherThanProfile = pathsForHost ++ pathsForHostProfile;
 
   pass1SharedPaths = lib.filter (
     sp: !builtins.any (hp: sp == hp || lib.hasPrefix (hp + "/") sp) higherThanShared
   ) sharedPaths;
+
+  pass1PersistentHyprlandPaths = lib.filter (
+    pp: !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) (pathsForHost ++ pathsForHostProfile)
+  ) persistentHyprlandPaths;
 
   pass1ProfilePaths = lib.filter (
     pp: !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) higherThanProfile
@@ -617,12 +591,16 @@ let
     hp: !builtins.any (hpp: hp == hpp || lib.hasPrefix (hpp + "/") hp) pathsForHostProfile
   ) pathsForHost;
 
-  # Pass 2 — drop any path that has child paths in the combined list
-  pass1All = pass1SharedPaths ++ pass1ProfilePaths ++ pass1HostPaths ++ pathsForHostProfile;
+  # Pass 2 — drop any path that has child paths in the combined list.
+  pass1All = pass1SharedPaths ++ pass1PersistentHyprlandPaths ++ pass1ProfilePaths ++ pass1HostPaths ++ pathsForHostProfile;
 
   filteredSharedPaths = lib.filter (
     sp: !builtins.any (other: lib.hasPrefix (sp + "/") other) pass1All
   ) pass1SharedPaths;
+
+  filteredPersistentHyprlandPaths = lib.filter (
+    pp: !builtins.any (other: lib.hasPrefix (pp + "/") other) pass1All
+  ) pass1PersistentHyprlandPaths;
 
   filteredProfilePaths = lib.filter (
     pp: !builtins.any (other: lib.hasPrefix (pp + "/") other) pass1All
@@ -762,12 +740,13 @@ in
 
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (
-            filteredSharedPaths ++ filteredProfilePaths ++ filteredHostPaths ++ filteredHostProfilePaths
+            filteredSharedPaths ++ filteredPersistentHyprlandPaths ++ filteredProfilePaths ++ filteredHostPaths ++ filteredHostProfilePaths
+            ++ map (file: file.target) persistentHyprlandRofiFiles
           )}
         )
         for p in "''${managed_paths[@]}"; do
           target="$HOME/$p"
-          if [ -e "$target" ] && [ ! -L "$target" ]; then
+          if [ -e "$target" ] || [ -L "$target" ]; then
             $DRY_RUN_CMD rm -rf "$target"
           fi
         done
@@ -786,7 +765,6 @@ in
         + lib.optionalString (profileName == "hyprland") ''
           init_file ".config/waybar/orgm-current.css"            "/* generated by orgm-themes */"
           init_file ".config/waybar-hypr/orgm-current.css"       "/* generated by orgm-themes */"
-          init_file ".config/nwg-dock-hyprland/orgm-current.css" "/* generated by orgm-themes */"
           init_file ".config/swaync/orgm-current.css"            "/* generated by orgm-themes */"
           init_file ".config/rofi/orgm-current.rasi"             "/* generated by orgm-themes */"
           init_file ".config/qt5ct/qt5ct.conf"     ""
@@ -826,11 +804,16 @@ in
       );
 
       # Nautilus 50 reliably discovers real executable scripts, not a Home
-      # Manager symlink. Install this generated deployment after links settle.
-      home.activation.installI3NautilusScripts = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+      # Manager symlink. Install these generated deployments after links settle.
+      home.activation.installNautilusWallpaperScripts = lib.hm.dag.entryAfter [ "linkGeneration" ] (
         ''
           target="$HOME/.local/share/nautilus/scripts/Set as Wallpaper"
           $DRY_RUN_CMD rm -f "$target"
+
+          hypr_target="$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
+          hypr_source="${dotfilesPath}/config/profiles/hyprland/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
+          $DRY_RUN_CMD rm -f "$hypr_target"
+          $DRY_RUN_CMD install -Dm755 "$hypr_source" "$hypr_target"
         ''
         + lib.optionalString (profileName == "i3") ''
           source="${dotfilesPath}/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
@@ -880,6 +863,20 @@ in
             value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/shared/${path}";
           }) filteredSharedPaths
         ))
+        # Persistent Hyprland paths — profile sources retained across switches.
+        (builtins.listToAttrs (
+          map (path: {
+            name = path;
+            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/profiles/hyprland/${path}";
+          }) filteredPersistentHyprlandPaths
+        ))
+        # Persistent Hyprland Rofi theme — separate from the active profile.
+        (builtins.listToAttrs (
+          map (file: {
+            name = file.target;
+            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/profiles/hyprland/${file.source}";
+          }) persistentHyprlandRofiFiles
+        ))
         # Profile-specific paths — dotfiles/config/profiles/<profile>/<path>
         (builtins.listToAttrs (
           map (path: {
@@ -905,6 +902,17 @@ in
             };
           }) filteredHostProfilePaths
         ))
+        # tmux plugins are store-backed, so a fresh Home Manager activation
+        # recreates them without TPM or mutable clones under ~/.tmux/plugins.
+        {
+          ".config/tmux/plugins.conf" = {
+            force = true;
+            text = ''
+              run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
+              run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
+            '';
+          };
+        }
         # Force overwrite for migration/transition artifact that can exist from prior manual copies.
         {
           ".local/bin/hypr-video-timer" = lib.mkForce {

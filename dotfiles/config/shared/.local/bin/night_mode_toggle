@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+process=hyprsunset
+temperature_file="$HOME/.cache/hyprsunset_temp"
+if pgrep -x "$process" >/dev/null; then
+  exec pkill -INT -x "$process"
+fi
+
+if [[ -r $temperature_file ]]; then
+  read -r temperature < "$temperature_file"
+else
+  temperature=4000
+  printf '%s\n' "$temperature" > "$temperature_file"
+fi
+exec "$process" -t "$temperature"

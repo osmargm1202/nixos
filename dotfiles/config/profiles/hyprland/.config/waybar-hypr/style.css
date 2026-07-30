@@ -107,18 +107,18 @@ window.bottom_bar .modules-right { margin-right: 0; }
 }
 #group-usage, #usage, #group-system, #system,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap,
-#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #custom-clipboard, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
+#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-clipboard, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-clipboard, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
   background-color: transparent;
 }
 
-#custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect {
+#custom-wallpaper {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 18px 18px;
@@ -129,12 +129,6 @@ window.bottom_bar .modules-right { margin-right: 0; }
   padding: 0 3px;
 }
 #custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
-#custom-usb_devices { background-image: url("icons/usb_devices.svg"); }
-#custom-memclean { background-image: url("icons/memclean.svg"); }
-#custom-nixclean { background-image: url("icons/nixclean.svg"); }
-#custom-hardware_fetch { background-image: url("icons/hardware_fetch.svg"); }
-#custom-pi_status { background-image: url("icons/pi_status.svg"); }
-#custom-headset_reconnect { background-image: url("icons/headset_reconnect.svg"); }
 #custom-logout_menu { color: @red; font-weight: bold; padding: 0 12px 0 6px; }
 #custom-menu { color: @text; font-size: 18px; padding: 0 10px 0 6px; }
 #custom-wallpaper { color: @text; font-size: 18px; }
@@ -306,7 +300,6 @@ window.dock_bar#waybar {
   border: 2px solid @panel_border;
 }
 
-#custom-memclean, #custom-hardware_fetch { margin-left: 16px; }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
 #custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }

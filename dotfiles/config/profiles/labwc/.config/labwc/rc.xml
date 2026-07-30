@@ -165,12 +165,12 @@
     </keybind>
     <keybind key="W-S-slash">
       <action name="Execute">
-        <command>kitty --hold -e fish -ic tmuxnewz</command>
+        <command>kitty --hold -e tmuxnewz</command>
       </action>
     </keybind>
     <keybind key="W-A-backslash">
       <action name="Execute">
-        <command>kitty --hold -e fish -ic tmuxdel</command>
+        <command>kitty --hold -e tmuxdel</command>
       </action>
     </keybind>
     <keybind key="XF86AudioRaiseVolume" allowWhenLocked="yes">

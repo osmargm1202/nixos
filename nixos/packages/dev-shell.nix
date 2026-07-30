@@ -10,7 +10,9 @@ pkgs.buildFHSEnv {
   targetPkgs =
     pkgs: with pkgs; [
       # Shell
-      fish
+      bashInteractive
+      bash-completion
+      blesh
       # Node.js ecosystem
       nodejs_22
       nodePackages.pnpm
@@ -95,7 +97,7 @@ pkgs.buildFHSEnv {
       nodePackages.typescript-language-server
       nodePackages.svelte-language-server
     ];
-  runScript = "fish";
+  runScript = "bash";
   profile = ''
     export IN_DEV_SHELL=1
     export NPM_CONFIG_PREFIX="$HOME/.npm-global"

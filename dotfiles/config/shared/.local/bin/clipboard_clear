@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+rm -f "$HOME/.cache/cliphist/db"
+exec dunstify Clipboard Cleared -t 2000

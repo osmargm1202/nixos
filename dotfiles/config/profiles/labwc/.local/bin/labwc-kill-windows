@@ -35,7 +35,7 @@ rss_kb() {
 skip_process() {
   comm="$1"
   case "$comm" in
-    labwc|waybar|swaync|dunst|wl-paste|cliphist|pipewire*|wireplumber|dbus-daemon|systemd|ssh-agent|gpg-agent|gnome-keyring*|nm-applet|blueman-applet|polkit-*|xdg-desktop-portal*|fuzzel|sh|bash|fish|zsh|ps|awk|sort|sed|cut|grep|labwc-kill-windows)
+    labwc|waybar|swaync|dunst|wl-paste|cliphist|pipewire*|wireplumber|dbus-daemon|systemd|ssh-agent|gpg-agent|gnome-keyring*|nm-applet|blueman-applet|polkit-*|xdg-desktop-portal*|fuzzel|sh|bash|zsh|ps|awk|sort|sed|cut|grep|labwc-kill-windows)
       return 0
       ;;
   esac

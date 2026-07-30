@@ -5,22 +5,24 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
+repo="${DOTFILES_REPO:-$HOME/Hobby/nixos/dotfiles}"
 choice="$(printf '%s\n' \
-  '󰑓 Restart all' \
   '󰑓 Reload Hyprland' \
-  '󰑓 Restart Waybar' \
-  '󰑓 Reload Dock' \
+  '󰖟 Restore wallpaper' \
+  '󰖟 Random wallpaper' \
+  '󰕾 Restart Waybar' \
+  '󰃢 Nix cleanup' \
   '󰆍 User logs' \
   '󰉋 Open dotfiles' \
   '󰐥 Power' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
 
 case "$choice" in
-  *'Restart all') exec sh -lc 'hyprctl reload >/dev/null 2>&1 || true; (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &); ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true' ;;
   *'Reload Hyprland') exec hyprctl reload ;;
-  *'Restart Waybar') exec waybar-watch ~/.config/waybar-hypr ;;
-  *'Reload Dock') exec ~/.local/bin/hypr-nwg-dock reload ;;
+  *'Restore wallpaper') exec hypr-wallpaper restore ;;
+  *'Random wallpaper') exec hypr-wallpaper random ;;
+  *'Restart Waybar') exec waybar-watch "$HOME/.config/waybar-hypr" ;;
+  *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'Open dotfiles') exec nautilus "$repo" ;;
   *'Power') exec hypr-power-menu ;;

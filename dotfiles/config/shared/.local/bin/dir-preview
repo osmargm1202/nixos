@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec lsd --tree --depth=1 --color=always --icon=always --icon-theme=fancy "${1:?\"usage: dir-preview <directory>\"}"

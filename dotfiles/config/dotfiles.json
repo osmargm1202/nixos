@@ -16,7 +16,9 @@
       ".config/dunst",
       ".config/clipcat",
       ".config/fastfetch",
-      ".config/fish",
+      ".bashrc",
+      ".blerc",
+      ".config/bash",
       ".config/gtk-4.0",
       ".config/gtk-3.0",
       ".config/helix",
@@ -128,13 +130,58 @@
       ".local/bin/hypr-rofi-open-file-terminal",
       ".local/bin/hypr-rofi-ssh-host",
       ".local/bin/hypr-rofi-tmux-arch",
-      ".local/bin/hypr-rofi-window"
+      ".local/bin/hypr-rofi-window",
+      ".local/bin/aichat-rewrite",
+      ".local/bin/airplane_mode_toggle",
+      ".local/bin/archive-preview",
+      ".local/bin/autostart",
+      ".local/bin/bluetooth_toggle",
+      ".local/bin/bookmark_add",
+      ".local/bin/bookmark_delete",
+      ".local/bin/bookmark_to_type",
+      ".local/bin/check_airplane_mode",
+      ".local/bin/check_geo_module",
+      ".local/bin/check_night_mode",
+      ".local/bin/check_recording",
+      ".local/bin/check_webcam",
+      ".local/bin/clear-op",
+      ".local/bin/clipboard_clear",
+      ".local/bin/clipboard_copy",
+      ".local/bin/clipboard_delete_item",
+      ".local/bin/clipboard_to_type",
+      ".local/bin/clipboard_to_wlcopy",
+      ".local/bin/claude",
+      ".local/bin/codex",
+      ".local/bin/dir-preview",
+      ".local/bin/dunst_pause",
+      ".local/bin/fetch_music_player_data",
+      ".local/bin/file-preview",
+      ".local/bin/flakeinit",
+      ".local/bin/image-preview",
+      ".local/bin/kitty_launch",
+      ".local/bin/list-op",
+      ".local/bin/night_mode_temp_down",
+      ".local/bin/night_mode_temp_up",
+      ".local/bin/night_mode_toggle",
+      ".local/bin/nixclean",
+      ".local/bin/private-env-decrypt",
+      ".local/bin/private-env-edit",
+      ".local/bin/private-env-encrypt",
+      ".local/bin/record_screen_gif",
+      ".local/bin/record_screen_mp4",
+      ".local/bin/screenshot_edit",
+      ".local/bin/screenshot_to_clipboard",
+      ".local/bin/sshgo",
+      ".local/bin/switch-preview",
+      ".local/bin/unbindheadset",
+      ".local/bin/wifi_toggle",
+      ".local/bin/wlogout_uniqe"
     ]
   },
   "hosts": {
     "ero": {
       "paths": [
-        ".config/fish/age-host.fish",
+        ".config/bash/host-ero.bash",
         ".local/share/applications",
         ".local/share/icons"
       ]
@@ -142,8 +189,8 @@
     "lenovo": {
       "paths": [
         ".config/DankMaterialShell",
-        ".config/fish/age-host.fish",
-        ".config/fish/host-lenovo.fish",
+        ".config/bash/age-host.bash",
+        ".config/bash/host-lenovo.bash",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
         ".local/share/icons"
@@ -152,8 +199,8 @@
     "orgm": {
       "paths": [
         ".config/DankMaterialShell",
-        ".config/fish/age-host.fish",
-        ".config/fish/host-orgm.fish",
+        ".config/bash/age-host.bash",
+        ".config/bash/host-orgm.bash",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
         ".local/share/icons"
@@ -163,11 +210,8 @@
   "local_only": {
     "paths": [
       ".config/autorandr",
-      ".config/fish/fish_variables",
-      ".config/fish/functions/dir.txt",
-      ".config/fish/insforge.env",
-      ".config/fish/pdd",
-      ".config/fish/private-env.fish",
+      ".config/bash/insforge.env",
+      ".config/bash/private-env.bash",
       ".config/gtk-4.0/gtk-dark.css",
       ".config/gtk-4.0/gtk.css",
       ".pi/agent/agent-status.json",
