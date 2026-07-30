@@ -6,27 +6,16 @@
   ...
 }:
 
-let
-  sddmKwinOutputConfig = ../hosts/${config.networking.hostName}/sddm-kwinoutputconfig.json;
-  hasSddmKwinOutputConfig = builtins.pathExists sddmKwinOutputConfig;
-in
 {
   imports = [
-    ./sddm.nix
     ./printer.nix
     ./vesktop.nix
   ];
 
+
   services.xserver.enable = false;
   services.displayManager.defaultSession = "hyprland";
 
-  environment.etc = lib.mkIf hasSddmKwinOutputConfig {
-    "sddm/kwinoutputconfig-${config.networking.hostName}.json".source = sddmKwinOutputConfig;
-  };
-  systemd.tmpfiles.rules = lib.optionals hasSddmKwinOutputConfig [
-    "d /var/lib/sddm/.config 0755 sddm sddm -"
-    "C /var/lib/sddm/.config/kwinoutputconfig.json 0644 sddm sddm - /etc/sddm/kwinoutputconfig-${config.networking.hostName}.json"
-  ];
 
   programs.hyprland = {
     enable = true;
@@ -34,6 +23,34 @@ in
     package = pkgs.hyprland;
     portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
+  programs.bash.loginShellInit = lib.mkAfter (
+    ''
+      if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
+        if pgrep -x gamescope >/dev/null; then
+          printf '%s\n' 'Steam Gaming Mode sigue activo en TTY6; ciérralo antes de iniciar Hyprland.' >&2
+        else
+          exec start-hyprland
+        fi
+      fi
+    ''
+    + lib.optionalString config.programs.steam.enable ''
+      if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty6 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
+        if pgrep -x Hyprland >/dev/null; then
+          printf '%s\n' 'Hyprland sigue activo en TTY1; ciérralo antes de iniciar Steam Gaming Mode.' >&2
+        else
+          exec gamescope -e -- steam -gamepadui
+        fi
+      fi
+    ''
+  );
+
+  systemd.services."autovt@tty6" = lib.mkIf config.programs.steam.enable {
+    serviceConfig.ExecStart = [
+      ""
+      "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM"
+    ];
+  };
+
 
   security.polkit = {
     enable = true;
@@ -45,7 +62,6 @@ in
       });
     '';
   };
-  security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
 
   programs.nautilus-open-any-terminal = {

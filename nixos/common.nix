@@ -54,6 +54,7 @@ let
     uv
     python3
     android-tools
+    kdePackages.kdeconnect-kde
     freerdp
     podman-compose
     jujutsu

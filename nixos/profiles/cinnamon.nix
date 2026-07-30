@@ -180,5 +180,13 @@ in
 
     xdg.configFile."autostart/ulauncher.desktop".source =
       "${pkgs.ulauncher}/share/applications/ulauncher.desktop";
+    xdg.configFile."autostart/kdeconnect-indicator.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=KDE Connect Indicator
+      Exec=kdeconnect-indicator
+      Icon=kdeconnect
+      Terminal=false
+    '';
   };
 }

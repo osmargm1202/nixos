@@ -346,5 +346,6 @@ in
       pkgs."picom-pijulius"
       pkgs.gnome-keyring
       pkgs."gnome-online-accounts-gtk"
-    ];
+    ]
+    ++ lib.optionals isMinimalDesktop [ pkgs.kdePackages.kdeconnect-kde ];
 }
