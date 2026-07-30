@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
-NAUTILUS="$ROOT/dotfiles/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
+WRAPPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-set-wallpaper"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 TMP="$(mktemp -d)"
 cleanup() {
@@ -31,7 +31,7 @@ fail() {
 for package in mpv xwinwrap; do
   grep -Eq "^[[:space:]]+${package}[[:space:]]*$" "$PROFILE" || fail "$package package missing"
 done
-grep -Fq 'exec "$helper" --set-active' "$NAUTILUS" || fail 'Nautilus does not delegate active-output media'
+grep -Fq 'exec i3-wallpaper --set-active "$1"' "$WRAPPER" || fail 'Thunar wrapper does not delegate active-output media'
 grep -Fq '*.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi' "$HELPER" || fail 'video extensions are not accepted'
 grep -Fq 'setsid "$xwinwrap_bin"' "$HELPER" || fail 'xwinwrap process group is not isolated'
 grep -Fq '"$mpv_bin" -wid WID' "$HELPER" ||
@@ -152,6 +152,5 @@ POINTER_X=2200 run_wallpaper --set-active "$replacement"
 kill -0 "$restored_pid" 2>/dev/null && fail 'old HDMI xwinwrap process survived image replacement'
 kill -0 "$restored_child" 2>/dev/null && fail 'embedded mpv child survived image replacement'
 
-grep -Fq 'imagen o video' "$NAUTILUS" || fail 'Nautilus invalid-selection message does not mention video'
 
-printf 'PASS: Nautilus and per-monitor state support X11 video wallpapers\n'
+printf 'PASS: Thunar and per-monitor state support X11 video wallpapers\n'

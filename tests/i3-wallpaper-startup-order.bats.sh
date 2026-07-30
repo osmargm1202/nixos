@@ -6,7 +6,7 @@ CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 AUTOSTART="$ROOT/dotfiles/config/profiles/i3/.config/autostart/autorandr.desktop"
 MONITOR="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-monitor-profile"
 WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
-NAUTILUS="$ROOT/dotfiles/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
+WRAPPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-set-wallpaper"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -23,7 +23,7 @@ fi
 grep -Fq 'i3-wallpaper --restore' "$MONITOR" || fail 'monitor restore does not finish with wallpaper restore'
 grep -Fq 'restore_wallpaper' "$MONITOR" || fail 'wallpaper restore is not shared by success/failure paths'
 grep -Fq 'state_file="$state_dir/wallpaper"' "$WALLPAPER" || fail 'wallpaper selection is not persistent'
-grep -Fq 'exec "$helper" --set-active' "$NAUTILUS" ||
-  fail 'Nautilus does not persist the active monitor through i3-wallpaper'
+grep -Fq 'exec i3-wallpaper --set-active "$1"' "$WRAPPER" ||
+  fail 'Thunar wrapper does not persist the active monitor through i3-wallpaper'
 
 printf 'PASS: i3 serializes monitor restoration before persistent wallpaper application\n'

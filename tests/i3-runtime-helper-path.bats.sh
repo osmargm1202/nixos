@@ -25,7 +25,6 @@ for command in \
   'bindsym $mod+space exec --no-startup-id $run i3-rofi --drun' \
   'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' \
   'bindsym $mod+c exec --no-startup-id $run i3-calc' \
-  'bindsym $mod+w exec --no-startup-id $run i3-zen-new-window' \
   'bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus' \
   'bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt'; do
   grep -Fq "$command" "$CONFIG" || fail "custom helper bypasses i3 PATH runner: $command"

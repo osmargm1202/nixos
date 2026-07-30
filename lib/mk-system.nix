@@ -23,6 +23,7 @@ let
       profileName ? null,
       extraModules ? [ ],
       userName ? "osmarg",
+      isMinimalDesktop ? false,
     }:
     let
       effectiveProfileName =
@@ -36,7 +37,9 @@ let
         if role == "desktop" then
           [
             ../nixos/common.nix
-            ../nixos/ai/default.nix
+          ]
+          ++ lib.optionals (!isMinimalDesktop) [ ../nixos/ai/default.nix ]
+          ++ [
             hardware
             (if profile != null then profile else throw "Desktop role requires a profile module")
             { networking.hostName = hostName; }
@@ -59,7 +62,7 @@ let
     in
     lib.nixosSystem {
       specialArgs = {
-        inherit inputs userName;
+        inherit inputs userName isMinimalDesktop;
       }
       // lib.optionalAttrs (effectiveProfileName != null) {
         profileName = effectiveProfileName;

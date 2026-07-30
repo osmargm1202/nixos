@@ -13,9 +13,8 @@ fail() {
 }
 
 required_bindings=(
-  'bindsym $mod+w exec --no-startup-id $run i3-zen-new-window'
+  'bindsym $mod+w exec --no-startup-id $browser'
   'bindsym $mod+Tab workspace back_and_forth'
-  'bindsym $mod+Shift+w exec --no-startup-id chromium'
   'bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus'
   'bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt'
   'bindsym $mod+Shift+Return exec --no-startup-id zutty-fast'
@@ -42,8 +41,10 @@ required_bindings=(
 for binding in "${required_bindings[@]}"; do
   grep -Fq "$binding" "$CONFIG" || fail "missing parity binding: $binding"
 done
+grep -Fq 'set $browser chromium' "$CONFIG" || fail 'Chromium must be the shared i3 browser'
 
-for helper in i3-zen-new-window i3-obsidian-open-or-focus i3-pi-prompt; do
+
+for helper in i3-obsidian-open-or-focus i3-pi-prompt; do
   [ -x "$BIN/$helper" ] || fail "$helper missing or not executable"
   grep -Fq "\".local/bin/$helper\"" "$DOTFILES" || fail "$helper not deployed"
   bash -n "$BIN/$helper"

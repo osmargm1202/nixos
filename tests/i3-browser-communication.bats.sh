@@ -13,18 +13,16 @@ fail() {
 
 grep -Fq './vesktop.nix' "$PROFILE" ||
   fail 'i3 must retain wrapped Discord and Vesktop applications'
-grep -Fq 'zenBrowserFlakeSrc = inputs.zen-browser-flake;' "$PROFILE" ||
-  fail 'i3 must build the pinned Zen Browser package'
-grep -Eq '^[[:space:]]+zenBrowser[[:space:]]*$' "$PROFILE" ||
-  fail 'i3 must install Zen Browser'
+grep -Eq '^[[:space:]]+chromium[[:space:]]*$' "$PROFILE" ||
+  fail 'i3 must install Chromium'
 
 for mime in \
   text/html \
   application/xhtml+xml \
   x-scheme-handler/http \
   x-scheme-handler/https; do
-  grep -Fq "\"$mime\" = [ \"zen-browser.desktop\" ];" "$PROFILE" ||
-    fail "i3 must use Zen Browser for $mime"
+  grep -Fq "\"$mime\" = [ \"chromium.desktop\" ];" "$PROFILE" ||
+    fail "i3 must use Chromium for $mime"
 done
 
 grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interfaces' "$DISCORD" ||
@@ -34,4 +32,4 @@ grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interf
 grep -Fq -- '--disable-features=WebRtcAllowInputVolumeAdjustment' "$VESKTOP" ||
   fail 'Vesktop microphone gain policy disappeared'
 
-printf 'PASS: i3 retains Zen Browser and WebRTC-protected communication apps\n'
+printf 'PASS: i3 uses Chromium and retains WebRTC-protected communication apps\n'

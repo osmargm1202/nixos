@@ -2,14 +2,13 @@
 set -euo pipefail
 
 choice="$(printf '%s\n' \
-  Apps Windows Terminal Zen Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help 'Edit config' Power \
+  Apps Windows Terminal Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help 'Edit config' Power \
   | i3-rofi 'i3' 16 || true)"
 
 case "$choice" in
   Apps) exec i3-rofi --drun ;;
   Windows) exec i3-rofi --window ;;
   Terminal) exec kitty ;;
-  Zen) exec i3-zen-new-window ;;
   Chromium) exec chromium ;;
   Files) exec i3-open-file open ;;
   Obsidian) exec i3-obsidian-open-or-focus ;;

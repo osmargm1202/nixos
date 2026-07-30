@@ -7,6 +7,7 @@ let
     hyprland = ./nixos/profiles/hyprland.nix;
     hyprlandqs-caelestia = ./nixos/profiles/hyprlandqs-caelestia.nix;
     i3 = ./nixos/profiles/i3.nix;
+    i3-minimal = ./nixos/profiles/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
     xfce = ./nixos/profiles/xfce.nix;
   };
@@ -18,6 +19,7 @@ let
       hardware ? genericHardware,
       userName ? "osmarg",
       extraModules ? [ ],
+      isMinimalDesktop ? false,
     }:
     {
       role = "desktop";
@@ -27,6 +29,7 @@ let
         userName
         extraModules
         profileName
+        isMinimalDesktop
         ;
       profile = profiles.${profileName};
     };
@@ -212,6 +215,13 @@ in
       hardware = ./nixos/hosts/ero/hardware-configuration.nix;
       profileName = "i3";
       extraModules = [ ./nixos/hardware/gpu/intel.nix ];
+    };
+    ero-i3-minimal = desktop {
+      hostName = "ero";
+      hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+      profileName = "i3-minimal";
+      extraModules = [ ./nixos/hardware/gpu/intel.nix ];
+      isMinimalDesktop = true;
     };
     ero-server = server {
       hostName = "ero";

@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  isMinimalDesktop ? false,
   ...
 }:
 
@@ -106,7 +107,7 @@ let
   ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
 in
 {
-  imports = [
+  imports = lib.optionals (!isMinimalDesktop) [
     ./printer.nix
     ./vesktop.nix
   ];
@@ -136,7 +137,7 @@ in
     matchEdid = true;
   };
 
-  systemd.user.services.picom = {
+  systemd.user.services.picom = lib.mkIf (!isMinimalDesktop) {
     description = "Picom composite manager for i3";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
@@ -170,25 +171,25 @@ in
   security.polkit.enable = true;
   services.dbus.enable = true;
   services.gvfs.enable = true;
-  services.gvfs.package = pkgs.gnome.gvfs.override {
-    gnomeSupport = true;
-  };
+  services.gvfs.package = lib.mkIf (!isMinimalDesktop) (
+    pkgs.gnome.gvfs.override {
+      gnomeSupport = true;
+    }
+  );
   services.udisks2.enable = true;
   services.upower = {
     enable = true;
     package = pkgs.upower;
   };
-  services.gnome.gnome-keyring.enable = true;
-  services.gnome.gnome-online-accounts.enable = true;
+  services.gnome = lib.mkIf (!isMinimalDesktop) {
+    gnome-keyring.enable = true;
+    gnome-online-accounts.enable = true;
+  };
   services.power-profiles-daemon.enable = true;
-  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
+  nixpkgs.config.permittedInsecurePackages = lib.mkIf (!isMinimalDesktop) [ "libsoup-2.74.3" ];
 
   programs.dconf.enable = true;
-  security.pam.services.login.enableGnomeKeyring = true;
-  programs.nautilus-open-any-terminal = {
-    enable = true;
-    terminal = "kitty";
-  };
+  security.pam.services.login.enableGnomeKeyring = lib.mkIf (!isMinimalDesktop) true;
 
   services.pulseaudio.enable = false;
 
@@ -210,8 +211,14 @@ in
   };
 
   xdg.mime = {
+    enable = true;
     defaultApplications = {
-      "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+      "inode/directory" = [ "thunar.desktop" ];
+      "text/html" = [ "chromium.desktop" ];
+      "application/xhtml+xml" = [ "chromium.desktop" ];
+      "x-scheme-handler/http" = [ "chromium.desktop" ];
+      "x-scheme-handler/https" = [ "chromium.desktop" ];
+      "x-scheme-handler/chrome" = [ "chromium.desktop" ];
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
@@ -240,9 +247,12 @@ in
     XDG_SESSION_DESKTOP = "i3";
     XDG_CURRENT_DESKTOP = "i3";
     TERMINAL = "kitty";
+    I3_START_PICOM = if isMinimalDesktop then "0" else "1";
+    I3_START_DISCORD = if isMinimalDesktop then "0" else "1";
   };
 
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages =
+    (with pkgs; [
     # Xorg session and window manager.
     xorg-server
     xinit
@@ -267,7 +277,6 @@ in
     gnused
     iproute2
     procps
-    picom-pijulius
     i3lock-color
     ngcbgI3Tools.autotiling
     ngcbgI3Tools.rootbtnd
@@ -299,7 +308,6 @@ in
     pavucontrol
     pasystray
     polkit_gnome
-    gnome-keyring
     dex
     xss-lock
     udiskie
@@ -313,7 +321,7 @@ in
     pamixer
     playerctl
 
-    # Runtime-selected GTK/Nautilus appearance and status interactions.
+    # Runtime-selected GTK appearance and status interactions.
     gsimplecal
     lm_sensors
     lxappearance
@@ -327,12 +335,16 @@ in
 
     # Daily applications used by MIME defaults and bindings.
     kitty
-    chromium
-    nautilus
-    gnome-online-accounts-gtk
+    (chromium.override { enableWideVine = true; })
+    thunar
     gnome-text-editor
     evince
     loupe
     file-roller
-  ];
+    ])
+    ++ lib.optionals (!isMinimalDesktop) [
+      pkgs."picom-pijulius"
+      pkgs.gnome-keyring
+      pkgs."gnome-online-accounts-gtk"
+    ];
 }

@@ -1,8 +1,8 @@
 set $mod Mod4
 set $run $HOME/.local/bin/i3-run
 set $term kitty
-set $browser $run i3-zen-new-window
-set $files sh -lc 'nautilus --new-window "$HOME" >/tmp/i3-nautilus.log 2>&1 || gtk-launch org.gnome.Nautilus.desktop >/tmp/i3-nautilus.log 2>&1 || xdg-open "$HOME" >/tmp/i3-nautilus.log 2>&1'
+set $browser chromium
+set $files thunar "$HOME"
 set $launcher $run i3-rofi --drun
 
 font pango:JetBrainsMono Nerd Font 11
@@ -15,12 +15,12 @@ exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
-exec --no-startup-id systemctl --user start picom.service
+exec --no-startup-id sh -c '[ "$I3_START_PICOM" = 0 ] && exit 0; exec systemctl --user start picom.service'
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle on
 exec --no-startup-id $run i3-monitor-profile --apply --quiet
-exec --no-startup-id $run i3-start-discord-background
+exec --no-startup-id sh -c '[ "$I3_START_DISCORD" = 0 ] && exit 0; exec i3-start-discord-background'
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
@@ -44,8 +44,7 @@ bindsym $mod+F12 exec --no-startup-id $run i3-main-menu
 bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random
 bindsym $mod+p exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+Ctrl+comma exec --no-startup-id $run i3-monitor-profile
-bindsym $mod+w exec --no-startup-id $run i3-zen-new-window
-bindsym $mod+Shift+w exec --no-startup-id chromium
+bindsym $mod+w exec --no-startup-id $browser
 bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus
 bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
 bindsym $mod+e exec --no-startup-id $files

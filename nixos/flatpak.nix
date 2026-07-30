@@ -1,4 +1,8 @@
-{ ... }:
+{
+  lib,
+  isMinimalDesktop ? false,
+  ...
+}:
 
 {
   services.fwupd.enable = true;
@@ -15,7 +19,7 @@
 
     overrides = { };
 
-    packages = [
+    packages = lib.optionals (!isMinimalDesktop) [
       "be.alexandervanhee.gradia"
       "com.discordapp.Discord"
       "com.google.EarthPro"

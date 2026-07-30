@@ -4,6 +4,7 @@
   lib,
   userName ? "osmarg",
   profileName ? "hyprland",
+  isMinimalDesktop ? false,
   ...
 }:
 
@@ -14,6 +15,7 @@ let
   dotfilesPath = "/home/${userName}/Hobby/nixos/dotfiles";
   dotfilesParent = "/home/${userName}/Hobby";
   hostName = config.networking.hostName;
+  profileDotfilesName = if profileName == "i3-minimal" then "i3" else profileName;
 
   # Mirrors *.desktop files Steam (and similar launchers) drop into
   # ~/Desktop over to ~/.local/share/applications so dock/launcher icons
@@ -195,6 +197,7 @@ let
       ".config/waybar-hypr"
       ".config/rofi"
       ".config/swappy"
+      ".local/share/nautilus/scripts/Set as Hyprland Wallpaper"
       ".local/bin/hypr-apps-menu"
       ".local/bin/hypr-battery-alerts"
       ".local/bin/hypr-app-launcher"
@@ -245,6 +248,7 @@ let
 
     i3 = [
       ".config/autostart/autorandr.desktop"
+      ".config/Thunar/uca.xml"
       ".config/gtk-3.0"
       ".config/dunst"
       ".config/i3"
@@ -272,10 +276,14 @@ let
       ".local/bin/i3-ssh-host"
       ".local/bin/i3-start-discord-background"
       ".local/bin/i3-wallpaper"
+      ".local/bin/i3-set-wallpaper"
       ".local/bin/i3-wifi-toggle"
-      ".local/bin/i3-zen-new-window"
       ".local/bin/i3status-localized"
     ];
+    # i3-minimal deliberately links the identical i3 tree; only Nix options
+    # select its reduced runtime.
+    i3-minimal = profileSpecificPaths.i3;
+
 
     labwc = [
       ".config/dunst"
@@ -795,31 +803,26 @@ in
         ''
       );
 
+      # Nautilus 50 does not discover symlinked scripts. Keep the Hyprland
+      # action as a real executable file; i3 deliberately gets no Nautilus
+      # script.
+      home.activation.installHyprlandNautilusScript = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+        lib.optionalString (profileName == "hyprland") ''
+          $DRY_RUN_CMD rm -f "$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
+          $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -Dm755 \
+            "${dotfilesPath}/config/profiles/hyprland/.local/share/nautilus/scripts/Set as Hyprland Wallpaper" \
+            "$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
+        ''
+      );
+
       # Home Manager replaces the i3 config symlink during a live switch.
       # Reload through IPC afterward so i3 re-establishes its keyboard grabs.
       home.activation.reloadI3AfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
-        lib.optionalString (profileName == "i3") ''
+        lib.optionalString (profileName == "i3" || profileName == "i3-minimal") ''
           $DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch" || true
         ''
       );
 
-      # Nautilus 50 reliably discovers real executable scripts, not a Home
-      # Manager symlink. Install these generated deployments after links settle.
-      home.activation.installNautilusWallpaperScripts = lib.hm.dag.entryAfter [ "linkGeneration" ] (
-        ''
-          target="$HOME/.local/share/nautilus/scripts/Set as Wallpaper"
-          $DRY_RUN_CMD rm -f "$target"
-
-          hypr_target="$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
-          hypr_source="${dotfilesPath}/config/profiles/hyprland/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
-          $DRY_RUN_CMD rm -f "$hypr_target"
-          $DRY_RUN_CMD install -Dm755 "$hypr_source" "$hypr_target"
-        ''
-        + lib.optionalString (profileName == "i3") ''
-          source="${dotfilesPath}/config/profiles/i3/.local/share/nautilus/scripts/Set as Wallpaper"
-          $DRY_RUN_CMD install -Dm755 "$source" "$target"
-        ''
-      );
 
       # Steam (and similar launchers) write "Create desktop shortcut" .desktop
       # files into ~/Desktop instead of ~/.local/share/applications, so dock
@@ -837,7 +840,7 @@ in
       };
 
       # Lenovo has no G213; avoid starting a detector that can only exit.
-      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {
+      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo" && !isMinimalDesktop) {
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";
@@ -881,7 +884,7 @@ in
         (builtins.listToAttrs (
           map (path: {
             name = path;
-            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/profiles/${profileName}/${path}";
+            value.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesPath}/config/profiles/${profileDotfilesName}/${path}";
           }) filteredProfilePaths
         ))
         # Host paths — dotfiles/config/hosts/<host>/<path>

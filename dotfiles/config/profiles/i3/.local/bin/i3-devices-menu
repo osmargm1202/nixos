@@ -8,7 +8,7 @@ case "$choice" in
   Bluetooth) exec blueman-manager ;;
   Audio) exec pavucontrol ;;
   Keyboard) exec i3-keyboard-menu ;;
-  Storage) exec nautilus computer:/// ;;
+  Storage) exec thunar computer:/// ;;
   Back) exec i3-main-menu ;;
   *) exit 0 ;;
 esac

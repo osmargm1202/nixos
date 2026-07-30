@@ -24,13 +24,11 @@ grep -Fq 'exec --no-startup-id i3swallowd' "$CONFIG" || fail 'i3swallow daemon m
 expected_swallow_rules=(
   discord
   Steam
-  app.zen_browser.zen
-  zen-browser
   Zutty
   kitty
 )
 mapfile -t actual_swallow_rules < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$SWALLOW")
-[ "${#actual_swallow_rules[@]}" -eq "${#expected_swallow_rules[@]}" ] || fail 'swallow allow-list must contain exactly six rules'
+[ "${#actual_swallow_rules[@]}" -eq "${#expected_swallow_rules[@]}" ] || fail 'swallow allow-list must contain exactly four rules'
 for index in "${!expected_swallow_rules[@]}"; do
   [ "${actual_swallow_rules[$index]}" = "${expected_swallow_rules[$index]}" ] || fail "swallow rule $((index + 1)) must be ${expected_swallow_rules[$index]}"
 done

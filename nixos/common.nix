@@ -9,6 +9,7 @@
   inputs ? null,
   userName ? "osmarg",
   profileName ? null,
+  isMinimalDesktop ? false,
   ...
 }:
 
@@ -16,6 +17,61 @@ let
   zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
     exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 18 "$@"
   '';
+  minimalPackages = with pkgs; [
+    wget
+    curl
+    rsync
+    vim
+    fzf
+    bash-completion
+    blesh
+    starship
+    zoxide
+    python3
+    gtk3
+    libnotify
+    git
+    tmux
+    age
+    fd
+    jq
+    trash-cli
+    eza
+    ntfs3g
+    kitty
+    zutty
+    zuttyFast
+    bat
+    ripgrep
+    neovim
+    wl-clipboard
+    xclip
+    zip
+    unzip
+  ];
+  desktopOnlyPackages = with pkgs; [
+    nextcloud-client
+    uv
+    python3
+    android-tools
+    freerdp
+    podman-compose
+    jujutsu
+    gum
+    steam-run
+    vscode
+    gh
+    (chromium.override { enableWideVine = true; })
+    (pkgs.writeShellApplication {
+      name = "ns";
+      runtimeInputs = with pkgs; [
+        fzf
+        nix-search-tv
+      ];
+      checkPhase = "";
+      text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
+    })
+  ];
 in
 {
   # Boot menu shows "Generation N <label>, built on <date>" -- date is
@@ -23,8 +79,8 @@ in
   # to the profile instead of the default version string.
   system.nixos.label = lib.mkIf (profileName != null) profileName;
 
-  # Logitech G213 RGB (USB HID, no motherboard i2c needed)
-  services.hardware.openrgb.enable = true;
+  # Logitech G213 RGB (USB HID, no motherboard i2c needed).
+  services.hardware.openrgb.enable = !isMinimalDesktop;
 
   # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
   documentation.enable = false;
@@ -47,9 +103,9 @@ in
       inputs.nix-flatpak.nixosModules.nix-flatpak
       ./flatpak.nix
       ./common-dotfiles.nix
-      ./webapps.nix
       ./zen-browser.nix
     ]
+    ++ lib.optionals (inputs != null && !isMinimalDesktop) [ ./webapps.nix ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ./tailscale.nix
@@ -132,7 +188,7 @@ in
   };
   services.blueman.enable = true;
 
-  virtualisation.podman = {
+  virtualisation.podman = lib.mkIf (!isMinimalDesktop) {
     enable = true;
     dockerCompat = true; # alias docker -> podman
     dockerSocket.enable = true;
@@ -208,8 +264,8 @@ in
   services.libinput.enable = true;
 
   # Define user account. Don’t forget to set password with ‘passwd’.
-  # Fixed uid/gid + own primary group so ownership is stable across
-  # reinstalls and nixbld can't steal uid 1000 (rootless podman needs this).
+  # Fixed uid/gid + own primary group so ownership is stable across reinstalls
+  # and nixbld can't steal uid 1000.
   users.groups.${userName}.gid = 1000;
   users.users.${userName} = {
     isNormalUser = true;
@@ -217,27 +273,30 @@ in
     group = userName;
     description = userName;
     shell = pkgs.bashInteractive;
-    subUidRanges = [
+    subUidRanges = lib.optionals (!isMinimalDesktop) [
       {
         startUid = 100000;
         count = 65536;
       }
     ];
-    subGidRanges = [
+    subGidRanges = lib.optionals (!isMinimalDesktop) [
       {
         startGid = 100000;
         count = 65536;
       }
     ];
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "docker"
-      "podman"
-      "input"
-      "video"
-      "render"
-    ];
+    extraGroups =
+      [
+        "networkmanager"
+        "wheel"
+        "input"
+        "video"
+        "render"
+      ]
+      ++ lib.optionals (!isMinimalDesktop) [
+        "docker"
+        "podman"
+      ];
     packages = with pkgs; [
       # thunderbird
     ];
@@ -247,65 +306,8 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages = with pkgs; [
-    wget
-    curl
-    rsync
-    vim
-    gh
-    fzf
-    bash-completion
-    blesh
-    starship
-    zoxide
-    nextcloud-client
-    gtk3
-    libnotify
-    git
-    tmux
-    age # dependencia de arranque de Bash (load_private_env) — no mover a efimero
-    uv
-    python3
-    fd
-    jq
-    android-tools
-    trash-cli
-    eza
-    ntfs3g
-    freerdp
-    kitty
-    zutty
-    zuttyFast
-    # Daily-driver CLI. Project/dev tooling lives in per-project flakes
-    # (`nix develop`) or ad-hoc `nix shell`. Efimeras via aliases Bash:
-    # btop fastfetch ncdu yazi sops just xclip figlet nix-search-tv herdr
-    # + emuladores. Compose provider: podman 5.x no longer ships built-in
-    # subcommand; `docker compose` shim requires this plugin to exist.
-    podman-compose
-    bat
-    ripgrep
-    neovim
-    jujutsu
-    gum
-    steam-run # quick FHS runner for random dynamic executables
-    wl-clipboard
-    xclip
-    zip
-    unzip
-    # GUI apps (replaces distrobox versions — NixOS patches loaders automatically)
-    vscode
-    (chromium.override { enableWideVine = true; })
-    (pkgs.writeShellApplication {
-      name = "ns";
-      runtimeInputs = with pkgs; [
-        fzf
-        nix-search-tv
-      ];
-      checkPhase = "";
-      text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
-    })
-    # brave-origin removido del closure (~404 MB); nix file conservado.
-  ];
+  environment.systemPackages =
+    minimalPackages ++ lib.optionals (!isMinimalDesktop) desktopOnlyPackages;
 
   programs.dconf.enable = true;
 

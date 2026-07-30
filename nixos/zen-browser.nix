@@ -3,6 +3,8 @@
   pkgs,
   lib,
   userName ? "osmarg",
+  profileName ? null,
+  isMinimalDesktop ? false,
   ...
 }:
 
@@ -10,30 +12,30 @@ let
   zenBrowser = pkgs.callPackage ./packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
-  psdZen = pkgs.callPackage ./packages/psd-zen.nix { };
+  psd =
+    if isMinimalDesktop then
+      pkgs.profile-sync-daemon
+    else
+      pkgs.callPackage ./packages/psd-zen.nix { };
 in
 {
-  xdg.mime = {
-    enable = true;
-    defaultApplications = {
-      "text/html" = [ "zen-browser.desktop" ];
-      "application/xhtml+xml" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/http" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/https" = [ "zen-browser.desktop" ];
-      "x-scheme-handler/chrome" = [ "zen-browser.desktop" ];
-    };
-  };
+  environment.systemPackages =
+    lib.optionals (!isMinimalDesktop) [ zenBrowser ]
+    ++ [ psd ];
 
-  environment.systemPackages = [
-    zenBrowser
-    psdZen
-  ];
+  xdg.mime.defaultApplications = lib.mkIf (!isMinimalDesktop && profileName != "i3") {
+    "text/html" = [ "zen-browser.desktop" ];
+    "application/xhtml+xml" = [ "zen-browser.desktop" ];
+    "x-scheme-handler/http" = [ "zen-browser.desktop" ];
+    "x-scheme-handler/https" = [ "zen-browser.desktop" ];
+    "x-scheme-handler/chrome" = [ "zen-browser.desktop" ];
+  };
 
   home-manager.users.${userName} =
     { lib, pkgs, ... }:
     {
       xdg.configFile."psd/psd.conf".text = ''
-        BROWSERS=(zen chromium)
+        BROWSERS=(${if isMinimalDesktop then "chromium" else "zen chromium"})
       '';
 
       systemd.user.services.psd = {
@@ -56,8 +58,8 @@ in
               pkgs.psmisc
             ]
           }";
-          ExecStart = "${psdZen}/bin/profile-sync-daemon startup";
-          ExecStop = "${psdZen}/bin/profile-sync-daemon unsync";
+          ExecStart = "${psd}/bin/profile-sync-daemon startup";
+          ExecStop = "${psd}/bin/profile-sync-daemon unsync";
           TimeoutStopSec = 60;
         };
         Install.WantedBy = [ "default.target" ];
@@ -82,7 +84,7 @@ in
               pkgs.psmisc
             ]
           }";
-          ExecStart = "${psdZen}/bin/profile-sync-daemon resync";
+          ExecStart = "${psd}/bin/profile-sync-daemon resync";
         };
       };
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+  <action>
+    <icon>preferences-desktop-wallpaper</icon>
+    <name>Set as Wallpaper</name>
+    <unique-id>orgm-i3-set-wallpaper</unique-id>
+    <command>i3-set-wallpaper %f</command>
+    <description>Set the selected media on the active monitor</description>
+    <patterns>*.jpg;*.jpeg;*.png;*.webp;*.mp4;*.mkv;*.webm;*.mov;*.m4v;*.avi</patterns>
+    <image-files/>
+    <video-files/>
+  </action>
+</actions>

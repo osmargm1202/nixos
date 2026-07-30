@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (($# != 1)); then
+  printf 'usage: i3-set-wallpaper FILE\n' >&2
+  exit 2
+fi
+
+exec i3-wallpaper --set-active "$1"
