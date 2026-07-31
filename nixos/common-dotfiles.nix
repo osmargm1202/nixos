@@ -232,6 +232,7 @@ let
       ".local/bin/hypr-theme-chooser"
       ".local/bin/hypr-tools-menu"
       ".local/bin/hypr-transition-menu"
+      ".local/bin/hypr-tray-applets"
       ".local/bin/hypr-tweaks-menu"
       ".local/bin/hypr-workspace-button"
       ".local/bin/hypr-wallpaper"

@@ -1,13 +1,13 @@
 local exec_once = {
-  -- Import the graphical-session environment before user services start.
-  "hypr-session-import-env && systemctl --user start nixos-fake-graphical-session.target",
+  -- Import the graphical session before starting StatusNotifier clients.
+  "hypr-tray-applets",
   -- Keep the lightweight Waybar process and its helper modules alive.
   "sh -lc 'hypr-display-targets ensure || true; exec waybar-watch \"$HOME/.config/waybar-hypr\"'",
   -- Restore the selected static wallpaper without a persistent selector daemon.
   "hypr-wallpaper restore",
   "hyprpolkitagent",
   "kdeconnect-indicator",
-  "hypr-nwg-dock",
+  "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
   -- Lock and suspend on the established idle schedule.
   "hypridle",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",

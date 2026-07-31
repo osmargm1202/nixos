@@ -17,10 +17,13 @@ fail() {
 
 grep -Eq '^[[:space:]]+nwg-dock-hyprland[[:space:]]*$' "$PROFILE" ||
   fail 'Hyprland must install nwg-dock-hyprland'
-grep -Fq '"hypr-nwg-dock",' "$AUTOSTART" ||
-  fail 'Hyprland must start the dock through its pin initializer'
-grep -Fq 'exec nwg-dock-hyprland' "$HELPER" ||
+grep -Fq '"sh -lc '\''exec \"$HOME/.local/bin/hypr-nwg-dock\"'\''",' "$AUTOSTART" ||
+  fail 'Hyprland must launch the dock through an absolute helper path'
+grep -Fq 'dock_bin="${NWG_DOCK_BIN:-nwg-dock-hyprland}"' "$HELPER" &&
+  grep -Fq 'exec "$dock_bin" \' "$HELPER" ||
   fail 'Hyprland must reserve bottom space for the persistent dock'
+grep -Fq 'PATH="$HOME/.local/bin:/run/current-system/sw/bin:' "$HELPER" ||
+  fail 'dock helper must retain the NixOS system command path'
 grep -Fq -- '-c hypr-app-launcher' "$HELPER" ||
   fail 'dock launcher button must open the Rofi app launcher'
 grep -Fxq 'kitty' "$PINS" && grep -Fxq 'thunar' "$PINS" &&
@@ -34,10 +37,12 @@ grep -Fq 'background-color: rgba(26, 27, 38, 0.72);' "$STYLE" ||
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+home="$tmp/home"
+state="$tmp/state"
 config="$tmp/config"
 cache="$tmp/cache"
 bin="$tmp/bin"
-mkdir -p "$config/nwg-dock-hyprland" "$bin"
+mkdir -p "$home" "$state" "$config/nwg-dock-hyprland" "$bin"
 cp "$PINS" "$config/nwg-dock-hyprland/pinned"
 cat >"$bin/nwg-dock-hyprland" <<'EOF'
 #!/usr/bin/env bash
@@ -46,13 +51,13 @@ EOF
 chmod +x "$bin/nwg-dock-hyprland"
 export DOCK_ARGS="$tmp/dock-args"
 
-env XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" PATH="$bin:$PATH" "$HELPER"
+env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
 cmp "$PINS" "$cache/nwg-dock-hyprland/nwg-dock-pinned" ||
   fail 'dock must seed its pins when no user pin state exists'
-grep -Fxq -- "-x -p bottom -a center -c hypr-app-launcher -s $config/nwg-dock-hyprland/style.css" "$DOCK_ARGS" ||
+grep -Fxq -- "-x -p bottom -a center -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
   fail 'dock must retain its configured geometry and Rofi launcher'
 printf 'custom\n' >"$cache/nwg-dock-hyprland/nwg-dock-pinned"
-env XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" PATH="$bin:$PATH" "$HELPER"
+env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
 [[ "$(<"$cache/nwg-dock-hyprland/nwg-dock-pinned")" == "custom" ]] ||
   fail 'dock must preserve user-managed pins after initialization'
 cat >"$bin/pkill" <<'EOF'
@@ -61,7 +66,7 @@ printf '%s\n' "$*" >"$PKILL_ARGS"
 EOF
 chmod +x "$bin/pkill"
 export PKILL_ARGS="$tmp/pkill-args"
-env XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" PATH="$bin:$(dirname "$HELPER"):$PATH" "$RELOAD"
+env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$(dirname "$HELPER"):$PATH" "$RELOAD"
 [[ "$(<"$PKILL_ARGS")" == "-f nwg-dock-hyprland" ]] ||
   fail 'dock reload must stop the running dock before relaunching it'
 printf 'PASS: Hyprland autostarts nwg-dock on the bottom edge\n'

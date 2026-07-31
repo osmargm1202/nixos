@@ -15,6 +15,9 @@
     libqalculate
     dunst
     bluetui
+    blueman
+    networkmanagerapplet
+    nextcloud-client
     nwg-displays
     nwg-dock-hyprland
     pulsemixer
