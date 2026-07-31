@@ -4,7 +4,7 @@ set -eu
 runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
 current="${state_dir}/current"
-fallback="${HOME}/.config/wallpapers/xnm1-background.png"
+fallback="${HOME}/Pictures/Wallpapers/xnm1-background.png"
 out="${runtime_dir}/hypr-current-wallpaper"
 
 wallpaper="$fallback"

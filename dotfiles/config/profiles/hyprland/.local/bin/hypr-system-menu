@@ -8,6 +8,7 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 repo="${DOTFILES_REPO:-$HOME/Hobby/nixos/dotfiles}"
 choice="$(printf '%s\n' \
   '󰑓 Reload Hyprland' \
+  '󰑓 Reload nwg-dock' \
   '󰖟 Restore wallpaper' \
   '󰖟 Random wallpaper' \
   '󰕾 Restart Waybar' \
@@ -19,6 +20,7 @@ choice="$(printf '%s\n' \
 
 case "$choice" in
   *'Reload Hyprland') exec hyprctl reload ;;
+  *'Reload nwg-dock') exec hypr-nwg-dock-reload ;;
   *'Restore wallpaper') exec hypr-wallpaper restore ;;
   *'Random wallpaper') exec hypr-wallpaper random ;;
   *'Restart Waybar') exec waybar-watch "$HOME/.config/waybar-hypr" ;;

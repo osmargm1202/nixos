@@ -12,8 +12,7 @@ state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
 state_file="$state_dir/current"
 runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
 runtime_link="$runtime_dir/hypr-current-wallpaper"
-default_dir="${HYPR_WALLPAPER_DIR:-$HOME/.config/wallpapers}"
-fallback="$HOME/.config/wallpapers/xnm1-background.png"
+default_dir="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
 
 usage() {
   cat >&2 <<'EOF'
@@ -74,7 +73,7 @@ random() {
     return 1
   }
 
-  selected="$(find "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
+  selected="$(find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
   [[ -n "$selected" ]] || {
     printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$directory" >&2
     return 1
@@ -92,7 +91,7 @@ case "${1:-}" in
     if [[ -s "$state_file" ]] && [[ -f "$(<"$state_file")" ]]; then
       apply "$(<"$state_file")"
     else
-      apply "$fallback"
+      random "$default_dir"
     fi
     ;;
   random)

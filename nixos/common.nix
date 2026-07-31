@@ -48,6 +48,14 @@ let
     xclip
     zip
     unzip
+    btop
+    yazi
+    ncdu
+    fastfetch
+    sops
+    just
+    figlet
+    nix-search-tv
   ];
   desktopOnlyPackages = with pkgs; [
     nextcloud-client
@@ -309,6 +317,20 @@ in
 
   environment.systemPackages =
     minimalPackages ++ lib.optionals (!isMinimalDesktop) desktopOnlyPackages;
+
+  xdg.mime = {
+    enable = true;
+    defaultApplications = {
+      "inode/directory" = lib.mkForce [ "yazi.desktop" ];
+      "text/plain" = lib.mkForce [ "nvim.desktop" ];
+      "text/markdown" = lib.mkForce [ "nvim.desktop" ];
+      "text/x-markdown" = lib.mkForce [ "nvim.desktop" ];
+      "text/x-lua" = lib.mkForce [ "nvim.desktop" ];
+      "text/x-python" = lib.mkForce [ "nvim.desktop" ];
+      "application/json" = lib.mkForce [ "nvim.desktop" ];
+      "application/x-shellscript" = lib.mkForce [ "nvim.desktop" ];
+    };
+  };
 
   programs.dconf.enable = true;
 

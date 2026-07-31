@@ -16,7 +16,9 @@
     dunst
     bluetui
     nwg-displays
+    nwg-dock-hyprland
     pulsemixer
+    waybar
   ];
 
   home-manager.users.${userName}.xdg.desktopEntries.zutty-fast = {

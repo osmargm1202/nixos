@@ -15,6 +15,7 @@ grep -Fq 'waybar-watch' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    pulsemixer' "$repo_dir/nixos/profiles/hyprland.nix"
+grep -Fxq '    waybar' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '  "hypridle",' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fq 'timeout = 600' "$profile/.config/hypr/hypridle.conf"
 grep -Fq 'timeout = 900' "$profile/.config/hypr/hypridle.conf"
@@ -62,6 +63,10 @@ cat >"$test_bin/waybar-watch" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >"$WAYBAR_WATCH_ARGS"
 EOF
+cat >"$test_bin/hypr-nwg-dock-reload" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >"$NWG_DOCK_RELOAD_ARGS"
+EOF
 cat >"$test_bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
 if [[ "$*" == *clients* ]]; then
@@ -102,6 +107,8 @@ HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR
 test -f "$tmp/zutty-args"
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" ROFI_OUTPUT='Restart Waybar' WAYBAR_WATCH_ARGS="$tmp/waybar-watch-args" "$bin/hypr-system-menu"
 [[ "$(<"$tmp/waybar-watch-args")" == "$home/.config/waybar-hypr" ]]
+HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" ROFI_OUTPUT='Reload nwg-dock' NWG_DOCK_RELOAD_ARGS="$tmp/nwg-dock-reload-args" "$bin/hypr-system-menu"
+test -f "$tmp/nwg-dock-reload-args"
 
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRLOCK_ARGS="$tmp/hyprlock-args" "$bin/hypr-lock"
 [[ "$(<"$tmp/hyprlock-args")" == '--immediate-render --no-fade-in' ]]

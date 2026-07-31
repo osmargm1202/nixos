@@ -9,9 +9,26 @@
     "margin-left": 0,
     "margin-right": 0,
     "modules-left": [
-      "group/workspaces",
-      "group/system",
-      "hyprland/submap"
+      "custom/menu",
+      "custom/ws_1",
+      "custom/ws_2",
+      "custom/ws_3",
+      "custom/ws_4",
+      "custom/ws_5",
+      "custom/ws_6",
+      "custom/ws_7",
+      "custom/ws_8",
+      "custom/ws_9",
+      "custom/ws_10",
+      "custom/ws_special",
+      "backlight",
+      "battery",
+      "pulseaudio",
+      "pulseaudio#microphone",
+      "idle_inhibitor",
+      "custom/kbd_layout",
+      "custom/wallpaper",
+      "custom/keybindings_help"
     ],
     "modules-center": [
       "custom/day_month",
@@ -19,32 +36,22 @@
       "custom/date"
     ],
     "modules-right": [
-      "privacy",
-      "tray",
-      "custom/clipboard",
-      "custom/logout_menu"
+      "hyprland/window",
+      "mpris",
+      "custom/power",
+      "tray"
     ],
-    "group/workspaces": {
-      "orientation": "horizontal",
-      "modules": [
-        "custom/menu",
-        "custom/ws_1",
-        "custom/ws_2",
-        "custom/ws_3",
-        "custom/ws_4",
-        "custom/ws_5",
-        "custom/ws_6",
-        "custom/ws_7",
-        "custom/ws_8",
-        "custom/ws_9",
-        "custom/ws_10"
-      ]
-    },
     "custom/menu": {
       "format": "",
       "tooltip": true,
       "tooltip-format": "Abrir menú principal",
       "on-click": "hypr-main-menu"
+    },
+    "custom/power": {
+      "format": "󰐥",
+      "tooltip": true,
+      "tooltip-format": "Menú de energía",
+      "on-click": "hypr-power-menu"
     },
     "custom/ws_1": {
       "exec": "hypr-workspace-button status 1",
@@ -126,9 +133,75 @@
       "tooltip": true,
       "on-click": "hypr-workspace-button click 10"
     },
-    "hyprland/submap": {
-      "format": "<span color='#a6da95'>Mode:</span> {}",
-      "tooltip": false
+    "custom/ws_special": {
+      "format": "S",
+      "tooltip": true,
+      "tooltip-format": "Workspace especial",
+      "on-click": "hyprctl dispatch togglespecialworkspace magic"
+    },
+    "backlight": {
+      "format": "{icon} {percent}%",
+      "format-icons": ["󰃞", "󰃟", "󰃠"]
+    },
+    "battery": {
+      "states": {
+        "warning": 30,
+        "critical": 15
+      },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    },
+    "pulseaudio": {
+      "format": "{icon}",
+      "format-muted": "󰝟",
+      "format-icons": {
+        "default": ["", "", ""]
+      },
+      "on-click": "pamixer -t",
+      "on-click-middle": "kitty -e pulsemixer",
+      "on-click-right": "kitty -e pulsemixer",
+      "max-volume": 150
+    },
+    "pulseaudio#microphone": {
+      "target": "source",
+      "format": "{format_source}",
+      "format-source": "󰍬",
+      "format-source-muted": "󰍭",
+      "on-click": "pamixer --default-source -t",
+      "on-click-middle": "kitty -e pulsemixer",
+      "on-click-right": "kitty -e pulsemixer",
+      "max-volume": 150
+    },
+    "idle_inhibitor": {
+      "format": "{icon}",
+      "tooltip": true,
+      "tooltip-format": "Caffeine: mantener pantalla activa",
+      "format-icons": {
+        "activated": "󰅶",
+        "deactivated": "󰾪"
+      }
+    },
+    "custom/kbd_layout": {
+      "exec": "~/.config/waybar-hypr/kbd-layout.sh",
+      "interval": 1,
+      "tooltip": false,
+      "on-click": "~/.local/bin/kbd-layout-next"
+    },
+    "custom/wallpaper": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Fondo aleatorio",
+      "on-click": "hypr-wallpaper random"
+    },
+    "custom/keybindings_help": {
+      "format": "?",
+      "tooltip": true,
+      "tooltip-format": "Atajos Hyprland",
+      "on-click": "hypr-keybindings-help"
     },
     "custom/day_month": {
       "exec": "waybar-day-month-es",
@@ -145,412 +218,24 @@
       "interval": 60,
       "tooltip": false
     },
-    "custom/wallpaper": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Selector de wallpapers",
-      "on-click": "hypr-wallpaper random"
-    },
-    "custom/hardware_fetch": {
-      "format": "󰌢",
-      "tooltip": true,
-      "tooltip-format": "Hardware / Fastfetch",
-      "on-click": "kitty --title hardware-fastfetch -e bash -ic 'fastfetch --config \"$HOME/.config/fastfetch/hardware.jsonc\"; printf \"\\n\"; exec bash -i'"
-    },
-    "bluetooth": {
-      "format": "󰂯",
-      "format-disabled": "󰂲",
-      "format-connected": "󰂱 {device_alias}",
-      "format-connected-battery": "󰂱 {device_alias} (󰥉 {device_battery_percentage}%)",
-      "tooltip-format": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected",
-      "tooltip-format-disabled": "bluetooth off",
-      "tooltip-format-connected": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected\n\n{device_enumerate}",
-      "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
-      "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t({device_battery_percentage}%)",
-      "max-length": 35,
-      "on-click": "blueman-manager"
-    },
-    "cpu": {
-      "format": " {usage}%",
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "memory": {
-      "format": " {percentage}%",
-      "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "temperature": {
-      "format": " {temperatureC}°C",
-      "critical-threshold": 85,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "disk#ssd": {
-      "path": "/",
-      "format": "󰋊 SSD {percentage_used}%",
-      "tooltip-format": "{used} used / {total} total",
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "custom/swap": {
-      "exec": "waybar-swap-usage",
-      "interval": 5,
-      "tooltip": false,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "group/system": {
-      "orientation": "horizontal",
-      "modules": [
-        "backlight",
-        "battery",
-        "pulseaudio",
-        "pulseaudio/slider",
-        "pulseaudio#microphone",
-        "pulseaudio/slider#microphone"
-      ]
-    },
-    "backlight": {
-      "format": "{icon} {percent}%",
-      "format-icons": [
-        "󰃞",
-        "󰃟",
-        "󰃠"
-      ]
-    },
-    "pulseaudio": {
-      "format": "{icon}",
-      "format-muted": "󰝟",
-      "format-icons": {
-        "default": [
-          "",
-          "",
-          ""
-        ]
-      },
-      "on-click": "pamixer -t",
-      "on-click-middle": "kitty -e pulsemixer",
-      "on-click-right": "kitty -e pulsemixer",
-      "max-volume": 150
-    },
-    "pulseaudio/slider": {
-      "min": 0,
-      "max": 150,
-      "orientation": "horizontal"
-    },
-    "pulseaudio#microphone": {
-      "target": "source",
-      "format": "{format_source}",
-      "format-source": "󰍬",
-      "format-source-muted": "󰍭",
-      "on-click": "pamixer --default-source -t",
-      "on-click-middle": "kitty -e pulsemixer",
-      "on-click-right": "kitty -e pulsemixer",
-      "max-volume": 150
-    },
-    "pulseaudio/slider#microphone": {
-      "target": "source",
-      "min": 0,
-      "max": 150,
-      "orientation": "horizontal"
-    },
-    "battery": {
-      "states": {
-        "warning": 30,
-        "critical": 15
-      },
-      "format": "{icon} {capacity}%",
-      "format-charging": "󰂄 {capacity}% ",
-      "format-plugged": "󰚥 {capacity}%",
-      "format-full": "󰁹 {capacity}%",
-      "tooltip-format": "{capacity}% {timeTo} {power}W",
-      "format-icons": [
-        "󰁺",
-        "󰁻",
-        "󰁼",
-        "󰁽",
-        "󰁾",
-        "󰁿",
-        "󰂀",
-        "󰂁",
-        "󰂂",
-        "󰁹"
-      ]
-    },
-    "custom/power_profile": {
-      "exec-if": "waybar-power-profile check",
-      "exec": "waybar-power-profile status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "waybar-power-profile pick"
-    },
-    "network": {
-      "format": "󰤭",
-      "format-wifi": "{icon} ({signalStrength}%) {essid}",
-      "format-icons": [
-        "󰤯",
-        "󰤟",
-        "󰤢",
-        "󰤥",
-        "󰤨"
-      ],
-      "format-ethernet": "󰈀 {ipaddr}/{cidr}",
-      "format-disconnected": "󰤫 Disconnected",
-      "tooltip-format-wifi": "SSID: {essid} ({signalStrength}%)\nInterface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
-      "tooltip-format-ethernet": "Interface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
-      "tooltip-format-disconnected": "<span color='#ed8796'>disconnected</span>",
-      "max-length": 35,
-      "on-click": "nm-connection-editor"
-    },
-    "privacy": {
-      "icon-spacing": 5,
-      "icon-size": 16,
-      "transition-duration": 250,
-      "modules": [
-        {
-          "type": "audio-in"
-        },
-        {
-          "type": "screenshare"
-        }
-      ]
-    },
-    "tray": {
-      "icon-size": 21,
-      "spacing": 10
-    },
-    "custom/hypr_config_editor": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Editar configs Hyprland",
-      "on-click": "hypr-config-editor"
-    },
-    "custom/logout_menu": {
-      "format": "⏻",
-      "tooltip": false,
-      "on-click": "hypr-power-menu"
-    },
-    "custom/clipboard": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Historial clipboard",
-      "on-click": "hypr-rofi-clipboard"
-    }
-  },
-  {
-    "name": "bottom_bar",
-    "layer": "top",
-    "position": "bottom",
-    "height": 42,
-    "spacing": 5,
-    "margin-bottom": 0,
-    "margin-left": 0,
-    "margin-right": 0,
-    "modules-left": [
-      "custom/orgm_logo",
-      "custom/user",
-      "hyprland/window"
-    ],
-    "modules-center": [
-      "idle_inhibitor",
-      "mpris"
-    ],
-    "modules-right": [
-      "custom/wallpaper",
-      "custom/kbd_layout",
-      "custom/keybindings_help",
-      "custom/menu"
-    ],
-    "custom/orgm_logo": {
-      "format": "NixOS",
-      "tooltip": true,
-      "tooltip-format": "Abrir menú ORGM-HYPR",
-      "on-click": "hypr-main-menu"
-    },
-    "custom/user": {
-      "format": "  osmarg",
-      "tooltip": false
-    },
     "hyprland/window": {
       "format": "{}",
-      "max-length": 80,
+      "max-length": 50,
       "separate-outputs": true
     },
-    "idle_inhibitor": {
-      "format": "{icon}",
-      "format-icons": {
-        "activated": "󰅶",
-        "deactivated": "󰾪"
-      }
-    },
     "mpris": {
-      "format": "{player_icon} {dynamic}",
-      "format-paused": "{status_icon} {dynamic}",
-      "player-icons": {
-        "default": "󰎈"
-      },
-      "status-icons": {
-        "paused": "󰏤"
-      },
-      "max-length": 45,
+      "format": " 󰐊",
+      "format-paused": " 󰐉",
+      "format-stopped": "",
+      "tooltip-format": "{dynamic}",
+      "max-length": 0,
       "on-click": "playerctl play-pause",
       "on-click-right": "playerctl next",
       "on-click-middle": "playerctl previous"
     },
-    "custom/metric_cpu": {
-      "exec": "waybar-metric-widget cpu",
-      "return-type": "json",
-      "interval": 2,
-      "format": "{}",
-      "markup": "pango",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "custom/metric_gpu": {
-      "exec": "waybar-metric-widget gpu",
-      "return-type": "json",
-      "interval": 3,
-      "format": "{}",
-      "markup": "pango",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "custom/metric_ram": {
-      "exec": "waybar-metric-widget ram",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "markup": "pango",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "custom/metric_ssd": {
-      "exec": "waybar-metric-widget ssd",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "markup": "pango",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "custom/metric_swap": {
-      "exec": "waybar-metric-widget swap",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "markup": "pango",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "kitty -e bash -ic btop"
-    },
-    "group/usage": {
-      "orientation": "horizontal",
-      "modules": [
-        "custom/metric_cpu",
-        "custom/metric_gpu",
-        "custom/metric_ram",
-        "custom/metric_ssd",
-        "custom/metric_swap"
-      ]
-    },
-    "backlight": {
-      "format": "{icon} {percent}%",
-      "format-icons": [
-        "󰃞",
-        "󰃟",
-        "󰃠"
-      ]
-    },
-    "pulseaudio": {
-      "format": "{icon} {volume}%",
-      "format-muted": "󰝟 muted",
-      "format-icons": {
-        "default": [
-          "",
-          "",
-          ""
-        ]
-      },
-      "on-click": "pavucontrol"
-    },
-    "custom/kbd_layout": {
-      "exec": "~/.config/waybar-hypr/kbd-layout.sh",
-      "interval": 1,
-      "tooltip": false,
-      "on-click": "~/.local/bin/kbd-layout-next"
-    },
-    "custom/keybindings_help": {
-      "format": "?",
-      "tooltip": true,
-      "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir atajos\nClick derecho: abrir atajos",
-      "on-click": "hypr-keybindings-help",
-      "on-click-right": "hypr-keybindings-help"
-    },
-    "custom/menu": {
-      "format": "󰍜",
-      "tooltip": true,
-      "tooltip-format": "Menú principal",
-      "on-click": "hypr-main-menu",
-      "on-click-right": "hypr-main-menu"
-    },
-    "custom/power_profile": {
-      "exec-if": "waybar-power-profile check",
-      "exec": "waybar-power-profile status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "waybar-power-profile pick"
-    },
-    "battery": {
-      "states": {
-        "warning": 30,
-        "critical": 15
-      },
-      "format": "{icon} {capacity}%",
-      "format-charging": "󰂄 {capacity}% ",
-      "format-plugged": "󰚥 {capacity}%",
-      "format-full": "󰁹 {capacity}%",
-      "tooltip-format": "{capacity}% {timeTo} {power}W",
-      "format-icons": [
-        "󰁺",
-        "󰁻",
-        "󰁼",
-        "󰁽",
-        "󰁾",
-        "󰁿",
-        "󰂀",
-        "󰂁",
-        "󰂂",
-        "󰁹"
-      ]
-    },
-    "custom/wallpaper": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Selector de wallpapers",
-      "on-click": "hypr-wallpaper random"
-    },
-
-
-    "custom/hardware_fetch": {
-      "format": "󰌢",
-      "tooltip": true,
-      "tooltip-format": "Hardware / Fastfetch",
-      "on-click": "kitty --title hardware-fastfetch -e bash -ic 'fastfetch --config \"$HOME/.config/fastfetch/hardware.jsonc\"; printf \"\\n\"; exec bash -i'"
-    },
-
-
-    "custom/hypr_config_editor": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Editar configs Hyprland",
-      "on-click": "hypr-config-editor"
+    "tray": {
+      "icon-size": 21,
+      "spacing": 10
     }
-
   }
 ]

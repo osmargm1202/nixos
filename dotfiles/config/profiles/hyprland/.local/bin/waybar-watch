@@ -54,7 +54,9 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 signature() {
-  find "$config_dir" -maxdepth 1 -type f \( -name 'config' -o -name '*.css' \) \
+  resolved_config_dir="$(readlink -f "$config_dir" 2>/dev/null || printf '%s' "$config_dir")"
+  printf '%s\n' "$resolved_config_dir"
+  find -L "$config_dir" -maxdepth 1 -type f \( -name 'config' -o -name '*.css' \) \
     -exec stat -c '%n:%Y:%s' {} \; 2>/dev/null | sort | cksum | awk '{print $1 ":" $2}'
 }
 

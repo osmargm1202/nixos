@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -u
+
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+helper="$HOME/.local/bin/waybar-watch"
+config_dir="$HOME/.config/waybar-hypr"
+
+for instance_dir in "$runtime_dir"/hypr/*; do
+  [ -S "$instance_dir/.socket.sock" ] || continue
+  signature="${instance_dir##*/}"
+
+  if ! XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" hyprctl -j monitors >/dev/null 2>&1; then
+    continue
+  fi
+
+  XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" hyprctl reload >/dev/null 2>&1 || exit 1
+
+  # Hyprland dispatches this in its own session environment, which supplies
+  # Wayland variables that Home Manager activation does not inherit.
+  if [ -x "$helper" ] && [ -d "$config_dir" ]; then
+    XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" \
+      hyprctl dispatch exec "$helper $config_dir" >/dev/null 2>&1 || exit 1
+  fi
+  exit 0
+done
+
+# Switching profiles without a live Hyprland session is valid.
+exit 0

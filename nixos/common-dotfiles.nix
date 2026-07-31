@@ -89,10 +89,6 @@ let
     ".config/starship.toml"
     ".config/wallpapers"
     ".config/warp-terminal/settings.toml"
-    ".config/yazi/flavors"
-    ".config/yazi/keymap.toml"
-    ".config/yazi/package.toml"
-    ".config/yazi/yazi.toml"
     ".config/zathura"
     ".config/zellij"
     # ".icons" intentionally NOT symlinked: nwg-look and dark/light theme
@@ -171,6 +167,7 @@ let
   profileSpecificPaths = {
     hyprland = [
       ".config/dunst"
+      ".config/nwg-dock-hyprland"
       ".config/hypr/hypridle.conf"
       ".config/hypr/hyprland.lua"
       ".config/hypr/hyprlock.conf"
@@ -214,6 +211,8 @@ let
       ".local/bin/hypr-lock"
       ".local/bin/hypr-main-menu"
       ".local/bin/hypr-obsidian-open-or-focus"
+      ".local/bin/hypr-nwg-dock"
+      ".local/bin/hypr-nwg-dock-reload"
       ".local/bin/hypr-pi-prompt"
       ".local/bin/hypr-power-menu"
       ".local/bin/hypr-rofi-calc"
@@ -225,6 +224,7 @@ let
       ".local/bin/hypr-rofi-ssh-host"
       ".local/bin/hypr-rofi-window"
       ".local/bin/hypr-session-import-env"
+      ".local/bin/hypr-reload-after-switch"
       ".local/bin/hypr-smart-run"
       ".local/bin/hypr-start-containers"
       ".local/bin/hypr-start-discord"
@@ -507,7 +507,6 @@ let
     ".config/helix/themes/orgm-hypr.toml"
     ".config/kitty/current-theme.conf"
     ".config/kitty/skwd-theme.conf"
-    ".config/yazi/theme.toml"
     ".config/orgm-hypr/display-targets.json"
     ".local/state/hypr-rofi-ssh-host"
     ".config/rofi/orgm-current.rasi"
@@ -720,6 +719,44 @@ in
             $DRY_RUN_CMD ${migrateHomeManagerDotfileDirs}/bin/migrate-home-manager-dotfile-dirs \
               .config/kitty .config/yazi
           '';
+      # Reset the obsolete managed Yazi setup once. Only repo-owned links and
+      # the known generated Matugen theme are removed; later local configuration
+      # remains user-owned.
+      home.activation.resetYaziConfiguration = lib.hm.dag.entryBefore [ "removeConflictingDotfiles" ] ''
+        for path in \
+          .config/yazi/yazi.toml \
+          .config/yazi/keymap.toml \
+          .config/yazi/package.toml \
+          .config/yazi/flavors; do
+          target="$HOME/$path"
+          source="${dotfilesPath}/config/shared/$path"
+          if [ -L "$target" ] && [ "$(${pkgs.coreutils}/bin/readlink -f -- "$target")" = "$source" ]; then
+            $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm "$target"
+          fi
+        done
+
+        theme="$HOME/.config/yazi/theme.toml"
+        if [ -f "$theme" ] && ${pkgs.gnugrep}/bin/grep -Fqx '# Matugen template: yazi file manager theme from wallpaper' "$theme"; then
+          $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm "$theme"
+        fi
+      '';
+
+      # Keep user-level MIME preferences in sync with declarative defaults,
+      # which take precedence over /etc/xdg/mimeapps.list.
+      home.activation.setPreferredFileHandlers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default yazi.desktop inode/directory
+        for mime in \
+          text/plain \
+          text/markdown \
+          text/x-markdown \
+          text/x-lua \
+          text/x-python \
+          application/json \
+          application/x-shellscript; do
+          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default nvim.desktop "$mime"
+        done
+      '';
+
 
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         if [ -L "$HOME/.local/share/applications" ]; then
@@ -820,6 +857,14 @@ in
       home.activation.reloadI3AfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
         lib.optionalString (profileName == "i3" || profileName == "i3-minimal") ''
           $DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch" || true
+        ''
+      );
+
+      # A NixOS/Home Manager switch replaces the Hyprland config symlink.
+      # Reload the live compositor and restart Waybar through its session IPC.
+      home.activation.reloadHyprlandAfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+        lib.optionalString (profileName == "hyprland") ''
+          $DRY_RUN_CMD "$HOME/.local/bin/hypr-reload-after-switch" || true
         ''
       );
 

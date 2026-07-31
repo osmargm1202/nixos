@@ -7,6 +7,7 @@ local exec_once = {
   "hypr-wallpaper restore",
   "hyprpolkitagent",
   "kdeconnect-indicator",
+  "hypr-nwg-dock",
   -- Lock and suspend on the established idle schedule.
   "hypridle",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",

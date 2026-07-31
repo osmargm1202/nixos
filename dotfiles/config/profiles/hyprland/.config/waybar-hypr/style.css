@@ -130,6 +130,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
 }
 #custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
 #custom-logout_menu { color: @red; font-weight: bold; padding: 0 12px 0 6px; }
+#custom-power { color: @red; font-weight: bold; padding: 0 10px; }
 #custom-menu { color: @text; font-size: 18px; padding: 0 10px 0 6px; }
 #custom-wallpaper { color: @text; font-size: 18px; }
 #custom-clipboard {

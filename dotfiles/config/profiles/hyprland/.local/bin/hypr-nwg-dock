@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/nwg-dock-hyprland"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/nwg-dock-hyprland"
+pinned="$cache_dir/nwg-dock-pinned"
+
+# nwg-dock turns a pin into a task button when its class has a live client:
+# left-click focuses that window; otherwise the pin launches its desktop entry.
+# Seed only once so pins added or removed from the dock stay user-owned.
+if [[ ! -e "$pinned" ]]; then
+  mkdir -p "$cache_dir"
+  install -m 600 "$config_dir/pinned" "$pinned"
+fi
+
+exec nwg-dock-hyprland \
+  -x \
+  -p bottom \
+  -a center \
+  -c hypr-app-launcher \
+  -s "$config_dir/style.css"

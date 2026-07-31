@@ -124,14 +124,14 @@ if command -v nvim >/dev/null; then
   alias bashconfig='nvim ~/.bashrc'
 fi
 
-alias yazi='nix run nixpkgs#yazi --'
 alias y='yazi'
 
 if command -v zutty-fast >/dev/null; then
   alias zutty='zutty-fast'
 fi
 
-# Runner efímero: `, app [args...]` = nix run nixpkgs#app.
+# Runner efímero para aplicaciones grandes o de uso ocasional:
+# `, app [args...]` = nix run nixpkgs#app.
 function , {
   if (($# == 0)); then
     printf '%s\n' 'uso: , <app> [args...]' >&2
@@ -140,17 +140,11 @@ function , {
   nix run "nixpkgs#$1" -- "${@:2}"
 }
 
-for app in ncdu fastfetch xclip podman-compose sops just figlet nix-search-tv dolphin-emu pcsx2 rpcs3; do
+for app in dolphin-emu pcsx2 rpcs3; do
   alias "$app=nix run nixpkgs#$app --"
 done
 unset app
 alias herdr='nix run herdr --'
-
-if [[ -f "$HOME/.local/state/caelestia/dots/btop/btop.conf" ]]; then
-  alias btop='nix run nixpkgs#btop -- -c ~/.local/state/caelestia/dots/btop/btop.conf'
-else
-  alias btop='nix run nixpkgs#btop --'
-fi
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then
   cheat() {

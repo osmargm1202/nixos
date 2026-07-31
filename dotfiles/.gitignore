@@ -36,7 +36,6 @@ config/shared/.config/swaync/orgm-current.css
 config/shared/.config/rofi/orgm-current.rasi
 config/shared/.config/kitty/current-theme.conf
 config/shared/.config/kitty/skwd-theme.conf
-config/shared/.config/yazi/theme.toml
 config/shared/.config/gtk-4.0/gtk.css
 config/shared/.config/gtk-4.0/gtk-dark.css
 config/shared/.config/gtk-4.0/settings.ini
