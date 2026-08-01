@@ -37,4 +37,8 @@ jq -e '
   and .[0]["modules-right"] == ["hyprland/window", "mpris", "custom/power", "tray"]
   and .[0]["custom/power"]["on-click"] == "hypr-power-menu"
 ' "$config" >/dev/null
+grep -Fq '#custom-ws_1.empty' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
+grep -Fq 'color: #8087a2;' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
+grep -Fq '#custom-ws_1.active' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
+grep -Fq 'color: #8aadf4;' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 printf '%s\n' 'hypr-waybar-profile: ok'

@@ -26,9 +26,9 @@ window.bottom_bar#waybar {
   border-radius: 12px;
 }
 #custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
-#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay0; }
+#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: #8087a2; }
 #custom-ws_1.active, #custom-ws_2.active, #custom-ws_3.active, #custom-ws_4.active, #custom-ws_5.active,
-#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
+#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: #8aadf4; }
 #mode, #submap {
   background: transparent;
   border-radius: 12px;

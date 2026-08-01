@@ -112,17 +112,11 @@ if command -v ssh >/dev/null; then
   alias ssh='env TERM=xterm-256color ssh'
 fi
 
-if command -v nano >/dev/null; then
-  export EDITOR=nano
-  alias bashconfig='nano ~/.bashrc'
-  alias kittyconfig='nano ~/.config/kitty/kitty.conf'
-  alias ffconfig='nano ~/.config/fastfetch/config.jsonc'
-fi
-
-if command -v nvim >/dev/null; then
-  export EDITOR=nvim
-  alias bashconfig='nvim ~/.bashrc'
-fi
+export EDITOR=nvim
+export VISUAL=nvim
+alias bashconfig='nvim ~/.bashrc'
+alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
+alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
 
 alias y='yazi'
 

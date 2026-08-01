@@ -50,6 +50,7 @@ let
     unzip
     btop
     yazi
+    superfile
     ncdu
     fastfetch
     sops
@@ -317,6 +318,11 @@ in
 
   environment.systemPackages =
     minimalPackages ++ lib.optionals (!isMinimalDesktop) desktopOnlyPackages;
+
+  environment.variables = {
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+  };
 
   xdg.mime = {
     enable = true;
