@@ -160,9 +160,7 @@
       ".local/bin/night_mode_temp_up",
       ".local/bin/night_mode_toggle",
       ".local/bin/nixclean",
-      ".local/bin/private-env-decrypt",
-      ".local/bin/private-env-edit",
-      ".local/bin/private-env-encrypt",
+      ".local/bin/sops-shared-env",
       ".local/bin/record_screen_gif",
       ".local/bin/record_screen_mp4",
       ".local/bin/screenshot_edit",
@@ -185,7 +183,6 @@
     "lenovo": {
       "paths": [
         ".config/DankMaterialShell",
-        ".config/bash/age-host.bash",
         ".config/bash/host-lenovo.bash",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
@@ -195,7 +192,6 @@
     "orgm": {
       "paths": [
         ".config/DankMaterialShell",
-        ".config/bash/age-host.bash",
         ".config/bash/host-orgm.bash",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
@@ -206,8 +202,6 @@
   "local_only": {
     "paths": [
       ".config/autorandr",
-      ".config/bash/insforge.env",
-      ".config/bash/private-env.bash",
       ".config/gtk-4.0/gtk-dark.css",
       ".config/gtk-4.0/gtk.css",
       ".pi/agent/agent-status.json",

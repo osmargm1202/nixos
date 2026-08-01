@@ -111,6 +111,8 @@ in
     lib.optionals (inputs != null) [
       inputs.home-manager.nixosModules.home-manager
       inputs.nix-flatpak.nixosModules.nix-flatpak
+      inputs.sops-nix.nixosModules.sops
+      ./sops.nix
       ./flatpak.nix
       ./common-dotfiles.nix
       ./zen-browser.nix

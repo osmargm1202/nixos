@@ -13,34 +13,22 @@ if [[ -r "$bash_config_dir/completions.bash" ]]; then
   . "$bash_config_dir/completions.bash"
 fi
 
-if [[ -r "$bash_config_dir/age.bash" ]]; then
-  . "$bash_config_dir/age.bash"
-fi
-
 host_config="$bash_config_dir/host-$(hostname).bash"
 if [[ -r "$host_config" ]]; then
   . "$host_config"
 fi
 unset host_config
 
-if [[ -r "$bash_config_dir/private-env-helpers.bash" ]]; then
-  . "$bash_config_dir/private-env-helpers.bash"
-  private_env_plain=$(_private_env_plain_path)
-  if [[ -r "$private_env_plain" ]]; then
-    # shellcheck source=/dev/null
-    . "$private_env_plain"
-  elif declare -F load_private_env >/dev/null; then
-    load_private_env
-  fi
-  unset private_env_plain
-fi
-
-if [[ -r "$bash_config_dir/insforge.env" ]]; then
-  . "$bash_config_dir/insforge.env"
-fi
+# API credentials are injected only into the child process by sops-shared-env.
 
 # Keep user-local tool locations ahead of the NixOS system profile.
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$PATH"
+if command -v sops-shared-env >/dev/null; then
+  alias claude='sops-shared-env claude'
+  alias opencode='sops-shared-env opencode'
+  alias pi='sops-shared-env pi'
+  alias nvim-ai='sops-shared-env nvim'
+fi
 # Keep fnm's managed Node versions available when fnm is installed locally.
 if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then
   export PATH="$HOME/.local/share/fnm:$PATH"

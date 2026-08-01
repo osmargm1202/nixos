@@ -31,5 +31,5 @@ omp() {
   omp_bin="$(readlink -f "$omp_bin")" || return
   package_dir="$(cd "$(dirname "$omp_bin")/.." && pwd -P)" || return
 
-  PI_PACKAGE_DIR="${PI_PACKAGE_DIR:-$package_dir}" command "$omp_bin" "$@"
+  PI_PACKAGE_DIR="${PI_PACKAGE_DIR:-$package_dir}" command sops-shared-env omp "$@"
 }

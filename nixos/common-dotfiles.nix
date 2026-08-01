@@ -70,10 +70,7 @@ let
     # shared configuration without a directory-level symlink collision.
     ".bashrc"
     ".blerc"
-    ".config/bash/age.bash"
     ".config/bash/config.bash"
-    ".config/bash/private-env-helpers.bash"
-    ".config/bash/private-env.bash.age"
     ".config/bash/completions.bash"
     ".config/bash/functions.bash"
     ".config/bash/fzf-widgets.bash"
@@ -135,9 +132,7 @@ let
     ".local/bin/night_mode_temp_up"
     ".local/bin/night_mode_toggle"
     ".local/bin/nixclean"
-    ".local/bin/private-env-decrypt"
-    ".local/bin/private-env-edit"
-    ".local/bin/private-env-encrypt"
+    ".local/bin/sops-shared-env"
     ".local/bin/record_screen_gif"
     ".local/bin/record_screen_mp4"
     ".local/bin/screenshot_edit"
@@ -387,7 +382,6 @@ let
     ]
     ++ hostIconSubdirs;
     lenovo = [
-      ".config/bash/age-host.bash"
       ".config/bash/host-lenovo.bash"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
@@ -397,7 +391,6 @@ let
     ]
     ++ hostIconSubdirs;
     orgm = [
-      ".config/bash/age-host.bash"
       ".config/bash/host-orgm.bash"
       ".local/share/applications/claude-code-url-handler.desktop"
       ".local/share/applications/desktop-apps.desktop"
@@ -408,7 +401,6 @@ let
     ]
     ++ hostIconSubdirs;
     jarq = [
-      ".config/bash/age-host.bash"
       ".config/bash/host-jarq.bash"
     ]
     ++ hostIconSubdirs;
@@ -462,8 +454,6 @@ let
 
   localOnlyPaths = [
     ".config/autorandr"
-    ".config/bash/insforge.env"
-    ".config/bash/private-env.bash"
     ".gtkrc-2.0"
     ".config/gtk-4.0/gtk-dark.css"
     ".config/gtk-4.0/gtk.css"

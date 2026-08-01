@@ -1,0 +1,8 @@
+keys:
+  - &shared_age age1hmnr736sfpqqs02j8zgaydm9r8c8cw9f5eek644rwvlygkgknaxqe64kx7
+
+creation_rules:
+  - path_regex: ^secrets/shared/.*\.yaml$
+    key_groups:
+      - age:
+          - *shared_age
