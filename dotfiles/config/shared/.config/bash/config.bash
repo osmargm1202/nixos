@@ -19,6 +19,10 @@ if [[ -r "$host_config" ]]; then
 fi
 unset host_config
 
+if [[ -r "$bash_config_dir/sops-age.bash" ]]; then
+  . "$bash_config_dir/sops-age.bash"
+fi
+
 # API credentials are injected only into the child process by sops-shared-env.
 
 # Keep user-local tool locations ahead of the NixOS system profile.

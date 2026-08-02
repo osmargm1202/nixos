@@ -73,6 +73,7 @@ let
     ".config/bash/config.bash"
     ".config/bash/completions.bash"
     ".config/bash/functions.bash"
+    ".config/bash/sops-age.bash"
     ".config/bash/fzf-widgets.bash"
     ".config/bash/icons"
     ".config/helix"

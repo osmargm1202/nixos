@@ -1,16 +1,18 @@
 {
   inputs,
   userName,
+  pkgs,
   ...
 }:
 {
-  home-manager.users.${userName} = { config, ... }: {
+  home-manager.users.${userName} = { config, lib, ... }: {
     imports = [ inputs.sops-nix.homeManagerModules.sops ];
 
     sops = {
-      # Existing shared recovery/edit identity. It is intentionally outside Git
-      # and the Nix store; future host-only secrets use SSH host identities.
-      age.keyFile = "${config.home.homeDirectory}/Nextcloud/Documentos/keys/age.txt";
+      # This stable user-local path is a symlink managed by `sops-age-key`.
+      # The activation below seeds it from the shared recovery identity only
+      # when no local host override exists.
+      age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
       defaultSopsFile = ../secrets/shared/api-keys.yaml;
 
       secrets = {
@@ -24,5 +26,20 @@
       };
 
     };
+
+    home.activation.initializeSopsAgeKey = lib.hm.dag.entryBefore [ "sops-nix" ] ''
+      key_file="${config.xdg.configHome}/sops/age/keys.txt"
+      default_key_file="${config.home.homeDirectory}/Nextcloud/Documentos/keys/age.txt"
+
+      if [ -L "$key_file" ] && [ ! -e "$key_file" ]; then
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -f "$key_file"
+      fi
+
+      if [ ! -e "$key_file" ] && [ -r "$default_key_file" ]; then
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$key_file")"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 700 "$(${pkgs.coreutils}/bin/dirname "$key_file")"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/ln -s "$default_key_file" "$key_file"
+      fi
+    '';
   };
 }
