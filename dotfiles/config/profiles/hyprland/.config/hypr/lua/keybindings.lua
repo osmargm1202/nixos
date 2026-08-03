@@ -21,6 +21,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
   hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("hypr-obsidian-open-or-focus"))
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-zen-new-window"))
+  hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))
 
   hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
 

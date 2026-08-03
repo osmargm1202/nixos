@@ -242,6 +242,7 @@ in
     swappy
     wl-screenrec
     wtype
+    woomer
 
     # Hardware controls
     brightnessctl
