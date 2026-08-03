@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
-# shellcheck disable=SC1090
-. "$lib"
-
-hypr_rofi_drun

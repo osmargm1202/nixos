@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Caelestia manages the lock screen — trigger via logind signal
-exec loginctl lock-session

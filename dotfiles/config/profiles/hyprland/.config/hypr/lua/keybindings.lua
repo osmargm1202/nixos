@@ -67,7 +67,7 @@ function M.setup(programs)
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
   hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.exec_cmd("hypr-video-timer"))
-  hl.bind("ALT + Tab", hl.dsp.exec_cmd("hypr-rofi-window"))
+  hl.bind("ALT + Tab", hl.dsp.exec_cmd("hyprctl dispatch scrolloverview:overview toggle"))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("hypr-kill-windows"))
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())

@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  isMinimalDesktop ? false,
   ...
 }:
 
@@ -107,7 +106,7 @@ let
   ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
 in
 {
-  imports = lib.optionals (!isMinimalDesktop) [
+  imports = [
     ./printer.nix
     ./vesktop.nix
   ];
@@ -130,14 +129,13 @@ in
     IdleAction = "ignore";
   };
 
-
   services.autorandr = {
     enable = true;
     defaultTarget = "horizontal";
     matchEdid = true;
   };
 
-  systemd.user.services.picom = lib.mkIf (!isMinimalDesktop) {
+  systemd.user.services.picom = {
     description = "Picom composite manager for i3";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
@@ -158,8 +156,6 @@ in
     };
   };
 
-
-
   # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.bash.loginShellInit = lib.mkAfter ''
     if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then
@@ -171,7 +167,7 @@ in
   security.polkit.enable = true;
   services.dbus.enable = true;
   services.gvfs.enable = true;
-  services.gvfs.package = lib.mkIf (!isMinimalDesktop) (
+  services.gvfs.package = (
     pkgs.gnome.gvfs.override {
       gnomeSupport = true;
     }
@@ -181,15 +177,15 @@ in
     enable = true;
     package = pkgs.upower;
   };
-  services.gnome = lib.mkIf (!isMinimalDesktop) {
+  services.gnome = {
     gnome-keyring.enable = true;
     gnome-online-accounts.enable = true;
   };
   services.power-profiles-daemon.enable = true;
-  nixpkgs.config.permittedInsecurePackages = lib.mkIf (!isMinimalDesktop) [ "libsoup-2.74.3" ];
+  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
 
   programs.dconf.enable = true;
-  security.pam.services.login.enableGnomeKeyring = lib.mkIf (!isMinimalDesktop) true;
+  security.pam.services.login.enableGnomeKeyring = true;
 
   services.pulseaudio.enable = false;
 
@@ -247,105 +243,102 @@ in
     XDG_SESSION_DESKTOP = "i3";
     XDG_CURRENT_DESKTOP = "i3";
     TERMINAL = "kitty";
-    I3_START_PICOM = if isMinimalDesktop then "0" else "1";
-    I3_START_DISCORD = if isMinimalDesktop then "0" else "1";
   };
 
-  environment.systemPackages =
-    (with pkgs; [
-    # Xorg session and window manager.
-    xorg-server
-    xinit
-    xauth
-    xrdb
-    xrandr
-    xinput
-    xset
-    xsetroot
-    setxkbmap
-    xkill
-    i3
-    i3status
-    clipcat
-    yazi
-    ueberzugpp
-    ffmpegthumbnailer
-    mediainfo
-    poppler-utils
-    fontconfig
-    git
-    gnused
-    iproute2
-    procps
-    i3lock-color
-    ngcbgI3Tools.autotiling
-    ngcbgI3Tools.rootbtnd
-    ngcbgI3Tools.i3swallow
-    ngcbgI3Tools.xlogout
+  environment.systemPackages = (
+    with pkgs;
+    [
+      # Xorg session and window manager.
+      xorg-server
+      xinit
+      xauth
+      xrdb
+      xrandr
+      xinput
+      xset
+      xsetroot
+      setxkbmap
+      xkill
+      i3
+      i3status
+      clipcat
+      yazi
+      ueberzugpp
+      ffmpegthumbnailer
+      mediainfo
+      poppler-utils
+      fontconfig
+      git
+      gnused
+      iproute2
+      procps
+      i3lock-color
+      ngcbgI3Tools.autotiling
+      ngcbgI3Tools.rootbtnd
+      ngcbgI3Tools.i3swallow
+      ngcbgI3Tools.xlogout
 
-    # Launchers, notifications, wallpaper and X11 helpers.
-    (rofi.override { plugins = [ rofi-calc ]; })
-    networkmanager_dmenu
-    # Clipboard history is supplied by the persistent Clipcat user service.
-    dunst
-    feh
-    mpv
-    xwinwrap
-    arandr
-    xdotool
-    xkb-switch
+      # Launchers, notifications, wallpaper and X11 helpers.
+      (rofi.override { plugins = [ rofi-calc ]; })
+      networkmanager_dmenu
+      # Clipboard history is supplied by the persistent Clipcat user service.
+      dunst
+      feh
+      mpv
+      xwinwrap
+      arandr
+      xdotool
+      xkb-switch
 
-    # Desktop integration.
-    xdg-utils
-    desktop-file-utils
-    xdg-desktop-portal
-    xdg-desktop-portal-gtk
-    shared-mime-info
-    stow
+      # Desktop integration.
+      xdg-utils
+      desktop-file-utils
+      xdg-desktop-portal
+      xdg-desktop-portal-gtk
+      shared-mime-info
+      stow
 
-    networkmanagerapplet
-    blueman
-    pavucontrol
-    pasystray
-    polkit_gnome
-    dex
-    xss-lock
-    udiskie
-    usbutils
+      networkmanagerapplet
+      blueman
+      pavucontrol
+      pasystray
+      polkit_gnome
+      dex
+      xss-lock
+      udiskie
+      usbutils
 
-    # User controls and X11 screen recording.
-    flameshot
-    ffcast
-    ffmpeg
-    brightnessctl
-    pamixer
-    playerctl
+      # User controls and X11 screen recording.
+      flameshot
+      ffcast
+      ffmpeg
+      brightnessctl
+      pamixer
+      playerctl
 
-    # Runtime-selected GTK appearance and status interactions.
-    gsimplecal
-    lm_sensors
-    lxappearance
-    adwaita-icon-theme
-    hicolor-icon-theme
-    colloid-icon-theme
-    catppuccin-gtk
-    catppuccin-cursors.macchiatoTeal
-    catppuccin-cursors.latteTeal
-    gnome-themes-extra
+      # Runtime-selected GTK appearance and status interactions.
+      gsimplecal
+      lm_sensors
+      lxappearance
+      adwaita-icon-theme
+      hicolor-icon-theme
+      colloid-icon-theme
+      catppuccin-gtk
+      catppuccin-cursors.macchiatoTeal
+      catppuccin-cursors.latteTeal
+      gnome-themes-extra
 
-    # Daily applications used by MIME defaults and bindings.
-    kitty
-    (chromium.override { enableWideVine = true; })
-    thunar
-    gnome-text-editor
-    evince
-    loupe
-    file-roller
-    ])
-    ++ lib.optionals (!isMinimalDesktop) [
+      # Daily applications used by MIME defaults and bindings.
+      kitty
+      (chromium.override { enableWideVine = true; })
+      thunar
+      gnome-text-editor
+      evince
+      loupe
+      file-roller
       pkgs."picom-pijulius"
       pkgs.gnome-keyring
       pkgs."gnome-online-accounts-gtk"
     ]
-    ++ lib.optionals isMinimalDesktop [ pkgs.kdePackages.kdeconnect-kde ];
+  );
 }

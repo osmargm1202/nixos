@@ -1,1 +1,0 @@
-/nix/store/ynzjh05snwysj2y8q2gpr1pn9xgh6mh3-home-manager-files/.config/hypr/wallpaper-picker/wallpaper_picker.py

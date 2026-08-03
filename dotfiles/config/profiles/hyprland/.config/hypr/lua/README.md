@@ -22,6 +22,10 @@ behavior changes in these Lua modules.
 Keep this order deterministic. Put shared external command names in
 `programs.lua`; pass them into modules instead of duplicating paths.
 
+`lua.autostart` loads ScrollOverview first at `hyprland.start`. Its plugin load
+reloads the configuration; `lua.look-and-feel` then configures it only when
+`hl.plugin.scrolloverview` is available.
+
 ## Module contract
 
 - Lua modules must be fast to load and safe during compositor startup/reload.

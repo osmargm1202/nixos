@@ -9,7 +9,6 @@
   inputs ? null,
   userName ? "osmarg",
   profileName ? null,
-  isMinimalDesktop ? false,
   ...
 }:
 
@@ -90,7 +89,7 @@ in
   system.nixos.label = lib.mkIf (profileName != null) profileName;
 
   # Logitech G213 RGB (USB HID, no motherboard i2c needed).
-  services.hardware.openrgb.enable = !isMinimalDesktop;
+  services.hardware.openrgb.enable = true;
 
   # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
   documentation.enable = false;
@@ -117,7 +116,7 @@ in
       ./common-dotfiles.nix
       ./zen-browser.nix
     ]
-    ++ lib.optionals (inputs != null && !isMinimalDesktop) [ ./webapps.nix ]
+    ++ lib.optionals (inputs != null) [ ./webapps.nix ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ./tailscale.nix
@@ -200,7 +199,7 @@ in
   };
   services.blueman.enable = true;
 
-  virtualisation.podman = lib.mkIf (!isMinimalDesktop) {
+  virtualisation.podman = {
     enable = true;
     dockerCompat = true; # alias docker -> podman
     dockerSocket.enable = true;
@@ -227,7 +226,6 @@ in
     config.user.name = "osmar";
     config.user.email = "osmargm1202@gmail.com";
   };
-
 
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -285,30 +283,29 @@ in
     group = userName;
     description = userName;
     shell = pkgs.bashInteractive;
-    subUidRanges = lib.optionals (!isMinimalDesktop) [
+    subUidRanges = [
       {
         startUid = 100000;
         count = 65536;
       }
     ];
-    subGidRanges = lib.optionals (!isMinimalDesktop) [
+    subGidRanges = [
       {
         startGid = 100000;
         count = 65536;
       }
     ];
-    extraGroups =
-      [
-        "networkmanager"
-        "wheel"
-        "input"
-        "video"
-        "render"
-      ]
-      ++ lib.optionals (!isMinimalDesktop) [
-        "docker"
-        "podman"
-      ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "input"
+      "video"
+      "render"
+    ]
+    ++ [
+      "docker"
+      "podman"
+    ];
     packages = with pkgs; [
       # thunderbird
     ];
@@ -318,9 +315,7 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages =
-    minimalPackages ++ lib.optionals (!isMinimalDesktop) desktopOnlyPackages;
-
+  environment.systemPackages = minimalPackages ++ desktopOnlyPackages;
   environment.variables = {
     EDITOR = "nvim";
     VISUAL = "nvim";

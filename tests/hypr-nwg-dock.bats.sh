@@ -15,8 +15,11 @@ fail() {
   exit 1
 }
 
-grep -Eq '^[[:space:]]+nwg-dock-hyprland[[:space:]]*$' "$PROFILE" ||
-  fail 'Hyprland must install nwg-dock-hyprland'
+grep -Fq 'nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs' "$PROFILE" &&
+  grep -Fq 'version = "0.4.11";' "$PROFILE" &&
+  grep -Fq 'tag = "v0.4.11";' "$PROFILE" &&
+  grep -Eq '^[[:space:]]+nwgDockHyprland[[:space:]]*$' "$PROFILE" ||
+  fail 'Hyprland must install nwg-dock-hyprland 0.4.11 with Hyprland 0.55 focus support'
 grep -Fq '"sh -lc '\''exec \"$HOME/.local/bin/hypr-nwg-dock\"'\''",' "$AUTOSTART" ||
   fail 'Hyprland must launch the dock through an absolute helper path'
 grep -Fq 'dock_bin="${NWG_DOCK_BIN:-nwg-dock-hyprland}"' "$HELPER" &&

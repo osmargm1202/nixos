@@ -7,7 +7,6 @@ DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
-CAELESTIA_BIN="$ROOT/dotfiles/config/profiles/hyprlandqs-caelestia/.local/bin"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 
 fail() {
@@ -37,8 +36,7 @@ for helper in volume-osd mic-volume-osd; do
   [ -x "$SHARED_BIN/$helper" ] || fail "$helper must be shared and executable"
   [ ! -e "$HYPR_BIN/$helper" ] || fail "$helper must not remain Hyprland-owned"
   grep -Fq "    \".local/bin/$helper\"" "$DOTFILES" || fail "$helper missing from shared deployment"
-  [ -x "$CAELESTIA_BIN/$helper" ] || fail "Caelestia-specific $helper variant must remain available"
-  bash -n "$SHARED_BIN/$helper" "$CAELESTIA_BIN/$helper"
+  bash -n "$SHARED_BIN/$helper"
 done
 
 grep -Fq 'sp == hp || lib.hasPrefix (hp + "/") sp' "$DOTFILES" ||
@@ -47,7 +45,7 @@ grep -Fq 'sp == hp || lib.hasPrefix (hp + "/") sp' "$DOTFILES" ||
 grep -Fq 'systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {' "$DOTFILES" ||
   fail 'Lenovo must not start the absent G213 notification observer'
 if grep -Eq 'swaynotificationcenter|swaync' "$PROFILE" "$I3"; then
-  fail 'minimal i3 must use Dunst only'
+  fail 'i3 must use Dunst only'
 fi
 
 printf 'PASS: i3 uses portable Dunst controls and shared audio OSD without Lenovo G213\n'

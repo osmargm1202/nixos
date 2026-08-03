@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/common_hyprland.nix"
+PROFILE="$ROOT/nixos/profiles/hyprland.nix"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
@@ -14,10 +14,8 @@ grep -Eq '^[[:space:]]+steamcmd([[:space:]]|$)' "$PROFILE" || fail 'steamcmd mis
 grep -Fq '".local/bin/steam-workshop-image"' "$DOTFILES" || fail 'Steam image helper missing from sharedPaths'
 
 cd "$ROOT"
-for profile in orgm-hyprland orgm-hyprlandqs-caelestia; do
-  packages="$(nix eval ".#nixosConfigurations.$profile.config.environment.systemPackages" --json 2>/dev/null)"
-  jq -e 'any(.[]; test("-steamcmd-[^/]*$"))' <<< "$packages" >/dev/null \
-    || fail "steamcmd missing from $profile closure"
-done
+packages="$(nix eval ".#nixosConfigurations.orgm-hyprland.config.environment.systemPackages" --json 2>/dev/null)"
+jq -e 'any(.[]; test("-steamcmd-[^/]*$"))' <<< "$packages" >/dev/null \
+  || fail 'steamcmd missing from orgm-hyprland closure'
 
-printf 'PASS: SteamCMD available in both Hyprland profiles\n'
+printf 'PASS: SteamCMD available in the Hyprland profile\n'

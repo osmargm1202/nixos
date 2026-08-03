@@ -24,13 +24,37 @@ assert_not_contains() {
 }
 
 assert_contains \
+  'flake-parts = {' \
+  "$FLAKE" \
+  'flake must declare flake-parts input'
+assert_contains \
+  'inputs.nixpkgs-lib.follows = "nixpkgs";' \
+  "$FLAKE" \
+  'flake-parts nixpkgs-lib must follow root nixpkgs'
+assert_contains \
+  'flake-parts.lib.mkFlake { inherit inputs; } {' \
+  "$FLAKE" \
+  'flake must use flake-parts mkFlake'
+assert_contains \
+  'systems = [ "x86_64-linux" ];' \
+  "$FLAKE" \
+  'flake-parts must expose the supported system'
+assert_contains \
+  'flake =' \
+  "$FLAKE" \
+  'host outputs must be defined in flake-parts flake block'
+assert_contains \
+  'hostSystem = "x86_64-linux";' \
+  "$FLAKE" \
+  'NixOS builder must use an explicit host system'
+assert_contains \
+  'system = hostSystem;' \
+  "$FLAKE" \
+  'NixOS builder must receive the explicit host system'
+assert_contains \
   'configurationInventory = import ./configurations.nix;' \
   "$FLAKE" \
   'flake must load explicit configuration inventory'
-assert_contains \
-  'builtConfigurations =' \
-  "$FLAKE" \
-  'flake must define built configurations'
 assert_contains \
   'builtConfigurations = nixpkgs.lib.mapAttrs (' \
   "$FLAKE" \
@@ -46,7 +70,23 @@ assert_contains \
 assert_contains \
   'nixosConfigurations = builtConfigurations // configurationAliases;' \
   "$FLAKE" \
-  'flake must expose built configurations plus explicit aliases'
+  'flake block must expose built configurations plus explicit aliases'
+assert_contains \
+  'perSystem =' \
+  "$FLAKE" \
+  'platform outputs must be defined in perSystem'
+assert_contains \
+  'formatter = pkgs.nixfmt-rfc-style;' \
+  "$FLAKE" \
+  'perSystem must provide the formatter'
+assert_contains \
+  'packages = {' \
+  "$FLAKE" \
+  'perSystem must provide packages'
+assert_contains \
+  'devShells.default = pkgsDev.mkShell {' \
+  "$FLAKE" \
+  'perSystem must provide the default development shell'
 
 for old_matrix_entry in \
   'orgm-hyprland = mkHost' \

@@ -1,4 +1,5 @@
 local exec_once = {
+  "hyprctl plugin load /etc/scrolloverview.so",
   -- Import the graphical session before starting StatusNotifier clients.
   "hypr-tray-applets",
   -- Keep the lightweight Waybar process and its helper modules alive.

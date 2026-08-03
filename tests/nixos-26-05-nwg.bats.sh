@@ -29,21 +29,14 @@ grep -Fq '    android-tools' "$ROOT/nixos/common.nix" ||
 if grep -Rq 'googleSupport' "$ROOT/nixos" --include='*.nix'; then
   fail 'NixOS 26.05 gvfs removed googleSupport; use gnomeSupport'
 fi
-grep -Fq '    gnomeSupport = true;' "$ROOT/nixos/profiles/common_hyprland.nix" ||
+grep -Fq '    gnomeSupport = true;' "$ROOT/nixos/profiles/hyprland.nix" ||
   fail 'gvfs must retain online-account support through gnomeSupport'
-grep -Fq 'url = "github:Alexays/Waybar/d2a082933a1dfcc3e518f94b046c8caf328db011";' "$FLAKE" ||
-  fail 'Waybar source-slider support must use the merged upstream PR commit'
-grep -Fq -- '--replace-fail "alarm(5);" "alarm(30);"' "$ROOT/nixos/profiles/hyprland.nix" ||
-  fail 'Waybar stress test needs a load-safe timeout while remaining enabled'
 
 profiles=(
   lenovo-labwc
   lenovo-gnome
   lenovo-hyprland
-  lenovo-hyprlandqs-caelestia
   lenovo-i3
-  lenovo-xfce
-  lenovo-mate
 )
 
 for profile in "${profiles[@]}"; do

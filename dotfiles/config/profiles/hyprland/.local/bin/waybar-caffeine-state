@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/waybar"
+state_file="$state_dir/caffeine"
+lock_file="$state_dir/caffeine.lock"
+
+read_state() {
+  if [[ -r "$state_file" ]] && [[ "$(<"$state_file")" == "activated" ]]; then
+    printf '%s\n' activated
+  else
+    printf '%s\n' deactivated
+  fi
+}
+
+write_state() {
+  local next_state="$1"
+  local temporary
+
+  temporary="$(mktemp "$state_file.tmp.XXXXXX")"
+  printf '%s\n' "$next_state" >"$temporary"
+  mv "$temporary" "$state_file"
+}
+
+mkdir -p "$state_dir"
+
+case "${1:-}" in
+  toggle)
+    exec 9>"$lock_file"
+    flock 9
+    if [[ "$(read_state)" == activated ]]; then
+      write_state deactivated
+    else
+      write_state activated
+    fi
+    ;;
+  status)
+    read_state
+    ;;
+  *)
+    printf 'Usage: %s {toggle|status}\n' "${0##*/}" >&2
+    exit 64
+    ;;
+esac

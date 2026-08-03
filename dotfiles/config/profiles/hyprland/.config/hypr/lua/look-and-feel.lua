@@ -1,3 +1,14 @@
+if hl.plugin and hl.plugin.scrolloverview then
+  hl.plugin.scrolloverview.configure({
+    gesture_distance = 300,
+    scale = 0.5,
+    workspace_gap = 24,
+    layout = "vertical",
+    wallpaper = 0,
+    blur = true,
+  })
+end
+
 hl.config({
   general = {
     gaps_in = 12,
@@ -11,6 +22,7 @@ hl.config({
     allow_tearing = false,
     layout = "dwindle",
   },
+
 
   group = {
     col = {

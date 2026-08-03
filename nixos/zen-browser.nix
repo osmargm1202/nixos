@@ -4,7 +4,6 @@
   lib,
   userName ? "osmarg",
   profileName ? null,
-  isMinimalDesktop ? false,
   ...
 }:
 
@@ -12,18 +11,15 @@ let
   zenBrowser = pkgs.callPackage ./packages/zen-browser.nix {
     zenBrowserFlakeSrc = inputs.zen-browser-flake;
   };
-  psd =
-    if isMinimalDesktop then
-      pkgs.profile-sync-daemon
-    else
-      pkgs.callPackage ./packages/psd-zen.nix { };
+  psd = pkgs.callPackage ./packages/psd-zen.nix { };
 in
 {
-  environment.systemPackages =
-    lib.optionals (!isMinimalDesktop) [ zenBrowser ]
-    ++ [ psd ];
+  environment.systemPackages = [
+    zenBrowser
+    psd
+  ];
 
-  xdg.mime.defaultApplications = lib.mkIf (!isMinimalDesktop && profileName != "i3") {
+  xdg.mime.defaultApplications = lib.mkIf (profileName != "i3") {
     "text/html" = [ "zen-browser.desktop" ];
     "application/xhtml+xml" = [ "zen-browser.desktop" ];
     "x-scheme-handler/http" = [ "zen-browser.desktop" ];
@@ -35,7 +31,7 @@ in
     { lib, pkgs, ... }:
     {
       xdg.configFile."psd/psd.conf".text = ''
-        BROWSERS=(${if isMinimalDesktop then "chromium" else "zen chromium"})
+        BROWSERS=(zen chromium)
       '';
 
       systemd.user.services.psd = {

@@ -4,7 +4,6 @@
   lib,
   userName ? "osmarg",
   profileName ? "hyprland",
-  isMinimalDesktop ? false,
   ...
 }:
 
@@ -15,7 +14,7 @@ let
   dotfilesPath = "/home/${userName}/Hobby/nixos/dotfiles";
   dotfilesParent = "/home/${userName}/Hobby";
   hostName = config.networking.hostName;
-  profileDotfilesName = if profileName == "i3-minimal" then "i3" else profileName;
+  profileDotfilesName = profileName;
 
   # Mirrors *.desktop files Steam (and similar launchers) drop into
   # ~/Desktop over to ~/.local/share/applications so dock/launcher icons
@@ -62,7 +61,6 @@ let
   sharedPaths = [
     ".config/bat"
     ".config/btop"
-    ".config/caelestia/cli.json"
     ".config/delta"
     ".config/dolphinrc"
     ".config/fastfetch"
@@ -184,8 +182,6 @@ let
       ".config/orgm-hypr/notify-focus.json"
       ".config/orgm-hypr/themes.json"
       ".config/orgm-theme"
-      ".config/qt5ct/colors/caelestia.colors"
-      ".config/qt6ct/colors/caelestia.colors"
 
       ".config/waybar-hypr"
       ".config/rofi"
@@ -198,7 +194,6 @@ let
       ".local/bin/hypr-current-wallpaper"
       ".local/bin/hypr-devices-menu"
       ".local/bin/hypr-display-targets"
-      ".local/bin/hypr-focus-notification-app"
       ".local/bin/hypr-help-menu"
       ".local/bin/hypr-keybindings-help"
       ".local/bin/hypr-keyhelper"
@@ -233,6 +228,7 @@ let
       ".local/bin/hypr-workspace-button"
       ".local/bin/hypr-wallpaper"
       ".local/bin/hypr-zen-new-window"
+      ".local/bin/waybar-caffeine-state"
       ".local/bin/waybar-date-es"
       ".local/bin/waybar-day-month-es"
       ".local/bin/waybar-metric-widget"
@@ -277,10 +273,6 @@ let
       ".local/bin/i3-wifi-toggle"
       ".local/bin/i3status-localized"
     ];
-    # i3-minimal deliberately links the identical i3 tree; only Nix options
-    # select its reduced runtime.
-    i3-minimal = profileSpecificPaths.i3;
-
 
     labwc = [
       ".config/dunst"
@@ -294,68 +286,6 @@ let
       ".local/bin/labwc-kill-windows"
     ];
 
-    hyprlandqs-caelestia = [
-      ".config/hypr/hyprland.lua"
-      ".config/hypr/lua/autostart.lua"
-      ".config/hypr/lua/environment.lua"
-      ".config/hypr/lua/input.lua"
-      ".config/hypr/lua/keybindings.lua"
-      ".config/hypr/lua/layout.lua"
-      ".config/hypr/lua/look-and-feel.lua"
-      ".config/hypr/lua/monitors.lua"
-      ".config/hypr/lua/permissions.lua"
-      ".config/hypr/lua/programs.lua"
-      ".config/hypr/lua/README.md"
-      ".config/hypr/lua/windows-workspaces.lua"
-      ".config/hypr/noctalia/noctalia-colors.conf"
-      ".config/hypr/scripts/pi-walker-prompt.sh"
-      ".config/hypr/scripts/walker-window-switch.sh"
-      ".config/hypr/wallpaper-picker"
-      ".config/orgm-hypr/notify-focus.json"
-      ".config/orgm-hypr/themes.json"
-      ".config/orgm-theme"
-      ".config/rofi"
-      ".config/swappy"
-      ".config/wlogout"
-      ".local/bin/hypr-battery-alerts"
-      ".local/bin/hypr-app-launcher"
-      ".local/bin/hypr-audio-device-menu"
-      ".local/bin/hypr-bluetooth-menu"
-      ".local/bin/hypr-bluetooth-reconnect"
-      ".local/bin/hypr-devices-menu"
-      ".local/bin/hypr-display-targets"
-      ".local/bin/hypr-keyboard-menu"
-      ".local/bin/hypr-kill-windows"
-      ".local/bin/hypr-lock"
-      ".local/bin/hypr-current-wallpaper"
-      ".local/bin/hypr-qs-menu"
-      ".local/bin/hypr-obsidian-open-or-focus"
-      ".local/bin/hypr-performance-menu"
-      ".local/bin/hypr-pi-prompt"
-      ".local/bin/hypr-power-menu"
-      ".local/bin/hypr-random-wallpaper"
-      ".local/bin/hypr-rofi-calc"
-      ".local/bin/hypr-rofi-clipboard"
-      ".local/bin/hypr-rofi-lib"
-      ".local/bin/hypr-rofi-open-file"
-      ".local/bin/hypr-rofi-ssh-host"
-      ".local/bin/hypr-session-import-env"
-      ".local/bin/hypr-smart-run"
-      ".local/bin/hypr-usb-menu"
-      ".local/bin/hypr-video-timer"
-      ".local/bin/hypr-wallpaper-picker"
-      ".local/bin/hypr-wallpaper-picker-dark"
-      ".local/bin/hypr-wallpaper-picker-light"
-      ".local/bin/hypr-webapp-maker"
-      ".local/bin/hypr-wifi-menu"
-      ".local/bin/hypr-zen-new-window"
-
-      ".local/bin/mic-volume-osd"
-      ".local/bin/volume-osd"
-    ];
-
-    xfce = [ ];
-    mate = [ ];
     gnome = [ ];
     cinnamon = [ ];
   };
@@ -414,23 +344,16 @@ let
       hyprland = [ ];
       i3 = [ ];
       labwc = [ ];
-      hyprlandqs-caelestia = [ ];
     };
     jarq = {
       hyprland = [ ];
       i3 = [ ];
       labwc = [ ];
-      hyprlandqs-caelestia = [ ];
     };
     lenovo = {
       hyprland = [
         ".config/DankMaterialShell"
         ".config/hypr/lua/monitors/lenovo.lua"
-        ".config/niri/20-output.kdl"
-      ];
-      hyprlandqs-caelestia = [
-        ".config/hypr/lua/monitors/lenovo.lua"
-        ".config/rofi/hypr-menu.env"
       ];
       i3 = [ ];
       labwc = [ ];
@@ -439,14 +362,7 @@ let
       hyprland = [
         ".config/DankMaterialShell"
         ".config/hypr/lua/monitors/orgm.lua"
-        ".config/niri/20-output.kdl"
-        ".config/niri/dms/outputs.kdl"
         ".config/orgm-hypr/display-targets.json"
-      ];
-      hyprlandqs-caelestia = [
-        ".config/hypr/lua/monitors/orgm.lua"
-        ".config/orgm-hypr/display-targets.json"
-        ".config/rofi/hypr-menu.env"
       ];
       i3 = [ ];
       labwc = [ ];
@@ -504,7 +420,6 @@ let
     ".config/rofi/orgm-current.rasi"
     ".config/waybar/orgm-current.css"
     ".config/waybar-hypr/orgm-current.css"
-    ".config/swaync/orgm-current.css"
     ".config/qt5ct/colors/orgm-current.colors"
     ".config/qt6ct/colors/orgm-current.colors"
     ".config/hypr/scheme/current.conf"
@@ -529,7 +444,6 @@ let
     ".config/rofi/orgm-current.rasi"
     ".config/waybar/orgm-current.css"
     ".config/waybar-hypr/orgm-current.css"
-    ".config/swaync/orgm-current.css"
     ".config/hypr/scheme/current.conf"
     ".config/vesktop/settings/quickcss.css"
   ];
@@ -540,11 +454,11 @@ let
   # top bar, and command surface required by the next Hyprland login.
   persistentHyprlandPaths = lib.filter (
     path:
-      lib.hasPrefix ".config/hypr/" path
-      || lib.hasPrefix ".config/orgm-hypr/" path
-      || path == ".config/waybar-hypr"
-      || lib.hasPrefix ".local/bin/hypr-" path
-      || lib.hasPrefix ".local/bin/waybar-" path
+    lib.hasPrefix ".config/hypr/" path
+    || lib.hasPrefix ".config/orgm-hypr/" path
+    || path == ".config/waybar-hypr"
+    || lib.hasPrefix ".local/bin/hypr-" path
+    || lib.hasPrefix ".local/bin/waybar-" path
   ) (profileSpecificPaths.hyprland or [ ]);
   # Keep the Rofi theme required by Hyprland helpers separate from the active
   # profile's general Rofi configuration, which i3 owns at ~/.config/rofi.
@@ -562,16 +476,17 @@ let
       source = ".config/rofi/orgm-current.rasi";
     }
   ];
-  currentProfilePaths = lib.filter (
-    path: !builtins.elem path persistentHyprlandPaths
-  ) (profileSpecificPaths.${profileName} or [ ]);
+  currentProfilePaths = lib.filter (path: !builtins.elem path persistentHyprlandPaths) (
+    profileSpecificPaths.${profileName} or [ ]
+  );
   pathsForHost = hostPaths.${hostName} or [ ];
   pathsForHostProfile = (hostProfilePaths.${hostName} or { }).${profileName} or [ ];
 
   # Priority: hostProfilePaths > hostPaths > profilePaths > sharedPaths.
   # Persistent Hyprland paths are profile sources with the same priority as
   # the active profile, so host-specific monitor files can still override them.
-  higherThanShared = persistentHyprlandPaths ++ currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
+  higherThanShared =
+    persistentHyprlandPaths ++ currentProfilePaths ++ pathsForHost ++ pathsForHostProfile;
   higherThanProfile = pathsForHost ++ pathsForHostProfile;
 
   pass1SharedPaths = lib.filter (
@@ -579,7 +494,8 @@ let
   ) sharedPaths;
 
   pass1PersistentHyprlandPaths = lib.filter (
-    pp: !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) (pathsForHost ++ pathsForHostProfile)
+    pp:
+    !builtins.any (hp: pp == hp || lib.hasPrefix (hp + "/") pp) (pathsForHost ++ pathsForHostProfile)
   ) persistentHyprlandPaths;
 
   pass1ProfilePaths = lib.filter (
@@ -591,7 +507,12 @@ let
   ) pathsForHost;
 
   # Pass 2 — drop any path that has child paths in the combined list.
-  pass1All = pass1SharedPaths ++ pass1PersistentHyprlandPaths ++ pass1ProfilePaths ++ pass1HostPaths ++ pathsForHostProfile;
+  pass1All =
+    pass1SharedPaths
+    ++ pass1PersistentHyprlandPaths
+    ++ pass1ProfilePaths
+    ++ pass1HostPaths
+    ++ pathsForHostProfile;
 
   filteredSharedPaths = lib.filter (
     sp: !builtins.any (other: lib.hasPrefix (sp + "/") other) pass1All
@@ -618,12 +539,11 @@ in
     "d ${dotfilesParent} 0755 ${userName} users - -"
   ];
 
-  # Ensure the graphical login (and thus the Hyprland/niri session it spawns)
-  # starts only after home-manager has finished linking the dotfiles. Without
-  # this ordering the compositor can read its config before the lua/*.lua
-  # symlinks exist, making every require() fail and dropping Hyprland into
-  # emergency mode. `wants` (not `requires`) so a home-manager failure degrades
-  # gracefully instead of blocking login entirely.
+  # Ensure the graphical login starts only after home-manager has finished
+  # linking the dotfiles. Without this ordering the compositor can read its
+  # configuration before the Lua symlinks exist and enter emergency mode.
+  # `wants` (not `requires`) so a home-manager failure degrades gracefully
+  # instead of blocking login entirely.
   systemd.services.display-manager = {
     after = [ "home-manager-${userName}.service" ];
     wants = [ "home-manager-${userName}.service" ];
@@ -749,7 +669,6 @@ in
         done
       '';
 
-
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         if [ -L "$HOME/.local/share/applications" ]; then
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"
@@ -757,10 +676,9 @@ in
 
         for old_dir in \
           .config/hypr \
-          .config/niri \
           .config/orgm-hypr \
           .config/waybar .config/waybar-hypr \
-          .config/swaync .config/nwg-dock-hyprland \
+          .config/nwg-dock-hyprland \
           .config/qt5ct .config/qt6ct \
           .config/quickshell .config/gtk-4.0 \
           .config/Kvantum \
@@ -777,7 +695,11 @@ in
 
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (
-            filteredSharedPaths ++ filteredPersistentHyprlandPaths ++ filteredProfilePaths ++ filteredHostPaths ++ filteredHostProfilePaths
+            filteredSharedPaths
+            ++ filteredPersistentHyprlandPaths
+            ++ filteredProfilePaths
+            ++ filteredHostPaths
+            ++ filteredHostProfilePaths
             ++ map (file: file.target) persistentHyprlandRofiFiles
           )}
         )
@@ -802,7 +724,6 @@ in
         + lib.optionalString (profileName == "hyprland") ''
           init_file ".config/waybar/orgm-current.css"            "/* generated by orgm-themes */"
           init_file ".config/waybar-hypr/orgm-current.css"       "/* generated by orgm-themes */"
-          init_file ".config/swaync/orgm-current.css"            "/* generated by orgm-themes */"
           init_file ".config/rofi/orgm-current.rasi"             "/* generated by orgm-themes */"
           init_file ".config/qt5ct/qt5ct.conf"     ""
           init_file ".config/qt5ct/colors/orgm-current.colors" ""
@@ -815,20 +736,6 @@ in
           init_file ".local/state/orgm-theme/current"     "orgm-dark"
           init_file ".local/state/orgm-theme/current.env" ""
           init_file ".config/vesktop/settings/quickcss.css" "/* generated by orgm-themes */"
-        ''
-        + lib.optionalString (profileName == "hyprlandqs-caelestia") ''
-          init_file ".config/qt5ct/qt5ct.conf"     ""
-          init_file ".config/qt6ct/qt6ct.conf"     ""
-          init_file ".config/Kvantum/kvantum.kvconfig" ""
-          init_file ".config/kdeglobals"            ""
-          init_file ".config/hypr/scheme/current.conf" ""
-          init_file ".config/vesktop/settings/quickcss.css" ""
-          # Caelestia shell defaults: seeded once if absent, then owned by the
-          # Nexus settings UI (it rewrites the file live, so no symlink).
-          if [ ! -e "$HOME/.config/caelestia/shell.json" ]; then
-            $DRY_RUN_CMD mkdir -p "$HOME/.config/caelestia"
-            $DRY_RUN_CMD cp "${dotfilesPath}/config/profiles/hyprlandqs-caelestia/.config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
-          fi
         ''
       );
 
@@ -847,7 +754,7 @@ in
       # Home Manager replaces the i3 config symlink during a live switch.
       # Reload through IPC afterward so i3 re-establishes its keyboard grabs.
       home.activation.reloadI3AfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
-        lib.optionalString (profileName == "i3" || profileName == "i3-minimal") ''
+        lib.optionalString (profileName == "i3") ''
           $DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch" || true
         ''
       );
@@ -859,7 +766,6 @@ in
           $DRY_RUN_CMD "$HOME/.local/bin/hypr-reload-after-switch" || true
         ''
       );
-
 
       # Steam (and similar launchers) write "Create desktop shortcut" .desktop
       # files into ~/Desktop instead of ~/.local/share/applications, so dock
@@ -877,7 +783,7 @@ in
       };
 
       # Lenovo has no G213; avoid starting a detector that can only exit.
-      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo" && !isMinimalDesktop) {
+      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";

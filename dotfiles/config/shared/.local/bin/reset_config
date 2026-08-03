@@ -4,11 +4,10 @@ set -e
 
 ALL_CONFIGS=(
   "mimeapps:$HOME/.config/mimeapps.list"
-  "caelestia:$HOME/.config/caelestia/shell.json"
 )
 
 usage() {
-  echo "Usage: reset_config [all] [mimeapps] [caelestia] ..."
+  echo "Usage: reset_config [all] [mimeapps] ..."
   echo ""
   echo "Available configs:"
   for entry in "${ALL_CONFIGS[@]}"; do

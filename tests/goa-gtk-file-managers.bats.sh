@@ -20,7 +20,7 @@ assert_goa_after_nautilus() {
 }
 
 for profile in \
-	nixos/profiles/common_hyprland.nix \
+	nixos/profiles/hyprland.nix \
 	nixos/profiles/gnome.nix \
 	nixos/profiles/labwc.nix; do
 	assert_goa_after_nautilus "$ROOT/$profile"
@@ -33,7 +33,7 @@ if grep -Eq '^[[:space:]]+gnome-online-accounts-gtk([[:space:]]|$)' "$ROOT/nixos
 	fail "gnome-online-accounts-gtk must not be global"
 fi
 for profile in \
-	nixos/profiles/common_hyprland.nix \
+	nixos/profiles/hyprland.nix \
 	nixos/profiles/gnome.nix \
 	nixos/profiles/i3.nix \
 	nixos/profiles/labwc.nix; do
@@ -43,7 +43,7 @@ done
 
 
 for profile in \
-	nixos/profiles/common_hyprland.nix \
+	nixos/profiles/hyprland.nix \
 	nixos/profiles/labwc.nix; do
 	grep -Fq 'services.gnome.gnome-online-accounts.enable = true;' "$ROOT/$profile" ||
 		fail "GOA backend must be enabled in $profile"

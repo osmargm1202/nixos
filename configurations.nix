@@ -5,11 +5,8 @@ let
     cinnamon = ./nixos/profiles/cinnamon.nix;
     gnome = ./nixos/profiles/gnome.nix;
     hyprland = ./nixos/profiles/hyprland.nix;
-    hyprlandqs-caelestia = ./nixos/profiles/hyprlandqs-caelestia.nix;
     i3 = ./nixos/profiles/i3.nix;
-    i3-minimal = ./nixos/profiles/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
-    xfce = ./nixos/profiles/xfce.nix;
   };
 
   desktop =
@@ -19,7 +16,6 @@ let
       hardware ? genericHardware,
       userName ? "osmarg",
       extraModules ? [ ],
-      isMinimalDesktop ? false,
     }:
     {
       role = "desktop";
@@ -29,7 +25,6 @@ let
         userName
         extraModules
         profileName
-        isMinimalDesktop
         ;
       profile = profiles.${profileName};
     };
@@ -99,7 +94,6 @@ in
     hyprland = desktop { profileName = "hyprland"; };
     i3 = desktop { profileName = "i3"; };
     labwc = desktop { profileName = "labwc"; };
-    xfce = desktop { profileName = "xfce"; };
     terminal = terminal { };
     server = server { };
 
@@ -117,13 +111,6 @@ in
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       userName = "jarq";
-    };
-    jarq-xfce = desktop {
-      hostName = "jarq";
-      hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-      profileName = "xfce";
-      userName = "jarq";
-      extraModules = jarqExtra;
     };
     jarq-i3 = desktop {
       hostName = "jarq";
@@ -143,13 +130,6 @@ in
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "hyprland";
-      userName = "jarq";
-      extraModules = jarqExtra;
-    };
-    jarq-hyprlandqs-caelestia = desktop {
-      hostName = "jarq";
-      hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
-      profileName = "hyprlandqs-caelestia";
       userName = "jarq";
       extraModules = jarqExtra;
     };
@@ -176,12 +156,6 @@ in
       profileName = "hyprland";
       extraModules = orgmExtra;
     };
-    orgm-hyprlandqs-caelestia = desktop {
-      hostName = "orgm";
-      hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-      profileName = "hyprlandqs-caelestia";
-      extraModules = orgmExtra;
-    };
     orgm-labwc = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
@@ -192,12 +166,6 @@ in
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "i3";
-      extraModules = orgmExtra;
-    };
-    orgm-xfce = desktop {
-      hostName = "orgm";
-      hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-      profileName = "xfce";
       extraModules = orgmExtra;
     };
     ero-terminal = terminal {
@@ -215,13 +183,6 @@ in
       hardware = ./nixos/hosts/ero/hardware-configuration.nix;
       profileName = "i3";
       extraModules = [ ./nixos/hardware/gpu/intel.nix ];
-    };
-    ero-i3-minimal = desktop {
-      hostName = "ero";
-      hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-      profileName = "i3-minimal";
-      extraModules = [ ./nixos/hardware/gpu/intel.nix ];
-      isMinimalDesktop = true;
     };
     ero-server = server {
       hostName = "ero";
@@ -250,22 +211,10 @@ in
       profileName = "hyprland";
       extraModules = lenovoExtra;
     };
-    lenovo-hyprlandqs-caelestia = desktop {
-      hostName = "lenovo";
-      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-      profileName = "hyprlandqs-caelestia";
-      extraModules = lenovoExtra;
-    };
     lenovo-i3 = desktop {
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "i3";
-      extraModules = lenovoExtra;
-    };
-    lenovo-xfce = desktop {
-      hostName = "lenovo";
-      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-      profileName = "xfce";
       extraModules = lenovoExtra;
     };
   };

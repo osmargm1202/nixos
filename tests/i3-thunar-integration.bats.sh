@@ -28,12 +28,6 @@ grep -Fq 'exec i3-wallpaper --set-active "$1"' "$WRAPPER" ||
   fail 'wallpaper wrapper must quote and forward the selected file'
 [[ -x "$WRAPPER" ]] || fail 'wallpaper wrapper source is not executable'
 
-grep -Fq 'profileDotfilesName = if profileName == "i3-minimal" then "i3" else profileName;' "$MODULE" ||
-  fail 'i3-minimal must source the i3 dotfile tree'
-grep -Fq 'i3-minimal = profileSpecificPaths.i3;' "$MODULE" ||
-  fail 'i3-minimal must reuse the exact i3 deployment paths'
-grep -Fq 'profileName == "i3" || profileName == "i3-minimal"' "$MODULE" ||
-  fail 'i3-minimal must receive the i3 reload activation'
 
 i3_deployment_paths="$(awk '
   /^[[:space:]]+i3 = \[/ { active = 1 }

@@ -17,20 +17,19 @@ picom_config="$(awk '
   active && /^  '\''\{2\};$/ { exit }
 ' "$PROFILE")"
 picom_service="$(awk '
-  /systemd\.user\.services\.picom = lib\.mkIf \(!isMinimalDesktop\) \{/ { active = 1 }
+  /systemd\.user\.services\.picom = \{/ { active = 1 }
   active { print }
   active && /^  \};$/ { exit }
 ' "$PROFILE")"
 
 [[ -n "$picom_config" ]] || fail 'declarative Picom config missing'
-grep -Fq 'systemd.user.services.picom = lib.mkIf (!isMinimalDesktop) {' "$PROFILE" ||
-  fail 'Picom service must be disabled in i3-minimal'
-[[ -n "$picom_service" ]] || fail 'normal i3 Picom user service missing'
+grep -Fq 'systemd.user.services.picom = {' "$PROFILE" ||
+  fail 'Picom user service missing'
+[[ -n "$picom_service" ]] || fail 'Picom user service is empty'
 grep -Fq 'ExecStart = "${lib.getExe pkgs.picom-pijulius} --config ${picomConfig}";' <<<"$picom_service" ||
-  fail 'normal i3 service does not use animation-capable Picom with generated config'
-normal_packages="$(sed -n '/++ lib.optionals (!isMinimalDesktop) \[/,/^    \];/p' "$PROFILE")"
-grep -Fq 'pkgs."picom-pijulius"' <<<"$normal_packages" ||
-  fail 'Picom package missing from the normal i3 package guard'
+  fail 'Picom user service does not use animation-capable Picom with generated config'
+grep -Fq 'pkgs."picom-pijulius"' "$PROFILE" ||
+  fail 'Picom package missing from i3 profile'
 grep -Fq 'backend = "glx";' <<<"$picom_config" || fail 'GLX backend missing'
 grep -Fq 'vsync = true;' <<<"$picom_config" || fail 'Picom VSync missing'
 grep -Fq 'shadow = true;' <<<"$picom_config" || fail 'window shadows missing'
@@ -82,8 +81,8 @@ done
 [[ "$(grep -Fc 'duration = 0.001;' <<<"$lock_rule")" -eq 2 ]] ||
   fail 'both lock open and close animations must remain effectively instant'
 
-grep -Fq 'exec --no-startup-id sh -c '\''[ "$I3_START_PICOM" = 0 ] && exit 0; exec systemctl --user start picom.service'\''' "$CONFIG" ||
-  fail 'i3 must guard Picom startup with I3_START_PICOM'
+grep -Fq 'exec --no-startup-id systemctl --user start picom.service' "$CONFIG" ||
+  fail 'i3 must start the Picom user service'
 grep -Fq 'bar {' "$CONFIG" || fail 'native i3bar configuration missing'
 grep -Fq 'status_command ~/.local/bin/i3status-localized' "$CONFIG" ||
   fail 'native i3bar must use the localized i3status wrapper'

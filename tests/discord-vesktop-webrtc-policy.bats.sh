@@ -76,19 +76,17 @@ if grep -Eq 'wpctl[[:space:]]+set-volume[[:space:]]+@DEFAULT_AUDIO_SOURCE@|pactl
   fail 'Vesktop policy must not force a microphone volume'
 fi
 
-grep -Fq './vesktop.nix' "$ROOT/nixos/profiles/common_hyprland.nix" \
-  || fail 'common Hyprland profile does not import vesktop module'
-if grep -Eq '^[[:space:]]+vesktop[[:space:]]*$' "$ROOT/nixos/profiles/common_hyprland.nix"; then
-  fail 'raw Vesktop package remains in common Hyprland package list'
+grep -Fq './vesktop.nix' "$ROOT/nixos/profiles/hyprland.nix" \
+  || fail 'Hyprland profile does not import vesktop module'
+if grep -Eq '^[[:space:]]+vesktop[[:space:]]*$' "$ROOT/nixos/profiles/hyprland.nix"; then
+  fail 'raw Vesktop package remains in Hyprland package list'
 fi
 
-for profile in orgm-hyprland orgm-hyprlandqs-caelestia; do
-  packages="$(cd "$ROOT" && nix eval ".#nixosConfigurations.$profile.config.environment.systemPackages" --json)"
-  jq -e 'any(.[]; test("vesktop-webrtc-"))' <<<"$packages" >/dev/null \
-    || fail "wrapped Vesktop missing from $profile"
-  jq -e 'any(.[]; test("discord"))' <<<"$packages" >/dev/null \
-    || fail "Discord wrapper missing from $profile"
-done
+packages="$(cd "$ROOT" && nix eval ".#nixosConfigurations.orgm-hyprland.config.environment.systemPackages" --json)"
+jq -e 'any(.[]; test("vesktop-webrtc-"))' <<<"$packages" >/dev/null \
+  || fail 'wrapped Vesktop missing from orgm-hyprland'
+jq -e 'any(.[]; test("discord"))' <<<"$packages" >/dev/null \
+  || fail 'Discord wrapper missing from orgm-hyprland'
 
 exec_line="$(cd "$ROOT" && nix eval --raw \
   '.#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.xdg.desktopEntries."com.discordapp.Discord".exec')"

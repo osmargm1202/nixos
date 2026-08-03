@@ -16,12 +16,12 @@ exec --no-startup-id blueman-applet
 exec --no-startup-id kdeconnect-indicator
 exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
-exec --no-startup-id sh -c '[ "$I3_START_PICOM" = 0 ] && exit 0; exec systemctl --user start picom.service'
+exec --no-startup-id systemctl --user start picom.service
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle on
 exec --no-startup-id $run i3-monitor-profile --apply --quiet
-exec --no-startup-id sh -c '[ "$I3_START_DISCORD" = 0 ] && exit 0; exec i3-start-discord-background'
+exec --no-startup-id i3-start-discord-background
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu

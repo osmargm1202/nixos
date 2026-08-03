@@ -12,6 +12,7 @@ paths=(
   '.local/bin/waybar-day-month-es'
   '.local/bin/waybar-time-ampm'
   '.local/bin/waybar-watch'
+  '.local/bin/waybar-caffeine-state'
   '.local/bin/hypr-reload-after-switch'
   '.local/bin/hypr-nwg-dock'
   '.local/bin/hypr-nwg-dock-reload'
@@ -37,8 +38,25 @@ jq -e '
   and .[0]["modules-right"] == ["hyprland/window", "mpris", "custom/power", "tray"]
   and .[0]["custom/power"]["on-click"] == "hypr-power-menu"
 ' "$config" >/dev/null
+
+caffeine_helper='dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-state'
+[[ -x "$caffeine_helper" ]]
+grep -Fq '"on-click": "~/.local/bin/waybar-caffeine-state toggle"' "$config"
+jq -e '.[0].idle_inhibitor.signal == 8' "$config" >/dev/null
+grep -Fq 'waybarWithCaffeineSignal' 'nixos/profiles/hyprland.nix'
+grep -Fq 'auto refresh(int) -> void override;' 'nixos/profiles/hyprland.nix'
+grep -Fq 'kill -s 42 "$caffeine_waybar_pid"' 'dotfiles/config/profiles/hyprland/.local/bin/waybar-watch'
 grep -Fq '#custom-ws_1.empty' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 grep -Fq 'color: #8087a2;' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 grep -Fq '#custom-ws_1.active' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 grep -Fq 'color: #8aadf4;' 'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+XDG_STATE_HOME="$tmp/state" "$caffeine_helper" toggle
+[[ "$(XDG_STATE_HOME="$tmp/state" "$caffeine_helper" status)" == activated ]]
+
+XDG_STATE_HOME="$tmp/state" "$caffeine_helper" toggle
+[[ "$(XDG_STATE_HOME="$tmp/state" "$caffeine_helper" status)" == deactivated ]]
 printf '%s\n' 'hypr-waybar-profile: ok'

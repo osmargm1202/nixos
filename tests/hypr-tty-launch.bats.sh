@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/common_hyprland.nix"
+PROFILE="$ROOT/nixos/profiles/hyprland.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

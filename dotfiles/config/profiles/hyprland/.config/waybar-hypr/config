@@ -180,6 +180,8 @@
       "format": "{icon}",
       "tooltip": true,
       "tooltip-format": "Caffeine: mantener pantalla activa",
+      "on-click": "~/.local/bin/waybar-caffeine-state toggle",
+      "signal": 8,
       "format-icons": {
         "activated": "󰅶",
         "deactivated": "󰾪"
