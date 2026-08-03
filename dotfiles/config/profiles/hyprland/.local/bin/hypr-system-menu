@@ -23,7 +23,7 @@ case "$choice" in
   *'Reload nwg-dock') exec hypr-nwg-dock-reload ;;
   *'Restore wallpaper') exec hypr-wallpaper restore ;;
   *'Random wallpaper') exec hypr-wallpaper random ;;
-  *'Restart Waybar') exec waybar-watch "$HOME/.config/waybar-hypr" ;;
+  *'Restart Waybar') exec waybar-watch --restart "$HOME/.config/waybar-hypr" ;;
   *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'Open dotfiles') exec nautilus "$repo" ;;

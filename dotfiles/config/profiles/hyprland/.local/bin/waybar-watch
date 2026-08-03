@@ -4,6 +4,10 @@ set -eu
 PATH="$HOME/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH"
 export PATH
 
+if [ "${1:-}" = "--restart" ]; then
+  shift
+fi
+
 config_dir="${1:-${WAYBAR_CONFIG_DIR:-$HOME/.config/waybar}}"
 profile="$(basename "$config_dir")"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/waybar"
@@ -12,11 +16,16 @@ pid_file="$state_dir/${profile}.watch.pid"
 lock_dir="$state_dir/${profile}.watch.lock"
 mkdir -p "$state_dir"
 
+
 kill_pid() {
   old="$1"
   if [ -n "${old:-}" ] && [ "$old" != "$$" ] && kill -0 "$old" 2>/dev/null; then
     kill "$old" 2>/dev/null || true
-    sleep 0.2
+    attempts=0
+    while kill -0 "$old" 2>/dev/null && [ "$attempts" -lt 20 ]; do
+      sleep 0.1
+      attempts=$((attempts + 1))
+    done
     kill -KILL "$old" 2>/dev/null || true
   fi
 }
@@ -31,8 +40,6 @@ if ! mkdir "$lock_dir" 2>/dev/null; then
   mkdir "$lock_dir" 2>/dev/null || exit 0
 fi
 
-# From this point onward, always remove the lock on normal termination.
-trap 'rm -f "$pid_file"; rm -rf "$lock_dir"' INT TERM EXIT
 
 printf '%s\n' "$$" >"$pid_file"
 
@@ -51,7 +58,8 @@ cleanup() {
   rm -f "$pid_file"
   rm -rf "$lock_dir"
 }
-trap cleanup INT TERM EXIT
+trap cleanup EXIT
+trap 'cleanup; exit 0' INT TERM
 
 signature() {
   resolved_config_dir="$(readlink -f "$config_dir" 2>/dev/null || printf '%s' "$config_dir")"
@@ -71,7 +79,7 @@ stop_waybar() {
 }
 
 restore_caffeine() {
-  [ "$("$HOME/.local/bin/waybar-caffeine-state" status 2>/dev/null)" = activated ] || return
+  [ "$("$HOME/.local/bin/waybar-caffeine-state" status 2>/dev/null)" = activated ] || return 0
   caffeine_waybar_pid="$waybar_pid"
 
   (
@@ -94,8 +102,7 @@ start_waybar() {
   restore_caffeine
 }
 
-# Replace any orphan Waybar from older watcher versions before taking ownership.
-pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
+
 current_sig="$(signature)"
 start_waybar
 

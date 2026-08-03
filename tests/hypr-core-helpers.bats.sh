@@ -108,7 +108,7 @@ done
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" ROFI_OUTPUT='Zutty Fast' ZUTTY_ARGS="$tmp/zutty-args" "$bin/hypr-apps-menu"
 test -f "$tmp/zutty-args"
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" ROFI_OUTPUT='Restart Waybar' WAYBAR_WATCH_ARGS="$tmp/waybar-watch-args" "$bin/hypr-system-menu"
-[[ "$(<"$tmp/waybar-watch-args")" == "$home/.config/waybar-hypr" ]]
+[[ "$(<"$tmp/waybar-watch-args")" == "--restart $home/.config/waybar-hypr" ]]
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" ROFI_OUTPUT='Reload nwg-dock' NWG_DOCK_RELOAD_ARGS="$tmp/nwg-dock-reload-args" "$bin/hypr-system-menu"
 test -f "$tmp/nwg-dock-reload-args"
 
