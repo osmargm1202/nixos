@@ -98,11 +98,6 @@ in
   services.gnome.gnome-online-accounts.enable = true;
 
   services.dbus.enable = true;
-  services.udisks2.enable = true;
-  services.gvfs.enable = true;
-  services.gvfs.package = pkgs.gnome.gvfs.override {
-    gnomeSupport = true;
-  };
   nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
@@ -246,8 +241,6 @@ in
 
     # Hardware controls
     brightnessctl
-    udiskie
-    usbutils
     pamixer
     playerctl
     pavucontrol

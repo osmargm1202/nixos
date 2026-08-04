@@ -121,6 +121,7 @@ in
     ++ [
       ./tailscale.nix
       ./clean.nix
+      ./udiskie.nix
     ];
 
   home-manager.useGlobalPkgs = true;
