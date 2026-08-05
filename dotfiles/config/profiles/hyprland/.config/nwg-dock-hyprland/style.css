@@ -1,8 +1,4 @@
-window {
-  background-color: rgba(26, 27, 38, 0.72);
-  border: 1px solid rgba(122, 162, 247, 0.45);
-  border-radius: 12px;
-}
+@import url("orgm-current.css");
 
 #box {
   padding: 8px;
@@ -18,13 +14,4 @@ image {
 button {
   margin: 0 3px;
   padding: 5px;
-}
-
-button:hover {
-  background-color: rgba(122, 162, 247, 0.22);
-  border-radius: 8px;
-}
-
-#active {
-  border-bottom: 2px solid rgba(122, 162, 247, 0.9);
 }

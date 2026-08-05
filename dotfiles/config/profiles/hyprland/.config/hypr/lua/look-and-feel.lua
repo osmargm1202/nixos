@@ -84,6 +84,20 @@ hl.layer_rule({
   ignore_alpha = 0.1,
 })
 
+hl.layer_rule({
+  name = "blur-rofi",
+  match = { namespace = "rofi" },
+  blur = true,
+  ignore_alpha = 0.1,
+})
+
+hl.layer_rule({
+  name = "blur-nwg-dock",
+  match = { namespace = "nwg-dock" },
+  blur = true,
+  ignore_alpha = 0.1,
+})
+
 
 
 hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })

@@ -32,8 +32,8 @@ grep -Fq -- '-c hypr-app-launcher' "$HELPER" ||
 grep -Fxq 'kitty' "$PINS" && grep -Fxq 'thunar' "$PINS" &&
   grep -Fxq 'chromium' "$PINS" && grep -Fxq 'zen' "$PINS" ||
   fail 'dock must seed persistent application pins'
-grep -Fq 'background-color: rgba(26, 27, 38, 0.72);' "$STYLE" ||
-  fail 'dock background must be translucent'
+grep -Fq '@import url("orgm-current.css");' "$STYLE" ||
+  fail 'dock style must import the generated translucent palette'
 ! jq -e 'any(.[]; .position == "bottom")' "$WAYBAR" >/dev/null ||
   fail 'Waybar must not restore a bottom bar alongside the dock'
 
@@ -57,8 +57,8 @@ export DOCK_ARGS="$tmp/dock-args"
 env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
 cmp "$PINS" "$cache/nwg-dock-hyprland/nwg-dock-pinned" ||
   fail 'dock must seed its pins when no user pin state exists'
-grep -Fxq -- "-x -p bottom -a center -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
-  fail 'dock must retain its configured geometry and Rofi launcher'
+grep -Fxq -- "-x -p bottom -a center -mb 14 -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
+  fail 'dock must retain its floating bottom geometry and Rofi launcher'
 printf 'custom\n' >"$cache/nwg-dock-hyprland/nwg-dock-pinned"
 env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
 [[ "$(<"$cache/nwg-dock-hyprland/nwg-dock-pinned")" == "custom" ]] ||
@@ -72,4 +72,4 @@ export PKILL_ARGS="$tmp/pkill-args"
 env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$(dirname "$HELPER"):$PATH" "$RELOAD"
 [[ "$(<"$PKILL_ARGS")" == "-f nwg-dock-hyprland" ]] ||
   fail 'dock reload must stop the running dock before relaunching it'
-printf 'PASS: Hyprland autostarts nwg-dock on the bottom edge\n'
+printf 'PASS: Hyprland autostarts a floating nwg-dock\n'

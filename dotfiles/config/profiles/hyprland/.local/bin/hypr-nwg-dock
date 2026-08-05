@@ -23,5 +23,6 @@ exec "$dock_bin" \
   -x \
   -p bottom \
   -a center \
+  -mb 14 \
   -c hypr-app-launcher \
   -s style.css >>"$state_dir/nwg-dock.log" 2>&1

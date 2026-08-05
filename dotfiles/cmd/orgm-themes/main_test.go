@@ -125,7 +125,7 @@ func TestToggleAcceptsNoReloadAndWritesNextTheme(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(css), "background-color: rgba(0, 0, 0, 0.6);") {
+	if !strings.Contains(string(css), "background-color: rgba(0, 0, 0, 0.8);") {
 		t.Fatalf("waybar-hypr css missing dark background:\n%s", css)
 	}
 }
@@ -154,7 +154,7 @@ func writeCLITheme(t *testing.T, themesDir, name string) {
 		colorScheme = "prefer-dark"
 		gtkTheme = "Adwaita-dark"
 		piTheme = "orgm"
-		panelBG = "00000099"
+		panelBG = "000000cc"
 	}
 	content := `THEME_NAME=` + name + `
 COLOR_SCHEME=` + colorScheme + `

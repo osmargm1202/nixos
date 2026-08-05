@@ -9,7 +9,7 @@ import (
 )
 
 func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
-	themesDir := filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes")
+	themesDir := filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes")
 	theme, err := LoadTheme(themesDir, "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
@@ -35,7 +35,7 @@ func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
 }
 
 func TestRenderWaybarHyprLightIconOverrides(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
 	}
@@ -58,7 +58,7 @@ func TestRenderWaybarHyprLightIconOverrides(t *testing.T) {
 func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
 	for _, themeName := range []string{"orgm-dark", "orgm-light"} {
 		t.Run(themeName, func(t *testing.T) {
-			theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), themeName)
+			theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), themeName)
 			if err != nil {
 				t.Fatalf("LoadTheme %s fixture error = %v", themeName, err)
 			}
@@ -105,7 +105,7 @@ func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
 }
 
 func TestRenderWaybarHyprDarkUsesPanelBG(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-dark")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
 	}
@@ -117,11 +117,33 @@ func TestRenderWaybarHyprDarkUsesPanelBG(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
-	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(0, 0, 0, 0.6);`)
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(0, 0, 0, 0.8);`)
+}
+
+func TestRenderDockUsesPanelBackgroundWithoutBorders(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-dark")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
+	}
+
+	writes, err := BuildWrites(Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	dock := writesByPath(writes)["/home/test/.config/nwg-dock-hyprland/orgm-current.css"]
+	for _, want := range []string{
+		"background-color: rgba(0, 0, 0, 0.8);",
+		"border-radius: 14px;",
+		"background-color: alpha(@dock_accent, 0.20);",
+	} {
+		if !strings.Contains(dock, want) {
+			t.Fatalf("dock palette missing %q:\n%s", want, dock)
+		}
+	}
 }
 
 func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-dark")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
 	}
@@ -140,7 +162,7 @@ func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
 }
 
 func TestRenderQuickshellUsesOpaqueWhiteOverlay(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
 	}
@@ -159,7 +181,7 @@ func TestRenderQuickshellUsesOpaqueWhiteOverlay(t *testing.T) {
 }
 
 func TestBuildWritesRejectsRelativeRoots(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
 	}
@@ -174,7 +196,7 @@ func TestBuildWritesRejectsRelativeRoots(t *testing.T) {
 }
 
 func TestRenderActivePathsMatchBashHelper(t *testing.T) {
-	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
 	}

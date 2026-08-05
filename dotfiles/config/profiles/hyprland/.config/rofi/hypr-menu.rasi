@@ -1,6 +1,6 @@
 @import "orgm-current.rasi"
 
-// Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
+// Hyprland Rofi menu theme: translucent Waybar-like surface without an outline.
 
 configuration {
     font: "JetBrainsMono Nerd Font 14.4";
@@ -19,8 +19,7 @@ window {
     anchor: center;
     width: @width;
     background-color: @bg-col;
-    border: 2px;
-    border-color: @border-col;
+    border: 0px;
     border-radius: 15px;
 }
 
@@ -98,6 +97,18 @@ element-text selected {
 
 element-icon selected {
     background-color: @selected-col;
+}
+
+mode-switcher,
+button {
+    background-color: transparent;
+    border: 0px;
+    text-color: @fg-col;
+}
+
+button selected {
+    background-color: @selected-col;
+    text-color: @fg-col2;
 }
 
 message {
