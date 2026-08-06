@@ -77,6 +77,7 @@ let
     ./nixos/hosts/lenovo/audio.nix
     ./nixos/gaming/steam.nix
     ./nixos/gaming/emulators.nix
+    ./nixos/gaming/sunshine.nix
   ];
   lenovoWindows = profileName:
     desktop {

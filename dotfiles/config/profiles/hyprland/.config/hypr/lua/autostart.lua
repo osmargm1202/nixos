@@ -8,6 +8,7 @@ local exec_once = {
   "hypr-wallpaper restore",
   "hyprpolkitagent",
   "kdeconnect-indicator",
+  "systemctl --user --quiet start sunshine.service || true",
   "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
   -- Lock and suspend on the established idle schedule.
   "hypridle",

@@ -18,6 +18,7 @@ exec --no-startup-id udiskie --tray
 exec --no-startup-id dunst
 exec --no-startup-id systemctl --user start picom.service
 exec --no-startup-id systemctl --user start i3-clipcat.service
+exec --no-startup-id systemctl --user --quiet start sunshine.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle on
 exec --no-startup-id $run i3-monitor-profile --apply --quiet
