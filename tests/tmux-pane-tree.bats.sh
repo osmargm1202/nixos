@@ -8,6 +8,7 @@ plugin="$(nix eval --raw --impure --expr '
   let flake = builtins.getFlake (toString ./.) ;
   in flake.nixosConfigurations.lenovo-windows-hyprland.pkgs.callPackage ./nixos/packages/tmux-pane-tree.nix { }
 ')"
+grep -Fq 'source-file ${tmuxPaneTree}/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux' "$repo_dir/nixos/common-dotfiles.nix"
 entrypoint="$plugin/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux"
 [[ -f "$entrypoint" ]]
 

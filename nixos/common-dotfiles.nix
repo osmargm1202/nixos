@@ -862,7 +862,7 @@ in
             text = ''
               run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
               run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
-              run-shell ${tmuxPaneTree}/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux
+              source-file ${tmuxPaneTree}/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux
             '';
           };
         }
