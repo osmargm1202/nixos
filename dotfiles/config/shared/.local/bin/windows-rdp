@@ -180,12 +180,14 @@ rdp_command() {
   local -a client_cmd
   local backend=""
 
-  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sfreerdp &>/dev/null; then
-    backend="wayland"
-    client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sfreerdp)
-  elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
+    # The native Wayland client creates a visible Hyprland toplevel. The
+    # SDL3 client can complete an RDP session here without mapping a window.
     backend="wayland"
     client_cmd=(wlfreerdp)
+  elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sfreerdp &>/dev/null; then
+    backend="wayland"
+    client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sfreerdp)
   elif command -v xfreerdp &>/dev/null; then
     backend="x11"
     client_cmd=(xfreerdp)

@@ -118,6 +118,8 @@ func TestRenderWaybarHyprDarkUsesPanelBG(t *testing.T) {
 	byPath := writesByPath(writes)
 
 	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(0, 0, 0, 0.8);`)
+	assertRenderedContains(t, byPath, "/home/test/.config/kitty/current-theme.conf", "background #1e2030")
+	assertRenderedContains(t, byPath, "/home/test/.config/kitty/current-theme.conf", "background_opacity 0.90")
 }
 
 func TestRenderDockUsesPanelBackgroundWithoutBorders(t *testing.T) {

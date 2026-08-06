@@ -42,7 +42,7 @@ chmod +x "$bin"/*
 
 wayland_log="$tmp/wayland.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" "$helper" connect
-[[ "$(<"$wayland_log")" == "wayland $bin/sfreerdp /v:localhost:3389"* ]]
+[[ "$(<"$wayland_log")" == "wlfreerdp /v:localhost:3389"* ]]
 
 x11_log="$tmp/x11.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" "$helper" connect

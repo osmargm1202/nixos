@@ -20,6 +20,7 @@ type Theme struct {
 	QTStyle                string
 	PITheme                string
 	KittyBackgroundOpacity string
+	KittyBackground        string
 	Base                   string
 	Mantle                 string
 	Crust                  string
@@ -119,6 +120,7 @@ func LoadTheme(themesDir, name string) (Theme, error) {
 		QTStyle:                values["QT_STYLE"],
 		PITheme:                values["PI_THEME"],
 		KittyBackgroundOpacity: values["KITTY_BACKGROUND_OPACITY"],
+		KittyBackground:        values["KITTY_BACKGROUND"],
 		Base:                   values["BASE"],
 		Mantle:                 values["MANTLE"],
 		Crust:                  values["CRUST"],
