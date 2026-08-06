@@ -14,8 +14,6 @@ RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"
 RDP_PASS="hacker12"
-WIDTH="2530"
-HEIGHT="1301"
 
 SCRIPT_NAME="windows-rdp"
 BIN_DIR="$HOME/.local/bin"
@@ -117,6 +115,16 @@ current_hypr_workspace() {
   hyprctl -j activeworkspace 2>/dev/null | jq -r '(.id // empty) as $id | if ($id | type) == "number" and $id > 0 then ($id | tostring) else (.name // empty) end' 2>/dev/null || true
 }
 
+focused_monitor_size() {
+  local size=""
+
+  if command -v hyprctl &>/dev/null && command -v jq &>/dev/null; then
+    size="$(hyprctl -j monitors 2>/dev/null | jq -r '[.[] | select(.focused and .width >= 200 and .height >= 200) | "\(.width)x\(.height)"] | first // empty' 2>/dev/null || true)"
+  fi
+
+  printf '%s\n' "${size:-1920x1080}"
+}
+
 move_next_rdp_window_to_workspace() {
   local workspace="$1"
   [[ -n "$workspace" ]] || return 0
@@ -179,12 +187,14 @@ wait_rdp() {
 rdp_command() {
   local -a client_cmd
   local backend=""
+  RDP_FULLSCREEN=1
 
   if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sdl-freerdp &>/dev/null; then
     # SDL's Wayland client has a visible cursor on Hyprland. wlfreerdp has a
     # known invisible-cursor bug despite otherwise rendering the RDP session.
     backend="wayland"
     client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sdl-freerdp)
+    RDP_FULLSCREEN=0
   elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
     backend="wayland"
     client_cmd=(wlfreerdp)
@@ -215,16 +225,22 @@ rdp_command() {
 rdp_connect() {
   local started_container="${1:-0}"
   local target_workspace="${2:-}"
+  local rdp_size
   local attempt=1
   local max_retries=1
   local rc=1
   local -a RDP_CMD
+  local -a rdp_display_options=()
 
+  rdp_size="$(focused_monitor_size)"
   if [[ "$started_container" == "1" ]]; then
     max_retries=$(( ${#RDP_RETRY_DELAYS[@]} + 1 ))
   fi
 
   rdp_command
+  if [[ "$RDP_FULLSCREEN" == 1 ]]; then
+    rdp_display_options=(/f)
+  fi
 
   while [[ $attempt -le $max_retries ]]; do
     if [[ "$started_container" == "1" ]]; then
@@ -237,8 +253,8 @@ rdp_connect() {
     "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
       /u:"$RDP_USER" \
       /p:"$RDP_PASS" \
-      /size:"${WIDTH}x${HEIGHT}" \
-      /dynamic-resolution \
+      /size:"$rdp_size" \
+      "${rdp_display_options[@]}" \
       /admin \
       /sec:nla:off \
       /tls:seclevel:0 \

@@ -29,6 +29,16 @@
       value = "unlimited";
     }
   ];
+
+  # The Rofi launcher inherits this from the graphical systemd user session,
+  # so rootless Podman can lock guest RAM without a terminal-side prlimit.
+  systemd.user.extraConfig = ''
+    DefaultLimitMEMLOCK=infinity
+  '';
+
+  # Hyprland is launched by the tty1 login shell; give that login process the
+  # same hard limit so Rofi inherits it as well.
+  systemd.services."getty@tty1".serviceConfig.LimitMEMLOCK = "infinity";
   boot.blacklistedKernelModules = [
     "nouveau"
     "nvidia"

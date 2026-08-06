@@ -38,17 +38,35 @@ cat >"$bin/xfreerdp" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "xfreerdp $*" >"$RDP_LOG"
 EOF
+cat >"$bin/hyprctl" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1 $2" == "-j monitors" ]]; then
+  printf '%s\n' '[{"focused":true,"width":1600,"height":900}]'
+fi
+EOF
+cat >"$bin/jq" <<'EOF'
+#!/usr/bin/env bash
+[[ "$*" == *focused* ]] && printf '%s\n' '1600x900'
+EOF
 chmod +x "$bin"/*
 
 wayland_log="$tmp/wayland.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" "$helper" connect
 [[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
 [[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
+[[ "$(<"$wayland_log")" == *"/size:1600x900"* ]]
+[[ "$(<"$wayland_log")" != *"/f"* ]]
+[[ "$(<"$wayland_log")" != *"-grab-keyboard"* ]]
+[[ "$(<"$wayland_log")" != *"/dynamic-resolution"* ]]
 
 x11_log="$tmp/x11.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" "$helper" connect
 [[ "$(<"$x11_log")" == "xfreerdp /v:localhost:3389"* ]]
 [[ "$(<"$x11_log")" == *"/gdi:sw"* ]]
+[[ "$(<"$x11_log")" == *"/size:1600x900"* ]]
+[[ "$(<"$x11_log")" == *"/f"* ]]
+[[ "$(<"$x11_log")" != *"-grab-keyboard"* ]]
+[[ "$(<"$x11_log")" != *"/dynamic-resolution"* ]]
 failure_profile="$tmp/render-node-profile"
 printf '%s\n' render-node >"$failure_profile"
 failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$failure_profile" "$helper" start 2>&1 || true)"

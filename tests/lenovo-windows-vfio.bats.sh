@@ -30,6 +30,8 @@ nix eval --impure --raw --expr '
         && limit.item == "memlock"
         && limit.value == "unlimited"
       ) vfio.security.pam.loginLimits
+      && builtins.match ".*DefaultLimitMEMLOCK=infinity.*" vfio.systemd.user.extraConfig != null
+      && vfio.systemd.services."getty@tty1".serviceConfig.LimitMEMLOCK == "infinity"
       && !vfio.hardware.nvidia.prime.offload.enable;
   in
     if builtins.all isVfio vfioProfiles && standard.hardware.nvidia.prime.offload.enable
