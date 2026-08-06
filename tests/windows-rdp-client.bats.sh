@@ -26,9 +26,9 @@ case "$1" in
   logs) printf '%s\n' 'simulated QEMU failure' ;;
 esac
 EOF
-cat >"$bin/sfreerdp" <<'EOF'
+cat >"$bin/sdl-freerdp" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "${SDL_VIDEODRIVER:-} $0 $*" >"$RDP_LOG"
+printf '%s\n' "sdl-freerdp $*" >"$RDP_LOG"
 EOF
 cat >"$bin/wlfreerdp" <<'EOF'
 #!/usr/bin/env bash
@@ -42,11 +42,13 @@ chmod +x "$bin"/*
 
 wayland_log="$tmp/wayland.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" "$helper" connect
-[[ "$(<"$wayland_log")" == "wlfreerdp /v:localhost:3389"* ]]
+[[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
+[[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
 
 x11_log="$tmp/x11.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" "$helper" connect
 [[ "$(<"$x11_log")" == "xfreerdp /v:localhost:3389"* ]]
+[[ "$(<"$x11_log")" == *"/gdi:sw"* ]]
 failure_profile="$tmp/render-node-profile"
 printf '%s\n' render-node >"$failure_profile"
 failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$failure_profile" "$helper" start 2>&1 || true)"

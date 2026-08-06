@@ -180,14 +180,14 @@ rdp_command() {
   local -a client_cmd
   local backend=""
 
-  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
-    # The native Wayland client creates a visible Hyprland toplevel. The
-    # SDL3 client can complete an RDP session here without mapping a window.
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sdl-freerdp &>/dev/null; then
+    # SDL's Wayland client has a visible cursor on Hyprland. wlfreerdp has a
+    # known invisible-cursor bug despite otherwise rendering the RDP session.
+    backend="wayland"
+    client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sdl-freerdp)
+  elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
     backend="wayland"
     client_cmd=(wlfreerdp)
-  elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sfreerdp &>/dev/null; then
-    backend="wayland"
-    client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sfreerdp)
   elif command -v xfreerdp &>/dev/null; then
     backend="x11"
     client_cmd=(xfreerdp)
@@ -233,6 +233,7 @@ rdp_connect() {
 
     move_next_rdp_window_to_workspace "$target_workspace"
 
+    # Software GDI keeps the cursor visible with FreeRDP's Wayland/SDL client.
     "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
       /u:"$RDP_USER" \
       /p:"$RDP_PASS" \
@@ -245,6 +246,7 @@ rdp_connect() {
       /bpp:32 \
       /audio-mode:0 \
       +clipboard \
+      /gdi:sw \
       +home-drive \
       /cert:ignore \
       /wm-class:windows-rdp
