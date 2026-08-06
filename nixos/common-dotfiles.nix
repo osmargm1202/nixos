@@ -41,6 +41,8 @@ let
 
   # Python env for ~/.config/openrgb/lg213/main.py (notification RGB effects)
   lg213PythonEnv = pkgs.python3.withPackages (ps: [ ps.openrgb-python ]);
+  tmuxPaneTree = pkgs.callPackage ./packages/tmux-pane-tree.nix { };
+
 
   orgmDotfilesUpdateScript = pkgs.writeShellApplication {
     name = "orgm-dotfiles-update";
@@ -137,6 +139,7 @@ let
     ".local/bin/screenshot_edit"
     ".local/bin/screenshot_to_clipboard"
     ".local/bin/sshgo"
+    ".local/bin/tmux-spanish-date"
     ".local/bin/switch-preview"
     ".local/bin/unbindheadset"
     ".local/bin/wifi_toggle"
@@ -227,7 +230,7 @@ let
       ".local/bin/hypr-tweaks-menu"
       ".local/bin/hypr-workspace-button"
       ".local/bin/hypr-wallpaper"
-      ".local/bin/hypr-zen-new-window"
+      ".local/bin/hypr-chromium-new-window"
       ".local/bin/waybar-caffeine-state"
       ".local/bin/waybar-date-es"
       ".local/bin/waybar-day-month-es"
@@ -859,6 +862,7 @@ in
             text = ''
               run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
               run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
+              run-shell ${tmuxPaneTree}/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux
             '';
           };
         }

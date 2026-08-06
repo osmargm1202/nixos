@@ -62,7 +62,7 @@ entries() {
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus'
-      entry 'Win+W' 'Browser' 'hypr-zen-new-window'
+      entry 'Win+W' 'Chromium' 'hypr-chromium-new-window'
       entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
       entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'

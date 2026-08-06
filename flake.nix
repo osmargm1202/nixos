@@ -33,10 +33,6 @@
     #   # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
     #   url = "github:Darkkal44/qylock";
     # };
-    zen-browser-flake = {
-      url = "github:0xc000022070/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     herdr = {
       # tmux replacement (agent multiplexer). Own nixpkgs pin -- needs
       # zig_0_15 which may not exist on our stable 25.11 input.

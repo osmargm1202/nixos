@@ -30,8 +30,8 @@ grep -Fq 'PATH="$HOME/.local/bin:/run/current-system/sw/bin:' "$HELPER" ||
 grep -Fq -- '-c hypr-app-launcher' "$HELPER" ||
   fail 'dock launcher button must open the Rofi app launcher'
 grep -Fxq 'kitty' "$PINS" && grep -Fxq 'thunar' "$PINS" &&
-  grep -Fxq 'chromium' "$PINS" && grep -Fxq 'zen' "$PINS" ||
-  fail 'dock must seed persistent application pins'
+  grep -Fxq 'chromium' "$PINS" && ! grep -Fxq 'zen' "$PINS" ||
+  fail 'dock must seed Chromium without a Zen pin'
 grep -Fq '@import url("orgm-current.css");' "$STYLE" ||
   fail 'dock style must import the generated translucent palette'
 ! jq -e 'any(.[]; .position == "bottom")' "$WAYBAR" >/dev/null ||

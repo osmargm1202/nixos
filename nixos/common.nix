@@ -114,7 +114,7 @@ in
       ./sops.nix
       ./flatpak.nix
       ./common-dotfiles.nix
-      ./zen-browser.nix
+      ./chromium-browser.nix
     ]
     ++ lib.optionals (inputs != null) [ ./webapps.nix ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
@@ -333,6 +333,13 @@ in
       "text/x-python" = lib.mkForce [ "nvim.desktop" ];
       "application/json" = lib.mkForce [ "nvim.desktop" ];
       "application/x-shellscript" = lib.mkForce [ "nvim.desktop" ];
+    }
+    // lib.optionalAttrs (profileName != "i3") {
+      "text/html" = [ "chromium.desktop" ];
+      "application/xhtml+xml" = [ "chromium.desktop" ];
+      "x-scheme-handler/http" = [ "chromium.desktop" ];
+      "x-scheme-handler/https" = [ "chromium.desktop" ];
+      "x-scheme-handler/chrome" = [ "chromium.desktop" ];
     };
   };
 

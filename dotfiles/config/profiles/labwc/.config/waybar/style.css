@@ -175,7 +175,6 @@ window.dock_bar#waybar {
 #custom-dock_windows,
 #custom-dock_kitty,
 #custom-dock_nautilus,
-#custom-dock_zen,
 #custom-dock_chromium,
 #custom-dock_obsidian,
 #custom-dock_software {
@@ -194,7 +193,6 @@ window.dock_bar#waybar {
 #custom-dock_windows.running,
 #custom-dock_kitty.running,
 #custom-dock_nautilus.running,
-#custom-dock_zen.running,
 #custom-dock_chromium.running,
 #custom-dock_obsidian.running,
 #custom-dock_software.running {
@@ -205,7 +203,6 @@ window.dock_bar#waybar {
 #custom-dock_windows.active,
 #custom-dock_kitty.active,
 #custom-dock_nautilus.active,
-#custom-dock_zen.active,
 #custom-dock_chromium.active,
 #custom-dock_obsidian.active,
 #custom-dock_software.active {
@@ -233,7 +230,6 @@ window.dock_bar#waybar {
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
 #custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }
 #custom-dock_nautilus { background-image: url("/home/osmarg/.local/share/icons/nautilus.png"); }
-#custom-dock_zen { background-image: url("/home/osmarg/.local/share/icons/zen-browser.png"); }
 #custom-dock_chromium { background-image: url("/home/osmarg/.local/share/icons/chromium-browser.svg"); }
 #custom-dock_obsidian { background-image: url("/home/osmarg/.local/share/icons/obsidian.png"); }
 #custom-dock_software { background-image: url("/home/osmarg/.local/share/icons/software.png"); }

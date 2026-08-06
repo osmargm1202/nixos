@@ -11,8 +11,8 @@
     <item label="Files · Nautilus" icon="org.gnome.Nautilus">
       <action name="Execute"><command>nautilus</command></action>
     </item>
-    <item label="Browser · Zen" icon="web-browser">
-      <action name="Execute"><command>flatpak run app.zen_browser.zen</command></action>
+    <item label="Browser · Chromium" icon="web-browser">
+      <action name="Execute"><command>chromium</command></action>
     </item>
     <item label="Text Editor" icon="org.gnome.TextEditor">
       <action name="Execute"><command>gnome-text-editor</command></action>

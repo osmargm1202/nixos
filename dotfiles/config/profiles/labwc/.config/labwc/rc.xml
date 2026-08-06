@@ -84,7 +84,7 @@
     </keybind>
     <keybind key="W-w">
       <action name="Execute">
-        <command>flatpak run app.zen_browser.zen</command>
+        <command>chromium</command>
       </action>
     </keybind>
     <keybind key="W-a">

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-focus_zen() {
+focus_chromium() {
   command -v hyprctl >/dev/null 2>&1 || return 0
   command -v jq >/dev/null 2>&1 || return 0
 
   local address=""
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     address="$(hyprctl -j clients 2>/dev/null | jq -r '
-      map(select((.class // "") == "app.zen_browser.zen" or (.class // "") == "zen-browser"))
+      map(select((.class // "") == "chromium" or (.class // "") == "Chromium"))
       | sort_by(.focusHistoryID // 999999)
       | .[0].address // empty
     ')"
@@ -20,39 +20,29 @@ focus_zen() {
   done
 }
 
-zen_is_running() {
+chromium_is_running() {
   command -v hyprctl >/dev/null 2>&1 || return 1
   command -v jq >/dev/null 2>&1 || return 1
 
   hyprctl -j clients 2>/dev/null | jq -e '
-    any(.[]; (.class // "") == "app.zen_browser.zen" or (.class // "") == "zen-browser")
+    any(.[]; (.class // "") == "chromium" or (.class // "") == "Chromium")
   ' >/dev/null 2>&1
 }
 
-run_zen() {
+run_chromium() {
   local -a args=()
-  if zen_is_running; then
+  if chromium_is_running; then
     args=(--new-tab about:blank)
   fi
 
-  if command -v flatpak >/dev/null 2>&1 && flatpak info app.zen_browser.zen >/dev/null 2>&1; then
-    flatpak run app.zen_browser.zen "${args[@]}" >/dev/null 2>&1 &
+  if command -v chromium >/dev/null 2>&1; then
+    chromium "${args[@]}" >/dev/null 2>&1 &
     return 0
   fi
 
-  if command -v zen-browser >/dev/null 2>&1; then
-    zen-browser "${args[@]}" >/dev/null 2>&1 &
-    return 0
-  fi
-
-  if command -v zen >/dev/null 2>&1; then
-    zen "${args[@]}" >/dev/null 2>&1 &
-    return 0
-  fi
-
-  notify-send "Zen Browser" "Zen Browser is not installed" 2>/dev/null || true
+  notify-send "Chromium" "Chromium is not installed" 2>/dev/null || true
   return 1
 }
 
-run_zen
-focus_zen
+run_chromium
+focus_chromium

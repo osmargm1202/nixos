@@ -234,7 +234,6 @@
       "custom/dock_windows",
       "custom/dock_kitty",
       "custom/dock_nautilus",
-      "custom/dock_zen",
       "custom/dock_chromium",
       "custom/dock_obsidian",
       "custom/dock_software"
@@ -263,14 +262,6 @@
       "format": "{}",
       "tooltip": true,
       "on-click": "~/.local/bin/sway-app-dock click nautilus"
-    },
-    "custom/dock_zen": {
-      "exec": "~/.local/bin/sway-app-dock status zen",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click zen"
     },
     "custom/dock_chromium": {
       "exec": "~/.local/bin/sway-app-dock status chromium",
