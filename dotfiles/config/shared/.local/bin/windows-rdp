@@ -137,18 +137,42 @@ move_next_rdp_window_to_workspace() {
   ) &
 }
 
+container_is_running() {
+  [[ "$(container_cmd inspect --format '{{.State.Running}}' "$CONTAINER")" == true ]]
+}
+
+report_container_failure() {
+  local status
+  status="$(container_cmd inspect --format '{{.State.Status}} (exit {{.State.ExitCode}})' "$CONTAINER" || true)"
+  echo "Container '$CONTAINER' failed: ${status:-not found}." >&2
+  echo "----- $CONTAINER logs (last 60 lines) -----" >&2
+  container_cmd logs --tail 60 "$CONTAINER" || true
+  echo "---------------------------------------------" >&2
+  notify_user "Windows VM error" "El contenedor '$CONTAINER' falló; revisa la terminal."
+}
+
 wait_rdp() {
   echo "Waiting for RDP on $RDP_HOST:$RDP_PORT..."
-  for i in $(seq 1 60); do
+  for _ in $(seq 1 60); do
+    if ! container_is_running; then
+      report_container_failure
+      return 1
+    fi
+
     if nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
       echo "Port open. Waiting ${RDP_BOOT_DELAY}s for Windows to finish booting..."
       sleep "$RDP_BOOT_DELAY"
-      echo "RDP is ready."
-      return 0
+      if container_is_running && nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
+        echo "RDP is ready."
+        return 0
+      fi
+      report_container_failure
+      return 1
     fi
     sleep 2
   done
-  echo "Error: RDP did not become available after 120s."
+  echo "Error: RDP did not become available after 120s." >&2
+  report_container_failure
   return 1
 }
 
@@ -265,25 +289,32 @@ require_vfio_memlock() {
 # ============================================================
 
 do_start() {
-  notify_user "Windows iniciando!" "Iniciando contenedor '$CONTAINER'."
-  echo "Starting container '$CONTAINER'..."
-
   if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
     if [[ ! -e /dev/vfio/16 ]]; then
       echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
       return 1
     fi
     require_vfio_memlock || return 1
-    container_cmd rm -f "$INACTIVE_CONTAINER" || true
-    (
-      cd "$WINDOWS_COMPOSE_DIR"
-      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d
-    )
-  else
-    container_cmd start "$CONTAINER"
   fi
 
-  echo "Container started."
+  notify_user "Windows iniciando!" "Iniciando contenedor '$CONTAINER'."
+  echo "Starting container '$CONTAINER'..."
+
+  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
+    container_cmd rm -f "$INACTIVE_CONTAINER" || true
+    if ! (
+      cd "$WINDOWS_COMPOSE_DIR"
+      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d
+    ); then
+      report_container_failure
+      return 1
+    fi
+  elif ! container_cmd start "$CONTAINER"; then
+    report_container_failure
+    return 1
+  fi
+
+  wait_rdp
 }
 
 do_stop() {
@@ -310,11 +341,7 @@ do_connect() {
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
     started_container=1
     echo "RDP is not available. Starting container '$CONTAINER'..."
-    do_start
-    if ! wait_rdp; then
-      notify_user "Windows RDP no disponible" "No se abrió $RDP_HOST:$RDP_PORT tras iniciar '$CONTAINER'."
-      exit 1
-    fi
+    do_start || return 1
   fi
 
   rdp_connect "$started_container" "$target_workspace"
