@@ -10,3 +10,7 @@ services:
     devices:
       - /dev/vfio/vfio
       - /dev/vfio/16
+    # Rootless Podman otherwise drops osmarg's podman group, which owns
+    # /dev/vfio/16 after the NixOS udev rule applies.
+    group_add:
+      - keep-groups

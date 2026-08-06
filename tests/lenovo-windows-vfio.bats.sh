@@ -24,6 +24,12 @@ nix eval --impure --raw --expr '
       && builtins.all (value: builtins.elem value vfio.boot.initrd.kernelModules) requiredModules
       && vfio.environment.etc."orgm/windows-vm-profile".text == "lenovo-vfio\n"
       && builtins.substring 0 (builtins.stringLength requiredUdevRule) vfio.services.udev.extraRules == requiredUdevRule
+      && builtins.any (limit:
+        limit.domain == "osmarg"
+        && limit.type == "-"
+        && limit.item == "memlock"
+        && limit.value == "unlimited"
+      ) vfio.security.pam.loginLimits
       && !vfio.hardware.nvidia.prime.offload.enable;
   in
     if builtins.all isVfio vfioProfiles && standard.hardware.nvidia.prime.offload.enable

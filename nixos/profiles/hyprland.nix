@@ -206,6 +206,11 @@ in
     TERMINAL = "kitty";
   };
 
+  # The TCL Roku TV uses Miracast over Infrastructure Connection
+  # Establishment (MICE); it connects to GND's fixed RTSP listener on 7236.
+  networking.firewall.allowedTCPPorts = [ 7236 ];
+
+
   environment.systemPackages = with pkgs; [
     # Native NixOS Hyprland stack. This avoids a flake-pinned compositor build.
     hyprland
@@ -250,6 +255,7 @@ in
     gnome-system-monitor
     sushi
     gnome-software
+    gnome-network-displays
 
     # Desktop integration / theming
     gsettings-desktop-schemas

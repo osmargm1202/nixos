@@ -248,6 +248,18 @@ rdp_connect() {
   return 1
 }
 
+require_vfio_memlock() {
+  local hard_limit
+  hard_limit="$(ulimit -Hl)"
+
+  if [[ "$hard_limit" != unlimited ]]; then
+    echo "Error: VFIO requires an unlimited memlock limit; current hard limit is ${hard_limit} KiB." >&2
+    echo 'Run this in the same terminal, then retry: sudo prlimit --pid $$ --memlock=unlimited' >&2
+    notify_user "Windows VFIO error" "Ejecuta prlimit en la misma terminal antes de iniciar Windows."
+    return 1
+  fi
+}
+
 # ============================================================
 # Commands
 # ============================================================
@@ -261,6 +273,7 @@ do_start() {
       echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
       return 1
     fi
+    require_vfio_memlock || return 1
     container_cmd rm -f "$INACTIVE_CONTAINER" || true
     (
       cd "$WINDOWS_COMPOSE_DIR"

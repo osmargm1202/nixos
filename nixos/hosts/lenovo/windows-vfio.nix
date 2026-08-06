@@ -18,6 +18,17 @@
   services.udev.extraRules = ''
     SUBSYSTEM=="vfio", KERNEL=="[0-9]*", GROUP="podman", MODE="0660"
   '';
+
+  # QEMU must lock guest RAM before the IOMMU can map it for the T500.
+  # This takes effect for new login sessions and keeps rootless Podman viable.
+  security.pam.loginLimits = [
+    {
+      domain = "osmarg";
+      type = "-";
+      item = "memlock";
+      value = "unlimited";
+    }
+  ];
   boot.blacklistedKernelModules = [
     "nouveau"
     "nvidia"
