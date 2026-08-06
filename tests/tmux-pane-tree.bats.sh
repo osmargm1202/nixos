@@ -27,6 +27,8 @@ bindings="$(tmux -L "$socket" list-keys -T prefix)"
 clock_binding="$(tmux -L "$socket" list-keys -T prefix C-t)"
 [[ "$clock_binding" == *'clock-mode'* ]]
 status_right="$(tmux -L "$socket" show-options -gv status-right)"
+[[ "$status_right" == *"󰥔"* ]]
+grep -Fq '󰥔#[fg=${thm_blue},bg=${thm_gray}' "$repo_dir/dotfiles/config/shared/.tmux.conf"
 [[ "$status_right" == *"$HOME/.local/bin/tmux-spanish-date"* ]]
 date_helper="$repo_dir/dotfiles/config/shared/.local/bin/tmux-spanish-date"
 [[ -x "$date_helper" ]]
