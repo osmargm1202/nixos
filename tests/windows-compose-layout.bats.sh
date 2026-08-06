@@ -30,6 +30,7 @@ lenovo_vfio="$(render -f "$compose_dir/compose.yml" -f "$compose_dir/hosts/lenov
 [[ "$lenovo_vfio" == *'/dev/vfio/vfio'* ]]
 [[ "$lenovo_vfio" == *'/dev/vfio/16'* ]]
 [[ "$lenovo_vfio" == *'vfio-pci,host=01:00.0'* ]]
+[[ "$lenovo_vfio" == *'intel-iommu,intremap=on,caching-mode=on,aw-bits=39'* ]]
 [[ "$lenovo_vfio" == *'group_add:'* ]]
 [[ "$lenovo_vfio" == *'keep-groups'* ]]
 [[ "$lenovo_vfio" != *'/dev/dri'* ]]

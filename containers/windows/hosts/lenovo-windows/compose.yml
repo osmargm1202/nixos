@@ -6,7 +6,7 @@ services:
   windows:
     container_name: lenovo-windows
     environment:
-      ARGUMENTS: "-machine q35,kernel_irqchip=split -device intel-iommu,intremap=on,caching-mode=on -device vfio-pci,host=01:00.0"
+      ARGUMENTS: "-machine q35,kernel_irqchip=split -device intel-iommu,intremap=on,caching-mode=on,aw-bits=39 -device vfio-pci,host=01:00.0"
     devices:
       - /dev/vfio/vfio
       - /dev/vfio/16
