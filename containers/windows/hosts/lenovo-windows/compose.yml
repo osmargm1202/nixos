@@ -1,0 +1,12 @@
+# Lenovo T500 VFIO overlay. Stop the existing `windows` VM before starting this:
+# both configurations use the same Windows storage directory.
+# Do not run it until the T500 reports `Kernel driver in use: vfio-pci`
+# and `/dev/vfio/16` exists after the NixOS VFIO profile reboot.
+services:
+  windows:
+    container_name: lenovo-windows
+    environment:
+      ARGUMENTS: "-machine q35,kernel_irqchip=split -device intel-iommu,intremap=on,caching-mode=on -device vfio-pci,host=01:00.0"
+    devices:
+      - /dev/vfio/vfio
+      - /dev/vfio/16

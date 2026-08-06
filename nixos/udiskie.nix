@@ -19,6 +19,7 @@
   environment.systemPackages = [
     pkgs.udiskie
     pkgs.usbutils
+    pkgs.gphoto2
     pkgs.ifuse
     pkgs.libimobiledevice
   ];
@@ -31,6 +32,7 @@
     ];
     after = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
+    path = [ pkgs.xdg-utils ];
     serviceConfig = {
       ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --automount --notify --tray";
       Restart = "on-failure";

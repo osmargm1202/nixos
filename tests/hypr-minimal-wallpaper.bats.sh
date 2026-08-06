@@ -48,12 +48,22 @@ rm "$state/hypr-wallpaper/current"
 
 custom_dir="$home/Custom-Wallpapers"
 mkdir -p "$custom_dir"
+mkdir -p "$custom_dir/.thumb"
+printf 'thumbnail' >"$custom_dir/.thumb/ignored.jpg"
 printf 'custom' >"$custom_dir/custom.webp"
 "$script" random "$custom_dir"
 custom="$custom_dir/custom.webp"
 [[ "$(<"$state/hypr-wallpaper/current")" == "$custom" ]]
 [[ "$(readlink "$runtime/hypr-current-wallpaper")" == "$custom" ]]
 grep -Fq ", $custom, cover" "$HYPRPAPER_CALLS"
+
+thumb_only_dir="$home/Thumbs-only"
+mkdir -p "$thumb_only_dir/.thumb"
+printf 'thumbnail only' >"$thumb_only_dir/.thumb/ignored.jpg"
+if "$script" random "$thumb_only_dir"; then
+  echo 'FAIL: wallpaper selector must ignore a directory containing only .thumb images' >&2
+  exit 1
+fi
 
 default_dir="$home/Pictures/Wallpapers"
 "$script" random

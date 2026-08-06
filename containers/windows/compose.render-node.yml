@@ -1,0 +1,7 @@
+# Current ~/Apps/windows behavior: render-node acceleration, not PCI passthrough.
+services:
+  windows:
+    environment:
+      GPU: "Y"
+    devices:
+      - /dev/dri

@@ -73,7 +73,7 @@ random() {
     return 1
   }
 
-  selected="$(find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
+  selected="$(find -L "$directory" -type d -name .thumb -prune -o -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
   [[ -n "$selected" ]] || {
     printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$directory" >&2
     return 1

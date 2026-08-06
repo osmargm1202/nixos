@@ -1,0 +1,32 @@
+# Generic render-node VM:
+#   docker compose --env-file .env -f compose.yml -f compose.render-node.yml up -d
+# Lenovo T500 VFIO VM:
+#   docker compose --env-file .env -f compose.yml -f hosts/lenovo-windows/compose.yml up -d
+services:
+  windows:
+    image: "${WINDOWS_IMAGE:-dockurr/windows:latest}"
+    container_name: "${WINDOWS_CONTAINER_NAME:-windows}"
+    environment:
+      VERSION: "11"
+      RAM_SIZE: "${WINDOWS_RAM_SIZE:-4G}"
+      CPU_CORES: "${WINDOWS_CPU_CORES:-6}"
+      DISK_SIZE: "${WINDOWS_DISK_SIZE:-64G}"
+      USERNAME: "${WINDOWS_USERNAME:-osmarg}"
+      PASSWORD: "${WINDOWS_PASSWORD:?copy .env.example to .env and set WINDOWS_PASSWORD}"
+      LANGUAGE: "${WINDOWS_LANGUAGE:-English}"
+      REGION: "${WINDOWS_REGION:-es-DO}"
+      KEYBOARD: "${WINDOWS_KEYBOARD:-es-US}"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "${WINDOWS_WEB_PORT:-8006}:8006"
+      - "${WINDOWS_RDP_PORT:-3389}:3389/tcp"
+      - "${WINDOWS_RDP_PORT:-3389}:3389/udp"
+    volumes:
+      - "${WINDOWS_STORAGE_DIR:?set the existing Windows storage directory in .env}:/storage"
+      - "${WINDOWS_SHARED_DIR:?set WINDOWS_SHARED_DIR in .env}:/shared"
+      - "${WINDOWS_OEM_DIR:?set the existing OEM directory in .env}:/oem"
+    stop_grace_period: 2m

@@ -109,6 +109,8 @@ export VISUAL=nvim
 alias bashconfig='nvim ~/.bashrc'
 alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
 alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
+alias fastfetch-hardware='fastfetch --config "$HOME/.config/fastfetch/hardware.jsonc"'
+
 
 alias y='yazi'
 

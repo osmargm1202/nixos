@@ -184,7 +184,8 @@ in
     zoxide
     starship
     trash-cli
-    # monitors (btop/fastfetch/ncdu: efimeras via aliases Bash)
+    # monitors
+    fastfetch
     htop
     # editors
     helix

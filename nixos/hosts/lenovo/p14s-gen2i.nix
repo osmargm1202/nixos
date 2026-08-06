@@ -17,6 +17,10 @@ in
     ../../deskflow.nix
   ];
 
+  options.orgm.lenovo.windowsVfio.enable = lib.mkEnableOption "exclusive T500 VFIO passthrough for Windows";
+
+  config = {
+
   # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2
   # profile, kept in-repo so Lenovo carries its own host-specific GPU setup.
 
@@ -42,12 +46,12 @@ in
     extraPackages32 = [ pkgs.driversi686Linux.intel-media-driver ];
   };
 
-  # common/gpu/nvidia/prime.nix + common/gpu/nvidia/turing
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # PRIME offload owns the T500 unless the Windows VFIO profile claims it.
+  services.xserver.videoDrivers = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ "nvidia" ];
 
-  environment.systemPackages = [ nvidiaPackage ];
+  environment.systemPackages = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ nvidiaPackage ];
 
-  hardware.nvidia = {
+  hardware.nvidia = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) {
     modesetting.enable = true;
     open = lib.mkOverride 990 (nvidiaPackage ? open && nvidiaPackage ? firmware);
     nvidiaSettings = true;
@@ -70,4 +74,5 @@ in
   services.fstrim.enable = lib.mkDefault true;
   hardware.trackpoint.enable = lib.mkDefault true;
   hardware.trackpoint.emulateWheel = lib.mkDefault config.hardware.trackpoint.enable;
+  };
 }

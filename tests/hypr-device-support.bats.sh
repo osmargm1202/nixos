@@ -16,6 +16,7 @@ grep -Fq 'services.udisks2.enable = true;' "$module"
 grep -Fq 'services.usbmuxd.enable = true;' "$module"
 grep -Fq 'pkgs.ifuse' "$module"
 grep -Fq 'pkgs.libimobiledevice' "$module"
+grep -Fq 'pkgs.gphoto2' "$module"
 grep -Fq -- '--automount --notify --tray' "$module"
 
 [[ "$(nix eval --json "$configuration.config.services.udisks2.enable")" == true ]]
@@ -27,6 +28,7 @@ wanted_by="$(nix eval --json "$configuration.config.systemd.user.services.udiski
 jq -e 'index("graphical-session.target") and index("nixos-fake-graphical-session.target")' <<<"$wanted_by" >/dev/null
 udiskie_unit="$(nix eval --raw "$configuration.config.systemd.user.units.\"udiskie.service\".text")"
 grep -Fq 'After=graphical-session.target' <<<"$udiskie_unit"
+grep -Fq 'xdg-utils' <<<"$udiskie_unit"
 
 gvfs="$(nix eval --raw "$configuration.config.services.gvfs.package")"
 [[ -x "$gvfs/libexec/gvfsd-afc" ]]
@@ -35,7 +37,7 @@ gvfs="$(nix eval --raw "$configuration.config.services.gvfs.package")"
 nix eval --impure --raw --expr '
   let c = (builtins.getFlake (toString ./.)).nixosConfigurations.lenovo-hyprland;
   in if builtins.all (package: builtins.elem package c.config.environment.systemPackages) [
-    c.pkgs.udiskie c.pkgs.usbutils c.pkgs.ifuse c.pkgs.libimobiledevice
+    c.pkgs.udiskie c.pkgs.usbutils c.pkgs.gphoto2 c.pkgs.ifuse c.pkgs.libimobiledevice
   ] then "device packages present" else throw "device packages missing"
 ' >/dev/null
 

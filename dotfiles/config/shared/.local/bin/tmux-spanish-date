@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+IFS=';' read -r time hour numeric_date weekday month day year < <(
+  date '+%I:%M;%H;%d/%m/%Y;%u;%m;%d;%Y'
+)
+if ((10#$hour < 12)); then
+  ampm=AM
+else
+  ampm=PM
+fi
+
+days=(lunes martes miércoles jueves viernes sábado domingo)
+months=(enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre)
+
+printf '%s · %s · %s, %s de %s de %s\n' \
+  "$time $ampm" "$numeric_date" "${days[10#$weekday - 1]}" "$day" "${months[10#$month - 1]}" "$year"

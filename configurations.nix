@@ -78,6 +78,13 @@ let
     ./nixos/gaming/steam.nix
     ./nixos/gaming/emulators.nix
   ];
+  lenovoWindows = profileName:
+    desktop {
+      hostName = "lenovo";
+      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+      inherit profileName;
+      extraModules = lenovoExtra ++ [ ./nixos/hosts/lenovo/windows-vfio.nix ];
+    };
 in
 {
   inherit profiles;
@@ -211,6 +218,11 @@ in
       profileName = "hyprland";
       extraModules = lenovoExtra;
     };
+    lenovo-windows-labwc = lenovoWindows "labwc";
+    lenovo-windows-gnome = lenovoWindows "gnome";
+    lenovo-windows-hyprland = lenovoWindows "hyprland";
+    lenovo-windows-i3 = lenovoWindows "i3";
+    lenovo-windows-cinnamon = lenovoWindows "cinnamon";
     lenovo-i3 = desktop {
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;

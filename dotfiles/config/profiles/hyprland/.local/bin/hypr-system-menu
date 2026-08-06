@@ -13,8 +13,8 @@ choice="$(printf '%s\n' \
   '󰖟 Random wallpaper' \
   '󰕾 Restart Waybar' \
   '󰃢 Nix cleanup' \
+  '󰌢 Hardware details' \
   '󰆍 User logs' \
-  '󰉋 Open dotfiles' \
   '󰐥 Power' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
 
@@ -25,8 +25,8 @@ case "$choice" in
   *'Random wallpaper') exec hypr-wallpaper random ;;
   *'Restart Waybar') exec waybar-watch --restart "$HOME/.config/waybar-hypr" ;;
   *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
+  *'Hardware details') exec kitty --title hardware-fastfetch -e bash -ic 'fastfetch-hardware; printf "\n"; exec bash -i' ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
-  *'Open dotfiles') exec nautilus "$repo" ;;
   *'Power') exec hypr-power-menu ;;
   *) exec hypr-main-menu ;;
 esac

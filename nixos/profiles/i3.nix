@@ -166,12 +166,6 @@ in
   services.libinput.enable = true;
   security.polkit.enable = true;
   services.dbus.enable = true;
-  services.gvfs.enable = true;
-  services.gvfs.package = (
-    pkgs.gnome.gvfs.override {
-      gnomeSupport = true;
-    }
-  );
   services.udisks2.enable = true;
   services.upower = {
     enable = true;
