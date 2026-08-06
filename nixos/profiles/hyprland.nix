@@ -29,6 +29,7 @@ let
     '';
   });
   scrollOverview = pkgs.callPackage ../packages/hyprland-scroll-overview.nix { };
+  hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
   '';
@@ -107,6 +108,7 @@ in
     extraPortals = with pkgs; [
       xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
+      hyprKdeconnectFix
     ];
     config = {
       common.default = [
@@ -117,6 +119,7 @@ in
         "hyprland"
         "gtk"
       ];
+      hyprland."org.freedesktop.impl.portal.RemoteDesktop" = "hypr-kdeconnect";
     };
   };
 
@@ -154,19 +157,6 @@ in
       '';
     in
     {
-      xdg.desktopEntries.zutty-fast = {
-        name = "Zutty Fast";
-        genericName = "Terminal Emulator";
-        comment = "Fast terminal with the configured Zutty options";
-        exec = "zutty-fast";
-        icon = "utilities-terminal";
-        terminal = false;
-        type = "Application";
-        categories = [
-          "System"
-          "TerminalEmulator"
-        ];
-      };
       home.activation.mimeAppsDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mime_cfg="$HOME/.config/mimeapps.list"
         if [ ! -f "$mime_cfg" ]; then

@@ -16,6 +16,10 @@ let
   zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
     exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 18 "$@"
   '';
+  x11TerminalPackages = lib.optionals (builtins.elem profileName [ "cinnamon" "i3" ]) [
+    pkgs.zutty
+    zuttyFast
+  ];
   minimalPackages = with pkgs; [
     wget
     curl
@@ -38,8 +42,6 @@ let
     eza
     ntfs3g
     kitty
-    zutty
-    zuttyFast
     bat
     ripgrep
     neovim
@@ -56,13 +58,12 @@ let
     just
     figlet
     nix-search-tv
-  ];
+  ] ++ x11TerminalPackages;
   desktopOnlyPackages = with pkgs; [
     nextcloud-client
     uv
     python3
     android-tools
-    kdePackages.kdeconnect-kde
     freerdp
     podman-compose
     jujutsu
@@ -236,6 +237,8 @@ in
 
   # Enable networking
   networking.networkmanager.enable = true;
+  # KDE Connect needs TCP and UDP 1714-1764 for LAN discovery and pairing.
+  programs.kdeconnect.enable = true;
 
   # Set your time zone.
   time.timeZone = "America/Santo_Domingo";

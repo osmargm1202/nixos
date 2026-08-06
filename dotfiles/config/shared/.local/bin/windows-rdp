@@ -5,7 +5,11 @@
 # ============================================================
 
 CONTAINER="windows"
-DISTROBOX="arch"
+INACTIVE_CONTAINER=""
+WINDOWS_VM_PROFILE_FILE="${WINDOWS_VM_PROFILE_FILE:-/etc/orgm/windows-vm-profile}"
+WINDOWS_VM_PROFILE="render-node"
+WINDOWS_COMPOSE_DIR="${WINDOWS_COMPOSE_DIR:-$HOME/Apps/windows}"
+COMPOSE_FILES=()
 RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"
@@ -38,6 +42,35 @@ container_cmd() {
   else
     echo "Error: Neither docker nor podman found."
     exit 1
+  fi
+}
+
+select_vm_profile() {
+  if [[ -r "$WINDOWS_VM_PROFILE_FILE" ]]; then
+    read -r WINDOWS_VM_PROFILE <"$WINDOWS_VM_PROFILE_FILE"
+  fi
+
+  case "$WINDOWS_VM_PROFILE" in
+    lenovo-vfio)
+      CONTAINER="lenovo-windows"
+      INACTIVE_CONTAINER="windows"
+      COMPOSE_FILES=(-f compose.yml -f compose.lenovo-vfio.yml)
+      ;;
+    *)
+      CONTAINER="windows"
+      COMPOSE_FILES=()
+      ;;
+  esac
+}
+
+compose_cmd() {
+  if command -v docker &>/dev/null; then
+    docker compose "$@"
+  elif command -v podman &>/dev/null; then
+    podman compose "$@"
+  else
+    echo "Error: Neither docker nor podman found." >&2
+    return 1
   fi
 }
 
@@ -120,32 +153,36 @@ wait_rdp() {
 }
 
 rdp_command() {
-  local rdp_bin=""
+  local -a client_cmd
+  local backend=""
 
-  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp3 &>/dev/null; then
-    rdp_bin="wlfreerdp3"
-  elif command -v xfreerdp3 &>/dev/null; then
-    rdp_bin="xfreerdp3"
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v sfreerdp &>/dev/null; then
+    backend="wayland"
+    client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sfreerdp)
+  elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
+    backend="wayland"
+    client_cmd=(wlfreerdp)
   elif command -v xfreerdp &>/dev/null; then
-    rdp_bin="xfreerdp"
+    backend="x11"
+    client_cmd=(xfreerdp)
+  elif command -v xfreerdp3 &>/dev/null; then
+    backend="x11"
+    client_cmd=(xfreerdp3)
+  else
+    echo "Error: FreeRDP client not found." >&2
+    return 1
   fi
 
-  if [[ -n "$rdp_bin" ]]; then
+  if [[ "$backend" == x11 && "$WINDOWS_VM_PROFILE" != lenovo-vfio ]]; then
     if command -v nvidia-offload &>/dev/null; then
-      RDP_CMD=(nvidia-offload "$rdp_bin")
+      RDP_CMD=(nvidia-offload "${client_cmd[@]}")
     elif command -v prime-run &>/dev/null; then
-      RDP_CMD=(prime-run "$rdp_bin")
+      RDP_CMD=(prime-run "${client_cmd[@]}")
     else
-      RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$rdp_bin")
+      RDP_CMD=("${client_cmd[@]}")
     fi
   else
-    if command -v nvidia-offload &>/dev/null; then
-      RDP_CMD=(nvidia-offload distrobox-enter "$DISTROBOX" -- xfreerdp3)
-    elif command -v prime-run &>/dev/null; then
-      RDP_CMD=(prime-run distrobox-enter "$DISTROBOX" -- xfreerdp3)
-    else
-      RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only distrobox-enter "$DISTROBOX" -- xfreerdp3)
-    fi
+    RDP_CMD=("${client_cmd[@]}")
   fi
 }
 
@@ -218,7 +255,21 @@ rdp_connect() {
 do_start() {
   notify_user "Windows iniciando!" "Iniciando contenedor '$CONTAINER'."
   echo "Starting container '$CONTAINER'..."
-  container_cmd start "$CONTAINER"
+
+  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
+    if [[ ! -e /dev/vfio/16 ]]; then
+      echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
+      return 1
+    fi
+    container_cmd rm -f "$INACTIVE_CONTAINER" || true
+    (
+      cd "$WINDOWS_COMPOSE_DIR"
+      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d
+    )
+  else
+    container_cmd start "$CONTAINER"
+  fi
+
   echo "Container started."
 }
 
@@ -226,6 +277,15 @@ do_stop() {
   echo "Stopping container '$CONTAINER'..."
   container_cmd stop "$CONTAINER"
   echo "Container stopped."
+}
+
+do_status() {
+  local -a RDP_CMD
+
+  rdp_command
+  printf 'profile=%s\ncontainer=%s\nclient=' "$WINDOWS_VM_PROFILE" "$CONTAINER"
+  printf '%q ' "${RDP_CMD[@]}"
+  printf '\n'
 }
 
 do_connect() {
@@ -305,6 +365,7 @@ Commands:
   start      Start the Windows container only
   stop       Stop the Windows container only
   connect    Connect RDP; start container if needed
+  status     Show the selected VM profile and RDP client
   install    Install script, icon and .desktop launcher
 
 EOF
@@ -314,11 +375,14 @@ EOF
 # Main
 # ============================================================
 
+select_vm_profile
+
 case "${1:-}" in
 run) do_run ;;
 start) do_start ;;
 stop) do_stop ;;
 connect) do_connect ;;
+status) do_status ;;
 install) do_install ;;
 -h | --help) usage ;;
 "")
