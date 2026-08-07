@@ -234,7 +234,7 @@
       "custom/dock_windows",
       "custom/dock_kitty",
       "custom/dock_nautilus",
-      "custom/dock_chromium",
+      "custom/dock_firefox",
       "custom/dock_obsidian",
       "custom/dock_software"
     ],
@@ -263,13 +263,13 @@
       "tooltip": true,
       "on-click": "~/.local/bin/sway-app-dock click nautilus"
     },
-    "custom/dock_chromium": {
-      "exec": "~/.local/bin/sway-app-dock status chromium",
+    "custom/dock_firefox": {
+      "exec": "~/.local/bin/sway-app-dock status firefox",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click chromium"
+      "on-click": "~/.local/bin/sway-app-dock click firefox"
     },
     "custom/dock_obsidian": {
       "exec": "~/.local/bin/sway-app-dock status obsidian",

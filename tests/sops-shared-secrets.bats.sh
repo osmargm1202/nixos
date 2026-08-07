@@ -24,6 +24,8 @@ for secret in \
   grep -Fq "$secret" "$MODULE"
   grep -Fq "$secret" "$WRAPPER"
 done
+grep -Fq 'ORGM_TOKEN' "$MODULE"
+grep -Fq -- '--with SECRET [SECRET...] -- COMMAND [ARG...]' "$WRAPPER"
 
 grep -Fq 'Nextcloud/Documentos/keys/age.txt' "$MODULE"
 grep -Fq 'inputs.sops-nix.nixosModules.sops' nixos/common.nix
@@ -51,7 +53,8 @@ for secret in \
   STITCH_API_KEY \
   INSFORGE_API_KEY \
   INSFORGE_API_BASE_URL \
-  AVANTE_ANTHROPIC_API_KEY; do
+  AVANTE_ANTHROPIC_API_KEY \
+  ORGM_TOKEN; do
   printf '%s\n' 'value with spaces $(literal)' > "$secrets_dir/$secret"
 done
 ln -s "$ROOT/$WRAPPER" "$fake_bin/sops-shared-env"
@@ -84,11 +87,18 @@ cat > "$fake_bin/nvim" <<'EOF'
 [[ ${AVANTE_ANTHROPIC_API_KEY-} == 'value with spaces $(literal)' ]]
 [[ -z ${ANTHROPIC_API_KEY+x} ]]
 EOF
-chmod +x "$fake_bin/claude" "$fake_bin/pi" "$fake_bin/opencode" "$fake_bin/omp" "$fake_bin/nvim"
+cat > "$fake_bin/custom-command" <<'EOF'
+#!/usr/bin/env bash
+[[ ${ORGM_TOKEN-} == 'value with spaces $(literal)' ]]
+[[ -z ${ANTHROPIC_API_KEY+x} ]]
+EOF
+chmod +x "$fake_bin/claude" "$fake_bin/pi" "$fake_bin/opencode" "$fake_bin/omp" "$fake_bin/nvim" "$fake_bin/custom-command"
 
 for command in claude pi opencode omp nvim; do
   env -i HOME="$HOME" XDG_CONFIG_HOME="$tmp/config" PATH="$fake_bin:$PATH" "$WRAPPER" "$command"
 done
+env -i HOME="$HOME" XDG_CONFIG_HOME="$tmp/config" PATH="$fake_bin:$PATH" \
+  "$WRAPPER" --with ORGM_TOKEN -- custom-command
 
 env -i \
   HOME="$HOME" \

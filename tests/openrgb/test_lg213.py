@@ -41,21 +41,19 @@ class ApplicationConfigurationTests(unittest.TestCase):
         path.write_text(json.dumps(payload), encoding="utf-8")
         return path
 
-    def test_loads_color_and_matches_chromium_crunchyroll_class(self):
+    def test_loads_color_and_matches_application_class(self):
         path = self.write_config({"applications": [{
-            "name": "Crunchyroll",
-            "windowClasses": ["crunchyroll"],
-            "notificationNames": ["Crunchyroll"],
+            "name": "Sample",
+            "windowClasses": ["sample"],
+            "notificationNames": ["Sample"],
             "color": "#F28C28",
         }]})
         rules = lg213.load_application_rules(path)
         self.assertEqual(rules[0].color, RGBColor(242, 140, 40))
-        match = lg213.match_rule(
-            rules, "chrome-www.crunchyroll.com__-Default", "window_classes"
-        )
-        self.assertEqual(match.name, "Crunchyroll")
+        match = lg213.match_rule(rules, "sample", "window_classes")
+        self.assertEqual(match.name, "Sample")
         self.assertIs(
-            lg213.match_rule(rules, "CRUNCHYROLL", "notification_names"), rules[0]
+            lg213.match_rule(rules, "SAMPLE", "notification_names"), rules[0]
         )
 
     def test_missing_or_invalid_root_config_returns_no_rules(self):
@@ -82,16 +80,16 @@ class ApplicationConfigurationTests(unittest.TestCase):
 
 class ConfiguredRuntimeTests(unittest.TestCase):
     def setUp(self):
-        self.orange = RGBColor(242, 140, 40)
+        self.red = RGBColor(255, 0, 0)
         self.rule = lg213.ApplicationRule(
-            "Crunchyroll", ("crunchyroll",), ("crunchyroll",), self.orange
+            "Discord", ("discord",), ("discord",), self.red
         )
         self.notifier = lg213.G213Notifier([self.rule])
         self.notifier.apply_ambient = MagicMock()
 
-    def test_crunchyroll_focus_sets_uniform_ambient_color(self):
-        self.notifier.on_focus("chrome-www.crunchyroll.com__-Default")
-        self.assertEqual(self.notifier.ambient_color, self.orange)
+    def test_mapped_focus_sets_uniform_ambient_color(self):
+        self.notifier.on_focus("discord")
+        self.assertEqual(self.notifier.ambient_color, self.red)
         self.notifier.apply_ambient.assert_called_once_with()
 
     def test_first_unmapped_focus_restores_base_only_once(self):
@@ -105,10 +103,10 @@ class ConfiguredRuntimeTests(unittest.TestCase):
         notifier.apply_ambient.assert_called_once_with()
 
     @patch.object(lg213.threading, "Thread")
-    def test_crunchyroll_notification_starts_orange_blink(self, thread):
-        self.notifier.on_notification("Crunchyroll")
+    def test_mapped_notification_starts_blink(self, thread):
+        self.notifier.on_notification("Discord")
         thread.assert_called_once_with(
-            target=self.notifier.blink, args=(self.orange,), daemon=True
+            target=self.notifier.blink, args=(self.red,), daemon=True
         )
         thread.return_value.start.assert_called_once_with()
 
@@ -123,7 +121,6 @@ class ConfiguredRuntimeTests(unittest.TestCase):
                 "Vesktop": RGBColor(255, 0, 0),
                 "Dota": RGBColor(255, 0, 0),
                 "Steam": RGBColor(0, 0, 255),
-                "Crunchyroll": self.orange,
             },
         )
 

@@ -1,4 +1,6 @@
 .worktrees/
+__pycache__/
+nixos/packages/windows-manager-linux-orgm-unsigned.xpi
 
 # caelestia rewrites this on every colour-scheme change (apply_btop() in
 # caelestia-cli); ~/.config/btop is out-of-store symlinked straight into

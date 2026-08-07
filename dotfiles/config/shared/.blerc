@@ -1,10 +1,8 @@
 # Loaded by blesh after it has initialized its editing API.
-# Normal mode: steady block. Insert mode after i/I: steady I-beam.
-bleopt default_keymap=vi
+# Emacs keybindings are the sole interactive editing mode.
+bleopt default_keymap=emacs
 bleopt complete_auto_complete=1 complete_auto_history=1
 ble-face auto_complete=fg=242
-ble-bind -m vi_nmap --cursor 2
-ble-bind -m vi_imap --cursor 6
 
 # blesh owns PROMPT_COMMAND. Register the separator through its pre-prompt
 # hook instead of replacing its deferred attach command.

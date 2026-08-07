@@ -1,4 +1,4 @@
-# blesh widgets for fzf insert-mode bindings.
+# blesh widgets for fzf bindings in the Emacs keymap.
 # Load only after blesh and its fzf integration are initialized.
 
 _orgm_fzf_insert() {
@@ -37,8 +37,8 @@ _orgm_aichat_widget() {
   READLINE_POINT=${#READLINE_LINE}
 }
 
-ble-bind -m vi_imap -x M-r fzf-history-widget
-ble-bind -m vi_imap -x M-f fzf-file-preview-widget
-ble-bind -m vi_imap -x M-c fzf-cd-preview-widget
-ble-bind -m vi_imap -x M-p fzf-ps-widget
-ble-bind -m vi_imap -x M-a _orgm_aichat_widget
+ble-bind -m emacs -x M-r fzf-history-widget
+ble-bind -m emacs -x M-f fzf-file-preview-widget
+ble-bind -m emacs -x M-c fzf-cd-preview-widget
+ble-bind -m emacs -x M-p fzf-ps-widget
+ble-bind -m emacs -x M-a _orgm_aichat_widget

@@ -1,30 +1,48 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -eq 0 ]; then
+usage() {
   printf 'usage: sops-shared-env COMMAND [ARG...]\n' >&2
+  printf '       sops-shared-env --with SECRET [SECRET...] -- COMMAND [ARG...]\n' >&2
   exit 2
-fi
+}
+
+(( $# > 0 )) || usage
 
 secrets_dir="${XDG_CONFIG_HOME:-$HOME/.config}/sops-nix/secrets"
-case "$1" in
-  claude|pi)
-    secret_names=(ANTHROPIC_API_KEY STITCH_API_KEY INSFORGE_API_KEY INSFORGE_API_BASE_URL)
-    ;;
-  opencode)
-    secret_names=(OPENCODE_API_KEY MINIMAX_API_KEY ANTHROPIC_API_KEY)
-    ;;
-  omp)
-    secret_names=(ANTHROPIC_API_KEY)
-    ;;
-  nvim)
-    secret_names=(AVANTE_ANTHROPIC_API_KEY)
-    ;;
-  *)
-    printf 'sops-shared-env: unsupported command: %s\n' "$1" >&2
-    exit 2
-    ;;
-esac
+if [[ $1 == --with ]]; then
+  shift
+  secret_names=()
+  while (( $# > 0 )) && [[ $1 != -- ]]; do
+    [[ $1 =~ ^[A-Z_][A-Z0-9_]*$ ]] || {
+      printf 'sops-shared-env: invalid secret name: %s\n' "$1" >&2
+      exit 2
+    }
+    secret_names+=("$1")
+    shift
+  done
+  (( ${#secret_names[@]} > 0 )) && [[ ${1:-} == -- ]] && (( $# > 1 )) || usage
+  shift
+else
+  case "$1" in
+    claude|pi)
+      secret_names=(ANTHROPIC_API_KEY STITCH_API_KEY INSFORGE_API_KEY INSFORGE_API_BASE_URL)
+      ;;
+    opencode)
+      secret_names=(OPENCODE_API_KEY MINIMAX_API_KEY ANTHROPIC_API_KEY)
+      ;;
+    omp)
+      secret_names=(ANTHROPIC_API_KEY)
+      ;;
+    nvim)
+      secret_names=(AVANTE_ANTHROPIC_API_KEY)
+      ;;
+    *)
+      printf 'sops-shared-env: unsupported command: %s\n' "$1" >&2
+      exit 2
+      ;;
+  esac
+fi
 
 for secret_name in "${secret_names[@]}"; do
   secret_path="$secrets_dir/$secret_name"
