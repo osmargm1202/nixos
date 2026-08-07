@@ -5,12 +5,12 @@
 }:
 let
   windowsManagerLinuxOrgm = pkgs.callPackage ./packages/windows-manager-linux-orgm.nix { };
-  signedWindowsManagerLinuxOrgm = ./packages/windows-manager-linux-orgm-signed.xpi;
+  signedWindowsManagerLinuxOrgm = ./packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi;
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
 in
 {
   warnings = lib.optional (!hasSignedWindowsManagerLinuxOrgm) ''
-    Browser tab focusing is inactive until the signed AMO XPI is added at nixos/packages/windows-manager-linux-orgm-signed.xpi.
+    Browser tab focusing is inactive until the signed AMO XPI is added at nixos/packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi.
   '';
 
   environment.systemPackages = [ windowsManagerLinuxOrgm ];
