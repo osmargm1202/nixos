@@ -2,19 +2,26 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-module="$repo_dir/nixos/firefox.nix"
-theme="$repo_dir/nixos/packages/firefox-themes/grunge-impact-1.0.xpi"
-theme_id="{59129a6b-d6a6-452b-a5a6-df49f45ad943}"
+settings="$(cd "$repo_dir" && nix eval --impure --json '.#nixosConfigurations.lenovo-windows-i3.config.programs.firefox.policies.ExtensionSettings')"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-unzip -t "$theme" >/dev/null || fail 'theme XPI is invalid'
-actual_id="$(unzip -p "$theme" manifest.json | python3 -c 'import json, sys; print(json.load(sys.stdin)["browser_specific_settings"]["gecko"]["id"])')"
-[[ "$actual_id" == "$theme_id" ]] || fail 'theme XPI ID differs from the managed policy ID'
-grep -Fq 'grunge-impact-1.0.xpi' "$module" || fail 'Firefox must retain the theme XPI'
-grep -Fq 'installation_mode = "force_installed";' "$module" || fail 'Firefox must force-install the theme'
+assert_amo_addon() {
+  local id="$1"
+  local expected_url="https://addons.mozilla.org/firefox/downloads/latest/${id}/latest.xpi"
 
-printf 'PASS: Firefox force-installs the signed Grunge Impact theme\n'
+  jq -e --arg id "$id" --arg url "$expected_url" '
+    .[$id].installation_mode == "force_installed"
+    and .[$id].install_url == $url
+  ' <<<"$settings" >/dev/null ||
+    fail "$id must be force-installed from AMO"
+}
+
+assert_amo_addon "{22b0eca1-8c02-4c0d-a5d7-6604ddd9836e}"
+assert_amo_addon "jid1-NIfFY2CA8fy1tg@jetpack"
+assert_amo_addon "{446900e4-71c2-419f-a6a7-df9c091e268b}"
+
+printf 'PASS: Firefox installs the requested AMO theme and extensions\n'

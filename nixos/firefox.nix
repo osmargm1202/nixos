@@ -6,8 +6,10 @@
 let
   windowsManagerLinuxOrgm = pkgs.callPackage ./packages/windows-manager-linux-orgm.nix { };
   signedWindowsManagerLinuxOrgm = ./packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi;
-  grungeImpactTheme = ./packages/firefox-themes/grunge-impact-1.0.xpi;
-  grungeImpactThemeId = "{59129a6b-d6a6-452b-a5a6-df49f45ad943}";
+  amoXpi = id: "https://addons.mozilla.org/firefox/downloads/latest/${id}/latest.xpi";
+  defaultThemeId = "{22b0eca1-8c02-4c0d-a5d7-6604ddd9836e}";
+  adBlockId = "jid1-NIfFY2CA8fy1tg@jetpack";
+  bitwardenId = "{446900e4-71c2-419f-a6a7-df9c091e268b}";
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
 in
 {
@@ -23,9 +25,17 @@ in
     policies = {
       ExtensionSettings =
         {
-          "${grungeImpactThemeId}" = {
+          "${defaultThemeId}" = {
             installation_mode = "force_installed";
-            install_url = "file://${grungeImpactTheme}";
+            install_url = amoXpi defaultThemeId;
+          };
+          "${adBlockId}" = {
+            installation_mode = "force_installed";
+            install_url = amoXpi adBlockId;
+          };
+          "${bitwardenId}" = {
+            installation_mode = "force_installed";
+            install_url = amoXpi bitwardenId;
           };
         }
         // lib.optionalAttrs hasSignedWindowsManagerLinuxOrgm {
