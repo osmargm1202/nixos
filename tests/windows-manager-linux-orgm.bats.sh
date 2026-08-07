@@ -26,6 +26,14 @@ grep -Fq 'lib/mozilla/native-messaging-hosts/windows_manager_linux_orgm.json' "$
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+(
+  cd "$ROOT"
+  nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/packages/windows-manager-linux-orgm.nix { }'
+)
+if "$tmp/package/bin/windows-manager-linux-orgm-tab" https://example.com/ 2>"$tmp/wrapper-error"; then
+  fail 'wrapper should fail while the native host socket is absent'
+fi
+grep -Fq 'windows-manager-linux-orgm-tab:' "$tmp/wrapper-error" || fail 'wrapper did not start the packaged native host'
 python3 - "$HOST" "$tmp" <<'PY'
 import json
 import os

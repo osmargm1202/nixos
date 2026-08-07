@@ -50,12 +50,35 @@ cat >"$tmp/bin/rofi" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$ROFI_RESULT"
 EOF
+cat >"$tmp/bin/i3-msg" <<'EOF'
+#!/usr/bin/env bash
+printf 'i3-msg %s\n' "$*" >>"$FOCUS_ARGS"
+EOF
+cat >"$tmp/bin/hyprctl" <<'EOF'
+#!/usr/bin/env bash
+printf 'hyprctl %s\n' "$*" >>"$FOCUS_ARGS"
+EOF
+cat >"$tmp/bin/wlrctl" <<'EOF'
+#!/usr/bin/env bash
+printf 'wlrctl %s\n' "$*" >>"$FOCUS_ARGS"
+EOF
+
 chmod +x "$tmp/bin"/*
+
+wait_for_file() {
+  local path="$1"
+  for _ in {1..20}; do
+    [[ -e "$path" ]] && return 0
+    sleep 0.05
+  done
+  fail "timed out waiting for $path"
+}
 
 run_fallback() {
   local input="$1" expected="$2"
   rm -f "$tmp/firefox-args"
   FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" "$HELPER" "$input"
+  wait_for_file "$tmp/firefox-args"
   [[ "$(<"$tmp/firefox-args")" == "--new-tab $expected" ]] || fail "input $input normalized incorrectly"
 }
 
@@ -64,10 +87,24 @@ run_fallback pagina.net https://pagina.net
 run_fallback 10.0.0.13:8000 http://10.0.0.13:8000
 run_fallback nas:8080 http://nas:8080
 run_fallback https://example.com/path https://example.com/path
-rm -f "$tmp/firefox-args"
-BRIDGE_OK=1 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" "$HELPER" pagina.net
-[[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'bridge did not receive normalized URL'
-[[ ! -e "$tmp/firefox-args" ]] || fail 'bridge success must not create a Firefox tab'
+run_focus() {
+  local desktop="$1" expected="$2" bridge_ok="$3"
+  rm -f "$tmp/firefox-args" "$tmp/bridge-args" "$tmp/focus-args"
+  BRIDGE_OK="$bridge_ok" BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" FOCUS_ARGS="$tmp/focus-args" XDG_CURRENT_DESKTOP="$desktop" PATH="$tmp/bin:$PATH" "$HELPER" pagina.net
+  wait_for_file "$tmp/focus-args"
+  grep -Fxq "$expected" "$tmp/focus-args" || fail "$desktop did not focus Firefox"
+  if [[ "$bridge_ok" == 1 ]]; then
+    [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'bridge did not receive normalized URL'
+    [[ ! -e "$tmp/firefox-args" ]] || fail 'bridge success must not create a Firefox tab'
+  else
+    wait_for_file "$tmp/firefox-args"
+  fi
+}
+
+run_focus i3 'i3-msg [class="(?i)firefox"] focus' 1
+run_focus Hyprland 'hyprctl dispatch focuswindow class:^(firefox|Navigator)$' 1
+run_focus labwc 'wlrctl toplevel focus app_id:firefox' 1
+run_focus i3 'i3-msg [class="(?i)firefox"] focus' 0
 ROFI_RESULT=pagina.net FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" "$HELPER" --prompt
 [[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.net' ]] || fail 'Rofi result was not normalized and opened'
 

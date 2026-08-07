@@ -15,14 +15,13 @@ runCommand "windows-manager-linux-orgm" {
 } ''
   install -Dm755 ${./windows-manager-linux-orgm/native-host.py} "$out/libexec/windows-manager-linux-orgm-host.py"
   install -d "$out/bin"
-
-  cat > "$out/bin/windows-manager-linux-orgm-tab" <<'EOF'
+  cat > "$out/bin/windows-manager-linux-orgm-tab" <<EOF
   #!${pkgs.runtimeShell}
-  exec ${python3}/bin/python3 "$out/libexec/windows-manager-linux-orgm-host.py" --client "$@"
+  exec ${python3}/bin/python3 "$out/libexec/windows-manager-linux-orgm-host.py" --client "\$@"
   EOF
   chmod 0755 "$out/bin/windows-manager-linux-orgm-tab"
 
-  cat > "$out/libexec/windows-manager-linux-orgm-host" <<'EOF'
+  cat > "$out/libexec/windows-manager-linux-orgm-host" <<EOF
   #!${pkgs.runtimeShell}
   exec ${python3}/bin/python3 "$out/libexec/windows-manager-linux-orgm-host.py"
   EOF

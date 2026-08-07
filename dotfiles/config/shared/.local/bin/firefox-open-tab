@@ -30,6 +30,26 @@ prompt_url() {
   }
   rofi -dmenu -i -p "Abrir web"
 }
+focus_firefox() {
+  case "${XDG_CURRENT_DESKTOP:-}" in
+    *Hyprland*)
+      command -v hyprctl >/dev/null 2>&1 &&
+        hyprctl dispatch focuswindow 'class:^(firefox|Navigator)$'
+      ;;
+    *i3*)
+      command -v i3-msg >/dev/null 2>&1 &&
+        i3-msg '[class="(?i)firefox"] focus'
+      ;;
+    *labwc*)
+      command -v wlrctl >/dev/null 2>&1 &&
+        wlrctl toplevel focus app_id:firefox
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 
 if [[ "${1:-}" == "--prompt" ]]; then
   input="$(prompt_url || true)"
@@ -49,7 +69,9 @@ if ! command -v firefox >/dev/null 2>&1; then
 fi
 
 if command -v windows-manager-linux-orgm-tab >/dev/null 2>&1 && windows-manager-linux-orgm-tab "$url" 2>/dev/null; then
+  focus_firefox >/dev/null 2>&1 || true
   exit 0
 fi
 
-exec firefox --new-tab "$url"
+firefox --new-tab "$url" >/dev/null 2>&1 &
+focus_firefox >/dev/null 2>&1 || true
