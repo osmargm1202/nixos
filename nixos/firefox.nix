@@ -6,6 +6,8 @@
 let
   windowsManagerLinuxOrgm = pkgs.callPackage ./packages/windows-manager-linux-orgm.nix { };
   signedWindowsManagerLinuxOrgm = ./packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi;
+  grungeImpactTheme = ./packages/firefox-themes/grunge-impact-1.0.xpi;
+  grungeImpactThemeId = "{59129a6b-d6a6-452b-a5a6-df49f45ad943}";
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
 in
 {
@@ -18,11 +20,20 @@ in
   programs.firefox = {
     enable = true;
     nativeMessagingHosts.packages = [ windowsManagerLinuxOrgm ];
-    policies = lib.optionalAttrs hasSignedWindowsManagerLinuxOrgm {
-      ExtensionSettings."windows_manager_linux_orgm@or-gm.com" = {
-        installation_mode = "force_installed";
-        install_url = "file://${signedWindowsManagerLinuxOrgm}";
-      };
+    policies = {
+      ExtensionSettings =
+        {
+          "${grungeImpactThemeId}" = {
+            installation_mode = "force_installed";
+            install_url = "file://${grungeImpactTheme}";
+          };
+        }
+        // lib.optionalAttrs hasSignedWindowsManagerLinuxOrgm {
+          "windows_manager_linux_orgm@or-gm.com" = {
+            installation_mode = "force_installed";
+            install_url = "file://${signedWindowsManagerLinuxOrgm}";
+          };
+        };
     };
   };
 
