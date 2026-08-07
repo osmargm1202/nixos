@@ -17,4 +17,4 @@ fi
 
 sed "s|@RUNTIME_SOCKET@|$runtime_dir/clipcat/grpc.sock|" "$config_template" > "$runtime_config"
 exec clipcat-menu --config "$runtime_config" --finder rofi \
-  --rofi-extra-arguments "-theme,$theme,-theme-str,$theme_override"
+  --rofi-extra-arguments="-theme,$theme,-theme-str,$theme_override"

@@ -10,4 +10,13 @@
     <image-files/>
     <video-files/>
   </action>
+  <action>
+    <icon>utilities-terminal</icon>
+    <name>Open Terminal Here</name>
+    <unique-id>orgm-i3-open-terminal-here</unique-id>
+    <command>kitty --directory %f</command>
+    <description>Open Kitty in the selected folder</description>
+    <patterns>*</patterns>
+    <directories/>
+  </action>
 </actions>

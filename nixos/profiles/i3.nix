@@ -104,6 +104,12 @@ let
     });
   '';
   ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
+  thunarWithoutWallpaperPlugin = pkgs.thunar.overrideAttrs (old: {
+    postFixup = (old.postFixup or "") + ''
+      rm -f "$out/lib/thunarx-3/thunar-wallpaper-plugin.so" \
+        "$out/lib/thunarx-3/thunar-wallpaper-plugin.la"
+    '';
+  });
 in
 {
   imports = [
@@ -319,7 +325,8 @@ in
 
       # Daily applications used by MIME defaults and bindings.
       kitty
-      thunar
+      thunarWithoutWallpaperPlugin
+      tumbler
       gnome-text-editor
       evince
       loupe

@@ -271,7 +271,6 @@ let
       ".local/bin/i3-powermenu"
       ".local/bin/i3-rofi"
       ".local/bin/i3-ssh-host"
-      ".local/bin/i3-start-discord-background"
       ".local/bin/i3-wallpaper"
       ".local/bin/i3-set-wallpaper"
       ".local/bin/i3-wifi-toggle"

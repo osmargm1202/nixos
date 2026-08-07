@@ -14,8 +14,14 @@ fail() {
   exit 1
 }
 
-grep -Eq '^[[:space:]]+thunar[[:space:]]*$' "$PROFILE" ||
-  fail 'i3 must install Thunar'
+grep -Fq 'thunarWithoutWallpaperPlugin = pkgs.thunar.overrideAttrs' "$PROFILE" ||
+  fail 'i3 must package Thunar without its unusable Xfce wallpaper plugin'
+grep -Fq 'rm -f "$out/lib/thunarx-3/thunar-wallpaper-plugin.so"' "$PROFILE" ||
+  fail 'i3 must remove Thunar built-in wallpaper action'
+grep -Eq '^[[:space:]]+thunarWithoutWallpaperPlugin[[:space:]]*$' "$PROFILE" ||
+  fail 'i3 must install the filtered Thunar package'
+grep -Eq '^[[:space:]]+tumbler[[:space:]]*$' "$PROFILE" ||
+  fail 'i3 must install Tumbler so Thunar can generate thumbnails'
 grep -Fq '<command>i3-set-wallpaper %f</command>' "$UCA" ||
   fail 'Thunar field code %f must be passed to the wallpaper wrapper without quotes'
 grep -Fq '<patterns>*.jpg;*.jpeg;*.png;*.webp;*.mp4;*.mkv;*.webm;*.mov;*.m4v;*.avi</patterns>' "$UCA" ||
@@ -24,6 +30,12 @@ grep -Fq '<image-files/>' "$UCA" ||
   fail 'Thunar action must allow supported images'
 grep -Fq '<video-files/>' "$UCA" ||
   fail 'Thunar action must allow supported videos'
+[[ "$(grep -Fc '<name>Set as Wallpaper</name>' "$UCA")" -eq 1 ]] ||
+  fail 'i3 Thunar configuration must expose only one wallpaper action'
+grep -Fq '<command>kitty --directory %f</command>' "$UCA" ||
+  fail 'Thunar must open Kitty in the selected folder'
+grep -Fq '<directories/>' "$UCA" ||
+  fail 'Thunar terminal action must be restricted to folders'
 grep -Fq 'exec i3-wallpaper --set-active "$1"' "$WRAPPER" ||
   fail 'wallpaper wrapper must quote and forward the selected file'
 [[ -x "$WRAPPER" ]] || fail 'wallpaper wrapper source is not executable'
