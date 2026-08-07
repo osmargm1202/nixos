@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-browser="${BROWSER:-chromium}"
+browser="${BROWSER:-firefox}"
 theme="${HYPR_ROFI_THEME:-$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi}"
 menu=$'!a ChatGPT\n!c Claude\n!g Google\n!y YouTube'
 
@@ -30,8 +30,8 @@ launch_desktop() {
 case "$input" in
   http://*|https://*) open_url "$input" ;;
   localhost:*|127.0.0.1:*) open_url "http://$input" ;;
-  *'!a'*) launch_desktop 'Chatgpt.desktop' "$(printf '%s' "${input//!a/}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ;;
-  *'!c'*) launch_desktop 'Claude.desktop' "$(printf '%s' "${input//!c/}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ;;
+  *'!a'*) open_url "https://chatgpt.com/?q=$(printf '%s' "${input//!a/}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ;;
+  *'!c'*) open_url "https://claude.ai/new?q=$(printf '%s' "${input//!c/}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ;;
   *'!g'*) search_url 'https://www.google.com/search?q=' "${input//!g/}" ;;
   *'!y'*) search_url 'https://www.youtube.com/results?search_query=' "${input//!y/}" ;;
   *)
@@ -40,7 +40,7 @@ case "$input" in
     elif [[ "$input" != *' '* ]] && [[ "$input" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}(/.*)?$ ]]; then
       open_url "https://$input"
     else
-      launch_desktop 'Chatgpt.desktop' "$input"
+      open_url "https://chatgpt.com/?q=$input"
     fi
     ;;
 esac

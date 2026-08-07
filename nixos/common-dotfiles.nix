@@ -41,7 +41,6 @@ let
 
   # Python env for ~/.config/openrgb/lg213/main.py (notification RGB effects)
   lg213PythonEnv = pkgs.python3.withPackages (ps: [ ps.openrgb-python ]);
-  tmuxPaneTree = pkgs.callPackage ./packages/tmux-pane-tree.nix { };
 
 
   orgmDotfilesUpdateScript = pkgs.writeShellApplication {
@@ -126,6 +125,7 @@ let
     ".local/bin/fetch_music_player_data"
     ".local/bin/file-preview"
     ".local/bin/flakeinit"
+    ".local/bin/firefox-open-tab"
     ".local/bin/image-preview"
     ".local/bin/kitty_launch"
     ".local/bin/list-op"
@@ -230,7 +230,7 @@ let
       ".local/bin/hypr-tweaks-menu"
       ".local/bin/hypr-workspace-button"
       ".local/bin/hypr-wallpaper"
-      ".local/bin/hypr-chromium-new-window"
+      ".local/bin/hypr-firefox-new-window"
       ".local/bin/waybar-caffeine-state"
       ".local/bin/waybar-date-es"
       ".local/bin/waybar-day-month-es"
@@ -264,6 +264,7 @@ let
       ".local/bin/i3-obsidian-open-or-focus"
       ".local/bin/i3-reload-after-switch"
       ".local/bin/i3-run"
+      ".local/bin/i3-firefox-new-window"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
       ".local/bin/i3-performance-menu"
@@ -319,9 +320,7 @@ let
       ".config/bash/host-lenovo.bash"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
-      ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
-      ".local/share/applications/webapps.json"
     ]
     ++ hostIconSubdirs;
     orgm = [
@@ -329,9 +328,7 @@ let
       ".local/share/applications/claude-code-url-handler.desktop"
       ".local/share/applications/desktop-apps.desktop"
       ".local/share/applications/dota.desktop"
-      ".local/share/applications/opencode.desktop"
       ".local/share/applications/silksong.desktop"
-      ".local/share/applications/webapps.json"
     ]
     ++ hostIconSubdirs;
     jarq = [
@@ -862,7 +859,6 @@ in
             text = ''
               run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
               run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
-              source-file ${tmuxPaneTree}/share/tmux-plugins/tmux-pane-tree/tmux-pane-tree.tmux
             '';
           };
         }

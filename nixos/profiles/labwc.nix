@@ -102,6 +102,7 @@
 
     kitty
     fuzzel
+    rofi
     quickshell
     wlogout
     swaynotificationcenter

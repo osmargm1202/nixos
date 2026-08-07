@@ -11,7 +11,6 @@ let
 in
 {
   imports = [
-    ./webapps.nix
     # Keep every graphical Lenovo profile on the stable LTS kernel line.
     ../../hardware/kernel/lts.nix
     ../../deskflow.nix

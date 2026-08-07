@@ -3,7 +3,6 @@
 {
   imports = [
     ./audio.nix
-    ./webapps.nix
     ../../deskflow.nix
   ];
 

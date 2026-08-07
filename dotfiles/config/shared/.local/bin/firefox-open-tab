@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+normalize_url() {
+  local value="$1"
+
+  [[ -n "$value" ]] || return 1
+  case "$value" in
+    http://*|https://*|about:*)
+      printf '%s\n' "$value"
+      return
+      ;;
+  esac
+
+  if [[ "$value" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]+)?(/.*)?$ ]] ||
+     [[ "$value" =~ ^localhost(:[0-9]+)?(/.*)?$ ]] ||
+     [[ "$value" =~ ^[^./:]+:[0-9]+(/.*)?$ ]]; then
+    printf 'http://%s\n' "$value"
+  elif [[ "$value" == *.* ]]; then
+    printf 'https://%s\n' "$value"
+  else
+    printf 'https://%s.com\n' "$value"
+  fi
+}
+
+prompt_url() {
+  command -v rofi >/dev/null 2>&1 || {
+    notify-send "Firefox" "Rofi is not installed" 2>/dev/null || true
+    return 1
+  }
+  rofi -dmenu -i -p "Abrir web"
+}
+
+if [[ "${1:-}" == "--prompt" ]]; then
+  input="$(prompt_url || true)"
+else
+  input="${1:-about:blank}"
+fi
+
+[[ -n "$input" ]] || exit 0
+url="$(normalize_url "$input")" || {
+  notify-send "Firefox" "URL inválida" 2>/dev/null || true
+  exit 1
+}
+
+if ! command -v firefox >/dev/null 2>&1; then
+  notify-send "Firefox" "Firefox is not installed" 2>/dev/null || true
+  exit 1
+fi
+
+if command -v windows-manager-linux-orgm-tab >/dev/null 2>&1 && windows-manager-linux-orgm-tab "$url" 2>/dev/null; then
+  exit 0
+fi
+
+exec firefox --new-tab "$url"

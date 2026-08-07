@@ -25,7 +25,7 @@ grep -Fq 'hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("app_launcher",
 grep -Fq 'hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())' "$keybindings"
-grep -Fq 'hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-chromium-new-window"))' "$keybindings"
+grep -Fq 'hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window"))' "$keybindings"
 [[ "$(grep -Fc 'mainMod .. " + C"' "$keybindings")" == 1 ]]
 
 test_bin="$tmp/bin"
@@ -54,9 +54,13 @@ cat >"$test_bin/kitty" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >"$KITTY_ARGS"
 EOF
-cat >"$test_bin/chromium" <<'EOF'
+cat >"$test_bin/firefox" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >"$CHROMIUM_ARGS"
+printf '%s\n' "$*" >"$FIREFOX_ARGS"
+EOF
+cat >"$test_bin/firefox-open-tab" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >"$FIREFOX_ARGS"
 EOF
 cat >"$test_bin/nwg-displays" <<'EOF'
 #!/usr/bin/env bash
@@ -69,21 +73,6 @@ EOF
 cat >"$test_bin/hypr-nwg-dock-reload" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >"$NWG_DOCK_RELOAD_ARGS"
-EOF
-cat >"$test_bin/hyprctl" <<'EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "dispatch" ]]; then
-  printf '%s\n' "$*" >"$HYPRCTL_ARGS"
-fi
-EOF
-cat >"$test_bin/jq" <<'EOF'
-#!/usr/bin/env bash
-cat >/dev/null
-if [[ "$1" == "-e" ]]; then
-  [[ "${HYPR_CHROMIUM_RUNNING:-0}" == 1 ]]
-  exit
-fi
-printf '%s\n' "${HYPR_CHROMIUM_ADDRESS:-}"
 EOF
 chmod +x "$test_bin"/*
 
@@ -124,9 +113,6 @@ test -f "$tmp/nwg-dock-reload-args"
 
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRLOCK_ARGS="$tmp/hyprlock-args" "$bin/hypr-lock"
 [[ "$(<"$tmp/hyprlock-args")" == '--immediate-render --no-fade-in' ]]
-HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" CHROMIUM_ARGS="$tmp/chromium-fresh-args" HYPR_CHROMIUM_RUNNING=0 "$bin/hypr-chromium-new-window"
-[[ "$(<"$tmp/chromium-fresh-args")" == '' ]]
-HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" CHROMIUM_ARGS="$tmp/chromium-args" HYPRCTL_ARGS="$tmp/hyprctl-args" HYPR_CHROMIUM_RUNNING=1 HYPR_CHROMIUM_ADDRESS='0x123' "$bin/hypr-chromium-new-window"
-[[ "$(<"$tmp/chromium-args")" == '--new-tab about:blank' ]]
-[[ "$(<"$tmp/hyprctl-args")" == 'dispatch hl.dsp.focus({ window = "address:0x123" })' ]]
+HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" FIREFOX_ARGS="$tmp/firefox-args" "$bin/hypr-firefox-new-window"
+[[ "$(<"$tmp/firefox-args")" == '' ]]
 printf '%s\n' 'hypr-core-helpers: ok'

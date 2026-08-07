@@ -204,11 +204,6 @@ in
     enable = true;
     defaultApplications = {
       "inode/directory" = [ "thunar.desktop" ];
-      "text/html" = [ "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium.desktop" ];
-      "x-scheme-handler/chrome" = [ "chromium.desktop" ];
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
@@ -324,7 +319,6 @@ in
 
       # Daily applications used by MIME defaults and bindings.
       kitty
-      (chromium.override { enableWideVine = true; })
       thunar
       gnome-text-editor
       evince

@@ -19,13 +19,13 @@ for helper in i3-main-menu i3-devices-menu i3-powermenu; do
   bash -n "$BIN/$helper"
 done
 
-for entry in Apps Windows Terminal Chromium Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help Power; do
+for entry in Apps Windows Terminal Firefox Files Obsidian Calculator Clipboard SSH Devices Wallpaper Performance Help Power; do
   grep -Fq "$entry" "$MAIN" || fail "main menu entry missing: $entry"
 done
 
 grep -Fq 'Devices) exec i3-devices-menu' "$MAIN" || fail 'Devices submenu dispatch missing'
 grep -Fq 'Calculator) exec i3-calc' "$MAIN" || fail 'Calculator dispatch missing'
-grep -Fq 'Chromium) exec chromium' "$MAIN" || fail 'Chromium dispatch missing'
+grep -Fq 'Firefox) exec "$HOME/.local/bin/i3-firefox-new-window"' "$MAIN" || fail 'Firefox dispatch missing'
 grep -Fq 'Wallpaper) exec i3-wallpaper --random' "$MAIN" || fail 'Wallpaper dispatch missing'
 grep -Fq 'Help) exec i3-hotkeys' "$MAIN" || fail 'Help dispatch missing'
 grep -Fq 'Power) exec xlogout' "$MAIN" || fail 'Power dispatch missing'

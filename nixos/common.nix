@@ -71,7 +71,6 @@ let
     steam-run
     vscode
     gh
-    (chromium.override { enableWideVine = true; })
     (pkgs.writeShellApplication {
       name = "ns";
       runtimeInputs = with pkgs; [
@@ -115,9 +114,10 @@ in
       ./sops.nix
       ./flatpak.nix
       ./common-dotfiles.nix
-      ./chromium-browser.nix
+      ./chromium.nix
+      ./firefox.nix
+      ./webapps.nix
     ]
-    ++ lib.optionals (inputs != null) [ ./webapps.nix ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ./tailscale.nix
@@ -336,13 +336,6 @@ in
       "text/x-python" = lib.mkForce [ "nvim.desktop" ];
       "application/json" = lib.mkForce [ "nvim.desktop" ];
       "application/x-shellscript" = lib.mkForce [ "nvim.desktop" ];
-    }
-    // lib.optionalAttrs (profileName != "i3") {
-      "text/html" = [ "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium.desktop" ];
-      "x-scheme-handler/chrome" = [ "chromium.desktop" ];
     };
   };
 

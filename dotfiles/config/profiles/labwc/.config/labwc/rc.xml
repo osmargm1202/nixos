@@ -84,7 +84,7 @@
     </keybind>
     <keybind key="W-w">
       <action name="Execute">
-        <command>chromium</command>
+        <command>firefox-open-tab</command>
       </action>
     </keybind>
     <keybind key="W-a">
@@ -110,7 +110,7 @@
     </keybind>
     <keybind key="W-m">
       <action name="Execute">
-        <command>fuzzel</command>
+        <command>firefox-open-tab --prompt</command>
       </action>
     </keybind>
     <keybind key="W-space">
