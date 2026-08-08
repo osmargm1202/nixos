@@ -17,6 +17,7 @@ exec --no-startup-id kdeconnect-indicator
 exec --no-startup-id dunst
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id systemctl --user --quiet start sunshine.service
+exec --no-startup-id sh -c 'systemctl --user --quiet start windows-vm-battery-guard.service 2>/dev/null || true'
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle on
 exec --no-startup-id $run i3-monitor-profile --apply --quiet
@@ -44,6 +45,7 @@ bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random
 bindsym $mod+p exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+Ctrl+comma exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+w exec --no-startup-id $browser
+bindsym $mod+Ctrl+w exec --no-startup-id windows-rdp toggle
 bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus
 bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
 bindsym $mod+e exec --no-startup-id $files

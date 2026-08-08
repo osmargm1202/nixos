@@ -390,6 +390,14 @@ do_stop() {
   echo "Container stopped."
 }
 
+do_toggle() {
+  if container_is_running; then
+    do_stop
+  else
+    do_start
+  fi
+}
+
 do_status() {
   local -a RDP_CMD
 
@@ -509,6 +517,7 @@ Commands:
   run        Start container if needed and open RDP; leave container running on exit
   start      Start the Windows container only
   stop       Stop the Windows container only
+  toggle     Stop the selected container if running, otherwise start it
   connect    Connect RDP; start container if needed
   web        Start the selected container if needed and open its Web Console
   looking-glass
@@ -529,6 +538,7 @@ case "${1:-}" in
 run) do_run ;;
 start) do_start ;;
 stop) do_stop ;;
+toggle) do_toggle ;;
 connect) do_connect ;;
 web) do_web ;;
 status) do_status ;;

@@ -30,6 +30,11 @@ nix eval --impure --raw --expr '
       && builtins.match ".*${requiredKvmfrUdevRule}.*" vfio.services.udev.extraRules != null
       && vfio.home-manager.users.osmarg.xdg.desktopEntries."windows-looking-glass".exec
         == "/home/osmarg/.local/bin/windows-rdp looking-glass";
+    hasBatteryGuard = vfio:
+      vfio.systemd.user.services.windows-vm-battery-guard.wantedBy == [ "graphical-session.target" ]
+      && vfio.systemd.user.services.windows-vm-battery-guard.partOf == [ "graphical-session.target" ]
+      && vfio.systemd.user.services.windows-vm-battery-guard.serviceConfig.Restart == "always"
+      && vfio.systemd.user.services.windows-vm-battery-guard.serviceConfig.RestartSec == 5;
     isVfio = vfio:
       builtins.all (value: builtins.elem value vfio.boot.kernelParams) requiredParams
       && builtins.all (value: builtins.elem value vfio.boot.initrd.kernelModules) requiredModules
@@ -47,7 +52,7 @@ nix eval --impure --raw --expr '
       && !vfio.hardware.nvidia.prime.offload.enable;
   in
     if builtins.all isVfio vfioProfiles
-      && builtins.all hasLookingGlass vfioProfiles
+      && builtins.all hasBatteryGuard vfioProfiles
       && standard.hardware.nvidia.prime.offload.enable
     then "lenovo-windows-vfio: ok"
     else throw "lenovo Windows VFIO profile is incomplete"

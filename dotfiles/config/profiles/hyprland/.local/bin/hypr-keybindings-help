@@ -63,6 +63,7 @@ entries() {
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus'
       entry 'Win+W' 'Firefox' 'hypr-firefox-new-window'
+      entry 'Win+Ctrl+W' 'Iniciar/detener Windows VM' 'windows-rdp toggle'
       entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
       entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'

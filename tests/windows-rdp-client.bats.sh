@@ -8,6 +8,7 @@ trap 'rm -rf "$tmp"' EXIT
 bin="$tmp/bin"
 mkdir -p "$bin" "$tmp/home"
 ln -s "$BASH" "$bin/bash"
+ln -s "$(command -v grep)" "$bin/grep"
 
 cat >"$bin/nc" <<'EOF'
 #!/usr/bin/env bash
@@ -95,6 +96,16 @@ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="
 [[ "$(<"$x11_log")" == *"/f"* ]]
 [[ "$(<"$x11_log")" != *"-grab-keyboard"* ]]
 [[ "$(<"$x11_log")" != *"/dynamic-resolution"* ]]
+
+toggle_profile="$tmp/toggle-profile"
+printf '%s\n' render-node >"$toggle_profile"
+toggle_state="$tmp/toggle-state"
+printf '%s\n' false >"$toggle_state"
+toggle_log="$tmp/toggle.log"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$toggle_profile" WINDOWS_TEST_STATE_FILE="$toggle_state" DOCKER_LOG="$toggle_log" "$helper" toggle
+grep -Fqx 'start windows' "$toggle_log"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$toggle_profile" WINDOWS_TEST_STATE_FILE="$toggle_state" DOCKER_LOG="$toggle_log" "$helper" toggle
+grep -Fqx 'stop windows' "$toggle_log"
 failure_profile="$tmp/render-node-profile"
 printf '%s\n' render-node >"$failure_profile"
 failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$failure_profile" "$helper" start 2>&1 || true)"

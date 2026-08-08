@@ -87,6 +87,11 @@
         <command>firefox-open-tab --new</command>
       </action>
     </keybind>
+    <keybind key="W-C-w">
+      <action name="Execute">
+        <command>windows-rdp toggle</command>
+      </action>
+    </keybind>
     <keybind key="W-a">
       <action name="Execute">
         <command>kitty --class orgmai-chat -e orgmai chat</command>

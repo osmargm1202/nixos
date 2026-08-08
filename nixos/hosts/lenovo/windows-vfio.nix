@@ -14,6 +14,20 @@ let
     xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
       vioinput/w11/amd64=${pkgs.virtio-win}/vioinput/w11/amd64
   '';
+  windowsVmBatteryGuard = pkgs.writeShellApplication {
+    name = "windows-vm-battery-guard";
+    runtimeInputs = with pkgs; [
+      coreutils
+      gnugrep
+      iproute2
+      libnotify
+      podman
+      procps
+      systemd
+    ];
+    text = builtins.readFile ./windows-vm-battery-guard.sh;
+  };
+
 in
 {
   orgm.lenovo.windowsVfio.enable = true;
@@ -83,6 +97,17 @@ in
   systemd.user.extraConfig = ''
     DefaultLimitMEMLOCK=infinity
   '';
+
+  systemd.user.services.windows-vm-battery-guard = {
+    description = "Hibernate an unattended Windows VFIO VM on battery";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = lib.getExe windowsVmBatteryGuard;
+      Restart = "always";
+      RestartSec = 5;
+    };
+  };
 
   # i3 starts X from the tty1 login shell. Declaring a service override creates
   # the tty1 instance, so explicitly attach it to getty.target as well.
