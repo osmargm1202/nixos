@@ -28,7 +28,7 @@ grep -Fq 'mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window")' "$HYPR"
 grep -Fq 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus")' "$HYPR" || fail 'Hyprland Win+Shift+W must only focus'
 grep -Fq 'exec firefox-open-tab --new "$@"' "$HYPR_WRAPPER" || fail 'Hyprland Win+W wrapper must create a window'
 grep -Fq "*'Firefox') exec firefox-open-tab --focus" "$HYPR_MENU" || fail 'Hyprland Firefox menu must only focus'
-grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_SMART_RUN" || fail 'Hyprland web launcher must only request existing Firefox tabs'
+grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_SMART_RUN" || fail 'Hyprland web launcher must reuse or create a Firefox tab'
 grep -Fq '<keybind key="W-w">' "$LABWC" || fail 'Labwc Win+W binding missing'
 grep -Fq '<command>firefox-open-tab --new</command>' "$LABWC" || fail 'Labwc Win+W must create explicitly'
 grep -Fq '<keybind key="W-m">' "$LABWC" || fail 'Labwc Win+M binding missing'
@@ -105,14 +105,12 @@ run_bridge_focus i3 'i3-msg [class="(?i)firefox"] focus' pagina.net https://pagi
 run_bridge_focus Hyprland 'hyprctl dispatch focuswindow class:^(firefox|Navigator)$' nas:8080 http://nas:8080
 
 rm -f "$tmp/firefox-args" "$tmp/bridge-args" "$tmp/focus-args" "$tmp/notify-args"
-if BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \
+BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \
   FOCUS_ARGS="$tmp/focus-args" NOTIFY_ARGS="$tmp/notify-args" XDG_CURRENT_DESKTOP=i3 \
-  PATH="$tmp/bin:$PATH" "$HELPER" pagina.net; then
-  fail 'focus-only URL mode must fail when the bridge fails'
-fi
+  PATH="$tmp/bin:$PATH" "$HELPER" pagina.net
 [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'failed bridge did not receive the normalized URL'
-[[ ! -e "$tmp/firefox-args" ]] || fail 'failed bridge must never fall back to Firefox --new-window'
-wait_for_file "$tmp/notify-args"
+wait_for_file "$tmp/firefox-args"
+[[ "$(<"$tmp/firefox-args")" == '--new-window https://pagina.net' ]] || fail 'failed bridge did not create a Firefox window'
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
 rm -f "$tmp/firefox-args" "$tmp/bridge-args"
@@ -136,4 +134,4 @@ BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" FOCUS_ARGS="$tmp
 grep -Fxq 'wlrctl toplevel focus app_id:firefox' "$tmp/focus-args" || fail 'explicit focus mode did not focus Firefox'
 [[ ! -e "$tmp/firefox-args" && ! -e "$tmp/bridge-args" ]] || fail 'explicit focus mode must not create or query a tab'
 
-printf 'PASS: Firefox launcher creates only through explicit Win+M/Win+W routes\n'
+printf 'PASS: Firefox launcher reuses existing tabs or creates a window\n'

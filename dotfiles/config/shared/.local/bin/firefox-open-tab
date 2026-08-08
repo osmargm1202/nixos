@@ -147,5 +147,8 @@ if command -v windows-manager-linux-orgm-tab >/dev/null 2>&1 &&
   exit 0
 fi
 
-notify "No existing Firefox tab could be opened"
-exit 1
+command -v firefox >/dev/null 2>&1 || {
+  notify "Firefox is not installed"
+  exit 1
+}
+firefox --new-window "$url" >/dev/null 2>&1 &
