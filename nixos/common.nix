@@ -117,6 +117,7 @@ in
       ./common-dotfiles.nix
       ./chromium.nix
       ./firefox.nix
+      ./webapps.nix
       ./rmatrix.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
