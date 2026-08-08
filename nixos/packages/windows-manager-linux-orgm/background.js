@@ -1,49 +1,45 @@
 const hostName = "windows_manager_linux_orgm";
 let nativePort;
 
-function normalizeUrl(rawUrl) {
+function httpOrigin(rawUrl) {
   const url = new URL(rawUrl);
-  url.hash = "";
-  return url.href;
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("Only HTTP(S) URLs are supported");
+  }
+  return url.origin;
 }
 
-async function focusOrCreate(url) {
-  const normalizedUrl = normalizeUrl(url);
+async function focusExisting(url) {
+  const requestedOrigin = httpOrigin(url);
   const tabs = await browser.tabs.query({});
   const existing = tabs.find((tab) => {
     try {
-      return normalizeUrl(tab.url) === normalizedUrl;
+      return httpOrigin(tab.url) === requestedOrigin;
     } catch {
       return false;
     }
   });
 
-  if (existing) {
-    await browser.windows.update(existing.windowId, { focused: true });
-    await browser.tabs.update(existing.id, { active: true });
-    return "focused";
+  if (!existing) {
+    throw new Error("No matching HTTP(S) tab found");
   }
 
-  const window = await browser.windows.getLastFocused();
-  await browser.tabs.create({
-    windowId: window.id,
-    url: normalizedUrl,
-    active: true,
-  });
-  return "created";
+  await browser.windows.update(existing.windowId, { focused: true });
+  await browser.tabs.update(existing.id, { active: true });
+  return "focused";
 }
 
 function connectNativeHost() {
   nativePort = browser.runtime.connectNative(hostName);
   nativePort.onMessage.addListener(async (message) => {
     try {
-      if (message.type !== "focus-or-create" || typeof message.id !== "string" || typeof message.url !== "string") {
+      if (message.type !== "focus-existing" || typeof message.id !== "string" || typeof message.url !== "string") {
         throw new Error("Invalid native message");
       }
       nativePort.postMessage({
         id: message.id,
         ok: true,
-        action: await focusOrCreate(message.url),
+        action: await focusExisting(message.url),
       });
     } catch (error) {
       nativePort.postMessage({

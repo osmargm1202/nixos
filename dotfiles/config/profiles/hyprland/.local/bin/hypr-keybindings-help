@@ -68,7 +68,7 @@ entries() {
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)
-      entry 'Win+M' 'Abrir página web' 'firefox-open-tab --prompt'
+      entry 'Win+M' 'Abrir página web nueva' 'firefox-open-tab --new --prompt'
       entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
       entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
       entry 'Win+Esc' 'Cambiar ventana' 'hypr-rofi-window'
@@ -124,7 +124,7 @@ entries() {
       entry 'Win+Alt+E' 'Power menu' 'hypr-power-menu'
       entry 'Win+Alt+L' 'Lock' 'hyprlock'
       entry 'Win+Alt+W' 'Fondo aleatorio' 'hypr-wallpaper random'
-      entry 'Win+Shift+W' 'Firefox' 'firefox'
+      entry 'Win+Shift+W' 'Enfocar Firefox' 'firefox-open-tab --focus'
       entry 'Ctrl+Space' 'Cambiar teclado' 'hyprctl switchxkblayout all next'
       entry 'Win+Shift+E' 'Salir Hyprland' 'exit'
       entry 'Ctrl+Alt+Delete' 'Salir Hyprland' 'exit'

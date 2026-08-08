@@ -24,8 +24,6 @@ def socket_path():
 
 def valid_url(url):
     parsed = urlsplit(url)
-    if url == "about:blank":
-        return True
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
@@ -67,7 +65,7 @@ def send_client_message(connection, message):
 
 def request_url(url):
     if not valid_url(url):
-        raise ValueError("only http(s) URLs and about:blank are supported")
+        raise ValueError("only http(s) URLs are supported")
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
         connection.settimeout(3)
         connection.connect(str(socket_path()))
@@ -145,14 +143,14 @@ class NativeHost:
             request = json.loads(raw_message.decode("utf-8"))
             url = request["url"]
             if not isinstance(url, str) or not valid_url(url):
-                raise ValueError("only http(s) URLs and about:blank are supported")
+                raise ValueError("only http(s) URLs are supported")
         except (KeyError, ValueError, json.JSONDecodeError) as error:
             send_client_message(connection, {"ok": False, "error": str(error)})
             self.close_client(connection)
             return
         request_id = str(uuid.uuid4())
         self.pending[request_id] = connection
-        write_native_message({"type": "focus-or-create", "id": request_id, "url": url})
+        write_native_message({"type": "focus-existing", "id": request_id, "url": url})
 
     def read_browser_message(self, _):
         message = read_native_message(sys.stdin.buffer)

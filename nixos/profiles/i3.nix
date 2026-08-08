@@ -5,104 +5,6 @@
 }:
 
 let
-  # The pinned NixOS Picom module serializes every list with square brackets,
-  # but libconfig requires parentheses for lists of rule/animation groups.
-  # Generate the native config directly until that module formatter is fixed.
-  picomConfig = pkgs.writeText "picom-i3.conf" ''
-    backend = "glx";
-    vsync = true;
-    use-damage = true;
-    detect-rounded-corners = true;
-    detect-client-opacity = true;
-    detect-transient = true;
-    transparent-clipping = false;
-
-    fading = true;
-    fade-delta = 5;
-    fade-in-step = 0.045;
-    fade-out-step = 0.045;
-
-    shadow = true;
-    shadow-radius = 20;
-    shadow-offset-x = -8;
-    shadow-offset-y = -8;
-    shadow-opacity = 0.35;
-    shadow-color = "#000000";
-
-    corner-radius = 12;
-    blur-method = "dual_kawase";
-    blur-strength = 7;
-    blur-background = true;
-    blur-background-frame = true;
-    blur-background-fixed = false;
-
-
-    rules = ({
-      animations = ({
-        triggers = [ "open", "show" ];
-        preset = "appear";
-        scale = 0.96;
-        duration = 0.18;
-      }, {
-        triggers = [ "close", "hide" ];
-        preset = "disappear";
-        scale = 0.96;
-        duration = 0.14;
-      }, {
-        triggers = [ "geometry" ];
-        preset = "geometry-change";
-        duration = 0.20;
-      });
-    }, {
-      match = "!focused && !group_focused";
-      opacity = 0.84;
-    }, {
-      match = "focused || group_focused";
-      opacity = 0.92;
-    }, {
-      match = "window_type = 'dock'";
-      opacity = 1.0;
-      blur-background = true;
-      corner-radius = 0;
-      shadow = false;
-    }, {
-      match = "fullscreen";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      blur-background = false;
-    }, {
-      match = "window_type = 'desktop'";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      blur-background = false;
-    }, {
-      match = "class_g = 'i3lock'";
-      opacity = 1.0;
-      corner-radius = 0;
-      shadow = false;
-      fade = false;
-      blur-background = false;
-      animations = ({
-        triggers = [ "open", "show" ];
-        preset = "appear";
-        scale = 1.0;
-        duration = 0.001;
-      }, {
-        triggers = [ "close", "hide" ];
-        preset = "disappear";
-        scale = 1.0;
-        duration = 0.001;
-      });
-    }, {
-      match = "window_type = 'tooltip' || window_type = 'popup_menu' || window_type = 'dropdown_menu'";
-      opacity = 0.88;
-      corner-radius = 8;
-      shadow = true;
-      blur-background = true;
-    });
-  '';
   ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };
   thunarWithoutWallpaperPlugin = pkgs.thunar.overrideAttrs (old: {
     postFixup = (old.postFixup or "") + ''
@@ -141,16 +43,6 @@ in
     matchEdid = true;
   };
 
-  systemd.user.services.picom = {
-    description = "Picom composite manager for i3";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${lib.getExe pkgs.picom-pijulius} --config ${picomConfig}";
-      Restart = "on-failure";
-      RestartSec = 3;
-    };
-  };
   systemd.user.services.i3-clipcat = {
     description = "Clipcat clipboard history for i3";
     wantedBy = [ "graphical-session.target" ];
@@ -331,7 +223,6 @@ in
       evince
       loupe
       file-roller
-      pkgs."picom-pijulius"
       pkgs.gnome-keyring
       pkgs."gnome-online-accounts-gtk"
     ]

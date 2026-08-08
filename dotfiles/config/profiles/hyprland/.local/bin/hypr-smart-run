@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-browser="${BROWSER:-firefox}"
 theme="${HYPR_ROFI_THEME:-$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi}"
 menu=$'!a ChatGPT\n!c Claude\n!g Google\n!y YouTube'
 
@@ -13,7 +12,7 @@ fi
 input="$(printf '%s' "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 [ -n "$input" ] || exit 0
 
-open_url() { nohup "$browser" "$1" >/dev/null 2>&1 & }
+open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }
 search_url() { local engine="$1" q="$2"; q="${q// /+}"; open_url "$engine$q"; }
 launch_desktop() {
   local desktop="$1" query="${2:-}"

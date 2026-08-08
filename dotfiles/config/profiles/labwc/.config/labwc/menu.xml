@@ -12,7 +12,7 @@
       <action name="Execute"><command>nautilus</command></action>
     </item>
     <item label="Browser · Firefox" icon="firefox">
-      <action name="Execute"><command>firefox-open-tab</command></action>
+      <action name="Execute"><command>firefox-open-tab --focus</command></action>
     </item>
     <item label="Text Editor" icon="org.gnome.TextEditor">
       <action name="Execute"><command>gnome-text-editor</command></action>

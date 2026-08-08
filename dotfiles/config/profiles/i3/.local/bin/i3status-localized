@@ -12,6 +12,7 @@ RAM_WARNING = "#e0af68"
 CRITICAL = "#f7768e"
 CAFFEINE_ON = "#9ece6a"
 CAFFEINE_OFF = "#565f89"
+NETWORK = "#7aa2f7"
 GIB = 1024**3
 
 TRANSLATIONS = (
@@ -111,6 +112,8 @@ def localize(block):
     block = block.copy()
     for english, spanish in TRANSLATIONS:
         block["full_text"] = block["full_text"].replace(english, spanish)
+    if block.get("name") in {"wireless", "ethernet"} and not block["full_text"].endswith("down"):
+        block["color"] = NETWORK
     return block
 
 

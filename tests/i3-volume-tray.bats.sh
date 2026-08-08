@@ -16,7 +16,8 @@ if grep -Fq 'exec --no-startup-id pasystray' "$CONFIG"; then
   fail 'explicit pasystray duplicates its packaged XDG autostart'
 fi
 grep -Fq 'bar {' "$CONFIG" || fail 'native i3bar missing'
-grep -Fq 'status_command i3status' "$CONFIG" || fail 'i3bar must run i3status'
+grep -Fq 'status_command ~/.local/bin/i3status-localized' "$CONFIG" ||
+  fail 'i3bar must run the localized i3status wrapper'
 ! grep -Fqi 'polybar' "$PROFILE" "$CONFIG" || fail 'Polybar remains enabled'
 
 printf 'PASS: i3bar hosts the standard system tray and i3status\n'

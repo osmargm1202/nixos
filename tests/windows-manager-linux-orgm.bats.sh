@@ -14,6 +14,7 @@ fail() {
 
 python3 -m json.tool "$MANIFEST" >/dev/null
 python3 -m py_compile "$HOST"
+node "$ROOT/tests/windows-manager-linux-orgm-background.test.js"
 grep -Fq '"manifest_version": 2' "$MANIFEST" || fail 'Firefox extension must keep a persistent background page'
 grep -Fq '"strict_min_version": "142.0"' "$MANIFEST" || fail 'Firefox extension must require the first Android version supporting data consent'
 grep -Fq '"persistent": true' "$MANIFEST" || fail 'Firefox extension must retain the native bridge connection'
@@ -30,11 +31,13 @@ trap 'rm -rf "$tmp"' EXIT
   cd "$ROOT"
   nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/packages/windows-manager-linux-orgm.nix { }'
 )
-if "$tmp/package/bin/windows-manager-linux-orgm-tab" https://example.com/ 2>"$tmp/wrapper-error"; then
+mkdir "$tmp/no-socket-runtime"
+if XDG_RUNTIME_DIR="$tmp/no-socket-runtime" "$tmp/package/bin/windows-manager-linux-orgm-tab" https://example.com/ 2>"$tmp/wrapper-error"; then
   fail 'wrapper should fail while the native host socket is absent'
 fi
 grep -Fq 'windows-manager-linux-orgm-tab:' "$tmp/wrapper-error" || fail 'wrapper did not start the packaged native host'
 python3 - "$HOST" "$tmp" <<'PY'
+import importlib.util
 import json
 import os
 import struct
@@ -45,6 +48,11 @@ from pathlib import Path
 
 host_path = sys.argv[1]
 runtime_dir = Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location("native_host", host_path)
+native_host = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(native_host)
+assert native_host.valid_url("https://example.com/path")
+assert not native_host.valid_url("about:blank")
 socket_path = runtime_dir / "windows_manager_linux_orgm.sock"
 environment = {**os.environ, "XDG_RUNTIME_DIR": str(runtime_dir)}
 host = subprocess.Popen(
@@ -69,8 +77,29 @@ try:
     assert len(header) == 4, "native host did not emit a framed request"
     (size,) = struct.unpack("<I", header)
     message = json.loads(host.stdout.read(size).decode("utf-8"))
-    assert message["type"] == "focus-or-create"
+    assert message["type"] == "focus-existing"
     assert message["url"] == "https://example.com/"
+    response = json.dumps({
+        "id": message["id"],
+        "ok": False,
+        "error": "No matching HTTP(S) tab found",
+    }).encode("utf-8")
+    host.stdin.write(struct.pack("<I", len(response)) + response)
+    host.stdin.flush()
+    assert client.wait(timeout=3) == 1
+    assert "No matching HTTP(S) tab found" in client.stderr.read().decode("utf-8")
+
+    client = subprocess.Popen(
+        [sys.executable, host_path, "--client", "https://example.com/"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=environment,
+    )
+    header = host.stdout.read(4)
+    assert len(header) == 4, "native host did not emit a second framed request"
+    (size,) = struct.unpack("<I", header)
+    message = json.loads(host.stdout.read(size).decode("utf-8"))
+    assert message["type"] == "focus-existing"
     response = json.dumps({"id": message["id"], "ok": True, "action": "focused"}).encode("utf-8")
     host.stdin.write(struct.pack("<I", len(response)) + response)
     host.stdin.flush()

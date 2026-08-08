@@ -81,4 +81,9 @@ grep -Fqx 'profile=lenovo-vfio' <<<"$vfio_status"
 grep -Fqx 'container=lenovo-windows' <<<"$vfio_status"
 grep -Fqx 'client=xfreerdp ' <<<"$vfio_status"
 
+non_vfio_profile="$tmp/non-vfio-profile"
+printf '%s\n' render-node >"$non_vfio_profile"
+non_vfio_lg_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$non_vfio_profile" "$helper" looking-glass 2>&1 || true)"
+[[ "$non_vfio_lg_output" == *"Looking Glass is available only for the Lenovo VFIO Windows profile."* ]]
+
 printf '%s\n' 'windows-rdp-client: ok'

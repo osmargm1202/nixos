@@ -84,7 +84,7 @@
     </keybind>
     <keybind key="W-w">
       <action name="Execute">
-        <command>firefox-open-tab</command>
+        <command>firefox-open-tab --new</command>
       </action>
     </keybind>
     <keybind key="W-a">
@@ -110,7 +110,7 @@
     </keybind>
     <keybind key="W-m">
       <action name="Execute">
-        <command>firefox-open-tab --prompt</command>
+        <command>firefox-open-tab --new --prompt</command>
       </action>
     </keybind>
     <keybind key="W-space">

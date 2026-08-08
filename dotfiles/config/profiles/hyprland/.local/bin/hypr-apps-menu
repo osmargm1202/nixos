@@ -8,14 +8,14 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 choice="$(printf '%s\n' \
   '󰀻 App launcher' \
   '󰆍 Kitty' \
-  '󰖟 Firefox new window' \
+  '󰖟 Firefox' \
   '󰠮 Obsidian' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Apps' || true)"
 
 case "$choice" in
   *'App launcher') hypr_rofi_drun ;;
   *'Kitty') exec kitty ;;
-  *'Firefox new window') exec hypr-firefox-new-window ;;
+  *'Firefox') exec firefox-open-tab --focus ;;
   *'Obsidian') exec hypr-obsidian-open-or-focus ;;
   *) exec hypr-main-menu ;;
 esac

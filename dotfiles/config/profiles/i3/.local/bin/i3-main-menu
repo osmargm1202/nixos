@@ -9,7 +9,7 @@ case "$choice" in
   Apps) exec i3-rofi --drun ;;
   Windows) exec i3-rofi --window ;;
   Terminal) exec kitty ;;
-  Firefox) exec "$HOME/.local/bin/i3-firefox-new-window" ;;
+  Firefox) exec firefox-open-tab --focus ;;
   Files) exec i3-open-file open ;;
   Obsidian) exec i3-obsidian-open-or-focus ;;
   Calculator) exec i3-calc ;;

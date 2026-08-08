@@ -304,6 +304,27 @@ require_vfio_memlock() {
   fi
 }
 
+do_looking_glass() {
+  if [[ "$WINDOWS_VM_PROFILE" != lenovo-vfio ]]; then
+    echo "Error: Looking Glass is available only for the Lenovo VFIO Windows profile." >&2
+    return 1
+  fi
+
+  if [[ ! -e /dev/kvmfr0 ]]; then
+    echo "Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled." >&2
+    return 1
+  fi
+
+  if ! container_is_running; then
+    echo "Windows is not running. Starting '$CONTAINER'..."
+    do_start || return 1
+  else
+    wait_rdp || return 1
+  fi
+
+  exec looking-glass-client -F
+}
+
 # ============================================================
 # Commands
 # ============================================================
@@ -312,6 +333,10 @@ do_start() {
   if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
     if [[ ! -e /dev/vfio/16 ]]; then
       echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
+      return 1
+    fi
+    if [[ ! -e /dev/kvmfr0 ]]; then
+      echo "Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled." >&2
       return 1
     fi
     require_vfio_memlock || return 1
@@ -420,11 +445,12 @@ usage() {
 Usage: $SCRIPT_NAME <command>
 
 Commands:
-  (none)     Install if first run, otherwise run
   run        Start container if needed and open RDP; leave container running on exit
   start      Start the Windows container only
   stop       Stop the Windows container only
   connect    Connect RDP; start container if needed
+  looking-glass
+             Start the Lenovo VFIO Windows VM if needed and open Looking Glass
   status     Show the selected VM profile and RDP client
   install    Install script, icon and .desktop launcher
 
@@ -443,6 +469,7 @@ start) do_start ;;
 stop) do_stop ;;
 connect) do_connect ;;
 status) do_status ;;
+looking-glass) do_looking_glass ;;
 install) do_install ;;
 -h | --help) usage ;;
 "")

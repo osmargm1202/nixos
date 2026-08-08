@@ -16,7 +16,7 @@ fi
 if grep -Fq './sddm.nix' "$PROFILE"; then
   fail 'i3 must not import SDDM'
 fi
-grep -Fq 'if test (tty) = /dev/tty1; and not set -q DISPLAY' "$PROFILE" ||
+grep -Fq 'if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then' "$PROFILE" ||
   fail 'manual tty1 login must start i3 through startx'
 grep -Fq 'exec startx /etc/X11/xinit/xinitrc' "$PROFILE" ||
   fail 'tty1 login does not enter the configured i3 X session'
