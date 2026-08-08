@@ -117,7 +117,6 @@ in
       ./common-dotfiles.nix
       ./chromium.nix
       ./firefox.nix
-      ./webapps.nix
       ./rmatrix.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
@@ -158,6 +157,18 @@ in
   programs.nh = {
     enable = true;
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
+  };
+
+  # Protect interactive desktops before memory pressure makes the session unusable.
+  # `-s 100` makes RAM availability decisive; RSS selects the largest memory user.
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 8;
+    freeMemKillThreshold = 4;
+    freeSwapThreshold = 100;
+    freeSwapKillThreshold = 100;
+    extraArgs = [ "--sort-by-rss" ];
+    enableNotifications = true;
   };
 
   # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host
