@@ -110,7 +110,7 @@ BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \
   PATH="$tmp/bin:$PATH" "$HELPER" pagina.net
 [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'failed bridge did not receive the normalized URL'
 wait_for_file "$tmp/firefox-args"
-[[ "$(<"$tmp/firefox-args")" == '--new-window https://pagina.net' ]] || fail 'failed bridge did not create a Firefox window'
+[[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.net' ]] || fail 'failed bridge did not create a tab in Firefox'
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
 rm -f "$tmp/firefox-args" "$tmp/bridge-args"
@@ -134,4 +134,4 @@ BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" FOCUS_ARGS="$tmp
 grep -Fxq 'wlrctl toplevel focus app_id:firefox' "$tmp/focus-args" || fail 'explicit focus mode did not focus Firefox'
 [[ ! -e "$tmp/firefox-args" && ! -e "$tmp/bridge-args" ]] || fail 'explicit focus mode must not create or query a tab'
 
-printf 'PASS: Firefox launcher reuses existing tabs or creates a window\n'
+printf 'PASS: Firefox launcher reuses existing tabs or creates a tab\n'

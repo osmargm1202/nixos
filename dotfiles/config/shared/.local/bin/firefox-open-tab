@@ -151,4 +151,4 @@ command -v firefox >/dev/null 2>&1 || {
   notify "Firefox is not installed"
   exit 1
 }
-firefox --new-window "$url" >/dev/null 2>&1 &
+firefox --new-tab "$url" >/dev/null 2>&1 &
