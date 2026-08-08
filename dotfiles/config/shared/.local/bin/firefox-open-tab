@@ -69,7 +69,7 @@ focus_firefox() {
   esac
 }
 
-new_tab=false
+new_window=false
 prompt=false
 focus_only=false
 input=""
@@ -77,7 +77,7 @@ input=""
 while (($#)); do
   case "$1" in
     --new)
-      new_tab=true
+      new_window=true
       ;;
     --prompt)
       prompt=true
@@ -107,7 +107,7 @@ while (($#)); do
 done
 
 if "$focus_only"; then
-  [[ "$new_tab" == false && "$prompt" == false && -z "$input" ]] ||
+  [[ "$new_window" == false && "$prompt" == false && -z "$input" ]] ||
     fail "--focus cannot be combined with a URL or creation options"
   focus_firefox >/dev/null 2>&1 || {
     notify "No existing Firefox window could be focused"
@@ -122,7 +122,7 @@ if "$prompt"; then
   [[ -n "$input" ]] || exit 0
 fi
 
-if "$new_tab" && [[ "$prompt" == false && -z "$input" ]]; then
+if "$new_window" && [[ "$prompt" == false && -z "$input" ]]; then
   input="about:blank"
 fi
 
@@ -132,12 +132,12 @@ url="$(normalize_url "$input")" || {
   exit 1
 }
 
-if "$new_tab"; then
+if "$new_window"; then
   command -v firefox >/dev/null 2>&1 || {
     notify "Firefox is not installed"
     exit 1
   }
-  firefox --new-tab "$url" >/dev/null 2>&1 &
+  firefox --new-window "$url" >/dev/null 2>&1 &
   exit 0
 fi
 

@@ -43,11 +43,11 @@ printf '%s\n' "$*" >"$FIREFOX_TAB_ARGS"
 EOF
 chmod +x "$tmp/bin/firefox-open-tab"
 FIREFOX_TAB_ARGS="$tmp/args" PATH="$tmp/bin:$PATH" "$HELPER"
-[[ "$(<"$tmp/args")" == '' ]] ||
-  fail 'Firefox i3 helper must delegate its default launch to the shared helper'
+[[ "$(<"$tmp/args")" == '--new' ]] ||
+  fail 'Firefox i3 helper must request a new tab from the shared helper'
 FIREFOX_TAB_ARGS="$tmp/args" PATH="$tmp/bin:$PATH" "$HELPER" https://example.com/
-[[ "$(<"$tmp/args")" == 'https://example.com/' ]] ||
-  fail 'Firefox i3 helper must pass URLs to the shared helper'
+[[ "$(<"$tmp/args")" == '--new https://example.com/' ]] ||
+  fail 'Firefox i3 helper must forward URLs while requesting a new tab'
 
 grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interfaces' "$DISCORD" ||
   fail 'Discord WebRTC network policy disappeared'

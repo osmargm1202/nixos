@@ -21,12 +21,12 @@ fail() {
 bash -n "$HELPER"
 grep -Fq 'bindsym $mod+m exec --no-startup-id firefox-open-tab --new --prompt' "$I3" || fail 'i3 Win+M must create from the web prompt'
 grep -Fq 'bindsym $mod+w exec --no-startup-id $browser' "$I3" || fail 'i3 Win+W binding missing'
-grep -Fq 'exec firefox-open-tab --new "$@"' "$I3_WRAPPER" || fail 'i3 Win+W wrapper must create a tab'
+grep -Fq 'exec firefox-open-tab --new "$@"' "$I3_WRAPPER" || fail 'i3 Win+W wrapper must create a window'
 grep -Fq 'Firefox) exec firefox-open-tab --focus' "$I3_MENU" || fail 'i3 Firefox menu must only focus'
 grep -Fq 'mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new --prompt")' "$HYPR" || fail 'Hyprland Win+M must create from the web prompt'
 grep -Fq 'mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window")' "$HYPR" || fail 'Hyprland Win+W binding missing'
 grep -Fq 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus")' "$HYPR" || fail 'Hyprland Win+Shift+W must only focus'
-grep -Fq 'exec firefox-open-tab --new "$@"' "$HYPR_WRAPPER" || fail 'Hyprland Win+W wrapper must create a tab'
+grep -Fq 'exec firefox-open-tab --new "$@"' "$HYPR_WRAPPER" || fail 'Hyprland Win+W wrapper must create a window'
 grep -Fq "*'Firefox') exec firefox-open-tab --focus" "$HYPR_MENU" || fail 'Hyprland Firefox menu must only focus'
 grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_SMART_RUN" || fail 'Hyprland web launcher must only request existing Firefox tabs'
 grep -Fq '<keybind key="W-w">' "$LABWC" || fail 'Labwc Win+W binding missing'
@@ -88,7 +88,7 @@ run_bridge_focus() {
     "$HELPER" "$input"
   [[ "$(<"$tmp/bridge-args")" == "$expected_url" ]] || fail 'bridge did not receive the normalized URL'
   grep -Fxq "$expected_focus" "$tmp/focus-args" || fail "$desktop did not focus Firefox after bridge reuse"
-  [[ ! -e "$tmp/firefox-args" ]] || fail 'focus-only URL mode must not create a Firefox tab'
+  [[ ! -e "$tmp/firefox-args" ]] || fail 'focus-only URL mode must not create a Firefox window'
 }
 
 run_explicit_new() {
@@ -97,7 +97,7 @@ run_explicit_new() {
   BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" \
     "$HELPER" --new "$input"
   wait_for_file "$tmp/firefox-args"
-  [[ "$(<"$tmp/firefox-args")" == "--new-tab $expected_url" ]] || fail 'explicit creation did not normalize the URL'
+  [[ "$(<"$tmp/firefox-args")" == "--new-window $expected_url" ]] || fail 'explicit creation did not normalize the URL'
   [[ ! -e "$tmp/bridge-args" ]] || fail 'explicit creation must not query the bridge'
 }
 
@@ -111,7 +111,7 @@ if BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \
   fail 'focus-only URL mode must fail when the bridge fails'
 fi
 [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'failed bridge did not receive the normalized URL'
-[[ ! -e "$tmp/firefox-args" ]] || fail 'failed bridge must never fall back to Firefox --new-tab'
+[[ ! -e "$tmp/firefox-args" ]] || fail 'failed bridge must never fall back to Firefox --new-window'
 wait_for_file "$tmp/notify-args"
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
@@ -119,7 +119,7 @@ rm -f "$tmp/firefox-args" "$tmp/bridge-args"
 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" \
   "$HELPER" --new
 wait_for_file "$tmp/firefox-args"
-[[ "$(<"$tmp/firefox-args")" == '--new-tab about:blank' ]] || fail 'URL-less creation did not open about:blank'
+[[ "$(<"$tmp/firefox-args")" == '--new-window about:blank' ]] || fail 'URL-less creation did not open about:blank'
 [[ ! -e "$tmp/bridge-args" ]] || fail 'URL-less creation must not query the bridge'
 
 
@@ -127,7 +127,7 @@ rm -f "$tmp/firefox-args" "$tmp/bridge-args"
 ROFI_RESULT=pagina FIREFOX_ARGS="$tmp/firefox-args" BRIDGE_ARGS="$tmp/bridge-args" PATH="$tmp/bin:$PATH" \
   "$HELPER" --new --prompt
 wait_for_file "$tmp/firefox-args"
-[[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.com' ]] || fail 'prompt creation did not normalize the selected URL'
+[[ "$(<"$tmp/firefox-args")" == '--new-window https://pagina.com' ]] || fail 'prompt creation did not normalize the selected URL'
 [[ ! -e "$tmp/bridge-args" ]] || fail 'prompt creation must not query the bridge'
 
 rm -f "$tmp/firefox-args" "$tmp/bridge-args" "$tmp/focus-args"

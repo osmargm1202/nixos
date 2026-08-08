@@ -74,6 +74,10 @@ cat >"$test_bin/hypr-nwg-dock-reload" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >"$NWG_DOCK_RELOAD_ARGS"
 EOF
+cat >"$test_bin/hyprctl" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
 chmod +x "$test_bin"/*
 
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" "$bin/hypr-app-launcher"
@@ -114,5 +118,5 @@ test -f "$tmp/nwg-dock-reload-args"
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRLOCK_ARGS="$tmp/hyprlock-args" "$bin/hypr-lock"
 [[ "$(<"$tmp/hyprlock-args")" == '--immediate-render --no-fade-in' ]]
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" FIREFOX_ARGS="$tmp/firefox-args" "$bin/hypr-firefox-new-window"
-[[ "$(<"$tmp/firefox-args")" == '' ]]
+[[ "$(<"$tmp/firefox-args")" == '--new' ]]
 printf '%s\n' 'hypr-core-helpers: ok'

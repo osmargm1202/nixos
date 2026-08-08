@@ -25,7 +25,7 @@ done
 
 grep -Fq 'Devices) exec i3-devices-menu' "$MAIN" || fail 'Devices submenu dispatch missing'
 grep -Fq 'Calculator) exec i3-calc' "$MAIN" || fail 'Calculator dispatch missing'
-grep -Fq 'Firefox) exec "$HOME/.local/bin/i3-firefox-new-window"' "$MAIN" || fail 'Firefox dispatch missing'
+grep -Fq 'Firefox) exec firefox-open-tab --focus' "$MAIN" || fail 'Firefox focus dispatch missing'
 grep -Fq 'Wallpaper) exec i3-wallpaper --random' "$MAIN" || fail 'Wallpaper dispatch missing'
 grep -Fq 'Help) exec i3-hotkeys' "$MAIN" || fail 'Help dispatch missing'
 grep -Fq 'Power) exec xlogout' "$MAIN" || fail 'Power dispatch missing'
