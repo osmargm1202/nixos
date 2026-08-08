@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Windows VM
-Comment=Launch Windows container via RDP
-Exec=/home/osmarg/.local/bin/windows-rdp run
+Name=Windows VM (RDP)
+Comment=Connect to Windows via RDP
+Exec=/home/osmarg/.local/bin/windows-rdp connect
 Icon=/home/osmarg/.local/share/icons/windows.png
 Terminal=false
 Type=Application

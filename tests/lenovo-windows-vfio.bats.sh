@@ -21,11 +21,12 @@ nix eval --impure --raw --expr '
     requiredUdevRule = "SUBSYSTEM==\"vfio\", KERNEL==\"[0-9]*\", GROUP=\"podman\", MODE=\"0660\"";
     requiredKvmfrUdevRule = "KERNEL==\"kvmfr0\", GROUP=\"podman\", MODE=\"0660\"";
     requiredKvmfrModprobe = "options kvmfr static_size_mb=128";
+    requiredLookingGlassClient = "looking-glass-client-B7-544-d3fff4eb";
     hasLookingGlass = vfio:
       builtins.elem "kvmfr" vfio.boot.kernelModules
       && builtins.substring 0 (builtins.stringLength requiredKvmfrModprobe) vfio.boot.extraModprobeConfig == requiredKvmfrModprobe
       && builtins.any (pkg: builtins.match "kvmfr-.*" pkg.name != null) vfio.boot.extraModulePackages
-      && builtins.any (pkg: builtins.match "looking-glass-client-.*" pkg.name != null) vfio.environment.systemPackages
+      && builtins.any (pkg: pkg.name == requiredLookingGlassClient) vfio.environment.systemPackages
       && builtins.match ".*${requiredKvmfrUdevRule}.*" vfio.services.udev.extraRules != null
       && vfio.home-manager.users.osmarg.xdg.desktopEntries."windows-looking-glass".exec
         == "/home/osmarg/.local/bin/windows-rdp looking-glass";

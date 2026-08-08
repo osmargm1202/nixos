@@ -129,6 +129,7 @@ in
     XDG_SESSION_TYPE = "x11";
     XDG_SESSION_DESKTOP = "i3";
     XDG_CURRENT_DESKTOP = "i3";
+    XCURSOR_SIZE = "24";
     TERMINAL = "kitty";
   };
 

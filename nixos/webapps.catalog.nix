@@ -27,7 +27,6 @@
     { name = "Google AI Studio"; url = "https://aistudio.google.com/"; icon = "google-ai-studio"; }
     { name = "Excalidraw"; url = "https://excalidraw.com/"; icon = "excalidraw"; }
     { name = "Fast"; url = "https://fast.com"; icon = "fast"; }
-    { name = "Windows Docker"; url = "http://127.0.0.1:8006"; icon = "windows-docker"; }
     { name = "Claude"; url = "https://claude.ai"; icon = "claude-webapp"; }
     { name = "Chatgpt"; url = "https://chatgpt.com"; icon = "chatgpt"; }
   ];

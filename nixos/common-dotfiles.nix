@@ -146,6 +146,7 @@ let
     ".local/bin/wlogout_uniqe"
     ".local/share/icons/hicolor/256x256/apps"
     ".local/share/applications/windows-rdp.desktop"
+    ".local/share/applications/windows-web-console.desktop"
     ".local/share/icons/nixos.svg"
     ".local/share/icons/windows.png"
     ".local/share/posting"

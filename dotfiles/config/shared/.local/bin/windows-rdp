@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ============================================================
-# Windows RDP - Container Manager
+# Windows VM - Container Manager
 # ============================================================
 
 CONTAINER="windows"
@@ -14,6 +14,9 @@ RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"
 RDP_PASS="hacker12"
+WEB_CONSOLE_URL="http://127.0.0.1:8006"
+WEB_CONSOLE_HOST="127.0.0.1"
+WEB_CONSOLE_PORT="8006"
 
 SCRIPT_NAME="windows-rdp"
 BIN_DIR="$HOME/.local/bin"
@@ -159,29 +162,44 @@ report_container_failure() {
   notify_user "Windows VM error" "El contenedor '$CONTAINER' falló; revisa la terminal."
 }
 
-wait_rdp() {
-  echo "Waiting for RDP on $RDP_HOST:$RDP_PORT..."
+wait_for_service_port() {
+  local host="$1"
+  local port="$2"
+  local service="$3"
+  local boot_delay="${4:-0}"
+
+  echo "Waiting for $service on $host:$port..."
   for _ in $(seq 1 60); do
     if ! container_is_running; then
       report_container_failure
       return 1
     fi
 
-    if nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
-      echo "Port open. Waiting ${RDP_BOOT_DELAY}s for Windows to finish booting..."
-      sleep "$RDP_BOOT_DELAY"
-      if container_is_running && nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
-        echo "RDP is ready."
-        return 0
+    if nc -z "$host" "$port" 2>/dev/null; then
+      if [[ "$boot_delay" -gt 0 ]]; then
+        echo "Port open. Waiting ${boot_delay}s for Windows to finish booting..."
+        sleep "$boot_delay"
+        if ! container_is_running || ! nc -z "$host" "$port" 2>/dev/null; then
+          report_container_failure
+          return 1
+        fi
       fi
-      report_container_failure
-      return 1
+      echo "$service is ready."
+      return 0
     fi
     sleep 2
   done
-  echo "Error: RDP did not become available after 120s." >&2
+  echo "Error: $service did not become available after 120s." >&2
   report_container_failure
   return 1
+}
+
+wait_rdp() {
+  wait_for_service_port "$RDP_HOST" "$RDP_PORT" "RDP" "$RDP_BOOT_DELAY"
+}
+
+wait_web_console() {
+  wait_for_service_port "$WEB_CONSOLE_HOST" "$WEB_CONSOLE_PORT" "Windows Web Console"
 }
 
 rdp_command() {
@@ -322,7 +340,7 @@ do_looking_glass() {
     wait_rdp || return 1
   fi
 
-  exec looking-glass-client -F
+  exec looking-glass-client -m 88 -p 5901
 }
 
 # ============================================================
@@ -330,6 +348,8 @@ do_looking_glass() {
 # ============================================================
 
 do_start() {
+  # Pass 0 for callers that need a service other than RDP after startup.
+  local wait_for_rdp="${1:-1}"
   if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
     if [[ ! -e /dev/vfio/16 ]]; then
       echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
@@ -349,7 +369,7 @@ do_start() {
     container_cmd rm -f "$INACTIVE_CONTAINER" || true
     if ! (
       cd "$WINDOWS_COMPOSE_DIR"
-      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d
+      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d --build
     ); then
       report_container_failure
       return 1
@@ -359,7 +379,9 @@ do_start() {
     return 1
   fi
 
-  wait_rdp
+  if [[ "$wait_for_rdp" == 1 ]]; then
+    wait_rdp
+  fi
 }
 
 do_stop() {
@@ -391,6 +413,31 @@ do_connect() {
 
   rdp_connect "$started_container" "$target_workspace"
 }
+open_web_console() {
+  if command -v firefox-open-tab &>/dev/null && firefox-open-tab --new "$WEB_CONSOLE_URL"; then
+    return 0
+  fi
+
+  if command -v firefox &>/dev/null; then
+    firefox --new-tab "$WEB_CONSOLE_URL" &
+    return 0
+  fi
+
+  echo "Error: Firefox tab helper and Firefox are unavailable." >&2
+  notify_user "Windows Web Console error" "Firefox no está disponible para abrir la consola web."
+  return 1
+}
+
+do_web() {
+  if ! container_is_running; then
+    echo "Windows Web Console is unavailable. Starting container '$CONTAINER'..."
+    do_start 0 || return 1
+  fi
+
+  wait_web_console || return 1
+  open_web_console
+}
+
 
 do_run() {
   do_connect
@@ -416,13 +463,13 @@ do_install() {
   fi
   echo "  Icon    -> $ICON_FILE"
 
-  # Create .desktop
+  # Create desktop launchers.
   mkdir -p "$APPS_DIR"
   cat >"$APPS_DIR/$SCRIPT_NAME.desktop" <<EOF
 [Desktop Entry]
-Name=Windows VM
-Comment=Launch Windows container via RDP
-Exec=$BIN_DIR/$SCRIPT_NAME run
+Name=Windows VM (RDP)
+Comment=Connect to Windows via RDP
+Exec=$BIN_DIR/$SCRIPT_NAME connect
 Icon=$ICON_FILE
 Terminal=false
 Type=Application
@@ -432,6 +479,20 @@ StartupWMClass=windows-rdp
 EOF
   chmod +x "$APPS_DIR/$SCRIPT_NAME.desktop"
   echo "  Desktop -> $APPS_DIR/$SCRIPT_NAME.desktop"
+
+  cat >"$APPS_DIR/windows-web-console.desktop" <<EOF
+[Desktop Entry]
+Name=Windows VM (Web Console)
+Comment=Open the Windows VM web console
+Exec=$BIN_DIR/$SCRIPT_NAME web
+Icon=$ICON_FILE
+Terminal=false
+Type=Application
+Categories=System;RemoteAccess;
+Keywords=windows;web;console;vm;container;
+EOF
+  chmod +x "$APPS_DIR/windows-web-console.desktop"
+  echo "  Web     -> $APPS_DIR/windows-web-console.desktop"
 
   echo "Install complete. '$SCRIPT_NAME' is now available."
 }
@@ -449,10 +510,11 @@ Commands:
   start      Start the Windows container only
   stop       Stop the Windows container only
   connect    Connect RDP; start container if needed
+  web        Start the selected container if needed and open its Web Console
   looking-glass
              Start the Lenovo VFIO Windows VM if needed and open Looking Glass
   status     Show the selected VM profile and RDP client
-  install    Install script, icon and .desktop launcher
+  install    Install script, icon and desktop launchers
 
 EOF
 }
@@ -468,6 +530,7 @@ run) do_run ;;
 start) do_start ;;
 stop) do_stop ;;
 connect) do_connect ;;
+web) do_web ;;
 status) do_status ;;
 looking-glass) do_looking_glass ;;
 install) do_install ;;

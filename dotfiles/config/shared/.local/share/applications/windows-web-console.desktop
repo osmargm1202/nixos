@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Windows VM (Web Console)
+Comment=Open the Windows VM web console
+Exec=/home/osmarg/.local/bin/windows-rdp web
+Icon=/home/osmarg/.local/share/icons/windows.png
+Terminal=false
+Type=Application
+Categories=System;RemoteAccess;
+Keywords=windows;web;console;vm;container;

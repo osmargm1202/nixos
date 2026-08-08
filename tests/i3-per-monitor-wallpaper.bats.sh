@@ -80,11 +80,19 @@ printf '%s\n' "$*" >>"${NOTIFY_CALLS:-/dev/null}"
 STUB
 cat >"$TMP/bin/shuf" <<'STUB'
 #!/usr/bin/env bash
-if [[ -n "${SHUF_VALUE:-}" ]]; then
-  printf '%s\n' "$SHUF_VALUE"
-else
-  head -n1
+mapfile -t candidates
+if [[ -n "${SHUF_REJECT_VALUE:-}" ]]; then
+  for candidate in "${candidates[@]}"; do
+    [[ "$candidate" != "$SHUF_REJECT_VALUE" ]] || exit 1
+  done
 fi
+if [[ -n "${SHUF_VALUE:-}" ]]; then
+  for candidate in "${candidates[@]}"; do
+    [[ "$candidate" == "$SHUF_VALUE" ]] && printf '%s\n' "$candidate" && exit 0
+  done
+  exit 1
+fi
+printf '%s\n' "${candidates[0]}"
 STUB
 chmod +x "$TMP/bin/"*
 
@@ -101,6 +109,45 @@ run_wallpaper() {
   CALLS="$TMP/calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/state" \
     I3_WALLPAPER_DIR="$TMP/wallpapers" PATH="$TMP/bin:$PATH" "$HELPER" "$@"
 }
+
+default_wallpaper="$TMP/home/Pictures/Wallpapers/default image.jpg"
+override_wallpaper="$TMP/override-wallpapers/override image.jpg"
+mkdir -p "${default_wallpaper%/*}" "${override_wallpaper%/*}"
+printf 'image\n' >"$default_wallpaper"
+printf 'image\n' >"$override_wallpaper"
+: >"$TMP/calls"
+CALLS="$TMP/calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/default-state" \
+  PATH="$TMP/bin:$PATH" "$HELPER" --random
+grep -Fxq "feh <--bg-fill> <$default_wallpaper> <$default_wallpaper>" "$TMP/calls" ||
+  fail 'default wallpaper directory was not used'
+: >"$TMP/calls"
+CALLS="$TMP/calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/override-state" \
+  I3_WALLPAPER_DIR="$TMP/override-wallpapers" PATH="$TMP/bin:$PATH" "$HELPER" --random
+grep -Fxq "feh <--bg-fill> <$override_wallpaper> <$override_wallpaper>" "$TMP/calls" ||
+  fail 'I3_WALLPAPER_DIR did not override default wallpaper directory'
+
+# Random selection ignores thumbnails, including nested .thumb directories.
+thumbnail_tree="$TMP/thumbnail-tree"
+normal_thumbnail_tree_image="$thumbnail_tree/nested/normal image.jpg"
+thumbnail_tree_image="$thumbnail_tree/nested/.thumb/thumbnail image.jpg"
+mkdir -p "${normal_thumbnail_tree_image%/*}" "${thumbnail_tree_image%/*}"
+printf 'image\n' >"$normal_thumbnail_tree_image"
+printf 'image\n' >"$thumbnail_tree_image"
+: >"$TMP/calls"
+CALLS="$TMP/calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/thumbnail-state" \
+  I3_WALLPAPER_DIR="$thumbnail_tree" SHUF_VALUE="$normal_thumbnail_tree_image" \
+  SHUF_REJECT_VALUE="$thumbnail_tree_image" PATH="$TMP/bin:$PATH" "$HELPER" --random
+grep -Fxq "feh <--bg-fill> <$normal_thumbnail_tree_image> <$normal_thumbnail_tree_image>" "$TMP/calls" ||
+  fail 'random wallpaper considered thumbnail'
+
+# A thumbnail-only tree is empty to random selection.
+thumbnail_only_tree="$TMP/thumbnail-only-tree"
+mkdir -p "$thumbnail_only_tree/.thumb"
+printf 'image\n' >"$thumbnail_only_tree/.thumb/thumbnail image.jpg"
+if CALLS="$TMP/thumbnail-only.calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/thumbnail-only-state" \
+  I3_WALLPAPER_DIR="$thumbnail_only_tree" PATH="$TMP/bin:$PATH" "$HELPER" --random; then
+  fail 'thumbnail-only wallpaper tree unexpectedly succeeded'
+fi
 
 # Same-image mode remains available and seeds the legacy/default state.
 : >"$TMP/calls"

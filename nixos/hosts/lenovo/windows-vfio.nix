@@ -5,6 +5,16 @@
   userName,
   ...
 }:
+let
+  lookingGlassIddClient = pkgs.callPackage ../../packages/looking-glass-idd-client.nix { };
+  virtioInputIso = pkgs.runCommand "virtio-input.iso" {
+    nativeBuildInputs = [ pkgs.xorriso ];
+  } ''
+    mkdir -p "$out"
+    xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
+      vioinput/w11/amd64=${pkgs.virtio-win}/vioinput/w11/amd64
+  '';
+in
 {
   orgm.lenovo.windowsVfio.enable = true;
 
@@ -12,21 +22,30 @@
   boot.kernelModules = [ "kvmfr" ];
   boot.extraModprobeConfig = "options kvmfr static_size_mb=128";
 
-  environment.systemPackages = [ pkgs.looking-glass-client ];
+  environment.systemPackages = [ lookingGlassIddClient ];
 
-  home-manager.users.${userName}.xdg.desktopEntries.windows-looking-glass = {
-    name = "Windows VM (Looking Glass)";
-    comment = "Open the Windows VFIO display without RDP";
-    exec = "/home/${userName}/.local/bin/windows-rdp looking-glass";
-    icon = "windows";
-    terminal = false;
-    categories = [
-      "System"
-      "RemoteAccess"
-    ];
-    settings = {
-      Keywords = "windows;looking glass;vm;vfio;";
-      StartupWMClass = "looking-glass-client";
+  home-manager.users.${userName} = {
+    xdg.desktopEntries.windows-looking-glass = {
+      name = "Windows VM (Looking Glass)";
+      comment = "Open the Windows VFIO display without RDP";
+      exec = "/home/${userName}/.local/bin/windows-rdp looking-glass";
+      icon = "windows";
+      terminal = false;
+      categories = [
+        "System"
+        "RemoteAccess"
+      ];
+      settings = {
+        Keywords = "windows;looking glass;vm;vfio;";
+        StartupWMClass = "looking-glass-client";
+      };
+    };
+
+    home.file = {
+      "Apps/windows/compose.yml".source = ../../../containers/windows/compose.yml;
+      "Apps/windows/compose.lenovo-vfio.yml".source = ../../../containers/windows/hosts/lenovo-windows/compose.yml;
+      "Apps/windows/Containerfile.spice".source = ../../../containers/windows/Containerfile.spice;
+      "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
   };
 

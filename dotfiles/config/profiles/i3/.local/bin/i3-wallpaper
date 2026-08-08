@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/.config/wallpapers}"
+wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
 state_file="$state_dir/wallpaper"
 output_state_dir="$state_dir/wallpapers"
@@ -47,8 +47,8 @@ is_video() {
 random_image() {
   local -a images=()
   mapfile -d '' images < <(
-    find "$wallpaper_dir" -type f \
-      \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+    find "$wallpaper_dir" -type d -name '.thumb' -prune -o \
+      -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
       -print0 2>/dev/null
   )
   ((${#images[@]} > 0)) || return 1

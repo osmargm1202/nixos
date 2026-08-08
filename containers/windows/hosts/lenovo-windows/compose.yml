@@ -1,15 +1,37 @@
 # Lenovo T500 VFIO overlay. Stop the existing `windows` VM before starting this:
 # both configurations use the same Windows storage directory.
-# Do not run it until the T500 reports `Kernel driver in use: vfio-pci`
-# and `/dev/vfio/16` exists after the NixOS VFIO profile reboot.
+# Do not run it until the T500 reports `Kernel driver in use: vfio-pci`,
+# `/dev/vfio/16` and `/dev/kvmfr0` exist after the NixOS VFIO profile reboot.
 services:
   windows:
     container_name: lenovo-windows
+    image: local/dockurr-windows-spice:latest
+    build:
+      context: .
+      dockerfile: Containerfile.spice
     environment:
-      ARGUMENTS: "-machine q35,kernel_irqchip=split -device intel-iommu,intremap=on,caching-mode=on,aw-bits=39 -device vfio-pci,host=01:00.0"
+      # Looking Glass requires relative VirtIO input, not QEMU's USB tablet.
+      USB: "no"
+      ARGUMENTS: >-
+        -machine q35,kernel_irqchip=split
+        -device intel-iommu,intremap=on,caching-mode=on,aw-bits=39
+        -object memory-backend-file,id=looking-glass,mem-path=/dev/kvmfr0,size=134217728,share=on
+        -device ivshmem-plain,memdev=looking-glass
+        -device vfio-pci,host=01:00.0
+        -spice port=5901,addr=0.0.0.0,disable-ticketing=on
+        -audiodev spice,id=spice-audio
+        -device ich9-intel-hda
+        -device hda-duplex,audiodev=spice-audio
+        -device virtio-mouse-pci
+        -device virtio-keyboard-pci
+    ports:
+      - 127.0.0.1:5901:5901
+    volumes:
+      - ./virtio-input.iso:/drivers.iso:ro
     devices:
       - /dev/vfio/vfio
       - /dev/vfio/16
+      - /dev/kvmfr0
     # Rootless Podman otherwise drops osmarg's podman group, which owns
     # /dev/vfio/16 after the NixOS udev rule applies.
     group_add:
