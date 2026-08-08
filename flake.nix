@@ -28,10 +28,6 @@
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    rmatrix = {
-      url = "github:osmargm1202/rmatrix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # qylock = {
     #   # SDDM/quickshell lockscreen themes. Pins its own nixpkgs-unstable
     #   # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
