@@ -182,6 +182,26 @@
         "url": "https://git.outfoxxed.me/quickshell/quickshell"
       }
     },
+    "rmatrix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786191151,
+        "narHash": "sha256-8uMYGE8Trgp2Pa0x5KcNJ6BCrjGe6wURnfMezjlYE2o=",
+        "owner": "osmargm1202",
+        "repo": "rmatrix",
+        "rev": "1843908b3ed6155f80bda3cda9a31e99cbced667",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "rmatrix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "cinnamon-spices-extensions": "cinnamon-spices-extensions",
@@ -192,6 +212,7 @@
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-zen70": "nixpkgs-zen70",
+        "rmatrix": "rmatrix",
         "sops-nix": "sops-nix"
       }
     },
