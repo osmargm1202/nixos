@@ -51,9 +51,10 @@
     title = Dunst
     class = Dunst
 
-    mouse_left_click = close_current
+    # Let the notification sender handle activation, then dismiss this notification.
+    mouse_left_click = do_action, close_current
     mouse_middle_click = do_action
-    mouse_right_click = close_all
+    mouse_right_click = close_current
 
 [urgency_low]
     background = "#1a1b26"

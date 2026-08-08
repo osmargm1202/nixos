@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
+HYPR_DUNST="$ROOT/dotfiles/config/profiles/hyprland/.config/dunst/dunstrc"
+LABWC_DUNST="$ROOT/dotfiles/config/profiles/labwc/.config/dunst/dunstrc"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
@@ -22,6 +24,13 @@ grep -Eq '^[[:space:]]*progress_bar[[:space:]]*=[[:space:]]*true' "$DUNST" ||
   fail 'Dunst progress bar must be enabled for audio OSD'
 grep -Eq '^[[:space:]]*mouse_middle_click[[:space:]]*=[[:space:]]*do_action' "$DUNST" ||
   fail 'Dunst notification actions must remain available'
+
+for config in "$DUNST" "$HYPR_DUNST" "$LABWC_DUNST"; do
+  grep -Eq '^[[:space:]]*mouse_left_click[[:space:]]*=[[:space:]]*do_action,[[:space:]]*close_current[[:space:]]*$' "$config" ||
+    fail 'left click must invoke the sender action and dismiss the notification'
+  grep -Eq '^[[:space:]]*mouse_right_click[[:space:]]*=[[:space:]]*close_current[[:space:]]*$' "$config" ||
+    fail 'right click must dismiss only the clicked notification'
+done
 
 grep -Fq 'bindsym $mod+n exec --no-startup-id dunstctl history-pop' "$I3" ||
   fail 'Dunst history binding missing'
