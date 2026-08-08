@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -13,6 +14,17 @@ CRITICAL = "#f7768e"
 CAFFEINE_ON = "#9ece6a"
 CAFFEINE_OFF = "#565f89"
 NETWORK = "#7aa2f7"
+ICON_KEYBOARD = ""
+ICON_CAFFEINE_ON = ""
+ICON_CAFFEINE_OFF = "󰅶"
+ICON_CPU = ""
+ICON_MEMORY = "󰍛"
+ICON_DISK = "󰋊"
+ICON_WIFI = ""
+ICON_WIFI_OFF = "󰖪"
+ICON_ETHERNET = "󰈀"
+BATTERY_ICONS = ("", "", "", "", "", "", "", "", "", "", "")
+BATTERY_CHARGING = ""
 GIB = 1024**3
 
 TRANSLATIONS = (
@@ -43,6 +55,39 @@ def caffeine_enabled():
     return (state_home / "i3" / "caffeine").is_file()
 
 
+def battery_block(block):
+    text = block.get("full_text", "")
+    match = re.search(r"(\d+)%", text)
+    if not match:
+        return block
+    percentage = int(match.group(1))
+    if "CHR" in text.upper():
+        icon = BATTERY_CHARGING
+    else:
+        icon = BATTERY_ICONS[min(percentage // 10, len(BATTERY_ICONS) - 1)]
+    block = block.copy()
+    block["full_text"] = f"{icon} {percentage}%"
+    block["color"] = CRITICAL if percentage <= 15 else CPU_WARNING if percentage <= 35 else NORMAL
+    return block
+
+
+def keyboard_block():
+    try:
+        result = subprocess.run(
+            ["xkb-switch", "-p"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=1,
+        )
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    layout = result.stdout.strip().upper()
+    if not layout:
+        return None
+    return {"name": "keyboard", "full_text": f"{ICON_KEYBOARD} {layout}", "color": NORMAL}
+
+
 def resource_blocks(cpu_percent, mem_total_kib, mem_available_kib, disk_available_bytes, caffeine_on):
     cpu_color = CRITICAL if cpu_percent > 90 else CPU_WARNING if cpu_percent >= 75 else NORMAL
     memory_used_percent = 100 * (mem_total_kib - mem_available_kib) / mem_total_kib
@@ -50,22 +95,22 @@ def resource_blocks(cpu_percent, mem_total_kib, mem_available_kib, disk_availabl
     return [
         {
             "name": "caffeine",
-            "full_text": f"Café: {'ON' if caffeine_on else 'OFF'}",
+            "full_text": ICON_CAFFEINE_ON if caffeine_on else ICON_CAFFEINE_OFF,
             "color": CAFFEINE_ON if caffeine_on else CAFFEINE_OFF,
         },
         {
             "name": "cpu",
-            "full_text": f"CPU: {cpu_percent:d}%",
+            "full_text": f"{ICON_CPU} {cpu_percent:d}%",
             "color": cpu_color,
         },
         {
             "name": "memory",
-            "full_text": f"RAM: {mem_available_kib * 1024 / GIB:.2f} GiB",
+            "full_text": f"{ICON_MEMORY} {mem_available_kib * 1024 / GIB:.2f} GiB",
             "color": ram_color,
         },
         {
             "name": "disk",
-            "full_text": f"SDD: {disk_available_bytes / GIB:.0f} GiB",
+            "full_text": f"{ICON_DISK} {disk_available_bytes / GIB:.0f} GiB",
             "color": NORMAL,
         },
     ]
@@ -112,8 +157,23 @@ def localize(block):
     block = block.copy()
     for english, spanish in TRANSLATIONS:
         block["full_text"] = block["full_text"].replace(english, spanish)
-    if block.get("name") in {"wireless", "ethernet"} and not block["full_text"].endswith("down"):
-        block["color"] = NETWORK
+    name = block.get("name", "")
+    if name.startswith("battery"):
+        return battery_block(block)
+    if name == "wireless":
+        if block["full_text"].endswith("down"):
+            block["full_text"] = ICON_WIFI_OFF
+            block["color"] = CRITICAL
+        else:
+            block["full_text"] = f"{ICON_WIFI} {block['full_text']}".rstrip()
+            block["color"] = NETWORK
+    elif name == "ethernet":
+        if block["full_text"].endswith("down"):
+            block["full_text"] = ICON_ETHERNET
+            block["color"] = CAFFEINE_OFF
+        else:
+            block["full_text"] = f"{ICON_ETHERNET} {block['full_text']}".rstrip()
+            block["color"] = NETWORK
     return block
 
 
@@ -121,6 +181,9 @@ def decorate(blocks, cpu_usage):
     localized = [localize(block) for block in blocks]
     regular = [block for block in localized if block.get("name") != "tztime"]
     clock = [block for block in localized if block.get("name") == "tztime"]
+    keyboard = keyboard_block()
+    if keyboard is not None:
+        regular.append(keyboard)
     total_kib, available_kib = memory_sample()
     return regular + resource_blocks(
         cpu_usage.percent(),

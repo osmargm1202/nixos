@@ -1,20 +1,20 @@
 const hostName = "windows_manager_linux_orgm";
 let nativePort;
 
-function httpOrigin(rawUrl) {
+function webAppHost(rawUrl) {
   const url = new URL(rawUrl);
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("Only HTTP(S) URLs are supported");
   }
-  return url.origin;
+  return url.hostname.toLowerCase().replace(/^www\./, "");
 }
 
 async function focusExisting(url) {
-  const requestedOrigin = httpOrigin(url);
+  const requestedHost = webAppHost(url);
   const tabs = await browser.tabs.query({});
   const existing = tabs.find((tab) => {
     try {
-      return httpOrigin(tab.url) === requestedOrigin;
+      return webAppHost(tab.url) === requestedHost;
     } catch {
       return false;
     }

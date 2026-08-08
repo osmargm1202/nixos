@@ -83,7 +83,7 @@ async function main() {
     {
       id: 41,
       title: "A title unrelated to the requested URL",
-      url: "https://webapp.example.test/previous/path?old=query#old-hash",
+      url: "https://www.netflix.com/do-en/",
       windowId: 8,
     },
     {
@@ -93,17 +93,30 @@ async function main() {
     },
   ]);
   await matching.deliver({
-    id: "focus-origin",
+    id: "focus-www-redirect",
     type: "focus-existing",
-    url: "https://webapp.example.test/current/path?new=query#new-hash",
+    url: "https://netflix.com/",
   });
   assert.deepEqual(matching.calls.windowUpdates, [{ details: { focused: true }, windowId: 8 }]);
   assert.deepEqual(matching.calls.tabUpdates, [{ details: { active: true }, tabId: 41 }]);
   assert.deepEqual(matching.calls.created, []);
-  assert.deepEqual(matching.posted, [{ action: "focused", id: "focus-origin", ok: true }]);
+  assert.deepEqual(matching.posted, [{ action: "focused", id: "focus-www-redirect", ok: true }]);
+
+  const ownSubdomain = createHarness([
+    { id: 61, url: "https://cloud.or-gm.com/index.php/apps/files/", windowId: 14 },
+    { id: 62, url: "https://chat.or-gm.com/", windowId: 15 },
+  ]);
+  await ownSubdomain.deliver({
+    id: "focus-own-subdomain",
+    type: "focus-existing",
+    url: "https://cloud.or-gm.com/index.php/apps/calendar/",
+  });
+  assert.deepEqual(ownSubdomain.calls.windowUpdates, [{ details: { focused: true }, windowId: 14 }]);
+  assert.deepEqual(ownSubdomain.calls.tabUpdates, [{ details: { active: true }, tabId: 61 }]);
+  assert.deepEqual(ownSubdomain.posted, [{ action: "focused", id: "focus-own-subdomain", ok: true }]);
 
   const noMatch = createHarness([
-    { id: 51, url: "http://webapp.example.test/same-host-different-scheme", windowId: 10 },
+    { id: 51, url: "https://m.webapp.example.test/same-site-different-subdomain", windowId: 10 },
     { id: 52, url: "about:blank", windowId: 11 },
     { id: 53, url: "file:///tmp/webapp.html", windowId: 12 },
     { id: 54, url: "not a valid URL", windowId: 13 },

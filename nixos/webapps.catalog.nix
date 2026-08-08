@@ -1,8 +1,8 @@
 {
   multimedia = [
-    { name = "Youtube"; url = "https://youtube.com"; icon = "youtube-webapp"; }
-    { name = "YoutubeKids"; url = "https://youtubekids.com"; icon = "youtube-kids"; }
-    { name = "Netflix"; url = "https://netflix.com"; icon = "netflix"; }
+    { name = "Youtube"; url = "https://www.youtube.com/"; icon = "youtube-webapp"; }
+    { name = "YoutubeKids"; url = "https://www.youtubekids.com/"; icon = "youtube-kids"; }
+    { name = "Netflix"; url = "https://www.netflix.com/"; icon = "netflix"; }
     { name = "HBO MAX"; url = "https://hbomax.com"; icon = "video-television"; }
     { name = "Crunchyroll"; url = "https://www.crunchyroll.com/"; icon = "crunchyroll"; }
   ];
@@ -30,8 +30,8 @@
     { name = "Chatgpt"; url = "https://chatgpt.com"; icon = "chatgpt"; }
   ];
   social = [
-    { name = "Facebook"; url = "https://facebook.com"; icon = "facebook"; }
-    { name = "Instagram"; url = "https://instagram.com"; icon = "instagram"; }
+    { name = "Facebook"; url = "https://www.facebook.com/"; icon = "facebook"; }
+    { name = "Instagram"; url = "https://www.instagram.com/"; icon = "instagram"; }
     { name = "UberEats"; url = "https://www.ubereats.com/"; icon = "ubereats"; }
   ];
 }

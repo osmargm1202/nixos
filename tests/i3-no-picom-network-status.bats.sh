@@ -27,8 +27,11 @@ spec = importlib.util.spec_from_loader(loader.name, loader)
 wrapper = importlib.util.module_from_spec(spec)
 loader.exec_module(wrapper)
 for name in ("wireless", "ethernet"):
-    assert wrapper.localize({"name": name, "full_text": "connected"})["color"] == "#7aa2f7"
-    assert wrapper.localize({"name": name, "full_text": "W: down", "color": "#ff0000"})["color"] == "#ff0000"
+    connected = wrapper.localize({"name": name, "full_text": "72%"})
+    assert connected["color"] == "#7aa2f7"
+    assert connected["full_text"].endswith("72%")
+    down = wrapper.localize({"name": name, "full_text": "down", "color": "#ff0000"})
+    assert down["full_text"] != "down"
 PY
 
 printf 'PASS: i3 runs without Picom and uses subdued network status\n'
