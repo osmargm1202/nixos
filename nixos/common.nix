@@ -49,6 +49,7 @@ let
     xclip
     zip
     unzip
+    unrar
     btop
     yazi
     superfile
