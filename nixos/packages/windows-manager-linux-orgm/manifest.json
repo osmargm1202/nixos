@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "windows_manager_linux_orgm",
-  "version": "1.0.4",
-  "description": "Focuses an existing browser tab for a requested web application URL.",
+  "version": "1.0.5",
+  "description": "Lists and focuses existing browser tabs through the native bridge.",
   "browser_specific_settings": {
     "gecko": {
       "id": "windows_manager_linux_orgm@or-gm.com",

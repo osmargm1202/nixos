@@ -29,10 +29,10 @@ has_active_viewer() {
   local uid
   uid="$(id -u)"
 
-  # FreeRDP owns the RDP socket. Keep the host awake for any interactive RDP
-  # or Web Console TCP session, including a client launched outside this script.
+  # pgrep's process-name field is capped at 15 bytes. Match full command lines
+  # so looking-glass-client is detected instead of treating it as unattended.
   pgrep -u "$uid" -f '(^|/)(wlfreerdp|xfreerdp|xfreerdp3|freerdp)( |$)' >/dev/null \
-    || pgrep -u "$uid" -x looking-glass-client >/dev/null \
+    || pgrep -u "$uid" -f '(^|/)looking-glass-client( |$)' >/dev/null \
     || ss -Htn state established | grep -Eq '(:3389|:8006)([[:space:]]|$)'
 }
 

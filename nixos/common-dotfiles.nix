@@ -267,6 +267,7 @@ let
       ".local/bin/i3-reload-after-switch"
       ".local/bin/i3-run"
       ".local/bin/i3-firefox-new-window"
+      ".local/bin/i3-firefox-tabs"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
       ".local/bin/i3-performance-menu"

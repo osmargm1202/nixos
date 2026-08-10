@@ -4,6 +4,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { TextEncoder } = require("node:util");
 const vm = require("node:vm");
 
 const backgroundPath = path.resolve(
@@ -24,6 +25,7 @@ function createHarness(tabs) {
   const calls = {
     created: [],
     queried: 0,
+    tabGets: [],
     tabUpdates: [],
     windowUpdates: [],
   };
@@ -51,6 +53,14 @@ function createHarness(tabs) {
       async create(details) {
         calls.created.push(cloneMessage(details));
       },
+      async get(tabId) {
+        calls.tabGets.push(tabId);
+        const tab = tabs.find((candidate) => candidate.id === tabId);
+        if (!tab) {
+          throw new Error(`No tab with id: ${tabId}`);
+        }
+        return tab;
+      },
       async query() {
         calls.queried += 1;
         return tabs;
@@ -66,7 +76,7 @@ function createHarness(tabs) {
     },
   };
 
-  vm.runInNewContext(source, { URL, browser, setTimeout() {} }, { filename: backgroundPath });
+  vm.runInNewContext(source, { URL, TextEncoder, browser, setTimeout() {} }, { filename: backgroundPath });
   assert(messageHandler, "background must register a native message handler");
 
   return {
@@ -114,6 +124,99 @@ async function main() {
   assert.deepEqual(ownSubdomain.calls.windowUpdates, [{ details: { focused: true }, windowId: 14 }]);
   assert.deepEqual(ownSubdomain.calls.tabUpdates, [{ details: { active: true }, tabId: 61 }]);
   assert.deepEqual(ownSubdomain.posted, [{ action: "focused", id: "focus-own-subdomain", ok: true }]);
+
+  const listed = createHarness([
+    {
+      id: 71,
+      windowId: 16,
+      index: 3,
+      active: false,
+      title: "Example tab",
+      url: "https://example.com/path",
+      favIconUrl: "https://example.com/favicon.ico",
+    },
+    {
+      id: 72,
+      windowId: 17,
+      index: 0,
+      active: true,
+      title: "",
+      url: "about:blank",
+      favIconUrl: "",
+    },
+  ]);
+  await listed.deliver({ id: "list-tabs", type: "tab-operation", action: "list-tabs" });
+  assert.equal(listed.calls.queried, 1);
+  assert.deepEqual(listed.posted, [{
+    id: "list-tabs",
+    ok: true,
+    tabs: [
+      {
+        id: 71,
+        windowId: 16,
+        index: 3,
+        active: false,
+        title: "Example tab",
+        url: "https://example.com/path",
+        favIconUrl: "https://example.com/favicon.ico",
+      },
+      {
+        id: 72,
+        windowId: 17,
+        index: 0,
+        active: true,
+        url: "about:blank",
+      },
+    ],
+  }]);
+
+  const activated = createHarness([
+    { id: 81, windowId: 18, index: 0, active: false },
+    { id: 82, windowId: 19, index: 1, active: true },
+  ]);
+  await activated.deliver({
+    id: "activate-tab",
+    type: "tab-operation",
+    action: "activate-tab",
+    tabId: 81,
+  });
+  assert.deepEqual(activated.calls.tabGets, [81]);
+  assert.deepEqual(activated.calls.windowUpdates, [{ details: { focused: true }, windowId: 18 }]);
+  assert.deepEqual(activated.calls.tabUpdates, [{ details: { active: true }, tabId: 81 }]);
+  assert.deepEqual(activated.calls.created, []);
+  assert.deepEqual(activated.posted, [{ id: "activate-tab", ok: true, action: "activated" }]);
+
+  await activated.deliver({
+    id: "invalid-tab-id",
+    type: "tab-operation",
+    action: "activate-tab",
+    tabId: true,
+  });
+  assert.deepEqual(activated.posted.at(-1), {
+    id: "invalid-tab-id",
+    ok: false,
+    error: "tabId must be a positive integer",
+  });
+
+  await matching.deliver({
+    id: "malformed-focus",
+    type: "focus-existing",
+    url: "https://netflix.com/",
+    unexpected: true,
+  });
+  assert.deepEqual(matching.posted.at(-1), {
+    id: "malformed-focus",
+    ok: false,
+    error: "Invalid native message",
+  });
+
+  const ordered = createHarness([
+    { id: 91, windowId: 21, index: 0, active: true },
+    { id: 92, windowId: 20, index: 5, active: false },
+    { id: 93, windowId: 20, index: 1, active: false },
+  ]);
+  await ordered.deliver({ id: "ordered-tabs", type: "tab-operation", action: "list-tabs" });
+  assert.deepEqual(ordered.posted[0].tabs.map((tab) => tab.id), [93, 92, 91]);
 
   const noMatch = createHarness([
     { id: 51, url: "https://m.webapp.example.test/same-site-different-subdomain", windowId: 10 },

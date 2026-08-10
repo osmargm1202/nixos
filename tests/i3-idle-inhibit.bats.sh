@@ -45,7 +45,19 @@ cat >"$tmp/bin/xset" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$XSET_CALLS"
 STUB
-chmod +x "$tmp/bin/playerctl" "$tmp/bin/systemd-inhibit" "$tmp/bin/xset"
+cat >"$tmp/bin/pgrep" <<'STUB'
+#!/usr/bin/env bash
+case "$*" in
+  *looking-glass-client*) exit "${MOCK_LOOKING_GLASS_VIEWER:-1}" ;;
+  *wlfreerdp*) exit "${MOCK_RDP_VIEWER:-1}" ;;
+  *) exit 1 ;;
+esac
+STUB
+cat >"$tmp/bin/ss" <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+chmod +x "$tmp/bin/playerctl" "$tmp/bin/systemd-inhibit" "$tmp/bin/xset" "$tmp/bin/pgrep" "$tmp/bin/ss"
 
 start_helper() {
   XDG_STATE_HOME="$tmp/state" \
@@ -53,6 +65,8 @@ start_helper() {
   INHIBITOR_CALLS="$tmp/inhibitor-calls" \
   PLAYER_STATUS="$tmp/player-status" \
   XSET_CALLS="$tmp/xset-calls" \
+  MOCK_RDP_VIEWER="${MOCK_RDP_VIEWER:-1}" \
+  MOCK_LOOKING_GLASS_VIEWER="${MOCK_LOOKING_GLASS_VIEWER:-1}" \
   PATH="$tmp/bin:$PATH" \
   "$HELPER" &
   helper_pid=$!
@@ -82,4 +96,21 @@ start_helper
 wait_for_inhibition
 grep -Fq -- '--what=idle:sleep' "$tmp/inhibitor-calls" || fail 'active media does not block idle sleep'
 grep -Fxq 's reset' "$tmp/xset-calls" || fail 'active media does not reset the X idle timer'
+stop_helper
+
+: >"$tmp/player-status"
+: >"$tmp/inhibitor-calls"
+: >"$tmp/xset-calls"
+MOCK_LOOKING_GLASS_VIEWER=0 start_helper
+wait_for_inhibition
+grep -Fq -- '--what=idle:sleep' "$tmp/inhibitor-calls" || fail 'Looking Glass does not block idle sleep'
+grep -Fxq 's reset' "$tmp/xset-calls" || fail 'Looking Glass does not reset the X idle timer'
+stop_helper
+
+: >"$tmp/inhibitor-calls"
+: >"$tmp/xset-calls"
+MOCK_RDP_VIEWER=0 start_helper
+wait_for_inhibition
+grep -Fq -- '--what=idle:sleep' "$tmp/inhibitor-calls" || fail 'RDP does not block idle sleep'
+grep -Fxq 's reset' "$tmp/xset-calls" || fail 'RDP does not reset the X idle timer'
 printf 'PASS: i3 caffeine and MPRIS playback block locking and system sleep\n'

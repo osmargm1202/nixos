@@ -23,6 +23,10 @@ case "${1:-}" in
   --calc)
     exec rofi -show calc -modes calc -theme "$theme" -theme-str "$base_theme_override"
     ;;
+  --tab-picker)
+    exec rofi -dmenu -i -no-custom -only-match -format i -p 'Pestañas Firefox' \
+      -show-icons -theme "$theme" -theme-str "$base_theme_override listview { lines: 14; }"
+    ;;
 esac
 
 prompt="${1:-i3}"

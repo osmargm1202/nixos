@@ -20,6 +20,12 @@ runCommand "windows-manager-linux-orgm" {
   exec ${python3}/bin/python3 "$out/libexec/windows-manager-linux-orgm-host.py" --client "\$@"
   EOF
   chmod 0755 "$out/bin/windows-manager-linux-orgm-tab"
+  cat > "$out/bin/windows-manager-linux-orgm-tabs" <<EOF
+  #!${pkgs.runtimeShell}
+  exec ${python3}/bin/python3 "$out/libexec/windows-manager-linux-orgm-host.py" --tabs-client "\$@"
+  EOF
+  chmod 0755 "$out/bin/windows-manager-linux-orgm-tabs"
+
 
   cat > "$out/libexec/windows-manager-linux-orgm-host" <<EOF
   #!${pkgs.runtimeShell}

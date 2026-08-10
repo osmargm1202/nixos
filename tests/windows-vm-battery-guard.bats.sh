@@ -14,7 +14,11 @@ printf '%s\n' "${MOCK_CONTAINER_RUNNING:-true}"
 EOF
 cat >"$tmp/bin/pgrep" <<'EOF'
 #!/usr/bin/env bash
-exit "${MOCK_VIEWER:-1}"
+case "$*" in
+  *looking-glass-client*) exit "${MOCK_LOOKING_GLASS_VIEWER:-1}" ;;
+  *wlfreerdp*) exit "${MOCK_RDP_VIEWER:-1}" ;;
+  *) exit 1 ;;
+esac
 EOF
 cat >"$tmp/bin/ss" <<'EOF'
 #!/usr/bin/env bash
@@ -37,7 +41,8 @@ run_guard() {
     WINDOWS_VM_GUARD_ONESHOT=1 \
     WINDOWS_VM_GUARD_IDLE_SECONDS=60 \
     MOCK_NOW="$1" \
-    MOCK_VIEWER="${MOCK_VIEWER:-1}" \
+    MOCK_RDP_VIEWER="${MOCK_RDP_VIEWER:-1}" \
+    MOCK_LOOKING_GLASS_VIEWER="${MOCK_LOOKING_GLASS_VIEWER:-1}" \
     HIBERNATE_LOG="$tmp/hibernate.log" \
     bash "$guard"
 }
@@ -51,6 +56,8 @@ run_guard 160
 [[ "$(<"$tmp/hibernate.log")" == "hibernate" ]]
 
 # A viewer cancels the timer rather than hibernating an active remote session.
-MOCK_VIEWER=0 run_guard 220
+MOCK_LOOKING_GLASS_VIEWER=0 run_guard 220
+[[ ! -e "$tmp/run/windows-vm-battery-guard.idle" ]]
+MOCK_RDP_VIEWER=0 run_guard 220
 [[ ! -e "$tmp/run/windows-vm-battery-guard.idle" ]]
 printf 'windows-vm-battery-guard: ok\n'

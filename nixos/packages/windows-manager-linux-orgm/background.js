@@ -1,5 +1,14 @@
 const hostName = "windows_manager_linux_orgm";
 let nativePort;
+const maxNativeMessageBytes = 64 * 1024;
+
+function postNativeMessage(message) {
+  if (new TextEncoder().encode(JSON.stringify(message)).byteLength > maxNativeMessageBytes) {
+    throw new Error("Native tab-list response exceeds maximum size");
+  }
+  nativePort.postMessage(message);
+}
+
 
 function webAppHost(rawUrl) {
   const url = new URL(rawUrl);
@@ -7,6 +16,41 @@ function webAppHost(rawUrl) {
     throw new Error("Only HTTP(S) URLs are supported");
   }
   return url.hostname.toLowerCase().replace(/^www\./, "");
+}
+
+function tabDescriptor(tab) {
+  const descriptor = {
+    id: tab.id,
+    windowId: tab.windowId,
+    index: tab.index,
+    active: tab.active,
+  };
+
+  for (const field of ["title", "url", "favIconUrl"]) {
+    if (typeof tab[field] === "string" && tab[field] !== "") {
+      descriptor[field] = tab[field];
+    }
+  }
+
+  return descriptor;
+}
+
+async function listTabs() {
+  const tabs = await browser.tabs.query({});
+  return tabs
+    .map(tabDescriptor)
+    .sort((left, right) => left.windowId - right.windowId || left.index - right.index);
+}
+
+async function activateTab(tabId) {
+  if (!Number.isSafeInteger(tabId) || tabId <= 0) {
+    throw new Error("tabId must be a positive integer");
+  }
+
+  const tab = await browser.tabs.get(tabId);
+  await browser.windows.update(tab.windowId, { focused: true });
+  await browser.tabs.update(tab.id, { active: true });
+  return "activated";
 }
 
 async function focusExisting(url) {
@@ -32,18 +76,54 @@ async function focusExisting(url) {
 function connectNativeHost() {
   nativePort = browser.runtime.connectNative(hostName);
   nativePort.onMessage.addListener(async (message) => {
+    const id = message && typeof message.id === "string" ? message.id : undefined;
     try {
-      if (message.type !== "focus-existing" || typeof message.id !== "string" || typeof message.url !== "string") {
+      if (message?.type === "focus-existing") {
+        if (
+          typeof id !== "string"
+          || typeof message.url !== "string"
+          || Object.keys(message).length !== 3
+        ) {
+          throw new Error("Invalid native message");
+        }
+        postNativeMessage({
+          id,
+          ok: true,
+          action: await focusExisting(message.url),
+        });
+        return;
+      }
+
+      if (message?.type !== "tab-operation" || typeof id !== "string") {
         throw new Error("Invalid native message");
       }
-      nativePort.postMessage({
-        id: message.id,
-        ok: true,
-        action: await focusExisting(message.url),
-      });
+
+      if (message.action === "list-tabs" && Object.keys(message).length === 3) {
+        postNativeMessage({
+          id,
+          ok: true,
+          tabs: await listTabs(),
+        });
+        return;
+      }
+
+      if (
+        message.action === "activate-tab"
+        && Object.keys(message).length === 4
+        && Object.hasOwn(message, "tabId")
+      ) {
+        postNativeMessage({
+          id,
+          ok: true,
+          action: await activateTab(message.tabId),
+        });
+        return;
+      }
+
+      throw new Error("Invalid native message");
     } catch (error) {
       nativePort.postMessage({
-        id: message.id,
+        id,
         ok: false,
         error: error.message,
       });
