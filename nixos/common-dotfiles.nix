@@ -252,6 +252,7 @@ let
       ".config/xlogout"
       ".config/rofi"
       ".local/bin/i3-caffeine-toggle"
+      ".local/bin/i3-idle-inhibit"
       ".local/bin/i3-calc"
       ".local/bin/i3-clipboard"
       ".local/bin/i3-config-editor"

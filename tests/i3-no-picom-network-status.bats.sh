@@ -32,6 +32,7 @@ for name in ("wireless", "ethernet"):
     assert connected["full_text"].endswith("72%")
     down = wrapper.localize({"name": name, "full_text": "down", "color": "#ff0000"})
     assert down["full_text"] != "down"
+    assert down["color"] == wrapper.CRITICAL
 PY
 
 printf 'PASS: i3 runs without Picom and uses subdued network status\n'

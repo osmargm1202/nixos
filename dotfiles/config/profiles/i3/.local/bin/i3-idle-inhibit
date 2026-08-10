@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/i3/caffeine"
+inhibitor_pid=''
+interval="${I3_IDLE_INHIBIT_INTERVAL:-5}"
+
+video_is_playing() {
+  playerctl --all-players status 2>/dev/null | grep -Fxq 'Playing'
+}
+
+inhibition_required() {
+  [[ -f "$state_file" ]] || video_is_playing
+}
+
+start_inhibitor() {
+  [[ -n "$inhibitor_pid" ]] && kill -0 "$inhibitor_pid" 2>/dev/null && return
+  setsid systemd-inhibit \
+    --what=idle:sleep \
+    --mode=block \
+    --why='i3 caffeine mode or active media playback' \
+    sleep infinity >/dev/null 2>&1 &
+  inhibitor_pid=$!
+}
+
+stop_inhibitor() {
+  [[ -n "$inhibitor_pid" ]] || return
+  kill -- "-$inhibitor_pid" 2>/dev/null || true
+  wait "$inhibitor_pid" 2>/dev/null || true
+  inhibitor_pid=''
+}
+
+cleanup() {
+  stop_inhibitor
+}
+trap cleanup EXIT
+trap 'cleanup; exit 0' INT TERM
+
+while :; do
+  if inhibition_required; then
+    start_inhibitor
+    # Caffeine is stateful: reassert its X settings in case another program
+    # changed them after activation. Playback only resets the existing timer.
+    if [[ -f "$state_file" ]]; then
+      xset s off 2>/dev/null || true
+      xset -dpms 2>/dev/null || true
+    else
+      xset s reset 2>/dev/null || true
+    fi
+  else
+    stop_inhibitor
+  fi
+  sleep "$interval"
+done

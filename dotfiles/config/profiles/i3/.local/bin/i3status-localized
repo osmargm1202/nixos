@@ -26,6 +26,7 @@ ICON_ETHERNET = "󰈀"
 BATTERY_ICONS = ("", "", "", "", "", "", "", "", "", "", "")
 BATTERY_CHARGING = ""
 GIB = 1024**3
+POWER_SUPPLY_PATH = Path(os.environ.get("I3_POWER_SUPPLY_PATH", "/sys/class/power_supply"))
 
 TRANSLATIONS = (
     ("Monday ", "Lunes "),
@@ -54,17 +55,50 @@ def caffeine_enabled():
     state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
     return (state_home / "i3" / "caffeine").is_file()
 
+def system_battery():
+    readings = []
+    for battery in sorted(POWER_SUPPLY_PATH.glob("BAT*")):
+        try:
+            percentage = int((battery / "capacity").read_text(encoding="ascii").strip())
+            status = (battery / "status").read_text(encoding="ascii").strip()
+        except (OSError, ValueError):
+            continue
+        readings.append((percentage, status))
+    if not readings:
+        return None
+    percentage = round(sum(percentage for percentage, _ in readings) / len(readings))
+    return percentage, any(status == "Charging" for _, status in readings)
+
+
+def click_action(click):
+    if click.get("button") != 1:
+        return
+    if click.get("name") == "caffeine":
+        toggle = Path.home() / ".local" / "bin" / "i3-caffeine-toggle"
+        subprocess.Popen(
+            [str(toggle), "toggle"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    elif click.get("name") == "keyboard":
+        subprocess.Popen(["xkb-switch", "-n"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+
 
 def battery_block(block):
     text = block.get("full_text", "")
-    match = re.search(r"(\d+)%", text)
-    if not match:
-        return block
-    percentage = int(match.group(1))
-    if "CHR" in text.upper():
-        icon = BATTERY_CHARGING
+    live_battery = system_battery()
+    if live_battery is not None:
+        percentage, charging = live_battery
     else:
-        icon = BATTERY_ICONS[min(percentage // 10, len(BATTERY_ICONS) - 1)]
+        match = re.search(r"(\d+)%", text)
+        if not match:
+            return block
+        percentage = int(match.group(1))
+        charging = "CHR" in text.upper()
+    icon = BATTERY_CHARGING if charging else BATTERY_ICONS[min(percentage // 10, len(BATTERY_ICONS) - 1)]
     block = block.copy()
     block["full_text"] = f"{icon} {percentage}%"
     block["color"] = CRITICAL if percentage <= 15 else CPU_WARNING if percentage <= 35 else NORMAL
@@ -82,7 +116,7 @@ def keyboard_block():
         )
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-    layout = result.stdout.strip().upper()
+    layout = result.stdout.strip().split("(", 1)[0].upper()
     if not layout:
         return None
     return {"name": "keyboard", "full_text": f"{ICON_KEYBOARD} {layout}", "color": NORMAL}
@@ -170,7 +204,7 @@ def localize(block):
     elif name == "ethernet":
         if block["full_text"].endswith("down"):
             block["full_text"] = ICON_ETHERNET
-            block["color"] = CAFFEINE_OFF
+            block["color"] = CRITICAL
         else:
             block["full_text"] = f"{ICON_ETHERNET} {block['full_text']}".rstrip()
             block["color"] = NETWORK
@@ -195,7 +229,6 @@ def decorate(blocks, cpu_usage):
 
 
 def handle_clicks():
-    toggle = Path.home() / ".local" / "bin" / "i3-caffeine-toggle"
     for line in sys.stdin:
         event = line.strip().lstrip(",")
         if not event or event in {"[", "]"}:
@@ -204,8 +237,7 @@ def handle_clicks():
             click = json.loads(event)
         except json.JSONDecodeError:
             continue
-        if click.get("name") == "caffeine" and click.get("button") == 1:
-            subprocess.Popen([str(toggle), "toggle"])
+        click_action(click)
 
 
 def main():

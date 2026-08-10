@@ -19,6 +19,7 @@ fail() {
 grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
 grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" || fail 'i3 login does not keep displays awake'
 grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
+grep -Fq '".local/bin/i3-idle-inhibit"' "$DOTFILES" || fail 'idle inhibitor is not deployed'
 ! grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config is still deployed'
 grep -Fq 'flock 9' "$HELPER" || fail 'caffeine transitions are not serialized'
 grep -Fq 'mktemp "$state_file.tmp.XXXXXX"' "$HELPER" || fail 'caffeine state is not written atomically'
@@ -29,8 +30,10 @@ STATUS_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/i3status.conf"
 grep -Fq 'interval = 1' "$STATUS_CONFIG" || fail 'status bar does not refresh caffeine promptly'
 ! grep -Fq 'order += "load"' "$STATUS_CONFIG" || fail 'load average remains instead of CPU percentage'
 grep -Fq '"click_events":true' "$WRAPPER" || fail 'i3bar click events are not enabled'
-grep -Fq 'format_up = "%quality"' "$STATUS_CONFIG" || fail 'Wi-Fi must provide only its signal quality'
+grep -Fq 'format_up = "%ip"' "$STATUS_CONFIG" || fail 'Wi-Fi must expose its IP address'
 grep -Fq 'format = "%status %percentage"' "$STATUS_CONFIG" || fail 'battery source must expose status and percentage'
+grep -Fq 'separator_symbol "│"' "$CONFIG" || fail 'status blocks must have a visible separator'
+grep -Fq 'exec --no-startup-id $run i3-idle-inhibit' "$CONFIG" || fail 'idle inhibitor is not started by i3'
 
 python3 - "$WRAPPER" <<'PY'
 import importlib.machinery
@@ -42,6 +45,7 @@ loader = importlib.machinery.SourceFileLoader("i3status_localized", sys.argv[1])
 spec = importlib.util.spec_from_loader(loader.name, loader)
 wrapper = importlib.util.module_from_spec(spec)
 loader.exec_module(wrapper)
+wrapper.system_battery = lambda: None
 GIB_KIB = 1024 * 1024
 blocks = {block["name"]: block for block in wrapper.resource_blocks(76, 100 * GIB_KIB, 49 * GIB_KIB, 20 * 1024**3, True)}
 assert blocks["caffeine"]["full_text"] == wrapper.ICON_CAFFEINE_ON
@@ -53,9 +57,17 @@ assert wrapper.localize({"name": "battery 0", "full_text": "CHR 87%"})["full_tex
 assert wrapper.localize({"name": "wireless", "full_text": "72%"})["full_text"] == f"{wrapper.ICON_WIFI} 72%"
 assert wrapper.localize({"name": "wireless", "full_text": "W: down"})["full_text"] == wrapper.ICON_WIFI_OFF
 original_run = wrapper.subprocess.run
-wrapper.subprocess.run = lambda *_args, **_kwargs: SimpleNamespace(stdout="latam\n")
-assert wrapper.keyboard_block()["full_text"] == f"{wrapper.ICON_KEYBOARD} LATAM"
+wrapper.subprocess.run = lambda *_args, **_kwargs: SimpleNamespace(stdout="us(altgr-intl)\n")
+assert wrapper.keyboard_block()["full_text"] == f"{wrapper.ICON_KEYBOARD} US"
 wrapper.subprocess.run = original_run
+wrapper.system_battery = lambda: (42, True)
+assert wrapper.battery_block({"name": "battery 0", "full_text": "BAT 1%"})["full_text"] == f"{wrapper.BATTERY_CHARGING} 42%"
+clicks = []
+wrapper.subprocess.Popen = lambda command, **_kwargs: clicks.append(command)
+wrapper.click_action({"name": "caffeine", "button": 1})
+wrapper.click_action({"name": "keyboard", "button": 1})
+assert clicks[0][-1] == "toggle"
+assert clicks[1] == ["xkb-switch", "-n"]
 
 blocks = {block["name"]: block for block in wrapper.resource_blocks(90, 100 * GIB_KIB, 10 * GIB_KIB, 20 * 1024**3, False)}
 assert blocks["cpu"]["color"] == wrapper.CPU_WARNING
@@ -68,7 +80,9 @@ bash -n "$HELPER"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/status-bin"
+mkdir -p "$tmp/status-bin" "$tmp/power/BAT0"
+printf '20\n' >"$tmp/power/BAT0/capacity"
+printf 'Discharging\n' >"$tmp/power/BAT0/status"
 cat >"$tmp/status-bin/i3status" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' '{"version":1}' '[' '[{"name":"wireless","full_text":"75%"},{"name":"ethernet","full_text":"down"},{"name":"battery 0","full_text":"BAT 20%"},{"name":"tztime","full_text":"Wednesday 29 - July - 2026"}]'
@@ -80,15 +94,19 @@ printf '%s\n' "$*" >>"$CAFFEINE_CLICK_CALLS"
 STUB
 cat >"$tmp/status-bin/xkb-switch" <<'STUB'
 #!/usr/bin/env bash
-[[ "$*" == "-p" ]] || exit 64
-printf '%s\n' LATAM
+case "${1:-}" in
+  -p) printf '%s\n' LATAM ;;
+  -n) printf '%s\n' "$*" >>"$KEYBOARD_CLICK_CALLS" ;;
+  *) exit 64 ;;
+esac
 STUB
 chmod +x "$tmp/status-bin/i3status" "$tmp/status-bin/i3-caffeine-toggle" "$tmp/status-bin/xkb-switch"
 export CAFFEINE_CLICK_CALLS="$tmp/click-calls"
+export KEYBOARD_CLICK_CALLS="$tmp/keyboard-click-calls"
 mkdir -p "$tmp/home/.local/bin"
 ln -s "$tmp/status-bin/i3-caffeine-toggle" "$tmp/home/.local/bin/i3-caffeine-toggle"
-printf '[\n{"name":"caffeine","button":1}\n' |
-  HOME="$tmp/home" PATH="$tmp/status-bin:$PATH" "$WRAPPER" >"$tmp/status-output"
+printf '[\n{"name":"caffeine","button":1}\n,{"name":"keyboard","button":1}\n' |
+  HOME="$tmp/home" I3_POWER_SUPPLY_PATH="$tmp/power" PATH="$tmp/status-bin:$PATH" "$WRAPPER" >"$tmp/status-output"
 grep -Fq '"click_events":true' "$tmp/status-output" || fail 'wrapper did not advertise click events'
 grep -Fq '"full_text":" 75%"' "$tmp/status-output" || fail 'Wi-Fi icon missing from status output'
 grep -Fq '"full_text":"󰈀"' "$tmp/status-output" || fail 'Ethernet icon missing from status output'
@@ -98,6 +116,7 @@ grep -Fq '' "$tmp/status-output" || fail 'CPU icon missing from status output
 grep -Fq '󰍛' "$tmp/status-output" || fail 'RAM icon missing from status output'
 grep -Fq '󰋊' "$tmp/status-output" || fail 'SSD icon missing from status output'
 grep -Fxq 'toggle' "$tmp/click-calls" || fail 'caffeine bar click did not toggle mode'
+grep -Fxq -- '-n' "$tmp/keyboard-click-calls" || fail 'keyboard bar click did not switch layout'
 mkdir -p "$tmp/bin"
 cat >"$tmp/bin/xset" <<'STUB'
 #!/usr/bin/env bash
@@ -124,6 +143,10 @@ XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" on
 [[ -f "$tmp/state/i3/caffeine" ]] || fail 'caffeine state not persisted'
 grep -Fxq 'xset s off' "$tmp/calls" || fail 'caffeine did not disable screen saver'
 grep -Fxq 'xset -dpms' "$tmp/calls" || fail 'caffeine did not disable DPMS'
+: >"$tmp/calls"
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" on
+grep -Fxq 'xset s off' "$tmp/calls" || fail 'existing caffeine state is not re-applied'
+grep -Fxq 'xset -dpms' "$tmp/calls" || fail 'existing caffeine state leaves DPMS enabled'
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" off
 [[ ! -f "$tmp/state/i3/caffeine" ]] || fail 'caffeine state not cleared'
 grep -Fxq 'xset s 600 600' "$tmp/calls" || fail 'screen saver settings not restored'

@@ -50,33 +50,15 @@ in
   };
 
   environment.etc."scrolloverview.so".source = scrollOverviewLibrary;
-  programs.bash.loginShellInit = lib.mkAfter (
-    ''
-      if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
-        if pgrep -x gamescope >/dev/null; then
-          printf '%s\n' 'Steam Gaming Mode sigue activo en TTY6; ciérralo antes de iniciar Hyprland.' >&2
-        else
-          exec start-hyprland
-        fi
+  programs.bash.loginShellInit = lib.mkAfter ''
+    if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
+      if pgrep -x gamescope >/dev/null; then
+        printf '%s\n' 'Steam Gaming Mode sigue activo en TTY6; ciérralo antes de iniciar Hyprland.' >&2
+      else
+        exec start-hyprland
       fi
-    ''
-    + lib.optionalString config.programs.steam.enable ''
-      if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty6 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
-        if pgrep -x Hyprland >/dev/null; then
-          printf '%s\n' 'Hyprland sigue activo en TTY1; ciérralo antes de iniciar Steam Gaming Mode.' >&2
-        else
-          exec gamescope -e -- steam -gamepadui
-        fi
-      fi
-    ''
-  );
-
-  systemd.services."autovt@tty6" = lib.mkIf config.programs.steam.enable {
-    serviceConfig.ExecStart = [
-      ""
-      "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM"
-    ];
-  };
+    fi
+  '';
 
   security.polkit = {
     enable = true;
@@ -209,7 +191,6 @@ in
   # The TCL Roku TV uses Miracast over Infrastructure Connection
   # Establishment (MICE); it connects to GND's fixed RTSP listener on 7236.
   networking.firewall.allowedTCPPorts = [ 7236 ];
-
 
   environment.systemPackages = with pkgs; [
     # Native NixOS Hyprland stack. This avoids a flake-pinned compositor build.

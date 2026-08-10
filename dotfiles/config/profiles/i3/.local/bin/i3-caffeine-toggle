@@ -39,6 +39,15 @@ status() {
   fi
 }
 
+enforce_active() {
+  if xset s off && xset -dpms; then
+    return 0
+  fi
+  rm -f "$state_file"
+  notify 'Could not enable caffeine mode'
+  return 1
+}
+
 activate() {
   local snapshot timeout cycle standby suspend off dpms_enabled temporary
   snapshot="$(xset q)"
@@ -86,7 +95,7 @@ case "${1:-toggle}" in
     if [[ -f "$state_file" ]]; then deactivate; else activate; fi
     ;;
   on)
-    [[ -f "$state_file" ]] || activate
+    if [[ -f "$state_file" ]]; then enforce_active; else activate; fi
     ;;
   off)
     [[ ! -f "$state_file" ]] || deactivate
