@@ -48,6 +48,7 @@ let
   hyprWindowShade = pkgs.callPackage ../packages/hyprwindowshade.nix {
     hyprland = hyprlandPackage;
     src = inputs.hyprWindowShade;
+    niriShaders = inputs.niriShaders;
   };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
@@ -213,7 +214,6 @@ in
     QT_QPA_PLATFORMTHEME_QT6 = "qt6ct";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     GDK_BACKEND = "wayland,x11";
-    SDL_VIDEODRIVER = "wayland";
     CLUTTER_BACKEND = "wayland";
     TERMINAL = "kitty";
   };

@@ -30,23 +30,64 @@ for _, rule in ipairs(opacity_rules) do
   })
 end
 
--- Opening-only shader transitions for selected desktop applications.
+-- Every daily-use application has an explicit opening shader. The package exposes
+-- every ported shader under /etc/hyprwindowshade-shaders/open for later selection.
 local opening_transition_rules = {
-  { class = "^(kitty)$", shader = "/etc/hyprwindowshade-shaders/open/fade.glsl", duration_ms = 220 },
-  { class = "^(org.gnome.Nautilus)$", shader = "/etc/hyprwindowshade-shaders/open/circle-reveal.glsl", duration_ms = 260 },
-  { class = "^(firefox|Firefox)$", shader = "/etc/hyprwindowshade-shaders/open/pixelate.glsl", duration_ms = 280 },
+  { class = "^(kitty)$", shader = "fade", duration_ms = 200 },
+  { class = "^(org.gnome.Nautilus)$", shader = "circle", duration_ms = 200 },
+  { class = "^(dev.warp.Warp)$", shader = "soft-warp-fade", duration_ms = 200 },
+  { class = "^(vesktop)$", shader = "pixelate", duration_ms = 200 },
+  { class = "^(discord)$", shader = "pixelate", duration_ms = 200 },
+  { class = "^(com.discordapp.Discord)$", shader = "pixelate", duration_ms = 200 },
+  { class = "^(spotify)$", shader = "ripple", duration_ms = 200 },
+  { class = "^(obsidian)$", shader = "ink-splash", duration_ms = 200 },
+  { class = "^(firefox|Firefox)$", shader = "pixelate", duration_ms = 200 },
 }
 
 for _, rule in ipairs(opening_transition_rules) do
   hl.window_rule({
     match = { class = rule.class },
-    tag = "+shader_transition_open:" .. rule.shader,
+    tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. rule.shader .. ".glsl",
   })
   hl.window_rule({
     match = { class = rule.class },
     tag = "+shader_transition_duration_ms:" .. rule.duration_ms,
   })
 end
+local shader_preview_state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
+local shader_override_file = io.open(shader_preview_state .. "/hypr/shader-overrides", "r")
+if shader_override_file then
+  for line in shader_override_file:lines() do
+    local class, shader = line:match("^([^\t]+)\t([%w%-]+)$")
+    if class and shader then
+      hl.window_rule({
+        match = { class = class },
+        tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader .. ".glsl",
+      })
+      hl.window_rule({
+        match = { class = class },
+        tag = "+shader_transition_duration_ms:200",
+      })
+    end
+  end
+  shader_override_file:close()
+end
+local shader_preview_file = io.open(shader_preview_state .. "/hypr/shader-preview", "r")
+if shader_preview_file then
+  local shader_preview = shader_preview_file:read("*l")
+  shader_preview_file:close()
+  if shader_preview and shader_preview:match("^[%w%-]+$") then
+    hl.window_rule({
+      match = { class = "^(hypr-shader-preview)$" },
+      tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader_preview .. ".glsl",
+    })
+    hl.window_rule({
+      match = { class = "^(hypr-shader-preview)$" },
+      tag = "+shader_transition_duration_ms:350",
+    })
+  end
+end
+
 
 local utilities = {
   { class = "^(org.gnome.Calculator)$", size = "420 520" },

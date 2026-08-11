@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+if [[ -r "$lib" ]]; then
+  # shellcheck disable=SC1090
+  . "$lib"
+fi
+
+shader_root="${HYPR_SHADER_ROOT:-/etc/hyprwindowshade-shaders/open}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr"
+preview_file="$state_dir/shader-preview"
+override_file="$state_dir/shader-overrides"
+
+rofi_menu() {
+  if declare -F hypr_rofi_dmenu >/dev/null 2>&1; then
+    hypr_rofi_dmenu "$1" 16
+  else
+    rofi -dmenu -i -p "$1"
+  fi
+}
+
+active_class="$(hyprctl activewindow -j | jq -r '.class // empty')"
+[[ -n "$active_class" ]] || {
+  notify-send -u critical "Hyprland shader" "No focused application" 2>/dev/null || true
+  exit 1
+}
+class_pattern="^$(printf '%s' "$active_class" | sed 's/[][\\.^$*+?(){}|]/\\&/g')$"
+
+action="$(
+  printf 'Preview opening shader\nAssign shader to %s\nReset %s to its default shader\n' "$active_class" "$active_class" |
+    rofi_menu "Hyprland shaders" || true
+)"
+[[ -n "$action" ]] || exit 0
+
+update_override() {
+  local shader="${1:-}" tmp line class
+  mkdir -p "$state_dir"
+  tmp="$(mktemp "${override_file}.XXXXXX")"
+  if [[ -r "$override_file" ]]; then
+    while IFS= read -r line; do
+      class="${line%%$'\t'*}"
+      [[ "$class" == "$class_pattern" ]] || printf '%s\n' "$line" >>"$tmp"
+    done <"$override_file"
+  fi
+  [[ -n "$shader" ]] && printf '%s\t%s\n' "$class_pattern" "$shader" >>"$tmp"
+  mv "$tmp" "$override_file"
+  hyprctl reload
+}
+
+case "$action" in
+  "Reset $active_class to its default shader")
+    update_override
+    notify-send "Hyprland shader" "Reset $active_class to its default shader" 2>/dev/null || true
+    exit 0
+    ;;
+  "Preview opening shader"|"Assign shader to $active_class")
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+choice="$(
+  for shader in "$shader_root"/*.glsl; do
+    [[ -r "$shader" ]] || continue
+    basename "${shader%.glsl}"
+  done | sort | rofi_menu "Opening shader" || true
+)"
+[[ -n "$choice" ]] || exit 0
+shader="$shader_root/$choice.glsl"
+[[ -r "$shader" ]] || {
+  notify-send -u critical "Hyprland shader" "Shader unavailable: $choice" 2>/dev/null || true
+  exit 1
+}
+
+if [[ "$action" == "Preview opening shader" ]]; then
+  mkdir -p "$state_dir"
+  tmp="$(mktemp "${preview_file}.XXXXXX")"
+  printf '%s\n' "$choice" >"$tmp"
+  mv "$tmp" "$preview_file"
+  hyprctl reload
+  notify-send "Hyprland shader" "Opening Kitty with $choice" 2>/dev/null || true
+  exec kitty --class hypr-shader-preview --title "Shader preview: $choice"
+fi
+
+update_override "$choice"
+notify-send "Hyprland shader" "$choice assigned to $active_class" 2>/dev/null || true

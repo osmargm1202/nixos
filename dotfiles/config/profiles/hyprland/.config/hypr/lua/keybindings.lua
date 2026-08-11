@@ -136,3 +136,4 @@ function M.setup(programs)
 end
 
 return M
+  hl.bind(mainMod .. " + CTRL + G", hl.dsp.exec_cmd("hypr-shader-menu"))

@@ -8,8 +8,10 @@
   pixman,
   libdrm,
   libglvnd,
-  wayland-protocols,
+  glslang,
+  niriShaders,
   src,
+  wayland-protocols,
 }:
 stdenv.mkDerivation {
   pname = "hyprwindowshade";
@@ -18,6 +20,7 @@ stdenv.mkDerivation {
   inherit src;
 
   nativeBuildInputs = hyprland.nativeBuildInputs ++ [
+    glslang
     pkg-config
   ];
   buildInputs = hyprland.buildInputs ++ [
@@ -48,12 +51,40 @@ stdenv.mkDerivation {
   '';
 
   installPhase = ''
-    runHook preInstall
     install -Dm755 HyprWindowShade.so "$out/lib/HyprWindowShade.so"
-    install -Dm644 shaders/LICENSE "$out/share/hyprwindowshade/shaders/LICENSE"
-    install -Dm644 shaders/open/fade.glsl "$out/share/hyprwindowshade/shaders/open/fade.glsl"
-    install -Dm644 shaders/open/circle-reveal.glsl "$out/share/hyprwindowshade/shaders/open/circle-reveal.glsl"
-    install -Dm644 shaders/open/pixelate.glsl "$out/share/hyprwindowshade/shaders/open/pixelate.glsl"
-    runHook postInstall
+    install -Dm644 ${niriShaders}/LICENSE "$out/share/hyprwindowshade/niri-shaders-LICENSE"
+    mkdir -p "$out/share/hyprwindowshade/shaders/open"
+
+    for source in ${niriShaders}/*/open.glsl; do
+      name="$(basename "$(dirname "$source")")"
+      destination="$out/share/hyprwindowshade/shaders/open/$name.glsl"
+      cat >"$destination" <<'GLSL'
+// Ported at build time from liixini/shaders. See niri-shaders-LICENSE.
+#version 320 es
+precision highp float;
+
+in vec2 v_texcoord;
+out vec4 fragColor;
+
+uniform sampler2D tex;
+uniform float transition_progress;
+uniform float transition_seed;
+uniform vec2 surface_size;
+
+#define niri_clamped_progress clamp(transition_progress, 0.0, 1.0)
+#define niri_random_seed transition_seed
+#define niri_geo_to_tex mat3(1.0)
+#define niri_tex tex
+#define texture2D texture
+GLSL
+      cat "$source" >>"$destination"
+      cat >>"$destination" <<'GLSL'
+
+void main() {
+  fragColor = open_color(vec3(v_texcoord, 1.0), vec3(surface_size, 1.0));
+}
+GLSL
+      glslangValidator -S frag "$destination"
+    done
   '';
 }

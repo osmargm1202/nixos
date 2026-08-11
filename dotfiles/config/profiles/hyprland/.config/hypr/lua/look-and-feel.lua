@@ -12,11 +12,16 @@ end
 if hl.plugin and hl.plugin.hyprglass then
   local hg = hl.plugin.hyprglass
   hg.config({
-    enabled = false,
+    enabled = true,
     manage_window_blur = true,
     default_theme = "dark",
     default_preset = "subtle",
+    layers = { enabled = true },
   })
+  hg.layer("top_bar", { preset = "subtle", mask_threshold = 0.1 })
+  hg.layer("bottom_bar", { preset = "subtle", mask_threshold = 0.1 })
+  hg.layer("rofi", { preset = "subtle", mask_threshold = 0.1 })
+  hg.layer("nwg-dock", { preset = "subtle", mask_threshold = 0.1 })
 end
 
 hl.config({
@@ -67,11 +72,7 @@ hl.config({
       color = "rgba(00000070)",
     },
     blur = {
-      enabled = true,
-      size = 6,
-      passes = 3,
-      vibrancy = 0.2,
-      new_optimizations = true,
+      enabled = false,
     },
   },
 
@@ -80,33 +81,6 @@ hl.config({
   },
 })
 
-hl.layer_rule({
-  name = "blur-top-bar",
-  match = { namespace = "top_bar" },
-  blur = true,
-  ignore_alpha = 0.1,
-})
-
-hl.layer_rule({
-  name = "blur-bottom-bar",
-  match = { namespace = "bottom_bar" },
-  blur = true,
-  ignore_alpha = 0.1,
-})
-
-hl.layer_rule({
-  name = "blur-rofi",
-  match = { namespace = "rofi" },
-  blur = true,
-  ignore_alpha = 0.1,
-})
-
-hl.layer_rule({
-  name = "blur-nwg-dock",
-  match = { namespace = "nwg-dock" },
-  blur = true,
-  ignore_alpha = 0.1,
-})
 
 
 

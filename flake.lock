@@ -500,6 +500,22 @@
         "type": "github"
       }
     },
+    "niriShaders": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786470971,
+        "narHash": "sha256-OGfmKf6vRJ37oQRLpAk4APn5plmYnDNXgXMNNI58zdE=",
+        "owner": "osmargm1202",
+        "repo": "shaders",
+        "rev": "ac8eaaf7a29ffa0975dcf57a537f55852e533128",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "shaders",
+        "type": "github"
+      }
+    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1779998907,
@@ -633,6 +649,7 @@
         "hyprWindowShade": "hyprWindowShade",
         "hyprglass": "hyprglass",
         "hyprland": "hyprland",
+        "niriShaders": "niriShaders",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-zen70": "nixpkgs-zen70",

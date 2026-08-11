@@ -18,6 +18,11 @@
       url = "github:osmargm1202/HyprWindowShade/5fcc906a7fed036afcf7e53e889a99c424b8b0fb";
       flake = false;
     };
+    niriShaders = {
+      # MIT-licensed opening shaders, ported to HyprWindowShade at build time.
+      url = "github:osmargm1202/shaders";
+      flake = false;
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
