@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-settings="$(cd "$repo_dir" && nix eval --impure --json '.#nixosConfigurations.lenovo-windows-i3.config.programs.firefox.policies.ExtensionSettings')"
+settings="$(cd "$repo_dir" && nix eval --impure --json '.#nixosConfigurations.lenovo-i3.config.programs.firefox.policies.ExtensionSettings')"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

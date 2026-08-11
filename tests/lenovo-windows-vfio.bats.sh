@@ -7,14 +7,10 @@ cd "$repo_dir"
 nix eval --impure --raw --expr '
   let
     flake = builtins.getFlake (toString ./.) ;
-    vfioProfileNames = [
-      "lenovo-windows-labwc"
-      "lenovo-windows-gnome"
-      "lenovo-windows-hyprland"
-      "lenovo-windows-i3"
-      "lenovo-windows-cinnamon"
-    ];
-    vfioProfiles = builtins.map (name: flake.nixosConfigurations.${name}.config) vfioProfileNames;
+    desktopProfileNames = [ "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" ];
+    vfioProfiles = builtins.map (
+      name: flake.nixosConfigurations.${name}.config.specialisation.windows-vfio.configuration
+    ) desktopProfileNames;
     standard = flake.nixosConfigurations.lenovo-hyprland.config;
     requiredParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=10de:1fbb" ];
     requiredModules = [ "vfio" "vfio_pci" "vfio_iommu_type1" ];
@@ -54,6 +50,6 @@ nix eval --impure --raw --expr '
     if builtins.all isVfio vfioProfiles
       && builtins.all hasBatteryGuard vfioProfiles
       && standard.hardware.nvidia.prime.offload.enable
-    then "lenovo-windows-vfio: ok"
-    else throw "lenovo Windows VFIO profile is incomplete"
+    then "lenovo Windows VFIO specialisation: ok"
+    else throw "lenovo Windows VFIO specialisation is incomplete"
 '

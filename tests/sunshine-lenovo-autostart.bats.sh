@@ -11,9 +11,7 @@ fail() {
   exit 1
 }
 
-for configuration in \
-  lenovo-hyprland lenovo-i3 lenovo-labwc \
-  lenovo-windows-hyprland lenovo-windows-i3 lenovo-windows-labwc
+for configuration in lenovo-hyprland lenovo-i3 lenovo-labwc
 do
   nix eval --json ".#nixosConfigurations.${configuration}.config.services.sunshine" |
     jq -e '.enable and .autoStart and .capSysAdmin and .openFirewall' >/dev/null ||

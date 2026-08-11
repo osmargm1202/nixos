@@ -26,9 +26,28 @@ in
     ../../deskflow.nix
   ];
 
-  options.orgm.lenovo.windowsVfio.enable = lib.mkEnableOption "exclusive T500 VFIO passthrough for Windows";
+  options.orgm.lenovo = {
+    windowsVfio.enable = lib.mkEnableOption "exclusive T500 VFIO passthrough for Windows";
+    nvidiaDisabled.enable = lib.mkEnableOption "Intel-only boot profile with NVIDIA disabled";
+  };
 
   config = {
+  specialisation = {
+    gaming.configuration = {
+      boot.loader.systemd-boot.sortKey = "nixos-gaming";
+      powerManagement.cpuFreqGovernor = "performance";
+    };
+    windows-vfio.configuration = {
+      imports = [ ./windows-vfio.nix ];
+      boot.loader.systemd-boot.sortKey = "nixos-windows-vfio";
+    };
+    battery.configuration = {
+      orgm.lenovo.nvidiaDisabled.enable = true;
+      boot.loader.systemd-boot.sortKey = "nixos-battery";
+      powerManagement.cpuFreqGovernor = "powersave";
+      boot.blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" "nvidia_uvm" ];
+    };
+  };
 
   # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2
   # profile, kept in-repo so Lenovo carries its own host-specific GPU setup.
@@ -55,19 +74,16 @@ in
     extraPackages32 = [ pkgs.driversi686Linux.intel-media-driver ];
   };
 
-  # PRIME offload owns the T500 unless the Windows VFIO profile claims it.
-  services.xserver.videoDrivers = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ "nvidia" ];
-
-  environment.systemPackages = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ nvidiaPackage nvidiaGame ];
-
-  hardware.nvidia = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) {
+  # PRIME owns the T500 unless another boot specialisation claims or disables it.
+  services.xserver.videoDrivers = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) [ "nvidia" ];
+  environment.systemPackages = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) [ nvidiaPackage nvidiaGame ];
+  hardware.nvidia = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) {
     modesetting.enable = true;
     open = lib.mkOverride 990 (nvidiaPackage ? open && nvidiaPackage ? firmware);
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     powerManagement.enable = true;
     powerManagement.finegrained = true;
-
     prime = {
       intelBusId = "PCI:0:2:0";
       nvidiaBusId = "PCI:1:0:0";
