@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Upstream v0.56.0 retains its release-locked dependency graph.
+    hyprland.url = "github:hyprwm/Hyprland/v0.56.0";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";

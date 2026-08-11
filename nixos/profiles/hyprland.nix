@@ -2,10 +2,14 @@
   config,
   lib,
   pkgs,
+  inputs,
   userName ? "osmarg",
   ...
 }:
 let
+  hyprlandPackages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
+  hyprlandPackage = hyprlandPackages.hyprland;
+  hyprlandPortalPackage = hyprlandPackages.xdg-desktop-portal-hyprland;
   nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs (_: {
     version = "0.4.11";
     src = pkgs.fetchFromGitHub {
@@ -45,8 +49,8 @@ in
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    package = pkgs.hyprland;
-    portalPackage = pkgs.xdg-desktop-portal-hyprland;
+    package = hyprlandPackage;
+    portalPackage = hyprlandPortalPackage;
   };
 
   environment.etc."scrolloverview.so".source = scrollOverviewLibrary;
@@ -88,7 +92,7 @@ in
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
+      hyprlandPortalPackage
       xdg-desktop-portal-gtk
       hyprKdeconnectFix
     ];
@@ -193,8 +197,8 @@ in
   networking.firewall.allowedTCPPorts = [ 7236 ];
 
   environment.systemPackages = with pkgs; [
-    # Native NixOS Hyprland stack. This avoids a flake-pinned compositor build.
-    hyprland
+    # Upstream Hyprland v0.56.0 compositor and matching portal.
+    hyprlandPackage
     xwayland
     hyprpaper
     hyprpolkitagent
@@ -203,7 +207,7 @@ in
     xdg-utils
     desktop-file-utils
     xdg-desktop-portal
-    xdg-desktop-portal-hyprland
+    hyprlandPortalPackage
     xdg-desktop-portal-gtk
 
     # Clipboard / screenshots / wlroots-compatible tools
@@ -274,8 +278,8 @@ in
 
   assertions = [
     {
-      assertion = lib.versionAtLeast pkgs.hyprland.version "0.55.1";
-      message = "The native nixpkgs Hyprland package must be newer than 0.55.";
+      assertion = hyprlandPackage.version == "0.56.0";
+      message = "The selected upstream Hyprland platform must be exactly 0.56.0.";
     }
   ];
 
