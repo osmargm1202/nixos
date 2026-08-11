@@ -172,6 +172,8 @@ in
     extraArgs = [ "--sort-by-rss" ];
     enableNotifications = true;
   };
+  # Resolve conflicting EarlyOOM/smartd defaults while preserving desktop notifications.
+  services.systembus-notify.enable = true;
 
   # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host
   # when we decide which machines should self-update.
