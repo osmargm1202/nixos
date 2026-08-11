@@ -42,7 +42,7 @@ stdenv.mkDerivation {
     hyprwayland-scanner \
       ${wayland-protocols}/share/wayland-protocols/staging/color-management/color-management-v1.xml \
       protocols/
-    $CXX -shared -fPIC -O3 -std=c++23 -Iprotocols *.cpp -o HyprWindowShade.so \
+    $CXX -shared -fPIC -O3 -std=c++23 -Iprotocols $(pkg-config --cflags hyprland pixman-1 libdrm) *.cpp -o HyprWindowShade.so \
       -lGLESv2 -lEGL -lGL
     runHook postBuild
   '';
