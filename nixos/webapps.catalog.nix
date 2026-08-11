@@ -11,6 +11,7 @@
   ];
   office = [
     { name = "Gmail"; url = "https://gmail.com"; icon = "gmail"; }
+    { name = "Google Maps"; url = "https://maps.google.com/"; icon = "maps"; }
     { name = "Outlook - Hotmail"; url = "https://outlook.office.com/"; icon = "outlook-hotmail"; }
     { name = "Microsoft Teams"; url = "https://teams.microsoft.com/"; icon = "microsoft-teams"; }
     { name = "Whatsapp"; url = "https://web.whatsapp.com/"; icon = "whatsapp"; }
