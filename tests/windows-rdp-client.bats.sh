@@ -59,6 +59,10 @@ cat >"$bin/looking-glass-client" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >"$LG_LOG"
 EOF
+cat >"$bin/notify-send" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$NOTIFY_LOG"
+EOF
 cat >"$bin/seq" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' 1
@@ -77,15 +81,15 @@ cat >"$bin/jq" <<'EOF'
 #!/usr/bin/env bash
 [[ "$*" == *focused* ]] && printf '%s\n' '1600x900'
 EOF
-chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq"
+chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq"
 
 wayland_log="$tmp/wayland.log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" "$helper" connect
 [[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
 [[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$wayland_log")" == *"/size:1600x900"* ]]
-[[ "$(<"$wayland_log")" != *"/f"* ]]
-[[ "$(<"$wayland_log")" != *"-grab-keyboard"* ]]
+[[ "$(<"$wayland_log")" == *"/f"* ]]
+[[ "$(<"$wayland_log")" == *"-grab-keyboard"* ]]
 [[ "$(<"$wayland_log")" != *"/dynamic-resolution"* ]]
 
 x11_log="$tmp/x11.log"
@@ -94,7 +98,7 @@ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="
 [[ "$(<"$x11_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$x11_log")" == *"/size:1600x900"* ]]
 [[ "$(<"$x11_log")" == *"/f"* ]]
-[[ "$(<"$x11_log")" != *"-grab-keyboard"* ]]
+[[ "$(<"$x11_log")" == *"-grab-keyboard"* ]]
 [[ "$(<"$x11_log")" != *"/dynamic-resolution"* ]]
 
 toggle_profile="$tmp/toggle-profile"
@@ -106,6 +110,14 @@ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$toggle_prof
 grep -Fqx 'start windows' "$toggle_log"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$toggle_profile" WINDOWS_TEST_STATE_FILE="$toggle_state" DOCKER_LOG="$toggle_log" "$helper" toggle
 grep -Fqx 'stop windows' "$toggle_log"
+notify_log="$tmp/notifications.log"
+printf '%s\n' false >"$toggle_state"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$toggle_profile" WINDOWS_TEST_STATE_FILE="$toggle_state" DOCKER_LOG="$toggle_log" NOTIFY_LOG="$notify_log" "$helper" toggle
+grep -Fq "Windows iniciando! Iniciando contenedor 'windows'." "$notify_log"
+grep -Fq "Windows iniciado Contenedor 'windows' y RDP listos." "$notify_log"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$toggle_profile" WINDOWS_TEST_STATE_FILE="$toggle_state" DOCKER_LOG="$toggle_log" NOTIFY_LOG="$notify_log" "$helper" toggle
+grep -Fq "Windows apagando Deteniendo contenedor 'windows'." "$notify_log"
+grep -Fq "Windows detenido Contenedor 'windows' detenido." "$notify_log"
 failure_profile="$tmp/render-node-profile"
 printf '%s\n' render-node >"$failure_profile"
 failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$failure_profile" "$helper" start 2>&1 || true)"

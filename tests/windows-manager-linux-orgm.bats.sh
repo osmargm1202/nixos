@@ -415,6 +415,22 @@ bounded = native_host.bounded_list_tabs_response(
     {"id": "response", "ok": True, "tabs": [response_tab]}, IconCache()
 )
 assert "iconPath" not in bounded["tabs"][0], "oversized optional iconPath was retained"
+
+
+class FailingIconCache:
+    def enrich_tabs(self, tabs):
+        raise RuntimeError("favicon cache unavailable")
+
+
+fallback = native_host.bounded_list_tabs_response(
+    {"id": "fallback", "ok": True, "tabs": [{"id": 1, "windowId": 1, "index": 0, "active": True}]},
+    FailingIconCache(),
+)
+assert fallback == {
+    "id": "fallback",
+    "ok": True,
+    "tabs": [{"id": 1, "windowId": 1, "index": 0, "active": True}],
+}, "favicon cache failure broke the tab list"
 too_large_tab = dict(response_tab, title=response_tab["title"] + "x" * 64)
 try:
     native_host.bounded_list_tabs_response(

@@ -36,7 +36,11 @@ grep -Fq '${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $T
   fail 'tty6 must autologin the configured user'
 grep -Fq '"$(tty)" = /dev/tty6' "$STEAM" ||
   fail 'tty6 must be the Steam launch console'
-grep -Fq 'exec gamescope -e -- steam -gamepadui' "$STEAM" ||
+grep -Fq 'gamescopeCommand = if nvidiaGameOffload then "nvidia-game gamescope" else "gamescope";' "$STEAM" ||
+  fail 'TTY6 must offload Gamescope on Lenovo PRIME'
+grep -Fq '__NV_PRIME_RENDER_OFFLOAD_PROVIDER = "NVIDIA-G0";' "$STEAM" ||
+  fail 'Steam must select the configured NVIDIA PRIME provider'
+grep -Fq 'exec ${gamescopeCommand} -e -- steam -gamepadui' "$STEAM" ||
   fail 'tty6 must run Big Picture inside Gamescope'
 
 printf 'PASS: Steam-enabled profiles get a dedicated Gaming Mode TTY\n'

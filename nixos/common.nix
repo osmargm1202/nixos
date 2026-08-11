@@ -71,6 +71,7 @@ let
     gum
     steam-run
     vscode
+    gnome-calculator
     gh
     (pkgs.writeShellApplication {
       name = "ns";

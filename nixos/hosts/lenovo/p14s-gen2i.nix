@@ -8,6 +8,16 @@
 let
   nvidiaPackage = config.hardware.nvidia.package;
   intelMediaRuntime = pkgs.vpl-gpu-rt or pkgs.onevpl-intel-gpu;
+  nvidiaGame = pkgs.writeShellApplication {
+    name = "nvidia-game";
+    text = ''
+      if ! command -v nvidia-offload >/dev/null 2>&1; then
+        printf '%s\n' 'NVIDIA PRIME offload is unavailable; refusing to fall back to Intel.' >&2
+        exit 1
+      fi
+      exec nvidia-offload "$@"
+    '';
+  };
 in
 {
   imports = [
@@ -48,7 +58,7 @@ in
   # PRIME offload owns the T500 unless the Windows VFIO profile claims it.
   services.xserver.videoDrivers = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ "nvidia" ];
 
-  environment.systemPackages = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ nvidiaPackage ];
+  environment.systemPackages = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) [ nvidiaPackage nvidiaGame ];
 
   hardware.nvidia = lib.mkIf (!config.orgm.lenovo.windowsVfio.enable) {
     modesetting.enable = true;

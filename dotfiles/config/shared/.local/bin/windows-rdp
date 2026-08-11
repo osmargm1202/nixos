@@ -27,9 +27,6 @@ ICON_FILE="$ICON_DIR/windows.png"
 
 # Seconds to wait after port is open for RDP to fully initialize
 RDP_BOOT_DELAY=10
-# Backoff delays (seconds) between retries after starting the container.
-# Attempt count = number of delays + 1 (one initial attempt, no wait before it).
-RDP_RETRY_DELAYS=(10 20 60 60)
 
 # ============================================================
 # Functions
@@ -212,7 +209,6 @@ rdp_command() {
     # known invisible-cursor bug despite otherwise rendering the RDP session.
     backend="wayland"
     client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sdl-freerdp)
-    RDP_FULLSCREEN=0
   elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
     backend="wayland"
     client_cmd=(wlfreerdp)
@@ -241,73 +237,38 @@ rdp_command() {
 }
 
 rdp_connect() {
-  local started_container="${1:-0}"
   local target_workspace="${2:-}"
   local rdp_size
-  local attempt=1
-  local max_retries=1
-  local rc=1
   local -a RDP_CMD
   local -a rdp_display_options=()
 
   rdp_size="$(focused_monitor_size)"
-  if [[ "$started_container" == "1" ]]; then
-    max_retries=$(( ${#RDP_RETRY_DELAYS[@]} + 1 ))
-  fi
-
-  rdp_command
+  rdp_command || return 1
   if [[ "$RDP_FULLSCREEN" == 1 ]]; then
     rdp_display_options=(/f)
   fi
 
-  while [[ $attempt -le $max_retries ]]; do
-    if [[ "$started_container" == "1" ]]; then
-      echo "RDP connection attempt $attempt/$max_retries..."
-    fi
-
-    move_next_rdp_window_to_workspace "$target_workspace"
-
-    # Software GDI keeps the cursor visible with FreeRDP's Wayland/SDL client.
-    "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
-      /u:"$RDP_USER" \
-      /p:"$RDP_PASS" \
-      /size:"$rdp_size" \
-      "${rdp_display_options[@]}" \
-      /admin \
-      /sec:nla:off \
-      /tls:seclevel:0 \
-      /network:lan \
-      /bpp:32 \
-      /audio-mode:0 \
-      +clipboard \
-      /gdi:sw \
-      +home-drive \
-      /cert:ignore \
-      /wm-class:windows-rdp
-    rc=$?
-
-    # rc=0 means clean disconnect (user closed session)
-    if [[ $rc -eq 0 ]]; then
-      return 0
-    fi
-
-    # Startup path can race Windows RDP initialization; direct path should fail fast.
-    if [[ "$started_container" == "1" && $attempt -lt $max_retries ]]; then
-      local delay="${RDP_RETRY_DELAYS[$((attempt - 1))]}"
-      echo "Connection failed (exit code $rc). Retrying in ${delay}s..."
-      sleep "$delay"
-    fi
-    ((attempt++))
-  done
-
-  if [[ "$started_container" == "1" ]]; then
-    echo "Error: Could not connect after $max_retries attempts."
-    notify_user "Windows RDP error" "No se pudo conectar tras iniciar '$CONTAINER'."
-  else
-    echo "Error: RDP connection failed (exit code $rc)."
-    notify_user "Windows RDP error" "La conexión directa falló (código $rc)."
-  fi
-  return 1
+  move_next_rdp_window_to_workspace "$target_workspace"
+  # Do not grab the physical keyboard: local compositor shortcuts remain usable.
+  # A client exit, including a Windows-side disconnect, is final; reconnecting is
+  # always an explicit user action.
+  "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
+    /u:"$RDP_USER" \
+    /p:"$RDP_PASS" \
+    /size:"$rdp_size" \
+    "${rdp_display_options[@]}" \
+    /admin \
+    /sec:nla:off \
+    /tls:seclevel:0 \
+    /network:lan \
+    /bpp:32 \
+    /audio-mode:0 \
+    +clipboard \
+    /gdi:sw \
+    -grab-keyboard \
+    +home-drive \
+    /cert:ignore \
+    /wm-class:windows-rdp
 }
 
 require_vfio_memlock() {
@@ -380,14 +341,22 @@ do_start() {
   fi
 
   if [[ "$wait_for_rdp" == 1 ]]; then
-    wait_rdp
+    wait_rdp || return 1
+    notify_user "Windows iniciado" "Contenedor '$CONTAINER' y RDP listos."
+  else
+    notify_user "Contenedor Windows iniciado" "El contenedor '$CONTAINER' está en ejecución."
   fi
 }
 
 do_stop() {
+  notify_user "Windows apagando" "Deteniendo contenedor '$CONTAINER'."
   echo "Stopping container '$CONTAINER'..."
-  container_cmd stop "$CONTAINER"
+  if ! container_cmd stop "$CONTAINER"; then
+    report_container_failure
+    return 1
+  fi
   echo "Container stopped."
+  notify_user "Windows detenido" "Contenedor '$CONTAINER' detenido."
 }
 
 do_toggle() {
@@ -419,7 +388,7 @@ do_connect() {
     do_start || return 1
   fi
 
-  rdp_connect "$started_container" "$target_workspace"
+  rdp_connect "$target_workspace"
 }
 open_web_console() {
   if command -v firefox-open-tab &>/dev/null && firefox-open-tab --new "$WEB_CONSOLE_URL"; then
@@ -454,7 +423,6 @@ do_run() {
 do_install() {
   echo "Installing $SCRIPT_NAME..."
 
-  # Copy script to bin
   mkdir -p "$BIN_DIR"
   cp "$(realpath "$0")" "$BIN_DIR/$SCRIPT_NAME"
   chmod +x "$BIN_DIR/$SCRIPT_NAME"

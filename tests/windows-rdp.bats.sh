@@ -4,8 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCRIPTS=(
-	"$REPO_DIR/config/shared/.local/bin/windows-rdp"
-	"$REPO_DIR/scripts/windows-rdp.sh"
+  "$REPO_DIR/dotfiles/config/shared/.local/bin/windows-rdp"
 )
 
 fail() {
@@ -15,7 +14,7 @@ fail() {
 
 make_stub() {
 	local dir="$1" name="$2" body="$3"
-	printf '#!/usr/bin/bash\n%s\n' "$body" >"$dir/$name"
+	printf '#!/bin/bash\n%s\n' "$body" >"$dir/$name"
 	chmod +x "$dir/$name"
 }
 
@@ -34,10 +33,11 @@ run_script() {
 		CALLS="$tmp/calls" \
 		HOME="$tmp/home" \
 		XDG_CURRENT_DESKTOP= \
+		WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
 		SWAYSOCK= \
 		WAYLAND_DISPLAY= \
 		DISPLAY= \
-		/usr/bin/bash "$script" "$command" >"$tmp/out" 2>"$tmp/err"
+		/bin/bash "$script" "$command" >"$tmp/out" 2>"$tmp/err"
 }
 
 assert_calls_contains() {
@@ -96,6 +96,7 @@ with_tmp() {
 	: >"$tmp/calls"
 	mkdir -p "$tmp/home"
 	make_default_stubs "$tmp"
+	printf '%s\n' render-node >"$tmp/profile"
 	"$@" "$tmp"
 	rc=$?
 	rm -rf "$tmp"
@@ -126,12 +127,15 @@ test_command_selection() {
     run_script "$script" connect "$tmp"
     assert_calls_contains "$tmp" "xfreerdp /v:localhost:3389" "uses host xfreerdp"
   ' bash "$script"
-
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" distrobox-enter "echo distrobox-enter \"\$@\" >>\"\$CALLS\"; exit 0"
-    run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "distrobox-enter arch -- xfreerdp3" "falls back to distrobox"
+    if run_script "$script" connect "$tmp"; then
+      dump_case "$tmp"
+      fail "connection without a FreeRDP client should fail"
+    fi
+    grep -Fq "Error: FreeRDP client not found." "$tmp/err" ||
+      fail "missing FreeRDP client is reported"
   ' bash "$script"
 }
 
@@ -153,6 +157,7 @@ test_container_start_waits_before_connecting() {
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" nc "if [[ \"\$(<\"\$CALLS\")\" == *nc-seen* ]]; then exit 0; fi; echo nc-seen >>\"\$CALLS\"; exit 1"
+    make_stub "$tmp" docker "if [[ \"\$1\" == inspect ]]; then echo true; else echo docker \"\$@\" >>\"\$CALLS\"; fi"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
     run_script "$script" run "$tmp"
     assert_calls_contains "$tmp" "docker start windows" "container path starts docker"
@@ -173,7 +178,7 @@ test_direct_connection_reports_failure_without_retry_waits() {
     assert_calls_not_contains "$tmp" "docker start" "direct failure does not start container"
     assert_calls_not_contains "$tmp" "sleep" "direct failure does not retry with waits"
     assert_stdout_not_contains "$tmp" "RDP connection attempt|Retrying" "direct failure suppresses retry chatter"
-    assert_stdout_contains "$tmp" "Error: RDP connection failed \(exit code 9\)" "direct failure reports error"
+    assert_stdout_empty "$tmp" "a disconnected client does not trigger helper output"
   ' bash "$script"
 }
 

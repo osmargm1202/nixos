@@ -142,6 +142,7 @@ let
     ".local/bin/tmux-spanish-date"
     ".local/bin/switch-preview"
     ".local/bin/unbindheadset"
+    ".local/bin/external-lid-inhibit"
     ".local/bin/wifi_toggle"
     ".local/bin/wlogout_uniqe"
     ".local/share/icons/hicolor/256x256/apps"

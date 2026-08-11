@@ -26,6 +26,7 @@ exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option
 exec_always --no-startup-id autotiling
 exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu
 exec --no-startup-id i3swallowd
+exec --no-startup-id external-lid-inhibit
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+Shift+Return exec --no-startup-id zutty-fast

@@ -956,7 +956,12 @@ def valid_browser_response(message, action):
 
 def bounded_list_tabs_response(message, favicon_cache):
     response = {"id": message["id"], "ok": True, "tabs": []}
-    for tab in favicon_cache.enrich_tabs(message["tabs"]):
+    try:
+        tabs = favicon_cache.enrich_tabs(message["tabs"])
+    except Exception:
+        # Icons are optional presentation data. A cache fault must not break tab focus.
+        tabs = message["tabs"]
+    for tab in tabs:
         tab_without_icon = dict(tab)
         icon_path = tab_without_icon.pop("iconPath", None)
         candidate = dict(tab_without_icon)

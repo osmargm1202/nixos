@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+inhibitor=''
+interval="${EXTERNAL_LID_INHIBIT_INTERVAL:-5}"
+
+external_only() {
+  case "${XDG_CURRENT_DESKTOP:-}" in
+    *Hyprland*)
+      hyprctl monitors -j 2>/dev/null | jq -e '([.[].name] | length == 1 and (.[0] | test("^(eDP|LVDS)"; "i") | not))' >/dev/null
+      ;;
+    *i3*)
+      mapfile -t monitors < <(xrandr --listactivemonitors 2>/dev/null | awk 'NR > 1 { print $4 }')
+      ((${#monitors[@]} == 1)) && [[ ! "${monitors[0]}" =~ ^(eDP|LVDS) ]]
+      ;;
+    *labwc*|*wlroots*)
+      wlr-randr --json 2>/dev/null | jq -e '([.[] | select(.enabled == true) | .name] | length == 1 and (.[0] | test("^(eDP|LVDS)"; "i") | not))' >/dev/null
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+start() {
+  [[ -n "$inhibitor" ]] && kill -0 "$inhibitor" 2>/dev/null && return
+  setsid systemd-inhibit --what=handle-lid-switch --mode=block \
+    --why='Laptop is operating on one external display' sleep infinity >/dev/null 2>&1 &
+  inhibitor=$!
+}
+
+stop() {
+  [[ -z "$inhibitor" ]] && return
+  kill -- "-$inhibitor" 2>/dev/null || true
+  wait "$inhibitor" 2>/dev/null || true
+  inhibitor=''
+}
+
+trap 'stop' EXIT
+trap 'stop; exit 0' INT TERM
+while :; do
+  if external_only; then start; else stop; fi
+  sleep "$interval"
+done
