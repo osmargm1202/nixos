@@ -146,6 +146,23 @@
         "type": "github"
       }
     },
+    "hyprWindowShade": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786440014,
+        "narHash": "sha256-2HCpYVPtaaYcG4mUhtpsvUFUAr/0yZQXIJpiHU1zqtg=",
+        "owner": "osmargm1202",
+        "repo": "HyprWindowShade",
+        "rev": "5fcc906a7fed036afcf7e53e889a99c424b8b0fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "HyprWindowShade",
+        "rev": "5fcc906a7fed036afcf7e53e889a99c424b8b0fb",
+        "type": "github"
+      }
+    },
     "hyprcursor": {
       "inputs": {
         "hyprlang": [
@@ -613,6 +630,7 @@
         "flake-parts": "flake-parts",
         "herdr": "herdr",
         "home-manager": "home-manager",
+        "hyprWindowShade": "hyprWindowShade",
         "hyprglass": "hyprglass",
         "hyprland": "hyprland",
         "nix-flatpak": "nix-flatpak",
