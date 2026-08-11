@@ -8,7 +8,10 @@
 }:
 let
   hyprlandPackages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
-  hyprlandPackage = hyprlandPackages.hyprland;
+  # Upstream v0.56.0 `nix/default.nix` reads finalAttrs.src/VERSION for GIT_TAG.
+  hyprlandPackage = hyprlandPackages.hyprland.overrideAttrs (_: {
+    src = inputs.hyprland.outPath;
+  });
   hyprlandPortalPackage = hyprlandPackages.xdg-desktop-portal-hyprland;
   nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs (_: {
     version = "0.4.11";
