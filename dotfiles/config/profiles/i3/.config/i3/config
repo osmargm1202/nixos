@@ -37,7 +37,7 @@ bindsym $mod+Escape exec --no-startup-id i3-firefox-tabs
 bindsym $mod+c exec --no-startup-id $run i3-calc
 bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle
 bindsym $mod+v exec --no-startup-id $run i3-clipboard
-bindsym $mod+m exec --no-startup-id firefox-open-tab --new --prompt
+bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt
 bindsym $mod+Ctrl+m exec --no-startup-id $run i3-open-file dir
 bindsym $mod+Shift+m exec --no-startup-id $run i3-open-file terminal
 bindsym $mod+d exec --no-startup-id $run i3-ssh-host

@@ -115,7 +115,7 @@
     </keybind>
     <keybind key="W-m">
       <action name="Execute">
-        <command>firefox-open-tab --new --prompt</command>
+        <command>firefox-open-tab --new-tab --prompt</command>
       </action>
     </keybind>
     <keybind key="W-space">

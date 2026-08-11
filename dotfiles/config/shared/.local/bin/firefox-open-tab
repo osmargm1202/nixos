@@ -7,7 +7,7 @@ notify() {
 }
 
 usage() {
-  printf 'Usage: %s [--new] [--prompt] URL | %s --focus\n' "${0##*/}" "${0##*/}" >&2
+  printf 'Usage: %s [--new | --new-tab] [--prompt] URL | %s --focus\n' "${0##*/}" "${0##*/}" >&2
 }
 
 fail() {
@@ -70,6 +70,7 @@ focus_firefox() {
 }
 
 new_window=false
+new_tab=false
 prompt=false
 focus_only=false
 input=""
@@ -78,6 +79,9 @@ while (($#)); do
   case "$1" in
     --new)
       new_window=true
+      ;;
+    --new-tab)
+      new_tab=true
       ;;
     --prompt)
       prompt=true
@@ -107,7 +111,7 @@ while (($#)); do
 done
 
 if "$focus_only"; then
-  [[ "$new_window" == false && "$prompt" == false && -z "$input" ]] ||
+  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && -z "$input" ]] ||
     fail "--focus cannot be combined with a URL or creation options"
   focus_firefox >/dev/null 2>&1 || {
     notify "No existing Firefox window could be focused"
@@ -116,13 +120,17 @@ if "$focus_only"; then
   exit 0
 fi
 
+if "$new_window" && "$new_tab"; then
+  fail "--new and --new-tab cannot be combined"
+fi
+
 if "$prompt"; then
   [[ -z "$input" ]] || fail "--prompt cannot be combined with a URL"
   input="$(prompt_url || true)"
   [[ -n "$input" ]] || exit 0
 fi
 
-if "$new_window" && [[ "$prompt" == false && -z "$input" ]]; then
+if { "$new_window" || "$new_tab"; } && [[ "$prompt" == false && -z "$input" ]]; then
   input="about:blank"
 fi
 
@@ -138,6 +146,15 @@ if "$new_window"; then
     exit 1
   }
   firefox --new-window "$url" >/dev/null 2>&1 &
+  exit 0
+fi
+
+if "$new_tab"; then
+  command -v firefox >/dev/null 2>&1 || {
+    notify "Firefox is not installed"
+    exit 1
+  }
+  firefox --new-tab "$url" >/dev/null 2>&1 &
   exit 0
 fi
 

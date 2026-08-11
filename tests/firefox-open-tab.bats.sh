@@ -19,11 +19,11 @@ fail() {
 }
 
 bash -n "$HELPER"
-grep -Fq 'bindsym $mod+m exec --no-startup-id firefox-open-tab --new --prompt' "$I3" || fail 'i3 Win+M must create from the web prompt'
+grep -Fq 'bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt' "$I3" || fail 'i3 Win+M must open a new tab from the web prompt'
 grep -Fq 'bindsym $mod+w exec --no-startup-id $browser' "$I3" || fail 'i3 Win+W binding missing'
 grep -Fq 'exec firefox-open-tab --new "$@"' "$I3_WRAPPER" || fail 'i3 Win+W wrapper must create a window'
 grep -Fq 'Firefox) exec firefox-open-tab --focus' "$I3_MENU" || fail 'i3 Firefox menu must only focus'
-grep -Fq 'mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new --prompt")' "$HYPR" || fail 'Hyprland Win+M must create from the web prompt'
+grep -Fq 'mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new-tab --prompt")' "$HYPR" || fail 'Hyprland Win+M must open a new tab from the web prompt'
 grep -Fq 'mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window")' "$HYPR" || fail 'Hyprland Win+W binding missing'
 grep -Fq 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus")' "$HYPR" || fail 'Hyprland Win+Shift+W must only focus'
 grep -Fq 'exec firefox-open-tab --new "$@"' "$HYPR_WRAPPER" || fail 'Hyprland Win+W wrapper must create a window'
@@ -32,7 +32,7 @@ grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_S
 grep -Fq '<keybind key="W-w">' "$LABWC" || fail 'Labwc Win+W binding missing'
 grep -Fq '<command>firefox-open-tab --new</command>' "$LABWC" || fail 'Labwc Win+W must create explicitly'
 grep -Fq '<keybind key="W-m">' "$LABWC" || fail 'Labwc Win+M binding missing'
-grep -Fq '<command>firefox-open-tab --new --prompt</command>' "$LABWC" || fail 'Labwc Win+M must create explicitly from the web prompt'
+grep -Fq '<command>firefox-open-tab --new-tab --prompt</command>' "$LABWC" || fail 'Labwc Win+M must open a new tab from the web prompt'
 grep -Fq '<command>firefox-open-tab --focus</command>' "$MENU" || fail 'Labwc browser menu must only focus'
 
 tmp="$(mktemp -d)"
@@ -101,6 +101,16 @@ run_explicit_new() {
   [[ ! -e "$tmp/bridge-args" ]] || fail 'explicit creation must not query the bridge'
 }
 
+run_explicit_tab() {
+  local input="$1" expected_url="$2"
+  rm -f "$tmp/firefox-args" "$tmp/bridge-args"
+  BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" \
+    "$HELPER" --new-tab "$input"
+  wait_for_file "$tmp/firefox-args"
+  [[ "$(<"$tmp/firefox-args")" == "--new-tab $expected_url" ]] || fail 'explicit tab creation did not normalize the URL'
+  [[ ! -e "$tmp/bridge-args" ]] || fail 'explicit tab creation must not query the bridge'
+}
+
 run_bridge_focus i3 'i3-msg [class="(?i)firefox"] focus' pagina.net https://pagina.net
 run_bridge_focus Hyprland 'hyprctl dispatch focuswindow class:^(firefox|Navigator)$' nas:8080 http://nas:8080
 
@@ -113,20 +123,27 @@ wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.net' ]] || fail 'failed bridge did not create a tab in Firefox'
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
+run_explicit_tab 10.0.0.13:8000 http://10.0.0.13:8000
 rm -f "$tmp/firefox-args" "$tmp/bridge-args"
 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" \
   "$HELPER" --new
 wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '--new-window about:blank' ]] || fail 'URL-less creation did not open about:blank'
 [[ ! -e "$tmp/bridge-args" ]] || fail 'URL-less creation must not query the bridge'
+rm -f "$tmp/firefox-args" "$tmp/bridge-args"
+BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" PATH="$tmp/bin:$PATH" \
+  "$HELPER" --new-tab
+wait_for_file "$tmp/firefox-args"
+[[ "$(<"$tmp/firefox-args")" == '--new-tab about:blank' ]] || fail 'URL-less tab creation did not open about:blank'
+[[ ! -e "$tmp/bridge-args" ]] || fail 'URL-less tab creation must not query the bridge'
 
 
 rm -f "$tmp/firefox-args" "$tmp/bridge-args"
 ROFI_RESULT=pagina FIREFOX_ARGS="$tmp/firefox-args" BRIDGE_ARGS="$tmp/bridge-args" PATH="$tmp/bin:$PATH" \
-  "$HELPER" --new --prompt
+  "$HELPER" --new-tab --prompt
 wait_for_file "$tmp/firefox-args"
-[[ "$(<"$tmp/firefox-args")" == '--new-window https://pagina.com' ]] || fail 'prompt creation did not normalize the selected URL'
-[[ ! -e "$tmp/bridge-args" ]] || fail 'prompt creation must not query the bridge'
+[[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.com' ]] || fail 'prompt tab creation did not normalize the selected URL'
+[[ ! -e "$tmp/bridge-args" ]] || fail 'prompt tab creation must not query the bridge'
 
 rm -f "$tmp/firefox-args" "$tmp/bridge-args" "$tmp/focus-args"
 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" FOCUS_ARGS="$tmp/focus-args" \
