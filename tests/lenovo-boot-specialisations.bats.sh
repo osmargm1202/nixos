@@ -10,7 +10,7 @@ nix eval --impure --raw --expr '
     profileNames = [ "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" ];
     configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
     hasBootMenu = config:
-      config.boot.loader.timeout == 10
+      config.boot.loader.systemd-boot.configurationLimit == 2
       && config.specialisation.battery.configuration.boot.loader.systemd-boot.sortKey == "nixos-battery"
       && config.specialisation.gaming.configuration.boot.loader.systemd-boot.sortKey == "nixos-gaming"
       && config.specialisation.windows-vfio.configuration.boot.loader.systemd-boot.sortKey == "nixos-windows-vfio";

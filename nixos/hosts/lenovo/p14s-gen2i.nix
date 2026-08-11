@@ -32,8 +32,9 @@ in
   };
 
   config = {
-  # Expose the normal, battery, gaming, and VFIO entries at every Lenovo boot.
-  boot.loader.timeout = 10;
+  # Keep one rollback set so the boot menu remains limited to normal, battery,
+  # gaming, and Windows VFIO entries for the current and prior deployment.
+  boot.loader.systemd-boot.configurationLimit = 2;
 
   specialisation = {
     gaming.configuration = {
