@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   pkgs,
   lib,
@@ -35,10 +36,17 @@ let
   nordzyDark = pkgs.nordzy-icon-theme.override {
     nordzy-themes = [ "default" ];
   };
+  cinnamonXSession = pkgs.writeShellScript "cinnamon-xsession" ''
+    export DESKTOP_SESSION=cinnamon
+    export XDG_CURRENT_DESKTOP=X-Cinnamon
+    export XDG_SESSION_DESKTOP=cinnamon
+    export XDG_SESSION_TYPE=x11
+    exec ${config.services.displayManager.sessionData.wrapper} \
+      ${pkgs.cinnamon}/bin/cinnamon-session-cinnamon
+  '';
 in
 {
   imports = [
-    ./sddm.nix
     ./printer.nix
     ./vesktop.nix
   ];
@@ -49,6 +57,17 @@ in
   services.desktopManager.gnome.enable = lib.mkForce false;
   services.displayManager.defaultSession = lib.mkForce "cinnamon";
   services.xserver.displayManager.lightdm.enable = lib.mkForce false;
+
+  services.xserver.displayManager.startx = {
+    enable = true;
+    generateScript = false;
+  };
+
+  programs.bash.loginShellInit = lib.mkAfter ''
+    if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
+      exec ${pkgs.xinit}/bin/startx ${cinnamonXSession}
+    fi
+  '';
 
   # Cinnamon as desktop environment.
   services.xserver.desktopManager.cinnamon.enable = true;
@@ -89,6 +108,12 @@ in
 
   programs.dconf.enable = true;
   security.pam.services.login.enableGnomeKeyring = true;
+
+  systemd.services."getty@tty1" = {
+    wantedBy = [ "getty.target" ];
+    after = [ "home-manager-${userName}.service" ];
+    wants = [ "home-manager-${userName}.service" ];
+  };
   security.polkit.enable = true;
 
   xdg.portal = {
