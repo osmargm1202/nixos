@@ -22,6 +22,7 @@ stdenv.mkDerivation {
   ];
 
   enableParallelBuilding = true;
+  dontConfigure = true;
 
   buildPhase = ''
     runHook preBuild
