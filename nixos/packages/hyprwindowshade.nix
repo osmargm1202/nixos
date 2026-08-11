@@ -8,6 +8,7 @@
   pixman,
   libdrm,
   libglvnd,
+  wayland-protocols,
   src,
 }:
 stdenv.mkDerivation {
@@ -27,6 +28,7 @@ stdenv.mkDerivation {
     libpng
     pixman
     libdrm
+    wayland-protocols
     libglvnd
   ];
 
@@ -35,7 +37,11 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    $CXX -shared -fPIC -O3 -std=c++23 *.cpp -o HyprWindowShade.so \
+    mkdir -p protocols
+    hyprwayland-scanner \
+      ${wayland-protocols}/share/wayland-protocols/staging/color-management/color-management-v1.xml \
+      protocols/color-management-v1
+    $CXX -shared -fPIC -O3 -std=c++23 -Iprotocols *.cpp -o HyprWindowShade.so \
       -lGLESv2 -lEGL -lGL
     runHook postBuild
   '';
