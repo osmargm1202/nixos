@@ -44,8 +44,10 @@ runCommand "windows-manager-linux-orgm" {
   }
   EOF
 
-  install -d "$out/share/windows-manager-linux-orgm"
+  install -d "$out/share/windows-manager-linux-orgm" "$TMPDIR/xpi-inputs"
+  cp ${./windows-manager-linux-orgm/manifest.json} "$TMPDIR/xpi-inputs/manifest.json"
+  cp ${./windows-manager-linux-orgm/background.js} "$TMPDIR/xpi-inputs/background.js"
   zip -X -j -q "$out/share/windows-manager-linux-orgm/windows-manager-linux-orgm-unsigned.xpi" \
-    ${./windows-manager-linux-orgm/manifest.json} \
-    ${./windows-manager-linux-orgm/background.js}
+    "$TMPDIR/xpi-inputs/manifest.json" \
+    "$TMPDIR/xpi-inputs/background.js"
 ''

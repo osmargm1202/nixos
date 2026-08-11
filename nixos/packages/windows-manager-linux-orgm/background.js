@@ -18,6 +18,19 @@ function webAppHost(rawUrl) {
   return url.hostname.toLowerCase().replace(/^www\./, "");
 }
 
+const maxFaviconUrlLength = 2048;
+
+function cacheableFaviconUrl(value) {
+  if (typeof value !== "string" || value === "" || value.length > maxFaviconUrlLength) {
+    return undefined;
+  }
+  try {
+    return new URL(value).protocol === "https:" ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function tabDescriptor(tab) {
   const descriptor = {
     id: tab.id,
@@ -26,10 +39,14 @@ function tabDescriptor(tab) {
     active: tab.active,
   };
 
-  for (const field of ["title", "url", "favIconUrl"]) {
+  for (const field of ["title", "url"]) {
     if (typeof tab[field] === "string" && tab[field] !== "") {
       descriptor[field] = tab[field];
     }
+  }
+  const favIconUrl = cacheableFaviconUrl(tab.favIconUrl);
+  if (favIconUrl !== undefined) {
+    descriptor.favIconUrl = favIconUrl;
   }
 
   return descriptor;

@@ -77,6 +77,7 @@ import sys
 import threading
 import time
 import urllib.error
+import zipfile
 import zlib
 from pathlib import Path
 
@@ -85,6 +86,12 @@ runtime_dir = Path(sys.argv[2])
 spec = importlib.util.spec_from_file_location("native_host", host_path)
 native_host = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(native_host)
+xpi_path = runtime_dir / "package/share/windows-manager-linux-orgm/windows-manager-linux-orgm-unsigned.xpi"
+with zipfile.ZipFile(xpi_path) as xpi:
+    assert set(xpi.namelist()) == {"manifest.json", "background.js"}
+    assert json.loads(xpi.read("manifest.json")) == json.loads(
+        Path(host_path).with_name("manifest.json").read_text(encoding="utf-8")
+    )
 assert native_host.valid_url("https://example.com/path")
 assert not native_host.valid_url("about:blank")
 socket_path = runtime_dir / "windows_manager_linux_orgm.sock"
@@ -565,6 +572,26 @@ try:
         "favIconUrl": canonical_favicon_url,
         "iconPath": str(native_cached_path),
     }]
+
+    client = subprocess.Popen(
+        [sys.executable, host_path, "--tabs-client", "list"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=environment,
+    )
+    header = host.stdout.read(4)
+    assert len(header) == 4, "native host did not emit a failed tab-list request"
+    (size,) = struct.unpack("<I", header)
+    message = json.loads(host.stdout.read(size).decode("utf-8"))
+    response = json.dumps({
+        "id": message["id"],
+        "ok": False,
+        "error": "tabs access denied",
+    }).encode("utf-8")
+    host.stdin.write(struct.pack("<I", len(response)) + response)
+    host.stdin.flush()
+    assert client.wait(timeout=3) == 1
+    assert "tabs access denied" in client.stderr.read().decode("utf-8")
 
     client = subprocess.Popen(
         [sys.executable, host_path, "--tabs-client", "activate", "71"],

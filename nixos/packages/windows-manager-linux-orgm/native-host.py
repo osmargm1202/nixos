@@ -1052,7 +1052,7 @@ class NativeHost:
         connection, action = pending
         try:
             if valid_browser_response(message, action):
-                if action == "list-tabs":
+                if action == "list-tabs" and message["ok"]:
                     message = bounded_list_tabs_response(message, self.favicon_cache)
                 send_client_message(connection, message)
             else:

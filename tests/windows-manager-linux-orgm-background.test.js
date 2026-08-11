@@ -170,6 +170,33 @@ async function main() {
     ],
   }]);
 
+  const oversizedFavicon = createHarness([{
+    id: 73,
+    windowId: 17,
+    index: 1,
+    active: false,
+    title: "Data favicon",
+    url: "https://example.com/data-icon",
+    favIconUrl: `data:image/png;base64,${"A".repeat(128 * 1024)}`,
+  }]);
+  await oversizedFavicon.deliver({
+    id: "oversized-favicon",
+    type: "tab-operation",
+    action: "list-tabs",
+  });
+  assert.deepEqual(oversizedFavicon.posted, [{
+    id: "oversized-favicon",
+    ok: true,
+    tabs: [{
+      id: 73,
+      windowId: 17,
+      index: 1,
+      active: false,
+      title: "Data favicon",
+      url: "https://example.com/data-icon",
+    }],
+  }]);
+
   const activated = createHarness([
     { id: 81, windowId: 18, index: 0, active: false },
     { id: 82, windowId: 19, index: 1, active: true },

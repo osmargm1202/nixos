@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "windows_manager_linux_orgm",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Lists and focuses existing browser tabs through the native bridge.",
   "browser_specific_settings": {
     "gecko": {
