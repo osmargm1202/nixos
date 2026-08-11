@@ -9,6 +9,10 @@
       url = "github:yayuuu/hyprland-scroll-overview";
       flake = false;
     };
+    hyprglass = {
+      url = "github:hyprnux/hyprglass/v0.7.0";
+      flake = false;
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";

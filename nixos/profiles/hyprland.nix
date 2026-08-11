@@ -41,9 +41,16 @@ let
     src = inputs.scrollOverview;
     version = inputs.scrollOverview.shortRev or inputs.scrollOverview.rev;
   });
+  hyprGlass = pkgs.callPackage ../packages/hyprglass.nix {
+    hyprland = hyprlandPackage;
+    src = inputs.hyprglass;
+  };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
+  '';
+  hyprGlassLibrary = pkgs.runCommand "hyprglass.so" { } ''
+    ln -s ${hyprGlass}/lib/hyprglass.so "$out"
   '';
 in
 {
@@ -62,6 +69,7 @@ in
   };
 
   environment.etc."scrolloverview.so".source = scrollOverviewLibrary;
+  environment.etc."hyprglass.so".source = hyprGlassLibrary;
   programs.bash.loginShellInit = lib.mkAfter ''
     if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
       if pgrep -x gamescope >/dev/null; then
@@ -208,6 +216,7 @@ in
     # Upstream Hyprland v0.56.0 compositor and matching portal.
     hyprlandPackage
     xwayland
+    hyprGlass
     hyprpaper
     hyprpolkitagent
 

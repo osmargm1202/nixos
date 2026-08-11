@@ -9,6 +9,16 @@ if hl.plugin and hl.plugin.scrolloverview then
   })
 end
 
+if hl.plugin and hl.plugin.hyprglass then
+  local hg = hl.plugin.hyprglass
+  hg.config({
+    enabled = false,
+    manage_window_blur = true,
+    default_theme = "dark",
+    default_preset = "subtle",
+  })
+end
+
 hl.config({
   general = {
     gaps_in = 12,
