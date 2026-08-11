@@ -28,6 +28,7 @@ stdenv.mkDerivation {
     libpng
     pixman
     libdrm
+    libdrm.dev
     wayland-protocols
     libglvnd
   ];
