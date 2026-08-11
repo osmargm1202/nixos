@@ -32,22 +32,19 @@ in
   };
 
   config = {
-  # Keep one rollback set so the boot menu remains limited to normal, battery,
-  # gaming, and Windows VFIO entries for the current and prior deployment.
-  boot.loader.systemd-boot.configurationLimit = 2;
+  # Retain the current deployment and two rollbacks. Shared sort keys keep the
+  # normal, battery, gaming, and Windows VFIO choices for each generation adjacent.
+  boot.loader.systemd-boot.configurationLimit = 3;
 
   specialisation = {
     gaming.configuration = {
-      boot.loader.systemd-boot.sortKey = "nixos-gaming";
       powerManagement.cpuFreqGovernor = "performance";
     };
     windows-vfio.configuration = {
       imports = [ ./windows-vfio.nix ];
-      boot.loader.systemd-boot.sortKey = "nixos-windows-vfio";
     };
     battery.configuration = {
       orgm.lenovo.nvidiaDisabled.enable = true;
-      boot.loader.systemd-boot.sortKey = "nixos-battery";
       powerManagement.cpuFreqGovernor = "powersave";
       boot.blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" "nvidia_uvm" ];
     };
