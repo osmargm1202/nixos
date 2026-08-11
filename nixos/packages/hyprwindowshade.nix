@@ -7,9 +7,7 @@
   libpng,
   pixman,
   libdrm,
-  libGL,
-  libEGL,
-  libGLESv2,
+  libglvnd,
   src,
 }:
 stdenv.mkDerivation {
@@ -29,9 +27,7 @@ stdenv.mkDerivation {
     libpng
     pixman
     libdrm
-    libGL
-    libEGL
-    libGLESv2
+    libglvnd
   ];
 
   enableParallelBuilding = true;
