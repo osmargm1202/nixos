@@ -35,7 +35,9 @@ let
         $'auto waybar::modules::IdleInhibitor::refresh(int sig) -> void {\n#ifdef SIGRTMIN\n  if (config_["signal"].isInt() && sig == SIGRTMIN + config_["signal"].asInt()) {\n    toggleStatus();\n    for (auto const& module : IdleInhibitor::modules) {\n      module->update();\n    }\n  }\n#endif\n}\n\nvoid waybar::modules::IdleInhibitor::toggleStatus() {'
     '';
   });
-  scrollOverview = pkgs.callPackage ../packages/hyprland-scroll-overview.nix { };
+  scrollOverview = pkgs.callPackage ../packages/hyprland-scroll-overview.nix {
+    hyprland = hyprlandPackage;
+  };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
