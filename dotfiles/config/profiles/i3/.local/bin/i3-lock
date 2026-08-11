@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
-lock_state="$state_dir/lock_screen"
 
-if [[ -r "$lock_state" ]]; then
-  IFS= read -r lock_image <"$lock_state" || lock_image=''
-  if [[ -n "$lock_image" && -f "$lock_image" ]]; then
-    exec i3lock-color -i "$lock_image" -e "$@"
-  fi
+assets_dir="${I3_LOCK_BACKGROUNDS_DIR:-$HOME/.local/share/i3-lock-backgrounds}"
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/i3-lock"
+mapfile -t backgrounds < <(find "$assets_dir" -maxdepth 1 -type f -name '*.svg' -print 2>/dev/null | sort)
+
+if ((${#backgrounds[@]} == 0)); then
+  exec i3lock-color -c 13182d --bar-indicator --bar-orientation horizontal \
+    --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
+    --bar-base-width 2 --bar-step 8 --bar-color c4b5fdff -e "$@"
 fi
 
-exec i3lock-color -c 2e3440 -e "$@"
+geometry="$(xrandr --current 2>/dev/null | sed -n 's/.*current \([0-9]\+\) x \([0-9]\+\).*/\1x\2/p' | head -n1)"
+width="${geometry%x*}"; height="${geometry#*x}"
+[[ "$width" =~ ^[0-9]+$ && "$height" =~ ^[0-9]+$ ]] || { width=1920; height=1080; }
+mkdir -p "$state_dir"
+background="$(mktemp "$state_dir/background.XXXXXX.png")"
+trap 'rm -f -- "$background"' EXIT
+rsvg-convert --width "$width" --height "$height" "$(shuf -n1 -e "${backgrounds[@]}")" >"$background"
+i3lock-color -i "$background" --bar-indicator --bar-orientation horizontal \
+  --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
+  --bar-base-width 2 --bar-step 8 --bar-color c4b5fdff -e "$@"

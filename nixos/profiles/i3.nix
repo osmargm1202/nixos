@@ -110,6 +110,7 @@ in
       "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
       "image/webp" = [ "org.gnome.Loupe.desktop" ];
       "image/gif" = [ "org.gnome.Loupe.desktop" ];
+      "image/svg+xml" = [ "org.gnome.Loupe.desktop" ];
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
@@ -161,6 +162,7 @@ in
       iproute2
       procps
       i3lock-color
+      librsvg
       ngcbgI3Tools.autotiling
       ngcbgI3Tools.rootbtnd
       ngcbgI3Tools.i3swallow
