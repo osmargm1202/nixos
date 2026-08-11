@@ -6,6 +6,7 @@ HOST="$ROOT/nixos/packages/windows-manager-linux-orgm/native-host.py"
 MANIFEST="$ROOT/nixos/packages/windows-manager-linux-orgm/manifest.json"
 PACKAGE="$ROOT/nixos/packages/windows-manager-linux-orgm.nix"
 MODULE="$ROOT/nixos/firefox.nix"
+SIGNED_XPI="$ROOT/nixos/packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -25,6 +26,29 @@ grep -Fq 'nativeMessagingHosts.packages = [ windowsManagerLinuxOrgm ];' "$MODULE
 grep -Fq 'windows-manager-linux-orgm-signed.xpi' "$MODULE" || fail 'browser must await the signed XPI before activation'
 grep -Fq 'lib/mozilla/native-messaging-hosts/windows_manager_linux_orgm.json' "$PACKAGE" || fail 'package must install the native host manifest'
 grep -Fq 'windows-manager-linux-orgm-tabs' "$PACKAGE" || fail 'package must install the tab-list client'
+python3 - "$MANIFEST" "$ROOT/nixos/packages/windows-manager-linux-orgm/background.js" "$SIGNED_XPI" <<'PY'
+import json
+import sys
+import zipfile
+
+manifest_path, background_path, signed_xpi_path = sys.argv[1:]
+with open(manifest_path, encoding="utf-8") as source:
+    source_manifest = json.load(source)
+with open(background_path, "rb") as source:
+    source_background = source.read()
+with zipfile.ZipFile(signed_xpi_path) as archive:
+    signed_manifest = json.loads(archive.read("manifest.json"))
+    assert signed_manifest == source_manifest, "signed XPI manifest differs from tracked source"
+    assert archive.read("background.js") == source_background, "signed XPI background differs from tracked source"
+    assert signed_manifest["browser_specific_settings"]["gecko"]["id"] == "windows_manager_linux_orgm@or-gm.com"
+    assert signed_manifest["version"] == "1.0.5"
+    required_signatures = {
+        "META-INF/manifest.mf",
+        "META-INF/mozilla.sf",
+        "META-INF/mozilla.rsa",
+    }
+    assert required_signatures.issubset(archive.namelist()), "XPI lacks Mozilla signature metadata"
+PY
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
