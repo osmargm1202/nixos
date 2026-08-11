@@ -30,6 +30,24 @@ for _, rule in ipairs(opacity_rules) do
   })
 end
 
+-- Opening-only shader transitions for selected desktop applications.
+local opening_transition_rules = {
+  { class = "^(kitty)$", shader = "/etc/hyprwindowshade-shaders/open/fade.glsl", duration_ms = 220 },
+  { class = "^(org.gnome.Nautilus)$", shader = "/etc/hyprwindowshade-shaders/open/circle-reveal.glsl", duration_ms = 260 },
+  { class = "^(firefox|Firefox)$", shader = "/etc/hyprwindowshade-shaders/open/pixelate.glsl", duration_ms = 280 },
+}
+
+for _, rule in ipairs(opening_transition_rules) do
+  hl.window_rule({
+    match = { class = rule.class },
+    tag = "+shader_transition_open:" .. rule.shader,
+  })
+  hl.window_rule({
+    match = { class = rule.class },
+    tag = "+shader_transition_duration_ms:" .. rule.duration_ms,
+  })
+end
+
 local utilities = {
   { class = "^(org.gnome.Calculator)$", size = "420 520" },
   { class = "^(pavucontrol)$", size = "760 520" },

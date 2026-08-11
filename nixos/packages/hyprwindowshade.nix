@@ -50,6 +50,10 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     install -Dm755 HyprWindowShade.so "$out/lib/HyprWindowShade.so"
+    install -Dm644 shaders/LICENSE "$out/share/hyprwindowshade/shaders/LICENSE"
+    install -Dm644 shaders/open/fade.glsl "$out/share/hyprwindowshade/shaders/open/fade.glsl"
+    install -Dm644 shaders/open/circle-reveal.glsl "$out/share/hyprwindowshade/shaders/open/circle-reveal.glsl"
+    install -Dm644 shaders/open/pixelate.glsl "$out/share/hyprwindowshade/shaders/open/pixelate.glsl"
     runHook postInstall
   '';
 }

@@ -80,6 +80,7 @@ in
   # Deliberately only expose the ABI-coupled plugin. After switching generations,
   # unload any prior instance, then manually load /etc/HyprWindowShade.so; never replace it while loaded.
   environment.etc."HyprWindowShade.so".source = hyprWindowShadeLibrary;
+  environment.etc."hyprwindowshade-shaders".source = "${hyprWindowShade}/share/hyprwindowshade/shaders";
   programs.bash.loginShellInit = lib.mkAfter ''
     if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
       if pgrep -x gamescope >/dev/null; then
