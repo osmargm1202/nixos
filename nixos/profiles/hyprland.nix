@@ -119,7 +119,6 @@ in
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      hyprlandPortalPackage
       xdg-desktop-portal-gtk
       hyprKdeconnectFix
     ];
