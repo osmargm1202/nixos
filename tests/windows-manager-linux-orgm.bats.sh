@@ -9,8 +9,8 @@ MODULE="$ROOT/nixos/firefox.nix"
 SIGNED_XPI="$ROOT/nixos/packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi"
 
 fail() {
-  printf 'FAIL: %s\n' "$*" >&2
-  exit 1
+	printf 'FAIL: %s\n' "$*" >&2
+	exit 1
 }
 
 python3 -m json.tool "$MANIFEST" >/dev/null
@@ -53,16 +53,16 @@ PY
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 (
-  cd "$ROOT"
-  nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/packages/windows-manager-linux-orgm.nix { }'
+	cd "$ROOT"
+	nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/packages/windows-manager-linux-orgm.nix { }'
 )
 mkdir "$tmp/no-socket-runtime"
 if XDG_RUNTIME_DIR="$tmp/no-socket-runtime" "$tmp/package/bin/windows-manager-linux-orgm-tab" https://example.com/ 2>"$tmp/wrapper-error"; then
-  fail 'wrapper should fail while the native host socket is absent'
+	fail 'wrapper should fail while the native host socket is absent'
 fi
 grep -Fq 'windows-manager-linux-orgm-tab:' "$tmp/wrapper-error" || fail 'wrapper did not start the packaged native host'
 if XDG_RUNTIME_DIR="$tmp/no-socket-runtime" "$tmp/package/bin/windows-manager-linux-orgm-tabs" list 2>"$tmp/tabs-wrapper-error"; then
-  fail 'tab-list wrapper should fail while the native host socket is absent'
+	fail 'tab-list wrapper should fail while the native host socket is absent'
 fi
 grep -Fq 'windows-manager-linux-orgm-tabs:' "$tmp/tabs-wrapper-error" || fail 'tab-list wrapper did not report its failure'
 python3 - "$HOST" "$tmp" <<'PY'
