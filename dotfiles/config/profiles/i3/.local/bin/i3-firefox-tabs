@@ -72,3 +72,8 @@ windows-manager-linux-orgm-tabs activate "${ids[selection]}" || {
   notify "La pestaña seleccionada ya no existe"
   exit 1
 }
+
+i3-msg '[class="firefox"] focus' >/dev/null 2>&1 || {
+  notify "No se pudo enfocar la ventana de Firefox"
+  exit 1
+}

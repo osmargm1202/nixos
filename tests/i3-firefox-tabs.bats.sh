@@ -35,10 +35,15 @@ cat >"$tmp/bin/i3-rofi" <<'EOF'
 cat >"$ROFI_INPUT"
 printf '1\n'
 EOF
-chmod +x "$tmp/bin/windows-manager-linux-orgm-tabs" "$tmp/bin/i3-rofi"
+cat >"$tmp/bin/i3-msg" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >"$I3_FOCUS_LOG"
+EOF
+chmod +x "$tmp/bin/windows-manager-linux-orgm-tabs" "$tmp/bin/i3-rofi" "$tmp/bin/i3-msg"
 export TABS_JSON='[{"id":11,"windowId":1,"index":0,"active":true,"title":"Duplicado\n\u001f","url":"https://first.example/","iconPath":"'"$tmp"'/icon.png"},{"id":12,"windowId":2,"index":0,"active":false,"title":"Duplicado","url":"https://second.example/"}]'
-ACTIVATE_LOG="$tmp/activate" ROFI_INPUT="$tmp/rofi-input" PATH="$tmp/bin:$PATH" "$HELPER"
+ACTIVATE_LOG="$tmp/activate" I3_FOCUS_LOG="$tmp/focus" ROFI_INPUT="$tmp/rofi-input" PATH="$tmp/bin:$PATH" "$HELPER"
 [[ "$(<"$tmp/activate")" == 'activate 12' ]] || fail 'selected row did not activate the matching tab id'
+[[ "$(<"$tmp/focus")" == '[class="firefox"] focus' ]] || fail 'selected tab did not focus the Firefox container'
 python3 - "$tmp/rofi-input" <<'PY'
 import sys
 rows = open(sys.argv[1], 'rb').read().splitlines()
