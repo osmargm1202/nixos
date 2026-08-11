@@ -1,5 +1,7 @@
 local exec_once = {
   "hyprctl plugin load /etc/scrolloverview.so",
+  "hyprctl plugin load /etc/hyprglass.so",
+  "hyprctl reload",
   "hyprctl plugin load /etc/HyprWindowShade.so",
   -- Import the graphical session before starting StatusNotifier clients.
   "hypr-tray-applets",
