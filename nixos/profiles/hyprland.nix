@@ -278,8 +278,8 @@ in
 
   assertions = [
     {
-      assertion = hyprlandPackage.version == "0.56.0";
-      message = "The selected upstream Hyprland platform must be exactly 0.56.0.";
+      assertion = lib.hasPrefix "0.56.0" hyprlandPackage.version;
+      message = "The selected upstream Hyprland platform requires the 0.56.0 release family; the flake input is the exact release pin.";
     }
   ];
 
