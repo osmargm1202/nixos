@@ -19,6 +19,9 @@ grep -Fq '"image/svg+xml" = [ "org.gnome.Loupe.desktop" ];' "$PROFILE" ||
   fail 'Loupe must open SVG images by default'
 for background in "$ASSETS"/*.svg; do [[ -s "$background" ]] || fail 'missing SVG lock background'; done
 grep -Fq -- '--bar-indicator' "$LOCK" || fail 'lock must use rectangular bar indicator'
+installed_i3lock="$(readlink -f "$(command -v i3lock-color)")"
+zcat "$(dirname "$(dirname "$installed_i3lock")")/share/man/man1/i3lock-color.1.gz" |
+  grep -Fq '\-\-bar\-indicator' || fail 'installed i3lock-color lacks bar indicator support'
 grep -Fq 'rsvg-convert --width "$width" --height "$height"' "$LOCK" || fail 'lock background must render at active resolution'
 ! grep -Fq 'lock_background_bin=' "$WALLPAPER" || fail 'wallpaper must not generate lock screenshots'
 grep -Fq 'xss-lock --transfer-sleep-lock -- $run i3-lock -n' "$CONFIG" || fail 'idle lock bypasses helper'
@@ -43,9 +46,9 @@ chmod +x "$tmp/bin/"*
 export LOCK_CALLS="$tmp/calls"
 I3_LOCK_BACKGROUNDS_DIR="$tmp/assets" XDG_RUNTIME_DIR="$tmp" PATH="$tmp/bin:$PATH" "$LOCK" -n
 grep -Fxq -- '--bar-indicator' "$tmp/calls" || fail 'bar indicator option missing'
-grep -Fxq -- '-i' "$tmp/calls" || fail 'rendered background missing'
+grep -Eq '^--image=.*/background\.[[:alnum:]]+\.png$' "$tmp/calls" || fail 'rendered background missing'
 grep -Fxq -- '-e' "$tmp/calls" || fail 'empty-password safeguard missing'
 grep -Fxq -- '-n' "$tmp/calls" || fail 'xss-lock foreground argument not preserved'
-rendered_path="$(sed -n '/^-i$/ { n; p; }' "$tmp/calls")"
+rendered_path="$(sed -n 's/^--image=//p' "$tmp/calls")"
 [[ ! -e "$rendered_path" ]] || fail 'temporary rendered background was not removed'
 printf 'PASS: i3 lock renders a random resolution-matched SVG background\n'

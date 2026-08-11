@@ -6,9 +6,10 @@ state_dir="${XDG_RUNTIME_DIR:-/tmp}/i3-lock"
 mapfile -t backgrounds < <(find "$assets_dir" -maxdepth 1 -type f -name '*.svg' -print 2>/dev/null | sort)
 
 if ((${#backgrounds[@]} == 0)); then
-  exec i3lock-color -c 13182d --bar-indicator --bar-orientation horizontal \
+  exec i3lock-color -c 13182dff --bar-indicator --bar-orientation horizontal \
     --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
-    --bar-base-width 2 --bar-step 8 --bar-color c4b5fdff -e "$@"
+    --bar-base-width 2 --bar-step 8 --bar-color=c4b5fdff --ringver-color=e9d5ffff \
+    --ringwrong-color=fb7185ff -e "$@"
 fi
 
 geometry="$(xrandr --current 2>/dev/null | sed -n 's/.*current \([0-9]\+\) x \([0-9]\+\).*/\1x\2/p' | head -n1)"
@@ -18,6 +19,7 @@ mkdir -p "$state_dir"
 background="$(mktemp "$state_dir/background.XXXXXX.png")"
 trap 'rm -f -- "$background"' EXIT
 rsvg-convert --width "$width" --height "$height" "$(shuf -n1 -e "${backgrounds[@]}")" >"$background"
-i3lock-color -i "$background" --bar-indicator --bar-orientation horizontal \
+i3lock-color --image="$background" --fill -c 13182dff --bar-indicator --bar-orientation horizontal \
   --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
-  --bar-base-width 2 --bar-step 8 --bar-color c4b5fdff -e "$@"
+  --bar-base-width 2 --bar-step 8 --bar-color=c4b5fdff --ringver-color=e9d5ffff \
+  --ringwrong-color=fb7185ff -e "$@"
