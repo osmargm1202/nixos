@@ -13,6 +13,11 @@
       url = "github:hyprnux/hyprglass/v0.7.0";
       flake = false;
     };
+    hyprWindowShade = {
+      # Immutable fork revision containing the Hyprland 0.56 shader ports.
+      url = "github:osmargm1202/HyprWindowShade/5fcc906a7fed036afcf7e53e889a99c424b8b0fb";
+      flake = false;
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";

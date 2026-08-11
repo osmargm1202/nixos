@@ -45,12 +45,19 @@ let
     hyprland = hyprlandPackage;
     src = inputs.hyprglass;
   };
+  hyprWindowShade = pkgs.callPackage ../packages/hyprwindowshade.nix {
+    hyprland = hyprlandPackage;
+    src = inputs.hyprWindowShade;
+  };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
   '';
   hyprGlassLibrary = pkgs.runCommand "hyprglass.so" { } ''
     ln -s ${hyprGlass}/lib/hyprglass.so "$out"
+  '';
+  hyprWindowShadeLibrary = pkgs.runCommand "HyprWindowShade.so" { } ''
+    ln -s ${hyprWindowShade}/lib/HyprWindowShade.so "$out"
   '';
 in
 {
@@ -70,6 +77,9 @@ in
 
   environment.etc."scrolloverview.so".source = scrollOverviewLibrary;
   environment.etc."hyprglass.so".source = hyprGlassLibrary;
+  # Deliberately only expose the ABI-coupled plugin. After switching generations,
+  # unload any prior instance, then manually load /etc/HyprWindowShade.so; never replace it while loaded.
+  environment.etc."HyprWindowShade.so".source = hyprWindowShadeLibrary;
   programs.bash.loginShellInit = lib.mkAfter ''
     if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
       if pgrep -x gamescope >/dev/null; then
