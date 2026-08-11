@@ -32,6 +32,9 @@ in
   };
 
   config = {
+  # Expose the normal, battery, gaming, and VFIO entries at every Lenovo boot.
+  boot.loader.timeout = 10;
+
   specialisation = {
     gaming.configuration = {
       boot.loader.systemd-boot.sortKey = "nixos-gaming";
