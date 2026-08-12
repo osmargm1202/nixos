@@ -7,6 +7,7 @@ HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
 CINNAMON="$ROOT/nixos/profiles/cinnamon.nix"
 COMMON="$ROOT/nixos/common.nix"
 HYPR_PROFILE="$ROOT/nixos/profiles/hyprland.nix"
+LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/autostart"
 HYPR_KDECONNECT_PORTAL="$ROOT/nixos/packages/hypr-kdeconnect-fix.nix"
 
 fail() {
@@ -20,6 +21,8 @@ grep -Fq 'exec --no-startup-id kdeconnect-indicator' "$I3" ||
   fail 'i3 must start the KDE Connect indicator'
 grep -Fq '"kdeconnect-indicator",' "$HYPR" ||
   fail 'Hyprland must start the KDE Connect indicator'
+grep -Fq 'kdeconnect-indicator >/dev/null 2>&1 &' "$LABWC" ||
+  fail 'Labwc must start the KDE Connect indicator'
 grep -Fq 'xdg.configFile."autostart/kdeconnect-indicator.desktop".text' "$CINNAMON" ||
   fail 'Cinnamon must install the KDE Connect autostart entry'
 grep -Fq 'Exec=kdeconnect-indicator' "$CINNAMON" ||

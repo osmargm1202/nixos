@@ -17,11 +17,14 @@ if [ ! -d "$hypr_root" ]; then
   exit 1
 fi
 
-selected="$(
-  cd "$hypr_root"
-  find . -type f -name '*.lua' \
-    -printf '%P\n' | sort | hypr_rofi_dmenu 'Hypr Lua config' 18 760px
-)" || exit 0
+selected="${1:-}"
+if [[ -z "$selected" ]]; then
+  selected="$(
+    cd "$hypr_root"
+    find . -type f -name '*.lua' \
+      -printf '%P\n' | sort | hypr_rofi_dmenu 'Hypr Lua config' 18 760px
+  )" || exit 0
+fi
 
 [ -n "$selected" ] || exit 0
 

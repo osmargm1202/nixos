@@ -30,27 +30,40 @@ for _, rule in ipairs(opacity_rules) do
   })
 end
 
--- Every daily-use application has an explicit opening shader. The package exposes
--- every ported shader under /etc/hyprwindowshade-shaders/open for later selection.
+-- Each daily-use app has an opening transition and is explicitly glassed.
+-- HyprGlass replaces Hyprland's disabled decoration blur for these clients.
+-- btop is a terminal app: its title rule overrides Kitty's transition.
 local opening_transition_rules = {
-  { class = "^(kitty)$", shader = "fade", duration_ms = 200 },
-  { class = "^(org.gnome.Nautilus)$", shader = "circle", duration_ms = 200 },
-  { class = "^(dev.warp.Warp)$", shader = "soft-warp-fade", duration_ms = 200 },
-  { class = "^(vesktop)$", shader = "pixelate", duration_ms = 200 },
-  { class = "^(discord)$", shader = "pixelate", duration_ms = 200 },
-  { class = "^(com.discordapp.Discord)$", shader = "pixelate", duration_ms = 200 },
-  { class = "^(spotify)$", shader = "ripple", duration_ms = 200 },
-  { class = "^(obsidian)$", shader = "ink-splash", duration_ms = 200 },
-  { class = "^(firefox|Firefox)$", shader = "pixelate", duration_ms = 200 },
+  { match = { class = "^(kitty)$" }, shader = "fade", duration_ms = 200 },
+  { match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },
+  { match = { class = "^(chromium|Chromium)$" }, shader = "directional-wipe", duration_ms = 200 },
+  { match = { class = "^(brave-browser|Brave-browser|brave-origin)$" }, shader = "crosswarp", duration_ms = 200 },
+  { match = { class = "^(opera|Opera)$" }, shader = "flyeye", duration_ms = 200 },
+  { match = { class = "^(obsidian)$" }, shader = "ink-splash", duration_ms = 200 },
+  { match = { class = "^(com.obsproject.Studio|obs)$" }, shader = "plasma-flow", duration_ms = 200 },
+  { match = { title = "^[Bb][Tt][Oo][Pp]$" }, shader = "static-fade", duration_ms = 200 },
+  { match = { class = "^(vesktop)$" }, shader = "pixelate", duration_ms = 200 },
+  { match = { class = "^(discord|com.discordapp.Discord)$" }, shader = "pixelate", duration_ms = 200 },
+  { match = { class = "^(libreoffice.*|LibreOffice.*)$" }, shader = "circle", duration_ms = 200 },
+  { match = { class = "^(Code|code|code-oss|VSCodium)$" }, shader = "crosshatch", duration_ms = 200 },
+  { match = { class = "^(Blender|blender)$" }, shader = "voronoi-shatter", duration_ms = 200 },
+  { match = { class = "^(org.gnome.Nautilus)$" }, shader = "morph", duration_ms = 200 },
+  { match = { class = "^(thunar|Thunar)$" }, shader = "ripple", duration_ms = 200 },
+  { match = { class = "^(org.gnome.Calculator)$" }, shader = "snap", duration_ms = 200 },
+  { match = { class = "^(pavucontrol)$" }, shader = "dissolve", duration_ms = 200 },
+  { match = { class = "^(dev.warp.Warp)$" }, shader = "soft-warp-fade", duration_ms = 200 },
+  { match = { class = "^(spotify)$" }, shader = "ripple", duration_ms = 200 },
 }
 
 for _, rule in ipairs(opening_transition_rules) do
+  hl.window_rule({ match = rule.match, tag = "+hyprglass_enabled" })
+  hl.window_rule({ match = rule.match, tag = "+hyprglass_preset_subtle" })
   hl.window_rule({
-    match = { class = rule.class },
+    match = rule.match,
     tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. rule.shader .. ".glsl",
   })
   hl.window_rule({
-    match = { class = rule.class },
+    match = rule.match,
     tag = "+shader_transition_duration_ms:" .. rule.duration_ms,
   })
 end
