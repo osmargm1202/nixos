@@ -33,6 +33,7 @@
   social = [
     { name = "Facebook"; url = "https://www.facebook.com/"; icon = "facebook"; }
     { name = "Instagram"; url = "https://www.instagram.com/"; icon = "instagram"; }
+    { name = "Reddit"; url = "https://www.reddit.com/"; icon = "applications-internet"; }
     { name = "UberEats"; url = "https://www.ubereats.com/"; icon = "ubereats"; }
   ];
 }
