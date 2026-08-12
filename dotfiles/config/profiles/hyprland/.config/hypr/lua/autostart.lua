@@ -10,6 +10,7 @@ local exec_once = {
   -- Restore the selected static wallpaper without a persistent selector daemon.
   "hypr-wallpaper restore",
   "hyprpolkitagent",
+  "sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'",
   "kdeconnect-indicator",
   "systemctl --user --quiet start sunshine.service || true",
   "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",

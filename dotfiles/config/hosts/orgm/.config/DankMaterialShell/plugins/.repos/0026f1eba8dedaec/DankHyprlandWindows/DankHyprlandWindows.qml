@@ -127,7 +127,7 @@ QtObject {
         if (!address)
             return;
 
-        Hyprland.dispatch(`focuswindow address:${address}`);
+        Hyprland.dispatch(`hl.dsp.focus({ window = "address:${address}" })`);
     }
 
     function getContextMenuActions(item) {

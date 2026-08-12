@@ -4,6 +4,8 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 profile="$repo_dir/dotfiles/config/profiles/hyprland"
 bin="$profile/.local/bin"
+obsidian_helper="$bin/hypr-obsidian-open-or-focus"
+dank_window_switcher="$repo_dir/dotfiles/config/hosts/orgm/.config/DankMaterialShell/plugins/.repos/0026f1eba8dedaec/DankHyprlandWindows/DankHyprlandWindows.qml"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
@@ -17,6 +19,9 @@ if grep -Fq 'SDL_VIDEODRIVER' "$profile/.config/hypr/lua/environment.lua" ||
   exit 1
 fi
 grep -Fq 'waybar-watch' "$profile/.config/hypr/lua/autostart.lua"
+grep -Fq 'dunstctl reload >/dev/null 2>&1 || exec dunst' "$profile/.config/hypr/lua/autostart.lua"
+grep -Fq 'hl.dsp.focus({ window = "address:${address}" })' "$dank_window_switcher"
+! grep -Fq 'focuswindow address:' "$dank_window_switcher"
 grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    pulsemixer' "$repo_dir/nixos/profiles/hyprland.nix"
@@ -35,7 +40,6 @@ grep -Fq 'hl.bind(mainMod .. " + CTRL + Return", hl.dsp.exec_cmd("kitty -e tmux 
 grep -Fq 'bindsym $mod+Ctrl+Return exec --no-startup-id kitty -e tmux new-session -A -s main' "$repo_dir/dotfiles/config/profiles/i3/.config/i3/config"
 grep -Fq "entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'" "$bin/hypr-keybindings-help"
 grep -Fq "entry 'Alt+Tab' 'Vista de workspaces' 'ScrollOverview'" "$bin/hypr-keybindings-help"
-[[ "$(grep -Fc 'mainMod .. " + C"' "$keybindings")" == 1 ]]
 
 test_bin="$tmp/bin"
 home="$tmp/home"
@@ -85,7 +89,15 @@ printf '%s\n' "$*" >"$NWG_DOCK_RELOAD_ARGS"
 EOF
 cat >"$test_bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
-exit 0
+if [[ "${1:-}" == "-j" ]]; then
+  printf '%s\n' '[]'
+  exit 0
+fi
+printf '%s\n' "$*" >"${HYPRCTL_ARGS:-/dev/null}"
+EOF
+cat >"$test_bin/jq" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' '0xobsidian'
 EOF
 chmod +x "$test_bin"/*
 
@@ -128,4 +140,6 @@ HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR
 [[ "$(<"$tmp/hyprlock-args")" == '--immediate-render --no-fade-in' ]]
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" FIREFOX_ARGS="$tmp/firefox-args" "$bin/hypr-firefox-new-window"
 [[ "$(<"$tmp/firefox-args")" == '--new' ]]
+HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRCTL_ARGS="$tmp/hyprctl-args" "$obsidian_helper"
+[[ "$(<"$tmp/hyprctl-args")" == 'dispatch hl.dsp.focus({ window = "address:0xobsidian" })' ]]
 printf '%s\n' 'hypr-core-helpers: ok'

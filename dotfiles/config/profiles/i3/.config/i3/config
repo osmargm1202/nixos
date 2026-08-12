@@ -14,7 +14,7 @@ exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id kdeconnect-indicator
-exec --no-startup-id dunst
+exec --no-startup-id sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id systemctl --user --quiet start sunshine.service
 exec --no-startup-id sh -c 'systemctl --user --quiet start windows-vm-battery-guard.service 2>/dev/null || true'

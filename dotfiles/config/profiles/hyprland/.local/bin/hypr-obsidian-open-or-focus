@@ -4,7 +4,7 @@ set -euo pipefail
 if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
   address="$(hyprctl -j clients 2>/dev/null | jq -r '.[] | select((.class // "" | test("obsidian"; "i")) or (.title // "" | test("obsidian"; "i"))) | .address' | head -n1)"
   if [[ -n "${address}" ]]; then
-    exec hyprctl dispatch focuswindow "address:${address}"
+    exec hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })"
   fi
 fi
 

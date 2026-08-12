@@ -16,8 +16,8 @@ fail() {
 }
 
 ! grep -Fq 'i3-gh0stzk' "$DUNST" || fail 'Dunst keeps a removed Polybar rice dependency'
-grep -Eq '^exec[[:space:]]+--no-startup-id[[:space:]]+dunst$' "$CONFIG" ||
-  fail 'i3 must start Dunst directly'
+grep -Fq "exec --no-startup-id sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'" "$CONFIG" ||
+  fail 'i3 must reload its profile-specific Dunst configuration or start Dunst'
 grep -Fq 'clipcat' "$PROFILE" || fail 'Clipcat package/service missing'
 grep -Fq 'systemd.user.services.i3-clipcat' "$PROFILE" || fail 'Clipcat user service missing'
 grep -Fq -- '--no-daemon' "$PROFILE" || fail 'Clipcat must remain supervised by systemd'
@@ -30,5 +30,26 @@ grep -Fq 'i3-clipcat.service' "$CLIPBOARD" || fail 'clipboard helper does not st
 grep -Fq 'bindsym $mod+v exec --no-startup-id $run i3-clipboard' "$CONFIG" || fail 'Mod+V does not open Rofi clipboard'
 grep -Fq 'Clipboard) exec i3-clipboard' "$MENU" || fail 'main menu does not open Rofi clipboard'
 bash -n "$CLIPBOARD"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/bin"
+cat >"$tmp/bin/dunstctl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$DUNST_LOG"
+exit "${DUNSTCTL_STATUS:-0}"
+EOF
+cat >"$tmp/bin/dunst" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' started >>"$DUNST_LOG"
+EOF
+chmod +x "$tmp/bin/dunstctl" "$tmp/bin/dunst"
+DUNST_LOG="$tmp/log" DUNSTCTL_STATUS=0 PATH="$tmp/bin:$PATH" \
+  sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
+grep -Fxq reload "$tmp/log" || fail 'Dunst startup must first reload the active Dunst instance'
+[[ "$(wc -l <"$tmp/log")" == 1 ]] || fail 'Dunst must not start a second instance after a successful reload'
+: >"$tmp/log"
+DUNST_LOG="$tmp/log" DUNSTCTL_STATUS=1 PATH="$tmp/bin:$PATH" \
+  sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
+grep -Fxq started "$tmp/log" || fail 'Dunst startup must launch Dunst when no active instance exists'
 
-printf 'PASS: i3 starts Dunst directly and clipboard uses UID-independent Clipcat\n'
+printf 'PASS: i3 starts or reloads Dunst and clipboard uses UID-independent Clipcat\n'
