@@ -72,7 +72,7 @@ entries() {
       entry 'Win+M' 'Abrir página web nueva' 'firefox-open-tab --new --prompt'
       entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
       entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
-      entry 'Win+Esc' 'Cambiar ventana' 'hypr-rofi-window'
+      entry 'Win+Esc' 'Pestañas Firefox' 'firefox-tabs'
       entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
       entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
       entry 'Win+V' 'Clipboard' 'cliphist + rofi'

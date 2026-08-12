@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 &&
+    notify-send "Firefox" "$1" 2>/dev/null || true
+}
+
+command -v windows-manager-linux-orgm-tabs >/dev/null 2>&1 || {
+  notify "El puente de pestañas no está instalado"
+  exit 1
+}
+
+command -v python3 >/dev/null 2>&1 || {
+  notify "Python no está instalado"
+  exit 1
+}
+
+tabs="$(windows-manager-linux-orgm-tabs list)" || {
+  notify "No se pudo consultar las pestañas existentes"
+  exit 1
+}
+
+state="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/firefox-tabs.XXXXXX")"
+trap 'rm -rf "$state"' EXIT
+printf '%s' "$tabs" >"$state/tabs.json"
+
+format_rofi_rows() {
+  python3 - "$state/ids" "$state/tabs.json" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+from urllib.parse import urlsplit
+
+ids_path = Path(sys.argv[1])
+tabs = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+if not isinstance(tabs, list):
+    raise ValueError("invalid tab list")
+
+
+def clean(value):
+    return "".join(char if ord(char) >= 0x20 and char not in "\x7f\x1f" else " " for char in value).strip()
+
+
+with ids_path.open("w", encoding="utf-8") as ids:
+    for tab in tabs:
+        if not isinstance(tab, dict) or not isinstance(tab.get("id"), int) or tab["id"] <= 0:
+            raise ValueError("invalid tab descriptor")
+        title = clean(tab.get("title") or "Pestaña sin título")
+        try:
+            host = urlsplit(tab.get("url") or "").hostname or "Firefox"
+        except ValueError:
+            host = "Firefox"
+        icon = tab.get("iconPath")
+        if not isinstance(icon, str) or not icon.startswith("/") or not os.path.isfile(icon):
+            icon = "firefox"
+        print(f"{title} — {clean(host)}\0icon\x1f{icon}")
+        print(tab["id"], file=ids)
+PY
+}
+
+format_fuzzel_rows() {
+  python3 - "$state/tabs.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+from urllib.parse import urlsplit
+
+tabs = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if not isinstance(tabs, list):
+    raise ValueError("invalid tab list")
+
+
+def clean(value):
+    return " ".join("".join(char if ord(char) >= 0x20 and char not in "\x7f\x1f" else " " for char in value).split())
+
+
+for tab in tabs:
+    if not isinstance(tab, dict) or not isinstance(tab.get("id"), int) or tab["id"] <= 0:
+        raise ValueError("invalid tab descriptor")
+    title = clean(tab.get("title") or "Pestaña sin título")
+    try:
+        host = urlsplit(tab.get("url") or "").hostname or "Firefox"
+    except ValueError:
+        host = "Firefox"
+    print(f"[{tab['id']}] {title} — {host}")
+PY
+}
+
+picker_failed() {
+  notify "No se pudo mostrar el selector de pestañas"
+  exit 1
+}
+
+case "${XDG_CURRENT_DESKTOP:-}" in
+  *i3*)
+    format_rofi_rows | i3-rofi --tab-picker >"$state/selection" || picker_failed
+    selection="$(<"$state/selection")"
+    [[ "$selection" =~ ^[0-9]+$ ]] || exit 0
+    mapfile -t ids <"$state/ids"
+    (( selection < ${#ids[@]} )) || {
+      notify "La selección de pestaña no es válida"
+      exit 1
+    }
+    tab_id="${ids[selection]}"
+    ;;
+  *Hyprland*)
+    format_rofi_rows | rofi -dmenu -i -no-custom -only-match -format i -p 'Pestañas Firefox' -show-icons >"$state/selection" || picker_failed
+    selection="$(<"$state/selection")"
+    [[ "$selection" =~ ^[0-9]+$ ]] || exit 0
+    mapfile -t ids <"$state/ids"
+    (( selection < ${#ids[@]} )) || {
+      notify "La selección de pestaña no es válida"
+      exit 1
+    }
+    tab_id="${ids[selection]}"
+    ;;
+  *labwc*)
+    format_fuzzel_rows | fuzzel --dmenu --prompt 'Pestañas Firefox> ' >"$state/selection" || picker_failed
+    selection="$(<"$state/selection")"
+    [[ "$selection" =~ ^\[([0-9]+)\]\  ]] || exit 0
+    tab_id="${BASH_REMATCH[1]}"
+    ;;
+  *)
+    notify "El selector de pestañas no es compatible con este escritorio"
+    exit 1
+    ;;
+esac
+
+windows-manager-linux-orgm-tabs activate "$tab_id" || {
+  notify "La pestaña seleccionada ya no existe"
+  exit 1
+}
+
+firefox-open-tab --focus >/dev/null 2>&1 ||
+  notify "La pestaña se activó, pero no se pudo enfocar Firefox"

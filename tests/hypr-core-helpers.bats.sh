@@ -11,6 +11,11 @@ bash -n "$bin"/hypr-*
 bash -n "$bin"/waybar-*
 
 grep -Fq 'PATH = path' "$profile/.config/hypr/lua/environment.lua"
+if grep -Fq 'SDL_VIDEODRIVER' "$profile/.config/hypr/lua/environment.lua" ||
+  grep -Fq 'SDL_VIDEODRIVER' "$repo_dir/nixos/profiles/hyprland.nix"; then
+  printf '%s\n' 'Hyprland must not globally force an SDL video backend' >&2
+  exit 1
+fi
 grep -Fq 'waybar-watch' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland.nix"

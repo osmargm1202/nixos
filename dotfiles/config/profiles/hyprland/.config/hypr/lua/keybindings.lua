@@ -34,7 +34,8 @@ function M.setup(programs)
   hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new-tab --prompt"))
   hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("hypr-rofi-open-file-dir"))
   hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("hypr-rofi-open-file-terminal"))
-  hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hypr-rofi-window"))
+  hl.bind(mainMod .. " + CTRL + G", hl.dsp.exec_cmd("hypr-shader-menu"))
+  hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("firefox-tabs"))
   hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))
   hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("hypr-rofi-ssh-host"))
   hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(program("power_menu", "wlogout_uniqe")))
@@ -136,4 +137,3 @@ function M.setup(programs)
 end
 
 return M
-  hl.bind(mainMod .. " + CTRL + G", hl.dsp.exec_cmd("hypr-shader-menu"))

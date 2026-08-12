@@ -15,7 +15,6 @@ local env = {
   QT_QPA_PLATFORMTHEME_QT6 = "qt6ct",
   ELECTRON_OZONE_PLATFORM_HINT = "auto",
   GDK_BACKEND = "wayland,x11",
-  SDL_VIDEODRIVER = "wayland",
   CLUTTER_BACKEND = "wayland",
   TERMINAL = "kitty",
   -- Binds and Waybar invoke managed helpers by name.

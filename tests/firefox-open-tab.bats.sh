@@ -12,6 +12,7 @@ HYPR_MENU="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-apps-menu"
 HYPR_SMART_RUN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-smart-run"
 LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/rc.xml"
 MENU="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/menu.xml"
+WEBAPPS="$ROOT/nixos/webapps.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -34,6 +35,7 @@ grep -Fq '<command>firefox-open-tab --new</command>' "$LABWC" || fail 'Labwc Win
 grep -Fq '<keybind key="W-m">' "$LABWC" || fail 'Labwc Win+M binding missing'
 grep -Fq '<command>firefox-open-tab --new-tab --prompt</command>' "$LABWC" || fail 'Labwc Win+M must open a new tab from the web prompt'
 grep -Fq '<command>firefox-open-tab --focus</command>' "$MENU" || fail 'Labwc browser menu must only focus'
+grep -Fq 'exec = "/home/${userName}/.local/bin/firefox-open-tab ${app.url}";' "$WEBAPPS" || fail 'webapps must use the Firefox reuse-or-create helper'
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -88,7 +90,7 @@ run_bridge_focus() {
     "$HELPER" "$input"
   [[ "$(<"$tmp/bridge-args")" == "$expected_url" ]] || fail 'bridge did not receive the normalized URL'
   grep -Fxq "$expected_focus" "$tmp/focus-args" || fail "$desktop did not focus Firefox after bridge reuse"
-  [[ ! -e "$tmp/firefox-args" ]] || fail 'focus-only URL mode must not create a Firefox window'
+  [[ ! -e "$tmp/firefox-args" ]] || fail 'bridge reuse must not create a Firefox window'
 }
 
 run_explicit_new() {
@@ -112,7 +114,8 @@ run_explicit_tab() {
 }
 
 run_bridge_focus i3 'i3-msg [class="(?i)firefox"] focus' pagina.net https://pagina.net
-run_bridge_focus Hyprland 'hyprctl dispatch focuswindow class:^(firefox|Navigator)$' nas:8080 http://nas:8080
+run_bridge_focus Hyprland 'hyprctl dispatch hl.dsp.focus({ window = "class:^(firefox|Navigator)$" })' nas:8080 http://nas:8080
+run_bridge_focus labwc 'wlrctl toplevel focus app_id:firefox' webapp.example https://webapp.example
 
 rm -f "$tmp/firefox-args" "$tmp/bridge-args" "$tmp/focus-args" "$tmp/notify-args"
 BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \

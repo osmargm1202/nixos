@@ -118,6 +118,11 @@
         <command>firefox-open-tab --new-tab --prompt</command>
       </action>
     </keybind>
+    <keybind key="W-Escape">
+      <action name="Execute">
+        <command>firefox-tabs</command>
+      </action>
+    </keybind>
     <keybind key="W-space">
       <action name="Execute">
         <command>fuzzel</command>

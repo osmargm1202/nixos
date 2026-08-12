@@ -53,7 +53,7 @@ focus_firefox() {
   case "${XDG_CURRENT_DESKTOP:-}" in
     *Hyprland*)
       command -v hyprctl >/dev/null 2>&1 &&
-        hyprctl dispatch focuswindow 'class:^(firefox|Navigator)$'
+        hyprctl dispatch 'hl.dsp.focus({ window = "class:^(firefox|Navigator)$" })'
       ;;
     *i3*)
       command -v i3-msg >/dev/null 2>&1 &&
@@ -160,6 +160,8 @@ fi
 
 if command -v windows-manager-linux-orgm-tab >/dev/null 2>&1 &&
    windows-manager-linux-orgm-tab "$url" 2>/dev/null; then
+  # Native messaging selects the tab; Hyprland requires an explicit compositor
+  # focus after Firefox changes its browser window.
   focus_firefox >/dev/null 2>&1 || notify "The Firefox window could not be focused"
   exit 0
 fi
