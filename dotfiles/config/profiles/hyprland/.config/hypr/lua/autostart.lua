@@ -12,6 +12,9 @@ local exec_once = {
   "hyprpolkitagent",
   "sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'",
   "kdeconnect-indicator",
+  -- Keep chat and games ready without opening either client window.
+  "hypr-start-discord",
+  "sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'",
   "systemctl --user --quiet start sunshine.service || true",
   "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
   -- Lock and suspend on the established idle schedule.

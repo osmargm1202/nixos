@@ -45,10 +45,13 @@ pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
 
 pgrep -u "$USER" -x nextcloud >/dev/null 2>&1 || nextcloud --background >/dev/null 2>&1 &
 
-# Discord espera a DMS para aparecer en systray.
+# Keep chat and games ready without opening either client window. Discord waits
+# for DMS so its indicator can attach to the tray.
 pgrep -u "$USER" -f 'com.discordapp.Discord' >/dev/null 2>&1 || \
   (until pgrep -u "$USER" -x dms >/dev/null 2>&1; do sleep 1; done; \
-   flatpak run com.discordapp.Discord --start-minimized >/dev/null 2>&1) &
+   exec discord --start-minimized >/dev/null 2>&1) &
+pgrep -u "$USER" -x steam >/dev/null 2>&1 || \
+  (command -v steam >/dev/null 2>&1 && steam -silent >/dev/null 2>&1) &
 
 # Portapapeles.
 pgrep -u "$USER" -f 'wl-paste.*text.*cliphist store' >/dev/null 2>&1 || \
