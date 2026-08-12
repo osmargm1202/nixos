@@ -20,7 +20,6 @@ local opacity_rules = {
   { class = "^(com.discordapp.Discord)$", opacity = browser_opacity },
   { class = "^(spotify)$", opacity = browser_opacity },
   { class = "^(obsidian)$", opacity = browser_opacity },
-  { class = "^(firefox|Firefox)$", opacity = browser_opacity },
 }
 
 for _, rule in ipairs(opacity_rules) do
@@ -35,7 +34,6 @@ end
 -- btop is a terminal app: its title rule overrides Kitty's transition.
 local opening_transition_rules = {
   { match = { class = "^(kitty)$" }, shader = "fade", duration_ms = 200 },
-  { match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },
   { match = { class = "^(chromium|Chromium)$" }, shader = "directional-wipe", duration_ms = 200 },
   { match = { class = "^(brave-browser|Brave-browser|brave-origin)$" }, shader = "crosswarp", duration_ms = 200 },
   { match = { class = "^(opera|Opera)$" }, shader = "flyeye", duration_ms = 200 },

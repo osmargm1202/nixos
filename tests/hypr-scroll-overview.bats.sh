@@ -23,7 +23,11 @@ grep -Fq 'hash = "sha256-l+47qR3CWO/3xdTLuC23Nktmys7ibRjhVU4gW19NtYg=";' "$PACKA
 grep -Fq 'environment.etc."scrolloverview.so".source = scrollOverviewLibrary;' "$PROFILE"
 grep -Fq '"hyprctl plugin load /etc/scrolloverview.so",' "$AUTOSTART"
 grep -Fq 'hl.on("hyprland.start", function()' "$AUTOSTART"
-grep -Fq 'hl.bind("ALT + Tab", hl.dsp.exec_cmd("hyprctl dispatch scrolloverview:overview toggle"))' "$BINDINGS"
+grep -Fq 'hl.bind("ALT + Tab", function()' "$BINDINGS"
+grep -Fq 'hl.plugin.scrolloverview.overview("toggle")' "$BINDINGS"
+if grep -Fq 'hyprctl dispatch scrolloverview:overview toggle' "$BINDINGS"; then
+  fail 'ScrollOverview must use its Lua dispatcher API'
+fi
 grep -Fq 'if hl.plugin and hl.plugin.scrolloverview then' "$LOOK_AND_FEEL"
 grep -Fq 'hl.plugin.scrolloverview.configure({' "$LOOK_AND_FEEL"
 grep -Fq 'layout = "vertical",' "$LOOK_AND_FEEL"

@@ -59,6 +59,7 @@ entries() {
       entry 'Win+/' 'Atajos Hyprland' 'hypr-keybindings-help'
       entry 'Win+Enter' 'Terminal' 'kitty'
       entry 'Win+Shift+Enter' 'Terminal' 'kitty'
+      entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus'
@@ -69,7 +70,7 @@ entries() {
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)
-      entry 'Win+M' 'Abrir página web nueva' 'firefox-open-tab --new --prompt'
+      entry 'Win+M' 'Abrir pestaña web nueva' 'firefox-open-tab --new-tab --prompt'
       entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
       entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
       entry 'Win+Esc' 'Pestañas Firefox' 'firefox-tabs'
@@ -83,6 +84,7 @@ entries() {
       ;;
     windows)
       entry 'Win+Tab' 'Última ventana' 'focus last'
+      entry 'Alt+Tab' 'Vista de workspaces' 'ScrollOverview'
       entry 'Win+Q' 'Cerrar enfocada' 'killactive'
       entry 'Win+Shift+Q' 'Cerrar por lista' 'hypr-kill-windows'
       entry 'Win+F' 'Fullscreen app' 'fullscreen 1'

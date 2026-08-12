@@ -31,6 +31,10 @@ grep -Fq 'hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))' "$keybi
 grep -Fq 'hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window"))' "$keybindings"
+grep -Fq 'hl.bind(mainMod .. " + CTRL + Return", hl.dsp.exec_cmd("kitty -e tmux new-session -A -s main"))' "$keybindings"
+grep -Fq 'bindsym $mod+Ctrl+Return exec --no-startup-id kitty -e tmux new-session -A -s main' "$repo_dir/dotfiles/config/profiles/i3/.config/i3/config"
+grep -Fq "entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'" "$bin/hypr-keybindings-help"
+grep -Fq "entry 'Alt+Tab' 'Vista de workspaces' 'ScrollOverview'" "$bin/hypr-keybindings-help"
 [[ "$(grep -Fc 'mainMod .. " + C"' "$keybindings")" == 1 ]]
 
 test_bin="$tmp/bin"

@@ -28,7 +28,6 @@ fi
 # Every requested client has both a HyprGlass tag and an opening shader rule.
 for matcher in \
   '^(kitty)$' \
-  '^(firefox|Firefox)$' \
   '^(chromium|Chromium)$' \
   '^(brave-browser|Brave-browser|brave-origin)$' \
   '^(opera|Opera)$' \
@@ -45,6 +44,10 @@ for matcher in \
   '^(pavucontrol)$'; do
   grep -Fq "$matcher" "$RULES" || fail "client effect missing: $matcher"
 done
+if grep -Fq '{ class = "^(firefox|Firefox)$", opacity = browser_opacity },' "$RULES" ||
+  grep -Fq '{ match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },' "$RULES"; then
+  fail 'Firefox must not receive HyprGlass or opening shader effects'
+fi
 grep -Fq '+hyprglass_enabled' "$RULES" || fail 'daily applications must explicitly enable HyprGlass'
 grep -Fq '+hyprglass_preset_glass' "$RULES" || fail 'daily applications must use the glass preset'
 grep -Fq '+shader_transition_open:/etc/hyprwindowshade-shaders/open/' "$RULES" || fail 'daily applications must receive opening shaders'
