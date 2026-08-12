@@ -18,36 +18,49 @@ let
 in
 
 {
-  programs.gamemode.enable = true;
+  options.orgm.gaming.gamescopeTty1.enable = lib.mkEnableOption "Gamescope Steam Gaming Mode on tty1";
 
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
-    gamescopeSession.enable = true;
-    package = lib.mkIf nvidiaGameOffload (pkgs.steam.override {
-      extraEnv = nvidiaOffloadEnv;
-    });
-  };
+  config = lib.mkMerge [
+    {
+      programs.gamemode.enable = true;
 
-  # TTY6 is the on-demand Steam Gaming Mode console on every Steam-enabled host.
-  programs.bash.loginShellInit = lib.mkAfter ''
-    if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty6 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
-      exec ${gamescopeCommand} -e -- steam -gamepadui
-    fi
-  '';
+      programs.steam = {
+        enable = true;
+        remotePlay.openFirewall = true;
+        dedicatedServer.openFirewall = true;
+        gamescopeSession.enable = true;
+        package = lib.mkIf nvidiaGameOffload (pkgs.steam.override {
+          extraEnv = nvidiaOffloadEnv;
+        });
+      };
 
-  systemd.services."autovt@tty6" = {
-    serviceConfig.ExecStart = [
-      ""
-      "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM"
-    ];
-  };
+      environment.systemPackages = with pkgs; [
+        mangohud
+        gamescope
+        protonup-qt
+        steam-run
+      ];
+    }
+    (lib.mkIf config.orgm.gaming.gamescopeTty1.enable {
+      programs.bash.loginShellInit = lib.mkForce ''
+        if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+          . "$HOME/.bashrc"
+        fi
+        if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
+          exec ${gamescopeCommand} -e -- steam -gamepadui
+        fi
+      '';
 
-  environment.systemPackages = with pkgs; [
-    mangohud
-    gamescope
-    protonup-qt
-    steam-run
+      systemd.services = {
+        "getty@tty1".serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM"
+        ];
+        "autovt@tty1".serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM"
+        ];
+      };
+    })
   ];
 }

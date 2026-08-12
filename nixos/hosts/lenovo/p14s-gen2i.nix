@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  userName ? "osmarg",
   ...
 }:
 
@@ -18,6 +19,7 @@ let
       exec nvidia-offload "$@"
     '';
   };
+  tty1Autologin = "${pkgs.util-linux}/sbin/agetty --autologin ${userName} --noclear %I $TERM";
 in
 {
   imports = [
@@ -33,11 +35,32 @@ in
 
   config = {
   # Retain the current deployment and two rollbacks. Shared sort keys keep the
-  # normal, battery, gaming, and Windows VFIO choices for each generation adjacent.
+  # normal, battery, gaming, Windows VFIO, and recovery choices adjacent.
   boot.loader.systemd-boot.configurationLimit = 3;
+
+  # Desktop profiles without a display manager start from tty1; SDDM profiles
+  # use its equivalent auto-login path. Both land directly in the selected
+  # normal, battery, or Windows session without exposing other VTs.
+  systemd.services = {
+    "getty@tty1".serviceConfig.ExecStart = [
+      ""
+      tty1Autologin
+    ];
+    "autovt@tty1".serviceConfig.ExecStart = [
+      ""
+      tty1Autologin
+    ];
+  };
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = userName;
+  };
 
   specialisation = {
     gaming.configuration = {
+      orgm.gaming.gamescopeTty1.enable = true;
+      services.displayManager.sddm.enable = lib.mkForce false;
+      services.displayManager.autoLogin.enable = lib.mkForce false;
       powerManagement.cpuFreqGovernor = "performance";
     };
     windows-vfio.configuration = {
@@ -47,6 +70,24 @@ in
       orgm.lenovo.nvidiaDisabled.enable = true;
       powerManagement.cpuFreqGovernor = "powersave";
       boot.blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" "nvidia_uvm" ];
+    };
+    server.configuration = {
+      systemd.defaultUnit = "multi-user.target";
+      services.openssh.enable = true;
+      networking.networkmanager.enable = true;
+      services.displayManager.sddm.enable = lib.mkForce false;
+      services.displayManager.autoLogin.enable = lib.mkForce false;
+      services.xserver.enable = lib.mkForce false;
+      services.xserver.desktopManager.cinnamon.enable = lib.mkForce false;
+      services.desktopManager.gnome.enable = lib.mkForce false;
+      services.xserver.windowManager.i3.enable = lib.mkForce false;
+      programs.hyprland.enable = lib.mkForce false;
+      programs.labwc.enable = lib.mkForce false;
+      programs.bash.loginShellInit = lib.mkForce ''
+        if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+          . "$HOME/.bashrc"
+        fi
+      '';
     };
   };
 

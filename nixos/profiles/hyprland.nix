@@ -85,7 +85,7 @@ in
   programs.bash.loginShellInit = lib.mkAfter ''
     if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
       if pgrep -x gamescope >/dev/null; then
-        printf '%s\n' 'Steam Gaming Mode sigue activo en TTY6; ciérralo antes de iniciar Hyprland.' >&2
+        printf '%s\n' 'Steam Gaming Mode sigue activo en TTY1; ciérralo antes de iniciar Hyprland.' >&2
       else
         exec start-hyprland
       fi
