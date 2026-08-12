@@ -27,4 +27,38 @@
   boot.extraModprobeConfig = lib.mkAfter ''
     options nvidia_drm modeset=1
   '';
+
+  # The base desktop configuration is ORGM's normal boot mode. Its server
+  # specialization retains the same board support and networking while
+  # replacing every graphical login path with the server role.
+  boot.loader.systemd-boot.sortKey = "nixos-00-normal";
+  specialisation.server.configuration = {
+    imports = [ ../../server.nix ];
+    boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-01-server";
+    systemd.defaultUnit = "multi-user.target";
+
+    services = {
+      displayManager = {
+        sddm.enable = lib.mkForce false;
+        autoLogin.enable = lib.mkForce false;
+      };
+      xserver = {
+        enable = lib.mkForce false;
+        desktopManager.cinnamon.enable = lib.mkForce false;
+        desktopManager.gnome.enable = lib.mkForce false;
+        windowManager.i3.enable = lib.mkForce false;
+        displayManager.startx.enable = lib.mkForce false;
+      };
+    };
+    programs = {
+      hyprland.enable = lib.mkForce false;
+      labwc.enable = lib.mkForce false;
+      xwayland.enable = lib.mkForce false;
+      bash.loginShellInit = lib.mkForce ''
+        if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+          . "$HOME/.bashrc"
+        fi
+      '';
+    };
+  };
 }
