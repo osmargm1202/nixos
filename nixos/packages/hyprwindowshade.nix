@@ -59,9 +59,10 @@ stdenv.mkDerivation {
       name="$(basename "$(dirname "$source")")"
       destination="$out/share/hyprwindowshade/shaders/open/$name.glsl"
       cat >"$destination" <<'GLSL'
-// Ported at build time from liixini/shaders. See niri-shaders-LICENSE.
 #version 320 es
+// Ported at build time from liixini/shaders. See niri-shaders-LICENSE.
 precision highp float;
+
 
 in vec2 v_texcoord;
 out vec4 fragColor;
