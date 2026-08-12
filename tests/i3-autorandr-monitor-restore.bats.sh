@@ -27,8 +27,8 @@ grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply --quiet' "$CONFIG
   fail 'i3 login profile restore must not notify'
 grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" ||
   fail 'i3 login must keep the display awake while idle'
-grep -Fq 'exec --no-startup-id $run i3-start-discord-background' "$CONFIG" ||
-  fail 'Discord login launch must use the background launcher'
+grep -Fq "exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'" "$CONFIG" ||
+  fail 'Discord login launch must start minimized when available'
 grep -Fq 'bindsym $mod+p exec --no-startup-id $run i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
 grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu does not open monitor profiles'
 
