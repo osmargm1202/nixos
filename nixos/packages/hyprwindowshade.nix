@@ -57,6 +57,11 @@ stdenv.mkDerivation {
 
     for source in ${niriShaders}/*/open.glsl; do
       name="$(basename "$(dirname "$source")")"
+      # Upstream glass-warp/open.glsl has no closing brace and is not used by
+      # any configured transition; omit it rather than shipping a broken shader.
+      if [[ "$name" == glass-warp ]]; then
+        continue
+      fi
       destination="$out/share/hyprwindowshade/shaders/open/$name.glsl"
       cat >"$destination" <<'GLSL'
 #version 320 es
