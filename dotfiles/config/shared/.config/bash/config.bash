@@ -25,8 +25,10 @@ fi
 
 # API credentials are injected only into the child process by sops-shared-env.
 
-# Keep user-local tool locations ahead of the NixOS system profile.
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$PATH"
+# Keep user-local tool locations ahead of the NixOS system profile.  The
+# system profile contains an unprivileged sudo binary; retain its wrapper
+# directory first so interactive privilege escalation resolves correctly.
+export PATH="/run/wrappers/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$PATH"
 if command -v sops-shared-env >/dev/null; then
   alias claude='sops-shared-env claude'
   alias opencode='sops-shared-env opencode'
