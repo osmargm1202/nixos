@@ -20,6 +20,10 @@ grep -Fq 'enabled = false,' "$LOOK" || fail 'Hyprland decoration blur must stay 
 for layer in waybar rofi nwg-dock nwg-dock-hyprland; do
   grep -Fq "hg.layer(\"$layer\"" "$LOOK" || fail "HyprGlass layer missing: $layer"
 done
+grep -Fq 'default_preset = "glass"' "$LOOK" || fail 'HyprGlass must use the glass preset by default'
+if grep -Fq 'preset = "subtle"' "$LOOK"; then
+  fail 'HyprGlass layers must use the glass preset'
+fi
 
 # Every requested client has both a HyprGlass tag and an opening shader rule.
 for matcher in \
@@ -42,6 +46,7 @@ for matcher in \
   grep -Fq "$matcher" "$RULES" || fail "client effect missing: $matcher"
 done
 grep -Fq '+hyprglass_enabled' "$RULES" || fail 'daily applications must explicitly enable HyprGlass'
+grep -Fq '+hyprglass_preset_glass' "$RULES" || fail 'daily applications must use the glass preset'
 grep -Fq '+shader_transition_open:/etc/hyprwindowshade-shaders/open/' "$RULES" || fail 'daily applications must receive opening shaders'
 
 # The top-level menu directly opens the program/window config and shader picker.

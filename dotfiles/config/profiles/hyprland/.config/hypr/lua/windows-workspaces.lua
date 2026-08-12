@@ -57,7 +57,7 @@ local opening_transition_rules = {
 
 for _, rule in ipairs(opening_transition_rules) do
   hl.window_rule({ match = rule.match, tag = "+hyprglass_enabled" })
-  hl.window_rule({ match = rule.match, tag = "+hyprglass_preset_subtle" })
+  hl.window_rule({ match = rule.match, tag = "+hyprglass_preset_glass" })
   hl.window_rule({
     match = rule.match,
     tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. rule.shader .. ".glsl",

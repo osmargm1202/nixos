@@ -15,15 +15,15 @@ if hl.plugin and hl.plugin.hyprglass then
     enabled = true,
     manage_window_blur = true,
     default_theme = "dark",
-    default_preset = "subtle",
+    default_preset = "glass",
     layers = { enabled = true },
   })
   -- HyprGlass owns the visual blur for these surfaces. Hyprland's ordinary
   -- decoration blur remains disabled below.
-  hg.layer("waybar", { preset = "subtle", mask_threshold = 0.1 })
-  hg.layer("rofi", { preset = "subtle", mask_threshold = 0.1 })
-  hg.layer("nwg-dock", { preset = "subtle", mask_threshold = 0.1 })
-  hg.layer("nwg-dock-hyprland", { preset = "subtle", mask_threshold = 0.1 })
+  hg.layer("waybar", { preset = "glass", mask_threshold = 0.1 })
+  hg.layer("rofi", { preset = "glass", mask_threshold = 0.1 })
+  hg.layer("nwg-dock", { preset = "glass", mask_threshold = 0.1 })
+  hg.layer("nwg-dock-hyprland", { preset = "glass", mask_threshold = 0.1 })
 end
 
 hl.config({
