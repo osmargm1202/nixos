@@ -402,7 +402,7 @@ in
     ports = [ 22 ];
     settings = {
       PermitRootLogin = "no";
-      PasswordAuthentication = true;
+      PasswordAuthentication = lib.mkDefault true;
     };
   };
 

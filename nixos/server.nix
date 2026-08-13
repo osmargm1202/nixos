@@ -61,7 +61,7 @@ in
   ];
 
   # Zen 7.0.10 pinned from nixpkgs-zen70.
-  boot.kernelPackages = inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
+  boot.kernelPackages = lib.mkDefault inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
   boot.tmp.cleanOnBoot = true;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -103,7 +103,7 @@ in
   users.users.${userName} = {
     isNormalUser = true;
     description = userName;
-    shell = pkgs.bashInteractive;
+    shell = lib.mkDefault pkgs.bashInteractive;
     extraGroups = [
       "wheel"
       "docker"
@@ -152,6 +152,8 @@ in
       bantime = fail2ban.bantime;
     };
   };
+
+  virtualisation.podman.enable = lib.mkForce false;
 
   virtualisation.docker = {
     enable = true;
