@@ -89,6 +89,7 @@ run_bridge_focus() {
     FOCUS_ARGS="$tmp/focus-args" XDG_CURRENT_DESKTOP="$desktop" PATH="$tmp/bin:$PATH" \
     "$HELPER" "$input"
   [[ "$(<"$tmp/bridge-args")" == "$expected_url" ]] || fail 'bridge did not receive the normalized URL'
+  wait_for_file "$tmp/focus-args"
   grep -Fxq "$expected_focus" "$tmp/focus-args" || fail "$desktop did not focus Firefox after bridge reuse"
   [[ ! -e "$tmp/firefox-args" ]] || fail 'bridge reuse must not create a Firefox window'
 }
@@ -124,6 +125,9 @@ BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" \
 [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'failed bridge did not receive the normalized URL'
 wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '--new-tab https://pagina.net' ]] || fail 'failed bridge did not create a tab in Firefox'
+wait_for_file "$tmp/focus-args"
+grep -Fxq 'i3-msg [class="(?i)firefox"] focus' "$tmp/focus-args" ||
+  fail 'fallback creation did not focus Firefox after opening its tab'
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
 run_explicit_tab 10.0.0.13:8000 http://10.0.0.13:8000

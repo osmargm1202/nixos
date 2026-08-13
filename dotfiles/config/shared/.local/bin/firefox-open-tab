@@ -69,6 +69,15 @@ focus_firefox() {
   esac
 }
 
+focus_after_opening_tab() {
+  (
+    # Firefox receives --new-tab asynchronously.  Let it map/raise the browser
+    # window before asking the compositor to focus it.
+    sleep 0.1
+    focus_firefox >/dev/null 2>&1 || notify "The Firefox window could not be focused"
+  ) &
+}
+
 new_window=false
 new_tab=false
 prompt=false
@@ -160,9 +169,9 @@ fi
 
 if command -v windows-manager-linux-orgm-tab >/dev/null 2>&1 &&
    windows-manager-linux-orgm-tab "$url" 2>/dev/null; then
-  # Native messaging selects the tab; Hyprland requires an explicit compositor
-  # focus after Firefox changes its browser window.
-  focus_firefox >/dev/null 2>&1 || notify "The Firefox window could not be focused"
+  # Native messaging selects the tab asynchronously; focus Firefox after that
+  # operation reaches the compositor.
+  focus_after_opening_tab
   exit 0
 fi
 
@@ -171,3 +180,4 @@ command -v firefox >/dev/null 2>&1 || {
   exit 1
 }
 firefox --new-tab "$url" >/dev/null 2>&1 &
+focus_after_opening_tab
