@@ -73,6 +73,7 @@ let
     steam-run
     vscode
     gnome-calculator
+    localsend
     gh
     (pkgs.writeShellApplication {
       name = "ns";
@@ -407,14 +408,17 @@ in
     };
   };
 
-  # 22 (SSH) and sunshine's ports are auto-opened by their own service
-  # modules (openssh openFirewall default true; nixos/gaming/sunshine.nix
-  # sets services.sunshine.openFirewall = true). Only HTTP/HTTPS need a
-  # manual allow here.
-  networking.firewall.allowedTCPPorts = [
-    80
-    443
-  ];
+  # 22 (SSH) and Sunshine ports are auto-opened by their service modules.
+  # LocalSend needs TCP/UDP 53317 for LAN discovery and transfers; only this
+  # port plus HTTP/HTTPS needs an explicit common firewall rule.
+  networking.firewall = {
+    allowedTCPPorts = [
+      80
+      443
+      53317
+    ];
+    allowedUDPPorts = [ 53317 ];
+  };
 
   system.stateVersion = "25.11"; # Did you read comment?
 }
