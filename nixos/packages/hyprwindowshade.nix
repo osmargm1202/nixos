@@ -55,41 +55,9 @@ stdenv.mkDerivation {
     install -Dm644 ${niriShaders}/LICENSE "$out/share/hyprwindowshade/niri-shaders-LICENSE"
     mkdir -p "$out/share/hyprwindowshade/shaders/open"
 
-    for source in ${niriShaders}/*/open.glsl; do
-      name="$(basename "$(dirname "$source")")"
-      # Upstream glass-warp/open.glsl has no closing brace and is not used by
-      # any configured transition; omit it rather than shipping a broken shader.
-      if [[ "$name" == glass-warp ]]; then
-        continue
-      fi
-      destination="$out/share/hyprwindowshade/shaders/open/$name.glsl"
-      cat >"$destination" <<'GLSL'
-#version 320 es
-// Ported at build time from liixini/shaders. See niri-shaders-LICENSE.
-precision highp float;
-
-
-in vec2 v_texcoord;
-out vec4 fragColor;
-
-uniform sampler2D tex;
-uniform float transition_progress;
-uniform float transition_seed;
-uniform vec2 surface_size;
-
-#define niri_clamped_progress clamp(transition_progress, 0.0, 1.0)
-#define niri_random_seed transition_seed
-#define niri_geo_to_tex mat3(1.0)
-#define niri_tex tex
-#define texture2D texture
-GLSL
-      cat "$source" >>"$destination"
-      cat >>"$destination" <<'GLSL'
-
-void main() {
-  fragColor = open_color(vec3(v_texcoord, 1.0), vec3(surface_size, 1.0));
-}
-GLSL
+    for source in ${niriShaders}/hyprwindowshade/open/*.glsl; do
+      destination="$out/share/hyprwindowshade/shaders/open/$(basename "$source")"
+      install -Dm644 "$source" "$destination"
       glslangValidator -S frag "$destination"
     done
   '';

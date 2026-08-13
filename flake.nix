@@ -19,8 +19,8 @@
       flake = false;
     };
     niriShaders = {
-      # MIT-licensed opening shaders, ported to HyprWindowShade at build time.
-      url = "github:osmargm1202/shaders";
+      # Niri sources and a committed, validated HyprWindowShade transition catalogue.
+      url = "github:osmargm1202/shaders/a63412b";
       flake = false;
     };
     flake-parts = {

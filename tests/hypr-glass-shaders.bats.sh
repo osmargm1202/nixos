@@ -8,11 +8,20 @@ RULES="$PROFILE/.config/hypr/lua/windows-workspaces.lua"
 MAIN_MENU="$PROFILE/.local/bin/hypr-main-menu"
 SHADER_MENU="$PROFILE/.local/bin/hypr-shader-menu"
 ROFI_LIB="$PROFILE/.local/bin/hypr-rofi-lib"
+PACKAGING="$ROOT/nixos/packages/hyprwindowshade.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
+
+# NixOS consumes the checked-in HyprWindowShade catalogue rather than
+# regenerating unvalidated Niri sources during its package build.
+grep -Fq '${niriShaders}/hyprwindowshade/open/*.glsl' "$PACKAGING" ||
+  fail 'HyprWindowShade package must install the published shader catalogue'
+if grep -Fq '${niriShaders}/*/open.glsl' "$PACKAGING"; then
+  fail 'HyprWindowShade package must not adapt raw Niri shaders at build time'
+fi
 
 # Hyprland's stock blur must stay disabled; HyprGlass owns the visual effect.
 grep -Fq 'manage_window_blur = true' "$LOOK" || fail 'HyprGlass must manage blur on glassed windows'
