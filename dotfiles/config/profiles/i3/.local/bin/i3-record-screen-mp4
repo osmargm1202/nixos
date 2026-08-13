@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/i3-screen-recording"
+pid_file="$state_dir/mp4.pid"
+output_dir="$HOME/Videos/Records"
+
+stop_recording() {
+  [[ -r "$pid_file" ]] || return 1
+  read -r pid <"$pid_file" || return 1
+  [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null || return 1
+  kill -TERM -- "-$pid"
+}
+
+if stop_recording; then
+  exit 0
+fi
+rm -f "$pid_file"
+mkdir -p "$state_dir" "$output_dir"
+
+record_name="record-$(date '+%Y-%m-%d--%H:%M:%S').mp4"
+output="$output_dir/$record_name"
+# The inner shell writes its post-setsid PID. That PID is the process-group
+# leader even when util-linux `setsid` must fork before creating the session.
+setsid bash -c 'printf "%s\n" "$$" >"$1"; shift; exec "$@"' bash "$pid_file" \
+  ffcast -s % ffmpeg -y \
+  -f x11grab -framerate 30 -video_size %s -i %D+%c \
+  -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \
+  "$output" &
+pid=$!
+dunstify 'Recording Started (MP4)' -t 2000
+
+wait "$pid" || true
+rm -f "$pid_file"
+
+if [[ -s "$output" ]]; then
+  printf 'file://%s\n' "$output" | xclip -selection clipboard -t text/uri-list
+  dunstify 'Recording Stopped (MP4)' -t 2000
+else
+  rm -f "$output"
+fi

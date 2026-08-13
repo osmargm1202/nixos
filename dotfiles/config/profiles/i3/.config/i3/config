@@ -74,6 +74,8 @@ bindsym $mod+s scratchpad show
 bindsym Print exec --no-startup-id flameshot gui
 bindsym Ctrl+Print exec --no-startup-id flameshot full -c
 bindsym Mod1+Print exec --no-startup-id flameshot gui
+bindsym $mod+Print exec --no-startup-id i3-record-screen-mp4
+bindsym $mod+Shift+Print exec --no-startup-id i3-record-screen-gif
 bindsym $mod+Shift+l exec --no-startup-id $run i3-lock
 bindsym $mod+Mod1+p exec --no-startup-id xset dpms force off
 bindsym $mod+Shift+o exec --no-startup-id systemctl suspend

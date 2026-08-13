@@ -270,6 +270,8 @@ let
       ".local/bin/i3-obsidian-open-or-focus"
       ".local/bin/i3-reload-after-switch"
       ".local/bin/i3-run"
+      ".local/bin/i3-record-screen-gif"
+      ".local/bin/i3-record-screen-mp4"
       ".local/bin/i3-firefox-new-window"
       ".local/bin/i3-firefox-tabs"
       ".local/bin/i3-open-file"
