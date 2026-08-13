@@ -37,8 +37,21 @@ else
   display="$input"
 fi
 
-export TIMER_NOTIFICATION_BODY="$display"
-exec termdown "$duration" \
+status_file="$(mktemp "${TMPDIR:-/tmp}/timer.XXXXXX")"
+rm -f "$status_file"
+cleanup() {
+  rm -f "$status_file"
+}
+trap cleanup EXIT
+
+if ! termdown "$duration" \
   --blink \
-  --title "Temporizador: $display" \
-  --exec-cmd 'if [ "{0}" -eq 0 ]; then notify-send -u critical -a timer "Temporizador terminado" "$TIMER_NOTIFICATION_BODY"; fi'
+  --quit-after 1 \
+  --outfile "$status_file" \
+  --title "Temporizador: $display"; then
+  exit 1
+fi
+
+if [ "$(sed -n '2p' "$status_file")" = 0 ]; then
+  notify-send -u critical -a timer "Temporizador terminado" "$display" || true
+fi

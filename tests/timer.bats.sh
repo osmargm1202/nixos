@@ -17,29 +17,49 @@ mkdir -p "$tmp/bin"
 
 cat >"$tmp/bin/termdown" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$TIMER_NOTIFICATION_BODY" >"$TIMER_NOTIFICATION_BODY_LOG"
 printf '%s\0' "$@" >"$TERMDOWN_ARGS"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --outfile)
+      [ ! -e "$2" ] || exit 9
+      printf 'DONE\n%s\n' "${TERMDOWN_STATUS:-0}" >"$2"
+      shift 2
+      ;;
+    *) shift ;;
+  esac
+done
 EOF
-chmod +x "$tmp/bin/termdown"
+cat >"$tmp/bin/notify-send" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\0' "$@" >"$NOTIFY_ARGS"
+EOF
+chmod +x "$tmp/bin/termdown" "$tmp/bin/notify-send"
 
-TERMDOWN_ARGS="$tmp/args" TIMER_NOTIFICATION_BODY_LOG="$tmp/body" \
+TERMDOWN_ARGS="$tmp/args" NOTIFY_ARGS="$tmp/notify" \
   PATH="$tmp/bin:$PATH" "$TIMER" 5
 
-[[ "$(<"$tmp/body")" == '5 min' ]] || afail 'bare duration must be interpreted as minutes'
 mapfile -d '' -t args <"$tmp/args"
 expected=(
   '5m'
   '--blink'
-  '--title'
-  'Temporizador: 5 min'
-  '--exec-cmd'
-  'if [ "{0}" -eq 0 ]; then notify-send -u critical -a timer "Temporizador terminado" "$TIMER_NOTIFICATION_BODY"; fi'
+  '--quit-after'
+  '1'
+  '--outfile'
 )
-[[ "${args[*]}" == "${expected[*]}" ]] || afail 'timer must launch termdown with its countdown and notification contract'
+[[ "${args[*]:0:5}" == "${expected[*]}" ]] || afail 'timer must launch termdown with a finite blinking countdown'
+[[ -n "${args[5]}" && ! -e "${args[5]}" ]] || afail 'timer must remove its completion status file'
+[[ "${args[6]}" == '--title' && "${args[7]}" == 'Temporizador: 5 min' ]] ||
+  afail 'bare duration must be interpreted as minutes'
+mapfile -d '' -t notification <"$tmp/notify"
+[[ "${notification[*]}" == '-u critical -a timer Temporizador terminado 5 min' ]] ||
+  afail 'completed timer must send one desktop notification'
 
-TERMDOWN_ARGS="$tmp/args" TIMER_NOTIFICATION_BODY_LOG="$tmp/body" \
+rm -f "$tmp/notify"
+TERMDOWN_STATUS=12 TERMDOWN_ARGS="$tmp/args" NOTIFY_ARGS="$tmp/notify" \
   PATH="$tmp/bin:$PATH" "$TIMER" 45s
-[[ "$(<"$tmp/body")" == '45s' ]] || afail 'explicit termdown duration must be preserved'
+mapfile -d '' -t args <"$tmp/args"
+[[ "${args[0]}" == '45s' ]] || afail 'explicit termdown duration must be preserved'
+[[ ! -e "$tmp/notify" ]] || afail 'early timer exit must not notify'
 
 if PATH="$tmp/bin:$PATH" "$TIMER" >/dev/null 2>&1; then
   afail 'timer without a duration must fail'
