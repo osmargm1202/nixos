@@ -503,16 +503,16 @@
     "niriShaders": {
       "flake": false,
       "locked": {
-        "lastModified": 1786602761,
-        "narHash": "sha256-WwoLAko1qIetNuhESdUvjXgn2LY3/wy3IBHIJpThLck=",
+        "lastModified": 1786603140,
+        "narHash": "sha256-7kwp107bIqx/LU64nYkBHm6xJou1oVrUR9fSsXtQe0w=",
         "owner": "osmargm1202",
         "repo": "shaders",
-        "rev": "a63412ba6f13576d1c5ff1458d32a24d511c20c0",
+        "rev": "44303f91563c9747420d7abf685b54bdcda2afd9",
         "type": "github"
       },
       "original": {
         "owner": "osmargm1202",
-        "ref": "a63412b",
+        "ref": "44303f9",
         "repo": "shaders",
         "type": "github"
       }
