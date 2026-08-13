@@ -145,6 +145,7 @@ let
     ".local/bin/unbindheadset"
     ".local/bin/external-lid-inhibit"
     ".local/bin/wifi_toggle"
+    ".local/bin/timer"
     ".local/bin/wlogout_uniqe"
     ".local/share/icons/hicolor/256x256/apps"
     ".local/share/applications/windows-rdp.desktop"

@@ -58,6 +58,7 @@ let
     sops
     just
     figlet
+    termdown
     nix-search-tv
   ] ++ x11TerminalPackages;
   desktopOnlyPackages = with pkgs; [
