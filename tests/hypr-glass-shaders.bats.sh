@@ -19,6 +19,8 @@ fail() {
 # regenerating unvalidated Niri sources during its package build.
 grep -Fq '${niriShaders}/hyprwindowshade/open/*.glsl' "$PACKAGING" ||
   fail 'HyprWindowShade package must install the published shader catalogue'
+grep -Fq '${niriShaders}/hyprwindowshade/open/niri-shaders-LICENSE' "$PACKAGING" ||
+  fail 'HyprWindowShade package must install the catalogue license beside its shaders'
 if grep -Fq '${niriShaders}/*/open.glsl' "$PACKAGING"; then
   fail 'HyprWindowShade package must not adapt raw Niri shaders at build time'
 fi

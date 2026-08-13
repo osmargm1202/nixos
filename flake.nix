@@ -20,7 +20,7 @@
     };
     niriShaders = {
       # Niri sources and a committed, validated HyprWindowShade transition catalogue.
-      url = "github:osmargm1202/shaders/44303f9";
+      url = "github:osmargm1202/shaders/4e82ea5";
       flake = false;
     };
     flake-parts = {

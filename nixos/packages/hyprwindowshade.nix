@@ -52,8 +52,8 @@ stdenv.mkDerivation {
 
   installPhase = ''
     install -Dm755 HyprWindowShade.so "$out/lib/HyprWindowShade.so"
-    install -Dm644 ${niriShaders}/LICENSE "$out/share/hyprwindowshade/niri-shaders-LICENSE"
-    mkdir -p "$out/share/hyprwindowshade/shaders/open"
+    install -Dm644 ${niriShaders}/hyprwindowshade/open/niri-shaders-LICENSE \
+      "$out/share/hyprwindowshade/shaders/open/niri-shaders-LICENSE"
 
     for source in ${niriShaders}/hyprwindowshade/open/*.glsl; do
       destination="$out/share/hyprwindowshade/shaders/open/$(basename "$source")"
