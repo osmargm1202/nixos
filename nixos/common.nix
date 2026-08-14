@@ -92,6 +92,10 @@ in
   # to the profile instead of the default version string.
   system.nixos.label = lib.mkIf (profileName != null) profileName;
 
+  # Firefox remains the URL/default browser. Chromium is available in every
+  # desktop profile for local HTML documents and DRM-dependent sites.
+  orgm.chromium.enable = true;
+
   # Logitech G213 RGB (USB HID, no motherboard i2c needed).
   services.hardware.openrgb.enable = true;
 

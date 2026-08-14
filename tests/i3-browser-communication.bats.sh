@@ -2,8 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
 FIREFOX="$ROOT/nixos/firefox.nix"
+CHROMIUM="$ROOT/nixos/chromium.nix"
+COMMON="$ROOT/nixos/common.nix"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-firefox-new-window"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 DISCORD="$ROOT/nixos/packages/discord-webrtc.nix"
@@ -14,20 +15,32 @@ fail() {
   exit 1
 }
 
-grep -Fq './firefox.nix' "$ROOT/nixos/common.nix" ||
+grep -Fq './firefox.nix' "$COMMON" ||
   fail 'common configuration must import Firefox'
+grep -Fq './chromium.nix' "$COMMON" ||
+  fail 'common configuration must import Chromium'
+grep -Fq 'orgm.chromium.enable = true;' "$COMMON" ||
+  fail 'common configuration must enable Chromium for every desktop profile'
 grep -Fq 'enable = true;' "$FIREFOX" ||
   fail 'Firefox must be enabled'
-! grep -Fq 'chromium' "$PROFILE" ||
-  fail 'i3 must not install or select Chromium'
+grep -Fq 'enableWideVine = true;' "$CHROMIUM" ||
+  fail 'Chromium must retain Widevine support'
 
-for mime in \
-  text/html \
-  application/xhtml+xml \
-  x-scheme-handler/http \
-  x-scheme-handler/https; do
-  grep -Fq "\"$mime\" = [ \"firefox.desktop\" ];" "$FIREFOX" ||
-    fail "Firefox must handle $mime"
+for mime in text/html application/xhtml+xml; do
+  grep -Fq "\"$mime\" = [ \"chromium-browser.desktop\" ];" "$FIREFOX" ||
+    fail "Chromium must handle HTML MIME type $mime"
+done
+for scheme in x-scheme-handler/http x-scheme-handler/https; do
+  grep -Fq "\"$scheme\" = [ \"firefox.desktop\" ];" "$FIREFOX" ||
+    fail "Firefox must remain the default URL browser for $scheme"
+done
+for mime in text/html application/xhtml+xml; do
+  grep -Fq "xdg-mime default chromium-browser.desktop $mime" "$DOTFILES" ||
+    fail "activation must persist Chromium for HTML MIME type $mime"
+done
+for scheme in x-scheme-handler/http x-scheme-handler/https; do
+  grep -Fq "xdg-mime default firefox.desktop $scheme" "$DOTFILES" ||
+    fail "activation must persist Firefox for URL scheme $scheme"
 done
 
 [[ -x "$HELPER" ]] || fail 'Firefox i3 helper missing or not executable'
@@ -56,4 +69,4 @@ grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interf
 grep -Fq -- '--disable-features=WebRtcAllowInputVolumeAdjustment' "$VESKTOP" ||
   fail 'Vesktop microphone gain policy disappeared'
 
-printf 'PASS: i3 uses Firefox and retains WebRTC-protected communication apps\n'
+printf 'PASS: desktop profiles use Chromium for HTML and Firefox for URLs\n'
