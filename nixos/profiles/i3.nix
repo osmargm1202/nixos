@@ -28,6 +28,11 @@ in
     windowManager.i3.enable = true;
   };
   services.displayManager.defaultSession = "none+i3";
+
+  # i3 starts from the tty1 autologin path on Lenovo; no display manager owns
+  # this X session, so its auto-login unit must remain inactive.
+  services.displayManager.autoLogin.enable = lib.mkForce false;
+
   # Suspend when the lid closes, but never suspend merely because the session
   # has been idle.
   services.logind.settings.Login = {
@@ -36,7 +41,6 @@ in
     HandleLidSwitchDocked = "suspend";
     IdleAction = "ignore";
   };
-
   services.autorandr = {
     enable = true;
     defaultTarget = "horizontal";
