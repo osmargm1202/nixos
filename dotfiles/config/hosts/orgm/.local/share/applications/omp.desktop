@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OMP
+Comment=Open Oh My Pi coding agent
+Exec=kitty --title=OMP --class=orgm-omp bash -lc "exec omp"
+Icon=/home/osmarg/.local/share/icons/omp.svg
+Categories=Development;
+Terminal=false

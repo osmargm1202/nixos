@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Reddit
+Comment=Open Reddit in Firefox
+Exec=firefox --new-window https://www.reddit.com/
+Icon=/home/osmarg/.local/share/icons/reddit.svg
+Categories=Network;WebBrowser;
+Terminal=false

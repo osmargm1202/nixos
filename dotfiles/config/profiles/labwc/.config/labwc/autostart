@@ -14,7 +14,6 @@ dbus-update-activation-environment --systemd \
   XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
 
 systemctl --user start graphical-session.target 2>/dev/null || true
-pgrep -u "$USER" -x external-lid-inhibit >/dev/null 2>&1 || external-lid-inhibit >/dev/null 2>&1 &
 systemctl --user --quiet start sunshine.service 2>/dev/null || true
 
 # DMS maneja panel, dock y wallpapers.

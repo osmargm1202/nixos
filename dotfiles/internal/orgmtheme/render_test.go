@@ -216,10 +216,8 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 	want := []string{
 		"/cfg/conky/orgm-colors.lua",
 		"/cfg/fuzzel/fuzzel.ini",
-		"/cfg/gtk-3.0/settings.ini",
 		"/cfg/gtk-4.0/gtk-dark.css",
 		"/cfg/gtk-4.0/gtk.css",
-		"/cfg/gtk-4.0/settings.ini",
 		"/cfg/hypr/scheme/current.conf",
 		"/cfg/kdeglobals",
 		"/cfg/kitty/current-theme.conf",
@@ -235,10 +233,29 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 		"/cfg/vesktop/settings/quickcss.css",
 		"/cfg/waybar-hypr/orgm-current.css",
 		"/cfg/waybar/orgm-current.css",
-		"/data/icons/default/index.theme",
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("paths = %#v, want %#v", got, want)
+	}
+}
+
+func TestBuildWritesDoesNotManageGTKPreferences(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "profiles", "hyprland", ".config", "orgm-theme", "themes"), "orgm-dark")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
+	}
+	writes, err := BuildWrites(Env{ConfigHome: "/cfg", DataHome: "/data"}, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	for _, path := range []string{
+		"/cfg/gtk-3.0/settings.ini",
+		"/cfg/gtk-4.0/settings.ini",
+		"/data/icons/default/index.theme",
+	} {
+		if _, ok := writesByPath(writes)[path]; ok {
+			t.Fatalf("BuildWrites must not overwrite user GTK preference %s", path)
+		}
 	}
 }
 

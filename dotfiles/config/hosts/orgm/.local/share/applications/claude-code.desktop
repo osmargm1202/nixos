@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Claude Code
+Comment=Open Claude Code in a terminal
+Exec=kitty "--title=Claude Code" --class=orgm-claude-code bash -lc "exec claude"
+Icon=utilities-terminal
+Categories=Development;
+Terminal=false

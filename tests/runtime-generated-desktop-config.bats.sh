@@ -29,19 +29,18 @@ if grep -Fq '.local/share/icons/default' <<<"$host_icons"; then
   fail '.local/share/icons/default must not be managed by hostIconSubdirs'
 fi
 
-activation_outputs=(
+preference_defaults=(
   '.config/gtk-3.0/settings.ini'
   '.config/gtk-4.0/settings.ini'
-  '.gtkrc-2.0'
-  '.config/xsettingsd/xsettingsd.conf'
   '.icons/default/index.theme'
-  '.config/gtk-4.0/gtk.css'
-  '.config/gtk-4.0/gtk-dark.css'
 )
-for path in "${activation_outputs[@]}"; do
-  if grep -Fq "$path" <<<"$activation"; then
-    fail "$path must not be created by Home Manager activation"
-  fi
+grep -Fq '[ -e "$dst" ] && return 0' <<<"$activation" ||
+  fail 'GTK preference defaults must only initialize absent files'
+grep -Fq 'gtk-icon-theme-name=Colloid-Dark' <<<"$activation" ||
+  fail 'first-run GTK defaults must use the Colloid-Dark icon theme'
+for path in "${preference_defaults[@]}"; do
+  grep -Fq "init_file \"$path\"" <<<"$activation" ||
+    fail "$path must receive a first-run user-owned default"
 done
 
 tracked_outputs=(

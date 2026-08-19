@@ -55,13 +55,15 @@ chmod +x "$bin/nwg-dock-hyprland"
 export DOCK_ARGS="$tmp/dock-args"
 
 env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
-cmp "$PINS" "$cache/nwg-dock-hyprland/nwg-dock-pinned" ||
+cmp "$PINS" "$cache/nwg-dock-pinned" ||
   fail 'dock must seed its pins when no user pin state exists'
+[[ ! -e "$cache/nwg-dock-hyprland/nwg-dock-pinned" ]] ||
+  fail 'dock must not initialize pins in the legacy nested cache path'
 grep -Fxq -- "-x -p bottom -a center -mb 14 -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
   fail 'dock must retain its floating bottom geometry and Rofi launcher'
-printf 'custom\n' >"$cache/nwg-dock-hyprland/nwg-dock-pinned"
+printf 'custom\n' >"$cache/nwg-dock-pinned"
 env HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
-[[ "$(<"$cache/nwg-dock-hyprland/nwg-dock-pinned")" == "custom" ]] ||
+[[ "$(<"$cache/nwg-dock-pinned")" == "custom" ]] ||
   fail 'dock must preserve user-managed pins after initialization'
 cat >"$bin/pkill" <<'EOF'
 #!/usr/bin/env bash

@@ -19,7 +19,6 @@ local exec_once = {
   "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
   -- Lock and suspend on the established idle schedule.
   "hypridle",
-  "external-lid-inhibit",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pi
+Comment=Open Pi coding agent in a terminal
+Exec=kitty --title=Pi --class=orgm-pi bash -lc "exec pi"
+Icon=utilities-terminal
+Categories=Development;
+Terminal=false

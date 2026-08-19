@@ -170,6 +170,13 @@ in
       '';
     in
     {
+      dconf.settings = lib.mkIf (config.networking.hostName == "orgm") {
+        "org/gnome/desktop/interface" = {
+          font-name = "Sans 11";
+          text-scaling-factor = 1.0;
+        };
+      };
+
       home.activation.mimeAppsDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mime_cfg="$HOME/.config/mimeapps.list"
         if [ ! -f "$mime_cfg" ]; then
@@ -251,6 +258,8 @@ in
     pamixer
     playerctl
     pavucontrol
+    pasystray
+    nwg-look
 
     # GNOME apps used as defaults
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,

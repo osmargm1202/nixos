@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Codex
+Comment=Open Codex in a terminal
+Exec=kitty --title=Codex --class=orgm-codex bash -lc "exec codex"
+Icon=utilities-terminal
+Categories=Development;
+Terminal=false

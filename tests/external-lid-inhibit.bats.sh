@@ -8,27 +8,29 @@ cat >"$tmp/bin/systemd-inhibit" <<'EOF'
 #!/usr/bin/env bash
 printf 'start\n' >>"$LOG"; trap 'printf "stop\n" >>"$LOG"; exit' TERM INT; sleep infinity
 EOF
-cat >"$tmp/bin/xrandr" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$XRANDR_OUTPUT"
-EOF
-cat >"$tmp/bin/hyprctl" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$MONITOR_JSON"
-EOF
-cat >"$tmp/bin/wlr-randr" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$MONITOR_JSON"
-EOF
-chmod +x "$tmp/bin/"*
-run_case(){ local output="$1" expected="$2"; : >"$tmp/log"; XRANDR_OUTPUT="$output" LOG="$tmp/log" XDG_CURRENT_DESKTOP=i3 EXTERNAL_LID_INHIBIT_INTERVAL=.05 PATH="$tmp/bin:$PATH" "$HELPER" & local pid=$!; sleep .15; kill "$pid"; wait "$pid" 2>/dev/null || true; [[ "$(<"$tmp/log")" == "$expected" ]] || fail "unexpected inhibitor state: $(<"$tmp/log")"; }
-run_case $'Monitors: 1\n 0: +*HDMI-1' $'start\nstop'
-run_case $'Monitors: 2\n 0: +*eDP-1\n 1: +HDMI-1' ''
-run_case $'Monitors: 2\n 0: +*HDMI-1\n 1: +DP-1' ''
-run_json_case(){ local desktop="$1" output="$2" expected="$3"; : >"$tmp/log"; MONITOR_JSON="$output" LOG="$tmp/log" XDG_CURRENT_DESKTOP="$desktop" EXTERNAL_LID_INHIBIT_INTERVAL=.05 PATH="$tmp/bin:$PATH" "$HELPER" & local pid=$!; sleep .15; kill "$pid"; wait "$pid" 2>/dev/null || true; [[ "$(<"$tmp/log")" == "$expected" ]] || fail "$desktop: unexpected inhibitor state: $(<"$tmp/log")"; }
-for desktop in Hyprland labwc; do
-  run_json_case "$desktop" '[{"name":"HDMI-A-1","enabled":true}]' $'start\nstop'
-  run_json_case "$desktop" '[{"name":"eDP-1","enabled":true}]' ''
-  run_json_case "$desktop" '[{"name":"HDMI-A-1","enabled":true},{"name":"DP-1","enabled":true}]' ''
-done
-printf 'PASS: external-only lid inhibition is exact in i3, Hyprland and Labwc\n'
+chmod +x "$tmp/bin/systemd-inhibit"
+
+run_case() {
+  local internal="$1" external="$2" expected="$3"
+  local drm="$tmp/drm"
+
+  rm -rf "$drm"
+  mkdir -p "$drm/card0-eDP-1" "$drm/card0-HDMI-A-1"
+  printf '%s\n' "$internal" >"$drm/card0-eDP-1/status"
+  printf '%s\n' "$external" >"$drm/card0-HDMI-A-1/status"
+  : >"$tmp/log"
+
+  LOG="$tmp/log" EXTERNAL_LID_INHIBIT_DRM_ROOT="$drm" \
+    EXTERNAL_LID_INHIBIT_INTERVAL=.05 PATH="$tmp/bin:$PATH" "$HELPER" &
+  local pid=$!
+  sleep .15
+  kill "$pid"
+  wait "$pid" 2>/dev/null || true
+  [[ "$(<"$tmp/log")" == "$expected" ]] || fail "unexpected inhibitor state: $(<"$tmp/log")"
+}
+
+run_case connected connected $'start\nstop'
+run_case connected disconnected ''
+run_case disconnected connected $'start\nstop'
+run_case disconnected disconnected ''
+printf 'PASS: external display lid inhibition uses DRM connector state\n'

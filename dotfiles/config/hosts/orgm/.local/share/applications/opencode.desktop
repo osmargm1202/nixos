@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OpenCode
+Comment=Open OpenCode in a terminal
+Exec=kitty --title=OpenCode --class=orgm-opencode bash -lc "exec opencode"
+Icon=/home/osmarg/.local/share/icons/opencode.svg
+Categories=Development;
+Terminal=false

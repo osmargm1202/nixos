@@ -7,7 +7,8 @@ cd "$repo_dir"
 attr='.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.home.file'
 paths=(
   '.config/waybar-hypr'
-  '.config/nwg-dock-hyprland'
+  '.config/nwg-dock-hyprland/style.css'
+  '.config/nwg-dock-hyprland/pinned'
   '.local/bin/waybar-date-es'
   '.local/bin/waybar-day-month-es'
   '.local/bin/waybar-time-ampm'
@@ -22,6 +23,9 @@ for path in "${paths[@]}"; do
   [[ -e "dotfiles/config/profiles/hyprland/$path" ]]
   nix eval --raw "$attr.\"$path\".source" >/dev/null
 done
+
+! nix eval --raw "$attr.\".config/nwg-dock-hyprland/orgm-current.css\".source" >/dev/null 2>&1
+[[ ! -e 'dotfiles/config/profiles/hyprland/.config/nwg-dock-hyprland/orgm-current.css' ]]
 
 config='dotfiles/config/profiles/hyprland/.config/waybar-hypr/config'
 jq -e '

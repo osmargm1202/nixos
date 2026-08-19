@@ -45,6 +45,7 @@ for matcher in \
   '^(obsidian)$' \
   '^(com.obsproject.Studio|obs)$' \
   '^[Bb][Tt][Oo][Pp]$' \
+  '^(firefox|Firefox)$' \
   '^(discord|com.discordapp.Discord)$' \
   '^(libreoffice.*|LibreOffice.*)$' \
   '^(Code|code|code-oss|VSCodium)$' \
@@ -55,10 +56,10 @@ for matcher in \
   '^(pavucontrol)$'; do
   grep -Fq "$matcher" "$RULES" || fail "client effect missing: $matcher"
 done
-if grep -Fq '{ class = "^(firefox|Firefox)$", opacity = browser_opacity },' "$RULES" ||
-  grep -Fq '{ match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },' "$RULES"; then
-  fail 'Firefox must not receive HyprGlass or opening shader effects'
-fi
+grep -Fq '{ class = "^(firefox|Firefox)$", opacity = browser_opacity },' "$RULES" ||
+  fail 'Firefox must use browser opacity for HyprGlass'
+grep -Fq '{ match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },' "$RULES" ||
+  fail 'Firefox must use the pixelate opening shader'
 grep -Fq '+hyprglass_enabled' "$RULES" || fail 'daily applications must explicitly enable HyprGlass'
 grep -Fq '+hyprglass_preset_glass' "$RULES" || fail 'daily applications must use the glass preset'
 grep -Fq '+shader_transition_open:/etc/hyprwindowshade-shaders/open/' "$RULES" || fail 'daily applications must receive opening shaders'
