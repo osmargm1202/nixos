@@ -69,9 +69,9 @@ case "${1:-}" in
     ;;
   waybar)
     if [[ "$(read_state)" == activated ]]; then
-      printf '%s\n' '{"text":"󰊴","class":"deactivated","tooltip":"Modo juego: efectos visuales desactivados"}'
+      printf '%s\n' '{"text":"󰊴","class":"activated","tooltip":"Modo juego: efectos visuales desactivados"}'
     else
-      printf '%s\n' '{"text":"󰊴","class":"activated","tooltip":"Modo juego: efectos visuales normales"}'
+      printf '%s\n' '{"text":"󰊴","class":"deactivated","tooltip":"Modo juego: efectos visuales normales"}'
     fi
     ;;
   *)

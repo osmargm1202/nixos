@@ -40,14 +40,14 @@ export HYPRCTL_LOG="$tmp/hyprctl.log"
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" toggle
 [[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" status)" == activated ]] ||
   fail 'game mode must activate on first toggle'
-XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" waybar | jq -e '.class == "deactivated" and .text == "󰊴"' >/dev/null ||
-  fail 'game mode Waybar state must invert the active indicator'
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" waybar | jq -e '.class == "activated" and .text == "󰊴"' >/dev/null ||
+  fail 'game mode Waybar state must activate the gamepad indicator'
 grep -Fxq 'reload' "$HYPRCTL_LOG" || fail 'game mode activation must reload Hyprland'
 
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" toggle
 [[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" status)" == deactivated ]] ||
   fail 'game mode must deactivate on second toggle'
-XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" waybar | jq -e '.class == "activated"' >/dev/null ||
-  fail 'normal visual mode must activate the Waybar indicator'
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" waybar | jq -e '.class == "deactivated"' >/dev/null ||
+  fail 'normal visual mode must deactivate the Waybar indicator'
 
 printf '%s\n' 'PASS: Hyprland game mode disables visual effects on demand'
