@@ -26,7 +26,7 @@ if grep -Fq '${niriShaders}/*/open.glsl' "$PACKAGING"; then
 fi
 
 # Hyprland's stock blur must stay disabled; HyprGlass owns the visual effect.
-grep -Fq 'manage_window_blur = true' "$LOOK" || fail 'HyprGlass must manage blur on glassed windows'
+grep -Fq 'manage_window_blur = visual_effects' "$LOOK" || fail 'HyprGlass blur ownership must follow game mode'
 grep -Fq 'enabled = false,' "$LOOK" || fail 'Hyprland decoration blur must stay disabled'
 for layer in waybar rofi nwg-dock nwg-dock-hyprland; do
   grep -Fq "hg.layer(\"$layer\"" "$LOOK" || fail "HyprGlass layer missing: $layer"

@@ -196,12 +196,13 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #custom-metric_ram.metric-critical,
 #custom-metric_ssd.metric-critical,
 #custom-metric_swap.metric-critical { color: @red; }
-#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
+#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #custom-game_mode.deactivated, #mpris.paused { color: @overlay0; }
 #network.disconnected, #battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
 #custom-user { color: @text; font-weight: bold; }
 #window { color: @text; }
 #idle_inhibitor.activated { color: @blue; }
+#custom-game_mode.activated { color: @green; }
 #mpris { color: @text; }
 #backlight { color: @text; }
 #pulseaudio { color: @blue; font-size: 20px; }
@@ -238,7 +239,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
 #keyboard-state label.capslock.locked { color: @text; }
 #custom-kbd_layout { color: @text; font-weight: bold; }
-#idle_inhibitor, #custom-keybindings_help {
+#idle_inhibitor, #custom-game_mode, #custom-keybindings_help {
   background: transparent;
   border-radius: 12px;
   min-height: 28px;

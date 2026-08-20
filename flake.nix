@@ -3,8 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Upstream v0.56.0 retains its release-locked dependency graph.
-    hyprland.url = "github:hyprwm/Hyprland/v0.56.0";
+    # Upstream v0.56.2 retains its release-locked dependency graph.
+    hyprland.url = "github:hyprwm/Hyprland/v0.56.2";
     scrollOverview = {
       url = "github:yayuuu/hyprland-scroll-overview";
       flake = false;

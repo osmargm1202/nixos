@@ -26,6 +26,7 @@
       "pulseaudio",
       "pulseaudio#microphone",
       "idle_inhibitor",
+      "custom/game_mode",
       "custom/kbd_layout",
       "custom/wallpaper",
       "custom/keybindings_help"
@@ -186,6 +187,12 @@
         "activated": "󰅶",
         "deactivated": "󰾪"
       }
+    },
+    "custom/game_mode": {
+      "exec": "~/.local/bin/hypr-game-mode waybar",
+      "return-type": "json",
+      "signal": 9,
+      "on-click": "~/.local/bin/hypr-game-mode toggle"
     },
     "custom/kbd_layout": {
       "exec": "~/.config/waybar-hypr/kbd-layout.sh",

@@ -1,3 +1,6 @@
+local game_mode = require("lua.game-mode").enabled()
+local visual_effects = not game_mode
+
 if hl.plugin and hl.plugin.scrolloverview then
   hl.plugin.scrolloverview.configure({
     gesture_distance = 300,
@@ -5,18 +8,18 @@ if hl.plugin and hl.plugin.scrolloverview then
     workspace_gap = 24,
     layout = "vertical",
     wallpaper = 0,
-    blur = true,
+    blur = visual_effects,
   })
 end
 
 if hl.plugin and hl.plugin.hyprglass then
   local hg = hl.plugin.hyprglass
   hg.config({
-    enabled = true,
-    manage_window_blur = true,
+    enabled = visual_effects,
+    manage_window_blur = visual_effects,
     default_theme = "dark",
     default_preset = "glass",
-    layers = { enabled = true },
+    layers = { enabled = visual_effects },
   })
   -- HyprGlass owns the visual blur for these surfaces. Hyprland's ordinary
   -- decoration blur remains disabled below.
@@ -28,8 +31,8 @@ end
 
 hl.config({
   general = {
-    gaps_in = 12,
-    gaps_out = 12,
+    gaps_in = game_mode and 0 or 12,
+    gaps_out = game_mode and 0 or 12,
     border_size = 0,
     col = {
       active_border = { colors = { "rgba(8aadf4ee)", "rgba(f5a97fee)" }, angle = 45 },
@@ -51,7 +54,7 @@ hl.config({
     groupbar = {
       font_size = 24,
       height = 42,
-      gradients = true,
+      gradients = visual_effects,
       col = {
         active = "rgba(8aadf4ee)",
         inactive = "rgba(00161acc)",
@@ -62,13 +65,13 @@ hl.config({
   },
 
   decoration = {
-    rounding = 12,
-    rounding_power = 2,
-    active_opacity = 0.96,
-    inactive_opacity = 0.96,
+    rounding = game_mode and 0 or 12,
+    rounding_power = game_mode and 0 or 2,
+    active_opacity = game_mode and 1.0 or 0.96,
+    inactive_opacity = game_mode and 1.0 or 0.96,
     fullscreen_opacity = 1.0,
     shadow = {
-      enabled = true,
+      enabled = visual_effects,
       range = 18,
       render_power = 3,
       color = "rgba(00000070)",
@@ -79,7 +82,7 @@ hl.config({
   },
 
   animations = {
-    enabled = true,
+    enabled = visual_effects,
   },
 })
 
@@ -151,16 +154,16 @@ end
 
 local workspace_animation = workspace_animation_preset()
 
-hl.animation({ leaf = "global", enabled = true, speed = 10, bezier = "default" })
-hl.animation({ leaf = "border", enabled = true, speed = 5.39, bezier = "easeOutQuint" })
-hl.animation({ leaf = "windows", enabled = true, speed = 4.79, bezier = "easeOutQuint" })
-hl.animation({ leaf = "windowsIn", enabled = true, speed = 4.1, bezier = "easeOutQuint", style = "popin 87%" })
-hl.animation({ leaf = "windowsOut", enabled = true, speed = 1.49, bezier = "almostLinear", style = "popin 87%" })
-hl.animation({ leaf = "fade", enabled = true, speed = 3.03, bezier = "quick" })
-hl.animation({ leaf = "layers", enabled = true, speed = 3.81, bezier = "easeOutQuint" })
+hl.animation({ leaf = "global", enabled = visual_effects, speed = 10, bezier = "default" })
+hl.animation({ leaf = "border", enabled = visual_effects, speed = 5.39, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windows", enabled = visual_effects, speed = 4.79, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windowsIn", enabled = visual_effects, speed = 4.1, bezier = "easeOutQuint", style = "popin 87%" })
+hl.animation({ leaf = "windowsOut", enabled = visual_effects, speed = 1.49, bezier = "almostLinear", style = "popin 87%" })
+hl.animation({ leaf = "fade", enabled = visual_effects, speed = 3.03, bezier = "quick" })
+hl.animation({ leaf = "layers", enabled = visual_effects, speed = 3.81, bezier = "easeOutQuint" })
 hl.animation({
   leaf = "workspaces",
-  enabled = workspace_animation.enabled,
+  enabled = visual_effects and workspace_animation.enabled,
   speed = workspace_animation.speed,
   bezier = workspace_animation.bezier,
   style = workspace_animation.style,

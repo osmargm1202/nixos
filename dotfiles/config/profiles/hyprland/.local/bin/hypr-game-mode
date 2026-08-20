@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr"
+state_file="$state_dir/game-mode"
+lock_file="$state_dir/game-mode.lock"
+
+read_state() {
+  if [[ -r "$state_file" ]] && [[ "$(<"$state_file")" == "activated" ]]; then
+    printf '%s\n' activated
+  else
+    printf '%s\n' deactivated
+  fi
+}
+
+write_state() {
+  local state="$1"
+  local temporary
+
+  temporary="$(mktemp "$state_file.tmp.XXXXXX")"
+  printf '%s\n' "$state" >"$temporary"
+  mv "$temporary" "$state_file"
+}
+
+refresh_waybar() {
+  local pid
+  while IFS= read -r pid; do
+    kill -s 43 "$pid" 2>/dev/null || true
+  done < <(pgrep -x waybar || true)
+}
+
+apply_state() {
+  local previous="$1"
+  local next="$2"
+
+  write_state "$next"
+  if ! hyprctl reload; then
+    write_state "$previous"
+    hyprctl reload || true
+    return 1
+  fi
+  refresh_waybar
+
+  if command -v notify-send >/dev/null 2>&1; then
+    if [[ "$next" == activated ]]; then
+      notify-send -a "hypr-game-mode" "Modo juego" "Efectos visuales desactivados" >/dev/null 2>&1 || true
+    else
+      notify-send -a "hypr-game-mode" "Modo juego" "Efectos visuales restaurados" >/dev/null 2>&1 || true
+    fi
+  fi
+}
+
+mkdir -p "$state_dir"
+
+case "${1:-}" in
+  toggle|on|off)
+    exec 9>"$lock_file"
+    flock 9
+    previous="$(read_state)"
+    case "${1:-}" in
+      toggle) [[ "$previous" == activated ]] && next=deactivated || next=activated ;;
+      on) next=activated ;;
+      off) next=deactivated ;;
+    esac
+    apply_state "$previous" "$next"
+    ;;
+  status)
+    read_state
+    ;;
+  waybar)
+    if [[ "$(read_state)" == activated ]]; then
+      printf '%s\n' '{"text":"󰊴","class":"deactivated","tooltip":"Modo juego: efectos visuales desactivados"}'
+    else
+      printf '%s\n' '{"text":"󰊴","class":"activated","tooltip":"Modo juego: efectos visuales normales"}'
+    fi
+    ;;
+  *)
+    printf 'Usage: %s {toggle|on|off|status|waybar}\n' "${0##*/}" >&2
+    exit 64
+    ;;
+esac

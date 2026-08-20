@@ -8,11 +8,13 @@
 }:
 let
   hyprlandPackages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
-  # Upstream v0.56.0 `nix/default.nix` reads finalAttrs.src/VERSION for GIT_TAG.
-  hyprlandPackage = hyprlandPackages.hyprland.overrideAttrs (_: {
-    src = inputs.hyprland.outPath;
-  });
-  hyprlandPortalPackage = hyprlandPackages.xdg-desktop-portal-hyprland;
+  # Hyprland's locked nixpkgs has Glaze 8.x; pass this flake's compatible 7.x package.
+  hyprlandPackage = hyprlandPackages.hyprland.override {
+    glaze-hyprland = pkgs.glaze;
+  };
+  hyprlandPortalPackage = hyprlandPackages.xdg-desktop-portal-hyprland.override {
+    hyprland = hyprlandPackage;
+  };
   nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs (_: {
     version = "0.4.11";
     src = pkgs.fetchFromGitHub {
@@ -314,8 +316,8 @@ in
 
   assertions = [
     {
-      assertion = lib.hasPrefix "0.56.0" hyprlandPackage.version;
-      message = "The selected upstream Hyprland platform requires the 0.56.0 release family; the flake input is the exact release pin.";
+      assertion = lib.hasPrefix "0.56.2" hyprlandPackage.version;
+      message = "The selected upstream Hyprland platform requires the exact 0.56.2 release family; the flake input is the exact release pin.";
     }
   ];
 

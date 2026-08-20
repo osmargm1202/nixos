@@ -14,6 +14,7 @@ paths=(
   '.local/bin/waybar-time-ampm'
   '.local/bin/waybar-watch'
   '.local/bin/waybar-caffeine-state'
+  '.local/bin/hypr-game-mode'
   '.local/bin/hypr-reload-after-switch'
   '.local/bin/hypr-nwg-dock'
   '.local/bin/hypr-nwg-dock-reload'
@@ -35,7 +36,7 @@ jq -e '
     "custom/ws_4", "custom/ws_5", "custom/ws_6", "custom/ws_7",
     "custom/ws_8", "custom/ws_9", "custom/ws_10", "custom/ws_special",
     "backlight", "battery", "pulseaudio", "pulseaudio#microphone",
-    "idle_inhibitor", "custom/kbd_layout", "custom/wallpaper",
+    "idle_inhibitor", "custom/game_mode", "custom/kbd_layout", "custom/wallpaper",
     "custom/keybindings_help"
   ]
   and .[0]["modules-center"] == ["custom/day_month", "custom/time", "custom/date"]
@@ -47,6 +48,12 @@ caffeine_helper='dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-st
 [[ -x "$caffeine_helper" ]]
 grep -Fq '"on-click": "~/.local/bin/waybar-caffeine-state toggle"' "$config"
 jq -e '.[0].idle_inhibitor.signal == 8' "$config" >/dev/null
+game_mode_helper='dotfiles/config/profiles/hyprland/.local/bin/hypr-game-mode'
+[[ -x "$game_mode_helper" ]]
+jq -e '.[0]["custom/game_mode"].exec == "~/.local/bin/hypr-game-mode waybar"
+  and .[0]["custom/game_mode"]["on-click"] == "~/.local/bin/hypr-game-mode toggle"
+  and .[0]["custom/game_mode"].signal == 9
+  and (.[0]["custom/game_mode"] | has("interval") | not)' "$config" >/dev/null
 grep -Fq 'waybarWithCaffeineSignal' 'nixos/profiles/hyprland.nix'
 grep -Fq 'auto refresh(int) -> void override;' 'nixos/profiles/hyprland.nix'
 grep -Fq 'kill -s 42 "$caffeine_waybar_pid"' 'dotfiles/config/profiles/hyprland/.local/bin/waybar-watch'
@@ -58,9 +65,19 @@ grep -Fq 'color: #8aadf4;' 'dotfiles/config/profiles/hyprland/.config/waybar-hyp
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-XDG_STATE_HOME="$tmp/state" "$caffeine_helper" toggle
-[[ "$(XDG_STATE_HOME="$tmp/state" "$caffeine_helper" status)" == activated ]]
+mkdir -p "$tmp/bin"
+cat >"$tmp/bin/notify-send" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"${CAFFEINE_NOTIFICATIONS:?}"
+EOF
+chmod +x "$tmp/bin/notify-send"
+export CAFFEINE_NOTIFICATIONS="$tmp/caffeine-notifications"
 
-XDG_STATE_HOME="$tmp/state" "$caffeine_helper" toggle
-[[ "$(XDG_STATE_HOME="$tmp/state" "$caffeine_helper" status)" == deactivated ]]
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
+[[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" status)" == activated ]]
+
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
+[[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" status)" == deactivated ]]
+grep -Fq 'Caffeine activado' "$CAFFEINE_NOTIFICATIONS"
+grep -Fq 'Caffeine desactivado' "$CAFFEINE_NOTIFICATIONS"
 printf '%s\n' 'hypr-waybar-profile: ok'

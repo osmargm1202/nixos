@@ -1,12 +1,14 @@
 -- Hyprland 0.55 Lua window rules.
 
 -- Force dark mode in Hyprland window opacity presets.
+local game_mode = require("lua.game-mode").enabled()
+
 local light_mode = false
 local opaque = "1.0 override 1.0 override 1.0 override"
-local base_opacity = light_mode and opaque or "0.96 override 0.96 override 1.0 override"
-local file_opacity = light_mode and opaque or "0.88 override 0.88 override 1.0 override"
-local terminal_opacity = light_mode and opaque or "0.85 override 0.85 override 1.0 override"
-local browser_opacity = light_mode and opaque or "0.90 override 0.90 override 1.0 override"
+local base_opacity = game_mode and opaque or (light_mode and opaque or "0.96 override 0.96 override 1.0 override")
+local file_opacity = game_mode and opaque or (light_mode and opaque or "0.88 override 0.88 override 1.0 override")
+local terminal_opacity = game_mode and opaque or (light_mode and opaque or "0.85 override 0.85 override 1.0 override")
+local browser_opacity = game_mode and opaque or (light_mode and opaque or "0.90 override 0.90 override 1.0 override")
 
 local opacity_rules = {
   { class = ".*", opacity = base_opacity },
@@ -55,49 +57,52 @@ local opening_transition_rules = {
   { match = { class = "^(spotify)$" }, shader = "ripple", duration_ms = 200 },
 }
 
-for _, rule in ipairs(opening_transition_rules) do
-  hl.window_rule({ match = rule.match, tag = "+hyprglass_enabled" })
-  hl.window_rule({ match = rule.match, tag = "+hyprglass_preset_glass" })
-  hl.window_rule({
-    match = rule.match,
-    tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. rule.shader .. ".glsl",
-  })
-  hl.window_rule({
-    match = rule.match,
-    tag = "+shader_transition_duration_ms:" .. rule.duration_ms,
-  })
-end
-local shader_preview_state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
-local shader_override_file = io.open(shader_preview_state .. "/hypr/shader-overrides", "r")
-if shader_override_file then
-  for line in shader_override_file:lines() do
-    local class, shader = line:match("^([^\t]+)\t([%w%-]+)$")
-    if class and shader then
+if not game_mode then
+  for _, rule in ipairs(opening_transition_rules) do
+    hl.window_rule({ match = rule.match, tag = "+hyprglass_enabled" })
+    hl.window_rule({ match = rule.match, tag = "+hyprglass_preset_glass" })
+    hl.window_rule({
+      match = rule.match,
+      tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. rule.shader .. ".glsl",
+    })
+    hl.window_rule({
+      match = rule.match,
+      tag = "+shader_transition_duration_ms:" .. rule.duration_ms,
+    })
+  end
+
+  local shader_preview_state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
+  local shader_override_file = io.open(shader_preview_state .. "/hypr/shader-overrides", "r")
+  if shader_override_file then
+    for line in shader_override_file:lines() do
+      local class, shader = line:match("^([^\t]+)\t([%w%-]+)$")
+      if class and shader then
+        hl.window_rule({
+          match = { class = class },
+          tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader .. ".glsl",
+        })
+        hl.window_rule({
+          match = { class = class },
+          tag = "+shader_transition_duration_ms:200",
+        })
+      end
+    end
+    shader_override_file:close()
+  end
+  local shader_preview_file = io.open(shader_preview_state .. "/hypr/shader-preview", "r")
+  if shader_preview_file then
+    local shader_preview = shader_preview_file:read("*l")
+    shader_preview_file:close()
+    if shader_preview and shader_preview:match("^[%w%-]+$") then
       hl.window_rule({
-        match = { class = class },
-        tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader .. ".glsl",
+        match = { class = "^(hypr-shader-preview)$" },
+        tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader_preview .. ".glsl",
       })
       hl.window_rule({
-        match = { class = class },
-        tag = "+shader_transition_duration_ms:200",
+        match = { class = "^(hypr-shader-preview)$" },
+        tag = "+shader_transition_duration_ms:350",
       })
     end
-  end
-  shader_override_file:close()
-end
-local shader_preview_file = io.open(shader_preview_state .. "/hypr/shader-preview", "r")
-if shader_preview_file then
-  local shader_preview = shader_preview_file:read("*l")
-  shader_preview_file:close()
-  if shader_preview and shader_preview:match("^[%w%-]+$") then
-    hl.window_rule({
-      match = { class = "^(hypr-shader-preview)$" },
-      tag = "+shader_transition_open:/etc/hyprwindowshade-shaders/open/" .. shader_preview .. ".glsl",
-    })
-    hl.window_rule({
-      match = { class = "^(hypr-shader-preview)$" },
-      tag = "+shader_transition_duration_ms:350",
-    })
   end
 end
 
