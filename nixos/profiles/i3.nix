@@ -27,18 +27,18 @@ in
     };
     windowManager.i3.enable = true;
   };
-  services.displayManager.defaultSession = "none+i3";
 
-  # i3 starts from the tty1 autologin path on Lenovo; no display manager owns
-  # this X session, so its auto-login unit must remain inactive.
+  # i3 starts through StartX from tty1; no display manager owns this X session,
+  # so its auto-login unit must remain inactive.
   services.displayManager.autoLogin.enable = lib.mkForce false;
 
-  # Suspend when the lid closes, but never suspend merely because the session
-  # has been idle.
+  # A manual i3 session must remain usable when the lid is closed. Logind
+  # cannot scope lid handling to a VT, so disable lid-initiated suspend for
+  # this profile entirely; idle time remains ignored as before.
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "suspend";
-    HandleLidSwitchDocked = "suspend";
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+    HandleLidSwitchDocked = "ignore";
     IdleAction = "ignore";
   };
   services.autorandr = {
@@ -58,7 +58,7 @@ in
     };
   };
 
-  # Password-authenticated tty1 login unlocks GNOME Keyring through PAM before X starts.
+  # The tty1 login unlocks GNOME Keyring through PAM before X starts.
   programs.bash.loginShellInit = lib.mkAfter ''
     if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then
       exec startx /etc/X11/xinit/xinitrc

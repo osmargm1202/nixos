@@ -16,6 +16,9 @@ fi
 if grep -Fq './sddm.nix' "$PROFILE"; then
   fail 'i3 must not import SDDM'
 fi
+if grep -Fq 'services.displayManager.defaultSession' "$PROFILE"; then
+  fail 'i3 starts through StartX and must not configure a display-manager session'
+fi
 grep -Fq 'services.displayManager.autoLogin.enable = lib.mkForce false;' "$PROFILE" ||
   fail 'i3 must not activate the display-manager autologin unit'
 grep -Fq 'if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then' "$PROFILE" ||
