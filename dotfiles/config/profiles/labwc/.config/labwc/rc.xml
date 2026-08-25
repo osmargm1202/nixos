@@ -237,6 +237,15 @@
     <keybind key="W-Tab">
       <action name="NextWindow"/>
     </keybind>
+    <keybind key="W-S-Tab">
+      <action name="Execute">
+        <command>hypr-video-timer --backend labwc</command>
+      </action>
+    </keybind>
+    <!-- Used by the timer to return to the previously active workspace. -->
+    <keybind key="W-C-Tab">
+      <action name="GoToDesktop" to="last"/>
+    </keybind>
     <keybind key="W-q">
       <action name="Close"/>
     </keybind>

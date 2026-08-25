@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+backend="hyprland"
+if [[ "${1:-}" == "--backend" ]]; then
+  [[ "$#" -ge 2 ]] || exit 2
+  backend="$2"
+  shift 2
+fi
+
+case "$backend" in
+  hyprland|i3|labwc) ;;
+  *) exit 2 ;;
+esac
+
 if [[ "${1:-}" != "--internal-run" ]]; then
   seconds="$(printf '' | rofi -dmenu -p 'Segundos')" || exit 0
   [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
 
   token="$(< /proc/sys/kernel/random/uuid)"
-  exec env HYPR_VIDEO_TIMER_TOKEN="$token" "$0" --internal-run "$seconds"
+  exec env HYPR_VIDEO_TIMER_TOKEN="$token" "$0" --backend "$backend" --internal-run "$seconds"
 fi
 
 [[ "$#" -eq 2 ]] || exit 2
@@ -90,6 +102,20 @@ cleanup_state() {
   fi
 }
 
+focus_previous() {
+  case "$backend" in
+    hyprland)
+      hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
+      ;;
+    i3)
+      i3-msg 'workspace back_and_forth'
+      ;;
+    labwc)
+      wtype -M logo -M ctrl -P Tab -R Tab -m ctrl -m logo
+      ;;
+  esac
+}
+
 stop_sleep() {
   [[ -n "$sleep_pid" ]] || return 0
   local pid="$sleep_pid"
@@ -121,7 +147,7 @@ if process_matches_identity \
 fi
 unlock_state
 
-hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
+focus_previous
 if ! playerctl play; then
   if command -v notify-send >/dev/null 2>&1; then
     notify-send 'Video timer' 'No se pudo iniciar la reproducción' || true
@@ -140,7 +166,7 @@ fi
 lock_state
 if owns_state_locked; then
   playerctl pause || true
-  hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
+  focus_previous
   rm -f "$state_file"
 fi
 unlock_state

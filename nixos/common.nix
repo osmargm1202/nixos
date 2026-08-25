@@ -73,6 +73,7 @@ let
     steam-run
     vscode
     gnome-calculator
+    gnome-software
     localsend
     gh
     (pkgs.writeShellApplication {

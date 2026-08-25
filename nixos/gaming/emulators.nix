@@ -1,46 +1,24 @@
-{ pkgs, ... }:
+{ ... }:
 
-let
-  # Emuladores efimeros: closures de GBs que no vale la pena tener
-  # instalados. Se lanzan con `nix run` (cache binario, mismo nixpkgs
-  # del sistema via registry pin) desde el launcher o el alias Bash.
-  mkEphemeralEmulator =
-    {
-      name,
-      desktopName,
-      comment,
-    }:
-    pkgs.makeDesktopItem {
-      name = "${name}-ephemeral";
-      inherit desktopName comment;
-      # `#` es caracter reservado en Exec — va entre comillas
-      exec = ''nix run "nixpkgs#${name}"'';
-      icon = "applications-games";
-      terminal = false;
-      categories = [ "Game" ];
-    };
-in
 {
-  environment.systemPackages = [
-    # Emulators for heavier local platforms. Smaller ROM libraries can stay in RomM.
-    (mkEphemeralEmulator {
-      name = "dolphin-emu";
-      desktopName = "Dolphin (GameCube/Wii)";
-      comment = "Emulador GameCube/Wii — descarga efimera al lanzar";
-    })
-    (mkEphemeralEmulator {
-      name = "pcsx2";
-      desktopName = "PCSX2 (PlayStation 2)";
-      comment = "Emulador PS2 — descarga efimera al lanzar";
-    })
-    (mkEphemeralEmulator {
-      name = "rpcs3";
-      desktopName = "RPCS3 (PlayStation 3)";
-      comment = "Emulador PS3 — descarga efimera al lanzar";
-    })
-  ];
-
+  # These applications are installed and updated by Flathub.  They keep large
+  # emulator closures out of the NixOS system build while remaining available
+  # in every configuration that imports this gaming module.
   services.flatpak.packages = [
-    "org.yuzu_emu.yuzu"
+    # NES, SNES, Nintendo 64, Game Boy, Game Boy Advance, Mega Drive, arcade,
+    # and other classic systems through Libretro cores.
+    "org.libretro.RetroArch"
+
+    # Nintendo platforms.
+    "org.DolphinEmu.dolphin-emu" # GameCube and Wii
+    "info.cemu.Cemu" # Wii U
+    "io.github.ryubing.Ryujinx" # Nintendo Switch
+
+    # Sony platforms.
+    "org.duckstation.DuckStation" # PlayStation
+    "org.ppsspp.PPSSPP" # PlayStation Portable
+    "net.pcsx2.PCSX2" # PlayStation 2
+    "net.rpcs3.RPCS3" # PlayStation 3
+    "net.shadps4.shadPS4" # PlayStation 4; upstream compatibility remains early.
   ];
 }

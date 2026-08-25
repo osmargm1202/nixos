@@ -130,10 +130,11 @@ function , {
   nix run "nixpkgs#$1" -- "${@:2}"
 }
 
-for app in dolphin-emu pcsx2 rpcs3; do
-  alias "$app=nix run nixpkgs#$app --"
-done
-unset app
+# Flatpak-backed emulators. Their desktop entries are installed declaratively
+# by nixos/gaming/emulators.nix; aliases retain the familiar terminal commands.
+alias dolphin-emu='flatpak run org.DolphinEmu.dolphin-emu --'
+alias pcsx2='flatpak run net.pcsx2.PCSX2 --'
+alias rpcs3='flatpak run net.rpcs3.RPCS3 --'
 alias herdr='nix run herdr --'
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then

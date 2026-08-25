@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/i3-focus-last"
+state_file="$state_dir/history"
+lock_file="$state_dir/watcher.lock"
+
+focused_window_id() {
+  i3-msg -t get_tree 2>/dev/null | jq -er '
+    .. | objects
+    | select(.focused == true and .window != null)
+    | .id
+  ' 2>/dev/null
+}
+
+record_focus() {
+  local focused_id="$1"
+  local discarded_id=""
+  local current_id=""
+
+  [[ "$focused_id" =~ ^[0-9]+$ ]] || return 0
+
+  if [[ -s "$state_file" ]]; then
+    read -r discarded_id current_id <"$state_file" || true
+  fi
+  [[ "$current_id" == "$focused_id" ]] && return 0
+  [[ -n "$current_id" ]] || current_id="$focused_id"
+
+  printf '%s %s\n' "$current_id" "$focused_id" >"$state_file.tmp"
+  mv "$state_file.tmp" "$state_file"
+}
+
+watch_focus() {
+  mkdir -p "$state_dir"
+  exec 9>"$lock_file"
+  flock -n 9 || exit 0
+
+  record_focus "$(focused_window_id || true)"
+
+  while :; do
+    i3-msg -m -t subscribe '["window", "workspace"]' 2>/dev/null |
+      while IFS= read -r event; do
+        [[ "$(jq -r '.change // empty' <<<"$event")" == "focus" ]] || continue
+
+        focused_id="$(jq -r '(.container | select(.window != null) | .id) // empty' <<<"$event")"
+        if [[ -z "$focused_id" ]]; then
+          focused_id="$(focused_window_id || true)"
+        fi
+        record_focus "$focused_id"
+      done
+    sleep 1
+  done
+}
+
+focus_last() {
+  local previous_id=""
+  local current_id=""
+
+  [[ -s "$state_file" ]] || exit 0
+  read -r previous_id current_id <"$state_file" || true
+  [[ "$previous_id" =~ ^[0-9]+$ ]] || exit 0
+
+  i3-msg -t get_tree 2>/dev/null |
+    jq -e --argjson previous_id "$previous_id" '
+      .. | objects
+      | select(.id == $previous_id and .window != null)
+    ' >/dev/null || exit 0
+
+  i3-msg "[con_id=$previous_id] focus" >/dev/null
+}
+
+case "${1:-}" in
+  --watch) watch_focus ;;
+  '') focus_last ;;
+  *) printf 'Usage: %s [--watch]\n' "${0##*/}" >&2; exit 64 ;;
+esac

@@ -68,6 +68,14 @@ cat > "$TMP/bin/hyprctl" <<'STUB'
 #!/usr/bin/env bash
 printf 'hyprctl %s\n' "$*" >> "$CALLS"
 STUB
+cat > "$TMP/bin/i3-msg" <<'STUB'
+#!/usr/bin/env bash
+printf 'i3-msg %s\n' "$*" >> "$CALLS"
+STUB
+cat > "$TMP/bin/wtype" <<'STUB'
+#!/usr/bin/env bash
+printf 'wtype %s\n' "$*" >> "$CALLS"
+STUB
 cat > "$TMP/bin/playerctl" <<'STUB'
 #!/usr/bin/env bash
 printf 'playerctl %s\n' "$*" >> "$CALLS"
@@ -107,7 +115,7 @@ run_timer() {
     ROFI_INPUT="${ROFI_INPUT:-}" ROFI_CANCEL="${ROFI_CANCEL:-0}" \
     PLAYERCTL_FAIL="${PLAYERCTL_FAIL:-0}" NOTIFY_FAIL="${NOTIFY_FAIL:-0}" \
     BLOCK_SLEEP="${BLOCK_SLEEP:-0}" DELAY_KILL="${DELAY_KILL:-0}" \
-    "$SCRIPT"
+    "$SCRIPT" "$@"
 }
 
 CALLS="$TMP/cancel.calls"
@@ -140,6 +148,11 @@ ROFI_INPUT=5 run_timer
 expected=$'hyprctl dispatch hl.dsp.focus({ workspace = "previous" })\nplayerctl play\nsleep 5\nplayerctl pause\nhyprctl dispatch hl.dsp.focus({ workspace = "previous" })'
 [[ "$(cat "$CALLS")" == "$expected" ]] || fail "valid timer call order differs: $(cat "$CALLS")"
 
+
+CALLS="$TMP/i3-valid.calls"
+ROFI_INPUT=5 run_timer --backend i3
+expected=$'i3-msg workspace back_and_forth\nplayerctl play\nsleep 5\nplayerctl pause\ni3-msg workspace back_and_forth'
+[[ "$(cat "$CALLS")" == "$expected" ]] || fail "i3 timer call order differs: $(cat "$CALLS")"
 CALLS="$TMP/player-failure.calls"
 PLAYERCTL_FAIL=1 NOTIFY_FAIL=1 ROFI_INPUT=5 run_timer
 [[ "$(grep -c '^hyprctl dispatch hl\.dsp\.focus({ workspace = "previous" })$' "$CALLS")" -eq 2 ]] || fail "playerctl and notification failure skipped final switch"
@@ -199,7 +212,7 @@ builtin kill "$replacement_owner" 2>/dev/null || true
 wait_for_exit "$replacement" || fail "race replacement did not exit within 2 seconds"
 [[ ! -e "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "race replacement state was not cleaned"
 
-[[ "$(grep -c '"\.local/bin/hypr-video-timer"' "$NIXOS_ROOT/nixos/common-dotfiles.nix")" -eq 2 ]] \
-  || fail "common-dotfiles.nix does not export helper for both Hyprland profiles"
+[[ "$(grep -c '"\.local/bin/hypr-video-timer"' "$NIXOS_ROOT/nixos/common-dotfiles.nix")" -eq 1 ]] \
+  || fail "common-dotfiles.nix does not export the shared timer helper"
 
 echo "hypr video timer tests passed"

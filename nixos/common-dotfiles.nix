@@ -277,6 +277,7 @@ let
       ".local/bin/i3-record-screen-mp4"
       ".local/bin/i3-firefox-new-window"
       ".local/bin/i3-firefox-tabs"
+      ".local/bin/i3-focus-last"
       ".local/bin/i3-open-file"
       ".local/bin/i3-pi-prompt"
       ".local/bin/i3-performance-menu"
