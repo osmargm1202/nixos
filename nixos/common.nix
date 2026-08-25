@@ -247,6 +247,13 @@ in
       fi
     '';
   };
+
+  # The NixOS module installs Atuin and initializes it after Blesh, allowing
+  # Atuin to use Blesh's history integration without a duplicate package entry.
+  programs.atuin = {
+    enable = true;
+    enableBashIntegration = true;
+  };
   programs.git = {
     enable = true;
     config.user.name = "osmar";
