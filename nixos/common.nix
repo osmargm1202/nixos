@@ -421,14 +421,14 @@ in
     };
   };
 
-  # 22 (SSH) and Sunshine ports are auto-opened by their service modules.
-  # LocalSend needs TCP/UDP 53317 for LAN discovery and transfers; only this
-  # port plus HTTP/HTTPS needs an explicit common firewall rule.
+  # SSH and Sunshine open their own ports. LocalSend needs TCP/UDP 53317;
+  # Deskflow accepts LAN clients over TCP 24800; HTTP/HTTPS are explicit.
   networking.firewall = {
     allowedTCPPorts = [
       80
       443
       53317
+      24800
     ];
     allowedUDPPorts = [ 53317 ];
   };
