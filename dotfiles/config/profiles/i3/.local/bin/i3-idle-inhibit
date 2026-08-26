@@ -24,7 +24,7 @@ inhibition_required() {
 start_inhibitor() {
   [[ -n "$inhibitor_pid" ]] && kill -0 "$inhibitor_pid" 2>/dev/null && return
   setsid systemd-inhibit \
-    --what=idle:sleep \
+    --what=idle \
     --mode=block \
     --why='i3 caffeine mode or active media playback' \
     sleep infinity >/dev/null 2>&1 &

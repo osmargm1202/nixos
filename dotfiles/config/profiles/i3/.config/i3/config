@@ -22,7 +22,7 @@ exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id systemctl --user --quiet start sunshine.service
 exec --no-startup-id sh -c 'systemctl --user --quiet start windows-vm-battery-guard.service 2>/dev/null || true'
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
-exec --no-startup-id $run i3-caffeine-toggle on
+exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-idle-inhibit
 exec --no-startup-id $run i3-monitor-profile --apply --quiet
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
@@ -79,7 +79,7 @@ bindsym Mod1+Print exec --no-startup-id flameshot gui
 bindsym $mod+Print exec --no-startup-id i3-record-screen-mp4
 bindsym $mod+Shift+Print exec --no-startup-id i3-record-screen-gif
 bindsym $mod+Shift+l exec --no-startup-id $run i3-lock
-bindsym $mod+Mod1+p exec --no-startup-id xset dpms force off
+bindsym $mod+Mod1+p exec --no-startup-id $run i3-powermenu
 bindsym $mod+Shift+o exec --no-startup-id systemctl suspend
 bindsym $mod+Mod1+o exec --no-startup-id systemctl poweroff
 bindsym $mod+Mod1+r exec --no-startup-id systemctl reboot

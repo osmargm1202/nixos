@@ -267,7 +267,6 @@ let
       ".local/bin/i3-hotkeys"
       ".local/bin/i3-keyboard-menu"
       ".local/bin/i3-lock"
-      ".local/share/i3-lock-backgrounds"
       ".local/bin/i3-main-menu"
       ".local/bin/i3-monitor-profile"
       ".local/bin/i3-obsidian-open-or-focus"

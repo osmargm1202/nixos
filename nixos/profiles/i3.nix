@@ -166,7 +166,6 @@ in
       iproute2
       procps
       i3lock-color
-      librsvg
       ngcbgI3Tools.autotiling
       ngcbgI3Tools.rootbtnd
       ngcbgI3Tools.i3swallow

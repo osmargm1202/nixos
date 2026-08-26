@@ -1,25 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-assets_dir="${I3_LOCK_BACKGROUNDS_DIR:-$HOME/.local/share/i3-lock-backgrounds}"
-state_dir="${XDG_RUNTIME_DIR:-/tmp}/i3-lock"
-mapfile -t backgrounds < <(find "$assets_dir" -maxdepth 1 -type f -name '*.svg' -print 2>/dev/null | sort)
-
-if ((${#backgrounds[@]} == 0)); then
-  exec i3lock-color -c 13182dff --bar-indicator --bar-orientation horizontal \
-    --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
-    --bar-base-width 2 --bar-step 8 --bar-color=c4b5fdff --ringver-color=e9d5ffff \
-    --ringwrong-color=fb7185ff -e "$@"
-fi
-
-geometry="$(xrandr --current 2>/dev/null | sed -n 's/.*current \([0-9]\+\) x \([0-9]\+\).*/\1x\2/p' | head -n1)"
-width="${geometry%x*}"; height="${geometry#*x}"
-[[ "$width" =~ ^[0-9]+$ && "$height" =~ ^[0-9]+$ ]] || { width=1920; height=1080; }
-mkdir -p "$state_dir"
-background="$(mktemp "$state_dir/background.XXXXXX.png")"
-trap 'rm -f -- "$background"' EXIT
-rsvg-convert --width "$width" --height "$height" "$(shuf -n1 -e "${backgrounds[@]}")" >"$background"
-i3lock-color --image="$background" --fill -c 13182dff --bar-indicator --bar-orientation horizontal \
-  --bar-direction 2 --bar-count 16 --bar-total-width 440 --bar-max-height 40 \
-  --bar-base-width 2 --bar-step 8 --bar-color=c4b5fdff --ringver-color=e9d5ffff \
-  --ringwrong-color=fb7185ff -e "$@"
+exec i3lock-color --color=13182dff --clock --indicator \
+  --time-color=e2e8f0ff --date-color=94a3b8ff \
+  --greeter-text=BLOQUEADO --greeter-color=c4b5fdff --no-modkey-text \
+  --bar-indicator --bar-orientation=horizontal --bar-direction=2 \
+  --bar-count=20 --bar-total-width=440 --bar-max-height=40 \
+  --bar-base-width=2 --bar-step=8 --bar-color=475569ff \
+  --keyhl-color=38bdf8ff --bshl-color=fb7185ff --separator-color=00000000 \
+  --ringver-color=e9d5ffff --ringwrong-color=fb7185ff -e "$@"
