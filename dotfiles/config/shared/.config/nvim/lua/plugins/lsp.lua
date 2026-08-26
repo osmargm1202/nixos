@@ -51,6 +51,12 @@ return {
 			capabilities = require("blink.cmp").get_lsp_capabilities(),
 		})
 
+		-- Mason's downloaded Marksman binary lacks its ICU runtime dependency on NixOS.
+		-- Use the Nix-wrapped system package, which supplies the required .NET runtime.
+		vim.lsp.config("marksman", {
+			cmd = { "/run/current-system/sw/bin/marksman", "server" },
+		})
+
 		vim.api.nvim_create_autocmd("LspAttach", {
 			callback = function(args)
 				local opts = { buffer = args.buf }

@@ -88,7 +88,7 @@ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 
 [[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
 [[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$wayland_log")" == *"/size:1600x900"* ]]
-[[ "$(<"$wayland_log")" == *"/f"* ]]
+[[ "$(<"$wayland_log")" != *"/f"* ]]
 [[ "$(<"$wayland_log")" == *"-grab-keyboard"* ]]
 [[ "$(<"$wayland_log")" != *"/dynamic-resolution"* ]]
 

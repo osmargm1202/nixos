@@ -53,6 +53,7 @@ let
     niriShaders = inputs.niriShaders;
   };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
+  hyprFM = pkgs.callPackage ../packages/hyprfm.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
   '';
@@ -151,7 +152,7 @@ in
     let
       mimeAppsDefaults = pkgs.writeText "mimeapps-defaults.list" ''
         [Default Applications]
-        inode/directory=org.gnome.Nautilus.desktop
+        inode/directory=io.github.soyeb_jim285.HyprFM.desktop
         text/plain=org.gnome.TextEditor.desktop
         text/markdown=org.gnome.TextEditor.desktop
         text/x-markdown=org.gnome.TextEditor.desktop
@@ -185,13 +186,14 @@ in
           $DRY_RUN_CMD mkdir -p "$(dirname "$mime_cfg")"
           $DRY_RUN_CMD cp ${mimeAppsDefaults} "$mime_cfg"
         fi
+        $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default io.github.soyeb_jim285.HyprFM.desktop inode/directory
       '';
     };
 
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+      "inode/directory" = [ "io.github.soyeb_jim285.HyprFM.desktop" ];
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
@@ -267,6 +269,7 @@ in
     # Uso esporádico via `, app` (nix run): apostrophe, totem, baobab,
     # gnome-disk-utility, gnome-logs, seahorse, gnome-font-viewer,
     # gnome-characters, warehouse, gnome-tweaks, overskride, iwgtk
+    hyprFM
     nautilus
     gnome-online-accounts-gtk
     gnome-text-editor

@@ -15,6 +15,7 @@ local opacity_rules = {
   -- Dark mode uses translucent windows so Hyprland blur is noticeable behind them.
   -- Light mode is fully opaque to preserve contrast and avoid washed-out terminals.
   { class = "^(org.gnome.Nautilus)$", opacity = file_opacity },
+  { class = "^(hyprfm)$", opacity = file_opacity },
   { class = "^(kitty)$", opacity = terminal_opacity },
   { class = "^(dev.warp.Warp)$", opacity = terminal_opacity },
   { class = "^(vesktop)$", opacity = browser_opacity },
@@ -50,6 +51,7 @@ local opening_transition_rules = {
   { match = { class = "^(Code|code|code-oss|VSCodium)$" }, shader = "crosshatch", duration_ms = 200 },
   { match = { class = "^(Blender|blender)$" }, shader = "voronoi-shatter", duration_ms = 200 },
   { match = { class = "^(org.gnome.Nautilus)$" }, shader = "morph", duration_ms = 200 },
+  { match = { class = "^(hyprfm)$" }, shader = "morph", duration_ms = 200 },
   { match = { class = "^(thunar|Thunar)$" }, shader = "ripple", duration_ms = 200 },
   { match = { class = "^(org.gnome.Calculator)$" }, shader = "snap", duration_ms = 200 },
   { match = { class = "^(pavucontrol)$" }, shader = "dissolve", duration_ms = 200 },

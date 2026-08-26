@@ -62,7 +62,7 @@ entries() {
       entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
-      entry 'Win+E' 'Archivos' 'nautilus'
+      entry 'Win+E' 'Archivos' 'hyprfm'
       entry 'Win+W' 'Firefox' 'hypr-firefox-new-window'
       entry 'Win+Ctrl+W' 'Iniciar/detener Windows VM' 'windows-rdp toggle'
       entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'

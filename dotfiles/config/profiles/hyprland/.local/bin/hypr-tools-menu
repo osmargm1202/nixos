@@ -16,7 +16,7 @@ choice="$(printf '%s\n' \
 
 case "$choice" in
   *'Terminal') exec kitty ;;
-  *'Files') exec nautilus ;;
+  *'Files') exec hyprfm ;;
   *'Search files') exec hypr-rofi-open-file ;;
   *'Clipboard') exec hypr-rofi-clipboard ;;
   *'Hypr config') exec hypr-config-editor ;;

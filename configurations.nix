@@ -71,6 +71,7 @@ let
     ./nixos/hardware/gpu/nvidia.nix
     ./nixos/hosts/orgm/ms-7d43.nix
     ./nixos/gaming/default.nix
+    ./nixos/hosts/orgm/zerotier.nix
   ];
   lenovoExtra = [
     ./nixos/hosts/lenovo/p14s-gen2i.nix
@@ -138,6 +139,7 @@ in
     orgm-terminal = terminal {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+      extraModules = [ ./nixos/hosts/orgm/zerotier.nix ];
     };
     orgm-gnome = desktop {
       hostName = "orgm";

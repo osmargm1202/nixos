@@ -139,6 +139,18 @@ test_command_selection() {
   ' bash "$script"
 }
 
+test_saved_password_uses_nla() {
+	local script="$1"
+	with_tmp bash -c '
+    script="$1"; tmp="$2"
+    make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
+    run_script "$script" connect "$tmp"
+    assert_calls_contains "$tmp" "xfreerdp3 .* /u:osmarg /p:[^[:space:]]+ .* /sec:nla( |$)" "saved password uses NLA"
+    assert_calls_not_contains "$tmp" "/sec:nla:off" "saved password does not disable NLA"
+  ' bash "$script"
+}
+
+
 test_direct_connection_is_silent_and_immediate() {
 	local script="$1"
 	with_tmp bash -c '
@@ -185,6 +197,7 @@ test_direct_connection_reports_failure_without_retry_waits() {
 for script in "${SCRIPTS[@]}"; do
 	test_command_selection "$script"
 	test_direct_connection_is_silent_and_immediate "$script"
+	test_saved_password_uses_nla "$script"
 	test_container_start_waits_before_connecting "$script"
 	test_direct_connection_reports_failure_without_retry_waits "$script"
 done

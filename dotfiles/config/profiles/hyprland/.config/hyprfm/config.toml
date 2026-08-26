@@ -1,0 +1,16 @@
+[general]
+icon_theme = "Colloid-Dark"
+builtin_icons = false
+dependency_startup_check = true
+
+[bookmarks]
+paths = [
+    "~/Documents",
+    "~/Downloads",
+    "~/Pictures",
+    "~/Projects",
+    "~/Nextcloud",
+    "~/Nextcloud/Calculos",
+    "~/Nextcloud/Proyectos",
+    "~/Nextcloud/SLC"
+]

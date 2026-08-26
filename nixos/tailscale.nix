@@ -208,6 +208,15 @@ in
   services.tailscale.enable = true;
   services.tailscale.useRoutingFeatures = "client";
 
+  networking.extraHosts = ''
+    100.67.39.12 fifrex.tailb870fa.ts.net fifrex
+    100.112.28.88 lenovo.tailb870fa.ts.net lenovo
+    100.89.45.64 nextcloud.tailb870fa.ts.net nextcloud
+    100.100.134.21 or-gm.tailb870fa.ts.net or-gm
+    100.94.177.77 orgm.tailb870fa.ts.net orgm
+    100.97.77.10 windows-orgm.tailb870fa.ts.net windows-orgm
+  '';
+
   systemd.services.${peerMonitorServiceName} = {
     description = "Detect Tailscale peer connection changes";
     after = [ "tailscaled.service" ];

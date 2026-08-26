@@ -191,6 +191,7 @@ let
       ".config/orgm-hypr/notify-focus.json"
       ".config/orgm-hypr/themes.json"
       ".config/orgm-theme"
+      ".config/hyprfm/config.toml"
 
       ".config/waybar-hypr"
       ".config/rofi"
@@ -209,6 +210,7 @@ let
       ".local/bin/hypr-keyboard-menu"
       ".local/bin/hypr-kill-windows"
       ".local/bin/hypr-lock"
+      ".local/bin/hyprlock-unlock"
       ".local/bin/hypr-main-menu"
       ".local/bin/hypr-obsidian-open-or-focus"
       ".local/bin/hypr-nwg-dock"

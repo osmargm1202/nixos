@@ -30,6 +30,7 @@ grep -Fxq '    woomer' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '  "hypridle",' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fq 'timeout = 600' "$profile/.config/hypr/hypridle.conf"
 grep -Fq 'timeout = 900' "$profile/.config/hypr/hypridle.conf"
+! grep -Fq 'dispatch dpms' "$profile/.config/hypr/hypridle.conf"
 keybindings="$profile/.config/hypr/lua/keybindings.lua"
 grep -Fq 'hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("app_launcher", "hypr-app-launcher")))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))' "$keybindings"
@@ -95,11 +96,16 @@ if [[ "${1:-}" == "-j" ]]; then
 fi
 printf '%s\n' "$*" >"${HYPRCTL_ARGS:-/dev/null}"
 EOF
+cat >"$test_bin/loginctl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"${LOGINCTL_ARGS:-/dev/null}"
+EOF
 cat >"$test_bin/jq" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' '0xobsidian'
 EOF
 chmod +x "$test_bin"/*
+chmod +x "$test_bin/loginctl"
 
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR_ROFI_LIB="$bin/hypr-rofi-lib" ROFI_ARGS="$tmp/rofi-args" "$bin/hypr-app-launcher"
 grep -Fq -- '-show drun' "$tmp/rofi-args"
@@ -138,6 +144,10 @@ test -f "$tmp/nwg-dock-reload-args"
 
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRLOCK_ARGS="$tmp/hyprlock-args" "$bin/hypr-lock"
 [[ "$(<"$tmp/hyprlock-args")" == '--immediate-render --no-fade-in' ]]
+HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRLAND_INSTANCE_SIGNATURE=test-instance HYPRCTL_ARGS="$tmp/hyprctl-args" LOGINCTL_ARGS="$tmp/loginctl-args" "$bin/hyprlock-unlock" 42
+[[ "$(<"$tmp/hyprctl-args")" == '--instance test-instance eval hl.clear_crashed_lockscreen()' ]]
+grep -Fxq 'unlock-session 42' "$tmp/loginctl-args"
+grep -Fxq 'activate 42' "$tmp/loginctl-args"
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" FIREFOX_ARGS="$tmp/firefox-args" "$bin/hypr-firefox-new-window"
 [[ "$(<"$tmp/firefox-args")" == '--new' ]]
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRCTL_ARGS="$tmp/hyprctl-args" "$obsidian_helper"

@@ -209,6 +209,10 @@ rdp_command() {
     # known invisible-cursor bug despite otherwise rendering the RDP session.
     backend="wayland"
     client_cmd=(/usr/bin/env SDL_VIDEODRIVER=wayland sdl-freerdp)
+    # FreeRDP SDL overrides /size with the Wayland surface dimensions in
+    # fullscreen mode. On this host that surface can be 64x64, which FreeRDP
+    # rejects before connecting. Keep the requested monitor size in a window.
+    RDP_FULLSCREEN=0
   elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
     backend="wayland"
     client_cmd=(wlfreerdp)
@@ -258,7 +262,7 @@ rdp_connect() {
     /size:"$rdp_size" \
     "${rdp_display_options[@]}" \
     /admin \
-    /sec:nla:off \
+    /sec:nla \
     /tls:seclevel:0 \
     /network:lan \
     /bpp:32 \

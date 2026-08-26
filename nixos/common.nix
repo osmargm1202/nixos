@@ -45,6 +45,7 @@ let
     bat
     ripgrep
     neovim
+    marksman
     wl-clipboard
     xclip
     zip
