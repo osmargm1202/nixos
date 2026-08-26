@@ -17,7 +17,7 @@ fail() {
 
 [ -x "$HELPER" ] || fail 'i3-caffeine-toggle missing or not executable'
 grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
-grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" || fail 'i3 login does not keep displays awake'
+grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" || fail 'i3 startup must leave caffeine disabled'
 grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
 grep -Fq '".local/bin/i3-idle-inhibit"' "$DOTFILES" || fail 'idle inhibitor is not deployed'
 ! grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config is still deployed'

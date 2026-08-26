@@ -2,40 +2,24 @@
 set -euo pipefail
 
 state_file="${XDG_STATE_HOME:-$HOME/.local/state}/i3/caffeine"
-inhibitor_pid=''
+inhibitor_pid=""
 interval="${I3_IDLE_INHIBIT_INTERVAL:-5}"
-
-video_is_playing() {
-  playerctl --all-players status 2>/dev/null | grep -Fxq 'Playing'
-}
-
-remote_session_is_active() {
-  local uid
-  uid="$(id -u)"
-  pgrep -u "$uid" -f '(^|/)(wlfreerdp|xfreerdp|xfreerdp3|freerdp)( |$)' >/dev/null \
-    || pgrep -u "$uid" -f '(^|/)looking-glass-client( |$)' >/dev/null \
-    || ss -Htn state established | grep -Eq '(:3389|:8006)([[:space:]]|$)'
-}
-
-inhibition_required() {
-  [[ -f "$state_file" ]] || video_is_playing || remote_session_is_active
-}
 
 start_inhibitor() {
   [[ -n "$inhibitor_pid" ]] && kill -0 "$inhibitor_pid" 2>/dev/null && return
-  setsid systemd-inhibit \
+  systemd-inhibit \
     --what=idle \
     --mode=block \
-    --why='i3 caffeine mode or active media playback' \
+    --why="i3 caffeine mode" \
     sleep infinity >/dev/null 2>&1 &
   inhibitor_pid=$!
 }
 
 stop_inhibitor() {
-  [[ -n "$inhibitor_pid" ]] || return
-  kill -- "-$inhibitor_pid" 2>/dev/null || true
+  [[ -n "$inhibitor_pid" ]] || return 0
+  kill "$inhibitor_pid" 2>/dev/null || true
   wait "$inhibitor_pid" 2>/dev/null || true
-  inhibitor_pid=''
+  inhibitor_pid=""
 }
 
 cleanup() {
@@ -45,16 +29,8 @@ trap cleanup EXIT
 trap 'cleanup; exit 0' INT TERM
 
 while :; do
-  if inhibition_required; then
+  if [[ -f "$state_file" ]]; then
     start_inhibitor
-    # Caffeine is stateful: reassert its X settings in case another program
-    # changed them after activation. Playback only resets the existing timer.
-    if [[ -f "$state_file" ]]; then
-      xset s off 2>/dev/null || true
-      xset -dpms 2>/dev/null || true
-    else
-      xset s reset 2>/dev/null || true
-    fi
   else
     stop_inhibitor
   fi

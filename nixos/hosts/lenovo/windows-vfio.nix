@@ -7,26 +7,16 @@
 }:
 let
   lookingGlassIddClient = pkgs.callPackage ../../packages/looking-glass-idd-client.nix { };
-  virtioInputIso = pkgs.runCommand "virtio-input.iso" {
-    nativeBuildInputs = [ pkgs.xorriso ];
-  } ''
-    mkdir -p "$out"
-    xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
-      vioinput/w11/amd64=${pkgs.virtio-win}/vioinput/w11/amd64
-  '';
-  windowsVmBatteryGuard = pkgs.writeShellApplication {
-    name = "windows-vm-battery-guard";
-    runtimeInputs = with pkgs; [
-      coreutils
-      gnugrep
-      iproute2
-      libnotify
-      podman
-      procps
-      systemd
-    ];
-    text = builtins.readFile ./windows-vm-battery-guard.sh;
-  };
+  virtioInputIso =
+    pkgs.runCommand "virtio-input.iso"
+      {
+        nativeBuildInputs = [ pkgs.xorriso ];
+      }
+      ''
+        mkdir -p "$out"
+        xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
+          vioinput/w11/amd64=${pkgs.virtio-win}/vioinput/w11/amd64
+      '';
 
 in
 {
@@ -57,7 +47,8 @@ in
 
     home.file = {
       "Apps/windows/compose.yml".source = ../../../containers/windows/compose.yml;
-      "Apps/windows/compose.lenovo-vfio.yml".source = ../../../containers/windows/hosts/lenovo-windows/compose.yml;
+      "Apps/windows/compose.lenovo-vfio.yml".source =
+        ../../../containers/windows/hosts/lenovo-windows/compose.yml;
       "Apps/windows/Containerfile.spice".source = ../../../containers/windows/Containerfile.spice;
       "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
@@ -97,17 +88,6 @@ in
   systemd.user.extraConfig = ''
     DefaultLimitMEMLOCK=infinity
   '';
-
-  systemd.user.services.windows-vm-battery-guard = {
-    description = "Hibernate an unattended Windows VFIO VM on battery";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = lib.getExe windowsVmBatteryGuard;
-      Restart = "always";
-      RestartSec = 5;
-    };
-  };
 
   # i3 starts X from the tty1 login shell. Declaring a service override creates
   # the tty1 instance, so explicitly attach it to getty.target as well.

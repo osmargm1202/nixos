@@ -20,7 +20,6 @@ exec --no-startup-id sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -sil
 exec --no-startup-id sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id systemctl --user --quiet start sunshine.service
-exec --no-startup-id sh -c 'systemctl --user --quiet start windows-vm-battery-guard.service 2>/dev/null || true'
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-idle-inhibit

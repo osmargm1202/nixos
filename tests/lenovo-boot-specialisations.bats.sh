@@ -9,6 +9,10 @@ nix eval --impure --raw --expr '
     flake = builtins.getFlake (toString ./.) ;
     profileNames = [ "lenovo-gnome" "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" ];
     configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
+    i3 = flake.nixosConfigurations.lenovo-i3.config;
+    autologinConfigs = builtins.map (
+      name: flake.nixosConfigurations.${name}.config
+    ) [ "lenovo-gnome" "lenovo-labwc" "lenovo-hyprland" ];
     hasTtyAutologin = config:
       builtins.any (line: builtins.match ".*--autologin osmarg.*" line != null)
         config.systemd.services."getty@tty1".serviceConfig.ExecStart
@@ -40,7 +44,10 @@ nix eval --impure --raw --expr '
       && !config.specialisation.server.configuration.services.xserver.enable
       && !hasTtyAutologin config.specialisation.server.configuration;
   in
-    if builtins.all (config: hasAutologin config && hasBootMenu config) configs
+    if builtins.all hasBootMenu configs
+      && builtins.all hasAutologin autologinConfigs
+      && !hasTtyAutologin i3
+      && !i3.services.displayManager.autoLogin.enable
     then "Lenovo boot specialisations: ok"
     else throw "Lenovo boot specialisation menu is incomplete"
 '

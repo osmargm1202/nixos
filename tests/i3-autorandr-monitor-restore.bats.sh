@@ -25,8 +25,10 @@ grep -Fq 'Hidden=true' "$AUTOSTART" || fail 'packaged Autorandr XDG startup must
 if grep -Fq 'Exec=' "$AUTOSTART"; then fail 'disabled Autorandr desktop still executes'; fi
 grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply --quiet' "$CONFIG" ||
   fail 'i3 login profile restore must not notify'
-grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle on' "$CONFIG" ||
-  fail 'i3 login must keep the display awake while idle'
+grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" ||
+  fail 'i3 startup must leave caffeine disabled until explicitly enabled'
+! grep -Fq 'i3-caffeine-toggle on' "$CONFIG" ||
+  fail 'i3 startup must not enable caffeine automatically'
 grep -Fq "exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'" "$CONFIG" ||
   fail 'Discord login launch must start minimized when available'
 grep -Fq 'bindsym $mod+p exec --no-startup-id $run i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'

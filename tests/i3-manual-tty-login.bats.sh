@@ -21,6 +21,18 @@ if grep -Fq 'services.displayManager.defaultSession' "$PROFILE"; then
 fi
 grep -Fq 'services.displayManager.autoLogin.enable = lib.mkForce false;' "$PROFILE" ||
   fail 'i3 must not activate the display-manager autologin unit'
+nix eval --impure --raw --expr '
+  let
+    config = (builtins.getFlake (toString ./.)).nixosConfigurations.lenovo-i3.config;
+    commands = builtins.concatLists [
+      config.systemd.services."getty@tty1".serviceConfig.ExecStart
+      config.systemd.services."autovt@tty1".serviceConfig.ExecStart
+    ];
+  in
+    if builtins.any (command: builtins.match ".*--autologin.*" command != null) commands
+    then throw "lenovo-i3 still autologins tty1"
+    else "manual tty1 login"
+' >/dev/null || fail 'lenovo-i3 must not autologin tty1'
 grep -Fq 'if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then' "$PROFILE" ||
   fail 'manual tty1 login must start i3 through startx'
 grep -Fq 'exec startx /etc/X11/xinit/xinitrc' "$PROFILE" ||

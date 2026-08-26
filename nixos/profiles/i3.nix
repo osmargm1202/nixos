@@ -28,9 +28,19 @@ in
     windowManager.i3.enable = true;
   };
 
-  # i3 starts through StartX from tty1; no display manager owns this X session,
-  # so its auto-login unit must remain inactive.
+  # i3 begins only after an authenticated tty1 login; neither a display manager
+  # nor the Lenovo host's tty1 autologin may bypass that boundary.
   services.displayManager.autoLogin.enable = lib.mkForce false;
+  systemd.services = {
+    "getty@tty1".serviceConfig.ExecStart = lib.mkForce [
+      ""
+      "${pkgs.util-linux}/sbin/agetty --noclear --keep-baud %I 115200,38400,9600 $TERM"
+    ];
+    "autovt@tty1".serviceConfig.ExecStart = lib.mkForce [
+      ""
+      "${pkgs.util-linux}/sbin/agetty --noclear %I $TERM"
+    ];
+  };
 
   # A manual i3 session must remain usable when the lid is closed. Logind
   # cannot scope lid handling to a VT, so disable lid-initiated suspend for
