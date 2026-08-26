@@ -156,14 +156,14 @@ yt() {
 }
 
 
-if command -v zoxide >/dev/null; then
-  eval "$(zoxide init bash)"
-  alias cd='z'
-fi
 
 if [[ $TERM != dumb ]] && command -v starship >/dev/null; then
   eval "$(starship init bash)"
 fi
 
-
 unset bash_config_dir
+
+if command -v zoxide >/dev/null; then
+  alias cd='z'
+  eval "$(zoxide init bash)"
+fi
