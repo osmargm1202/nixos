@@ -17,13 +17,16 @@ grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE" || fail 'i3lock-col
   fail 'native lock theme must not deploy image assets'
 ! grep -Eq '(rsvg-convert|convert|magick|--image=)' "$LOCK" ||
   fail 'native lock theme must not render or process images'
-for option in --clock --indicator --bar-indicator --keyhl-color=38bdf8ff \
-  --bshl-color=fb7185ff --greeter-text=BLOQUEADO --no-modkey-text; do
+for option in --clock --force-clock --indicator --time-size=72 \
+  --time-pos=x+w/2:y+h/2-180 --ind-pos=x+w/2:y+h/2+70 \
+  --inside-color=172554ff --ring-color=60a5faff \
+  --keyhl-color=7dd3fcff --bshl-color=fda4afff --no-modkey-text; do
   grep -Fq -- "$option" "$LOCK" || fail "lock option missing: $option"
 done
-installed_i3lock="$(readlink -f "$(command -v i3lock-color)")"
-zcat "$(dirname "$(dirname "$installed_i3lock")")/share/man/man1/i3lock-color.1.gz" |
-  grep -Fq '\-\-bar\-indicator' || fail 'installed i3lock-color lacks bar indicator support'
+! grep -Fq -- '--bar-indicator' "$LOCK" ||
+  fail 'simple lock theme must not use the bar indicator'
+! grep -Fq -- '--greeter-text' "$LOCK" ||
+  fail 'lock must reserve the upper center for the clock'
 ! grep -Fq 'lock_background_bin=' "$WALLPAPER" || fail 'wallpaper must not generate lock screenshots'
 grep -Fq 'xss-lock --transfer-sleep-lock -- $run i3-lock -n' "$CONFIG" || fail 'idle lock bypasses helper'
 grep -Fq 'Lock) exec i3-lock' "$POWER" || fail 'power menu bypasses helper'
@@ -37,9 +40,10 @@ EOF
 chmod +x "$tmp/bin/i3lock-color"
 export LOCK_CALLS="$tmp/calls"
 PATH="$tmp/bin:$PATH" "$LOCK" -n
-for option in --color=13182dff --clock --indicator --bar-indicator \
-  --keyhl-color=38bdf8ff --bshl-color=fb7185ff --greeter-text=BLOQUEADO \
-  --no-modkey-text -e -n; do
+for option in --color=0f172aff --clock --force-clock --indicator --time-size=72 \
+  --time-pos=x+w/2:y+h/2-180 --ind-pos=x+w/2:y+h/2+70 \
+  --inside-color=172554ff --ring-color=60a5faff \
+  --keyhl-color=7dd3fcff --bshl-color=fda4afff --no-modkey-text -e -n; do
   grep -Fxq -- "$option" "$tmp/calls" || fail "native lock call missing: $option"
 done
-printf '%s\n' 'PASS: i3 lock uses a native themed key-feedback bar'
+printf '%s\n' 'PASS: i3 lock uses a simple native circular indicator'
