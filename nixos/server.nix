@@ -56,6 +56,7 @@ let
 in
 {
   imports = [
+    ./hosts.nix
     ./tailscale.nix
     ./clean.nix
   ];

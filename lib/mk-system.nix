@@ -60,12 +60,13 @@ let
           throw "Unknown ORGMOS role '${role}'. Valid roles: desktop, server, terminal";
     in
     lib.nixosSystem {
-      specialArgs = {
-        inherit inputs userName;
-      }
-      // lib.optionalAttrs (effectiveProfileName != null) {
-        profileName = effectiveProfileName;
-      };
+      specialArgs =
+        {
+          inherit inputs userName hostName;
+        }
+        // lib.optionalAttrs (effectiveProfileName != null) {
+          profileName = effectiveProfileName;
+        };
       modules = [
         { nixpkgs.hostPlatform = system; }
         ../nixos/binary-cache.nix

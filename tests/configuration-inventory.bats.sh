@@ -47,7 +47,7 @@ jq -e '
   || fail 'ero-server hostname changed'
 [[ "$(jq -r '.configurations["jarq-hyprland"].userName' <<<"$inventory_json")" == 'jarq' ]] \
   || fail 'jarq user changed'
-[[ "$(jq -r '.configurations["orgm-hyprland"].extraModules | length' <<<"$inventory_json")" == '3' ]] \
-  || fail 'orgm host extras changed'
+[[ "$(jq -r '.configurations["orgm-hyprland"].extraModules | length' <<<"$inventory_json")" == '2' ]] \
+  || fail 'orgm desktop extras changed'
 
 printf 'PASS: explicit configuration inventory\n'

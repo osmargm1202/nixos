@@ -63,19 +63,12 @@ let
         ;
     };
 
-  jarqExtra = [
-    ./nixos/hardware/gpu/intel.nix
-    ./nixos/hosts/jarq/default.nix
-  ];
-  orgmExtra = [
-    ./nixos/hardware/gpu/nvidia.nix
-    ./nixos/hosts/orgm/ms-7d43.nix
+  orgmDesktopModules = [
+    ./nixos/deskflow.nix
     ./nixos/gaming/default.nix
-    ./nixos/hosts/orgm/zerotier.nix
   ];
-  lenovoExtra = [
+  lenovoDesktopModules = [
     ./nixos/hosts/lenovo/p14s-gen2i.nix
-    ./nixos/hosts/lenovo/audio.nix
     ./nixos/gaming/steam.nix
     ./nixos/gaming/emulators.nix
     ./nixos/gaming/sunshine.nix
@@ -104,7 +97,6 @@ in
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       userName = "osmarg";
       extraModules = [
-        ./nixos/hardware/gpu/intel.nix
         ./nixos/hosts/jarq/server.nix
         ./server/modules
       ];
@@ -119,57 +111,53 @@ in
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "i3";
       userName = "jarq";
-      extraModules = jarqExtra;
     };
     jarq-labwc = desktop {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "labwc";
       userName = "jarq";
-      extraModules = jarqExtra;
     };
     jarq-hyprland = desktop {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "hyprland";
       userName = "jarq";
-      extraModules = jarqExtra;
     };
 
     orgm-terminal = terminal {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-      extraModules = [ ./nixos/hosts/orgm/zerotier.nix ];
     };
     orgm-gnome = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "gnome";
-      extraModules = orgmExtra;
+      extraModules = orgmDesktopModules;
     };
     orgm-cinnamon = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "cinnamon";
-      extraModules = orgmExtra;
+      extraModules = orgmDesktopModules;
     };
     orgm-hyprland = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "hyprland";
-      extraModules = orgmExtra;
+      extraModules = orgmDesktopModules;
     };
     orgm-labwc = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "labwc";
-      extraModules = orgmExtra;
+      extraModules = orgmDesktopModules;
     };
     orgm-i3 = desktop {
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "i3";
-      extraModules = orgmExtra;
+      extraModules = orgmDesktopModules;
     };
     ero-terminal = terminal {
       hostName = "ero";
@@ -179,13 +167,11 @@ in
       hostName = "ero";
       hardware = ./nixos/hosts/ero/hardware-configuration.nix;
       profileName = "labwc";
-      extraModules = [ ./nixos/hardware/gpu/intel.nix ];
     };
     ero-i3 = desktop {
       hostName = "ero";
       hardware = ./nixos/hosts/ero/hardware-configuration.nix;
       profileName = "i3";
-      extraModules = [ ./nixos/hardware/gpu/intel.nix ];
     };
     ero-server = server {
       hostName = "ero";
@@ -200,25 +186,25 @@ in
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "labwc";
-      extraModules = lenovoExtra;
+      extraModules = lenovoDesktopModules;
     };
     lenovo-gnome = desktop {
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "gnome";
-      extraModules = lenovoExtra;
+      extraModules = lenovoDesktopModules;
     };
     lenovo-hyprland = desktop {
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "hyprland";
-      extraModules = lenovoExtra;
+      extraModules = lenovoDesktopModules;
     };
     lenovo-i3 = desktop {
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "i3";
-      extraModules = lenovoExtra;
+      extraModules = lenovoDesktopModules;
     };
   };
 }

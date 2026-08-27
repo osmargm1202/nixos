@@ -131,6 +131,7 @@ in
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
+      ./hosts.nix
       ./tailscale.nix
       ./clean.nix
       ./udiskie.nix

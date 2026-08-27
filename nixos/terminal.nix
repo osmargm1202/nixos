@@ -25,6 +25,7 @@ in
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ./ai/default.nix
+      ./hosts.nix
       ./tailscale.nix
       ./clean.nix
     ];

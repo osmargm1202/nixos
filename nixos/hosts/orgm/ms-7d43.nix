@@ -1,10 +1,7 @@
 { lib, ... }:
 
 {
-  imports = [
-    ./audio.nix
-    ../../deskflow.nix
-  ];
+  imports = [ ./audio.nix ];
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.
   # Keep generated disk/module detection in hardware-configuration.nix; this file

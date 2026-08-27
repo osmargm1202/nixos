@@ -11,9 +11,6 @@
     extraSetFlags = [ "--advertise-routes=172.18.0.0/24" ];
   };
 
-  networking.extraHosts = ''
-    172.18.0.251 vilserver1
-  '';
 
   networking.nat = {
     enable = true;
