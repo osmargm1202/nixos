@@ -23,6 +23,7 @@ in
     enable = true;
     nativeMessagingHosts.packages = [ windowsManagerLinuxOrgm ];
     policies = {
+      Homepage.StartPage = "previous-session";
       ExtensionSettings =
         {
           "${defaultThemeId}" = {

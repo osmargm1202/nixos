@@ -12,8 +12,9 @@ WINDOWS_COMPOSE_DIR="${WINDOWS_COMPOSE_DIR:-$HOME/Apps/windows}"
 COMPOSE_FILES=()
 RDP_HOST="localhost"
 RDP_PORT="3389"
-RDP_USER="osmarg"
-RDP_PASS="hacker12"
+RDP_USER=""
+RDP_PASSWORD_FILE=""
+LOCAL_WINDOWS_NAME="osmar-windows"
 WEB_CONSOLE_URL="http://127.0.0.1:8006"
 WEB_CONSOLE_HOST="127.0.0.1"
 WEB_CONSOLE_PORT="8006"
@@ -27,6 +28,12 @@ ICON_FILE="$ICON_DIR/windows.png"
 
 # Seconds to wait after port is open for RDP to fully initialize
 RDP_BOOT_DELAY=10
+
+declare -a TARGET_LABELS=()
+declare -a TARGET_PROTOCOLS=()
+declare -a TARGET_HOSTNAMES=()
+declare -a TARGET_ADDRESSES=()
+SELECTED_TARGET_INDEX=""
 
 # ============================================================
 # Functions
@@ -53,10 +60,12 @@ select_vm_profile() {
       CONTAINER="lenovo-windows"
       INACTIVE_CONTAINER="windows"
       COMPOSE_FILES=(-f compose.yml -f compose.lenovo-vfio.yml)
+      LOCAL_WINDOWS_NAME="lenovo-windows"
       ;;
     *)
       CONTAINER="windows"
       COMPOSE_FILES=()
+      LOCAL_WINDOWS_NAME="osmar-windows"
       ;;
   esac
 }
@@ -240,9 +249,31 @@ rdp_command() {
   fi
 }
 
+load_rdp_credentials() {
+  local selected_host="${1,,}"
+  local credential_host credential_key user_var password_file_var
+
+  case "$selected_host" in
+    orgm | orgm-windows) credential_host="osmar-windows" ;;
+    lenovo | lenovo-windows) credential_host="lenovo-windows" ;;
+    *) credential_host="$selected_host" ;;
+  esac
+  credential_key="${credential_host^^}"
+  credential_key="${credential_key//-/_}"
+  user_var="WINDOWS_RDP_${credential_key}_USER"
+  password_file_var="WINDOWS_RDP_${credential_key}_PASSWORD_FILE"
+  RDP_USER="${!user_var:-}"
+  RDP_PASSWORD_FILE="${!password_file_var:-}"
+
+  if [[ -z "$RDP_USER" || -z "$RDP_PASSWORD_FILE" || ! -r "$RDP_PASSWORD_FILE" || ! -s "$RDP_PASSWORD_FILE" ]]; then
+    echo "Error: RDP host '$selected_host' requires $user_var and $password_file_var." >&2
+    return 1
+  fi
+}
+
 rdp_connect() {
-  local target_workspace="${2:-}"
-  local rdp_size
+  local target_workspace="${1:-}"
+  local rdp_size rdp_password="${2:-}"
   local -a RDP_CMD
   local -a rdp_display_options=()
 
@@ -253,12 +284,19 @@ rdp_connect() {
   fi
 
   move_next_rdp_window_to_workspace "$target_workspace"
+  if [[ -z "$rdp_password" ]]; then
+    rdp_password="$(<"$RDP_PASSWORD_FILE")"
+  fi
+  if [[ -z "$rdp_password" ]]; then
+    echo "Error: RDP password is empty." >&2
+    return 1
+  fi
   # Do not grab the physical keyboard: local compositor shortcuts remain usable.
   # A client exit, including a Windows-side disconnect, is final; reconnecting is
   # always an explicit user action.
   "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
     /u:"$RDP_USER" \
-    /p:"$RDP_PASS" \
+    /p:"$rdp_password" \
     /size:"$rdp_size" \
     "${rdp_display_options[@]}" \
     /admin \
@@ -270,9 +308,234 @@ rdp_connect() {
     +clipboard \
     /gdi:sw \
     -grab-keyboard \
-    +home-drive \
     /cert:ignore \
     /wm-class:windows-rdp
+}
+
+append_target() {
+  TARGET_LABELS+=("$1")
+  TARGET_PROTOCOLS+=("$2")
+  TARGET_HOSTNAMES+=("$3")
+  TARGET_ADDRESSES+=("$4")
+}
+
+build_targets() {
+  local status_json peers host ip state
+
+  TARGET_LABELS=()
+  TARGET_PROTOCOLS=()
+  TARGET_HOSTNAMES=()
+  TARGET_ADDRESSES=()
+  append_target "Local | $LOCAL_WINDOWS_NAME | RDP" "rdp-local" "$LOCAL_WINDOWS_NAME" "localhost"
+  append_target "Custom | RDP" "rdp-custom" "" ""
+
+  if ! command -v tailscale &>/dev/null || ! command -v jq &>/dev/null; then
+    echo "Warning: Tailscale or jq is unavailable; showing local Windows only." >&2
+    return 0
+  fi
+  if ! status_json="$(tailscale status --json 2>&1)"; then
+    echo "Warning: tailscale status failed; showing local Windows only: $status_json" >&2
+    return 0
+  fi
+  if ! peers="$(printf '%s\n' "$status_json" | jq -r '
+    (.Peer // {})
+    | if type == "object" then to_entries | map(.value)
+      elif type == "array" then .
+      else [] end
+    | map(select((.Self // false) | not))
+    | map({
+        host: ((.HostName // .HostInfo.HostName // "") | ascii_downcase),
+        ip: (.TailscaleIPs[0] // "sin-ip"),
+        state: (if (.Online // false) then "online" else "offline" end)
+      })
+    | map(select(.host != ""))
+    | sort_by(.host)
+    | .[]
+    | "\(.host)\t\(.ip)\t\(.state)"
+  ')"; then
+    echo "Warning: could not parse Tailscale status; showing local Windows only." >&2
+    return 0
+  fi
+
+  while IFS=$'\t' read -r host ip state; do
+    [[ -n "$host" && "$host" != "$LOCAL_WINDOWS_NAME" ]] || continue
+    case "$host" in
+      *windows* | orgm | lenovo) ;;
+      *) continue ;;
+    esac
+    if [[ "$ip" == sin-ip ]]; then
+      echo "Warning: Tailscale peer '$host' has no usable Tailscale IP; skipping RDP." >&2
+      continue
+    fi
+    append_target "Tailscale | $host | RDP | $state" "rdp-tailscale" "$host" "$ip"
+  done <<<"$peers"
+
+  while IFS=$'\t' read -r host ip state; do
+    [[ "$host" == orgm || "$host" == lenovo ]] || continue
+    if [[ "$ip" == sin-ip ]]; then
+      echo "Warning: Tailscale peer '$host' has no usable Tailscale IP; skipping Moonlight." >&2
+      continue
+    fi
+    append_target "Tailscale | $host | Moonlight | $state" "moonlight" "$host" "$ip"
+  done <<<"$peers"
+}
+
+choose_target() {
+  local selected index
+
+  SELECTED_TARGET_INDEX=""
+  if [[ -t 0 && -t 1 ]] && command -v gum &>/dev/null; then
+    selected="$(gum choose --cursor.foreground "#2563EB" --selected.foreground "#2563EB" --header "Selecciona un equipo" "${TARGET_LABELS[@]}")" || return 0
+    [[ -n "$selected" ]] || return 0
+    for index in "${!TARGET_LABELS[@]}"; do
+      [[ "${TARGET_LABELS[$index]}" == "$selected" ]] && {
+        SELECTED_TARGET_INDEX="$index"
+        return 0
+      }
+    done
+    echo "Error: Gum returned an unknown target." >&2
+    return 1
+  fi
+
+  if [[ ! -t 0 || ! -t 1 ]] && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+    if ! command -v rofi &>/dev/null; then
+      echo "Error: Rofi is required by the graphical remote selector." >&2
+      notify_user "Selector remoto no disponible" "Rofi no está instalado."
+      return 1
+    fi
+    selected="$(printf '%s\n' "${TARGET_LABELS[@]}" | rofi -dmenu -i -no-custom -only-match -format i -p "Conectar remoto")" || return 0
+    [[ -n "$selected" ]] || return 0
+    [[ "$selected" =~ ^[0-9]+$ && "$selected" -lt "${#TARGET_LABELS[@]}" ]] || {
+      echo "Error: Rofi returned an invalid target index." >&2
+      return 1
+    }
+    SELECTED_TARGET_INDEX="$selected"
+    return 0
+  fi
+
+  while true; do
+    for index in "${!TARGET_LABELS[@]}"; do
+      printf '%d) %s\n' "$((index + 1))" "${TARGET_LABELS[$index]}" >&2
+    done
+    printf 'Selecciona un equipo: ' >&2
+    selected=""
+    if ! read -r selected; then
+      if [[ "$selected" =~ ^[0-9]+$ ]] && (( selected >= 1 && selected <= ${#TARGET_LABELS[@]} )); then
+        SELECTED_TARGET_INDEX="$((selected - 1))"
+      elif [[ -n "$selected" ]]; then
+        echo "Selecciona un número válido." >&2
+      fi
+      return 0
+    fi
+    if [[ "$selected" =~ ^[0-9]+$ ]] && (( selected >= 1 && selected <= ${#TARGET_LABELS[@]} )); then
+      SELECTED_TARGET_INDEX="$((selected - 1))"
+      return 0
+    fi
+    echo "Selecciona un número válido." >&2
+  done
+}
+
+do_moonlight_connect() {
+  local address="$1" apps app
+
+  if ! command -v flatpak &>/dev/null || ! flatpak info com.moonlight_stream.Moonlight &>/dev/null; then
+    echo "Error: Flatpak Moonlight is not installed." >&2
+    notify_user "Moonlight no disponible" "Instala com.moonlight_stream.Moonlight para conectar."
+    return 1
+  fi
+  if ! apps="$(flatpak run com.moonlight_stream.Moonlight list "$address" 2>&1)"; then
+    notify_user "Moonlight requiere configuración" "Abriendo Moonlight para emparejar o revisar '$address'."
+    flatpak run com.moonlight_stream.Moonlight
+    return
+  fi
+  while IFS= read -r app; do
+    if [[ "$app" == Desktop ]]; then
+      flatpak run com.moonlight_stream.Moonlight stream "$address" Desktop
+      return
+    fi
+  done <<<"$apps"
+  notify_user "Moonlight requiere configuración" "El host '$address' no expone Desktop; abriendo Moonlight."
+  flatpak run com.moonlight_stream.Moonlight
+}
+
+do_custom_rdp_connect() {
+  local address user password result
+
+  if [[ ! -t 0 || ! -t 1 ]] && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+    if ! command -v rofi &>/dev/null; then
+      echo "Error: Rofi is required for custom graphical RDP." >&2
+      notify_user "RDP personalizado no disponible" "Rofi no está instalado."
+      return 1
+    fi
+    address="$(printf '\n' | rofi -dmenu -i -p "IP RDP")" || return 0
+    user="$(printf '\n' | rofi -dmenu -i -p "Usuario RDP")" || return 0
+    password="$(printf '\n' | rofi -dmenu -password -p "Clave RDP")" || return 0
+  else
+    printf 'IP RDP: ' >&2
+    address=""
+    if ! IFS= read -r address && [[ -z "$address" ]]; then
+      return 0
+    fi
+    printf 'Usuario RDP: ' >&2
+    user=""
+    if ! IFS= read -r user && [[ -z "$user" ]]; then
+      return 0
+    fi
+    printf 'Clave RDP: ' >&2
+    password=""
+    if ! IFS= read -r -s password && [[ -z "$password" ]]; then
+      printf '\n' >&2
+      return 0
+    fi
+    printf '\n' >&2
+  fi
+
+  if [[ -z "$address" || -z "$user" || -z "$password" ]]; then
+    echo "Error: IP, usuario y clave RDP son obligatorios." >&2
+    return 1
+  fi
+
+  RDP_HOST="$address"
+  RDP_PORT=3389
+  RDP_USER="$user"
+  RDP_PASSWORD_FILE=""
+  rdp_connect "$(current_hypr_workspace)" "$password"
+  result=$?
+  password=""
+  return "$result"
+}
+
+do_choose_connect() {
+  local protocol hostname address
+
+  build_targets
+  choose_target || return $?
+  [[ -n "$SELECTED_TARGET_INDEX" ]] || return 0
+  protocol="${TARGET_PROTOCOLS[$SELECTED_TARGET_INDEX]}"
+  hostname="${TARGET_HOSTNAMES[$SELECTED_TARGET_INDEX]}"
+  address="${TARGET_ADDRESSES[$SELECTED_TARGET_INDEX]}"
+
+  case "$protocol" in
+    rdp-local)
+      do_connect
+      ;;
+    rdp-custom)
+      do_custom_rdp_connect
+      ;;
+    rdp-tailscale)
+      RDP_HOST="$address"
+      RDP_PORT=3389
+      load_rdp_credentials "$hostname" || return 1
+      rdp_connect "$(current_hypr_workspace)"
+      ;;
+    moonlight)
+      do_moonlight_connect "$address"
+      ;;
+    *)
+      echo "Error: unsupported remote protocol '$protocol'." >&2
+      return 1
+      ;;
+  esac
 }
 
 require_vfio_memlock() {
@@ -381,13 +644,14 @@ do_status() {
 }
 
 do_connect() {
-  local started_container=0
   local target_workspace=""
 
+  RDP_HOST=localhost
+  RDP_PORT=3389
+  load_rdp_credentials "$LOCAL_WINDOWS_NAME" || return 1
   target_workspace="$(current_hypr_workspace)"
 
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
-    started_container=1
     echo "RDP is not available. Starting container '$CONTAINER'..."
     do_start || return 1
   fi
@@ -486,12 +750,12 @@ usage() {
 Usage: $SCRIPT_NAME <command>
 
 Commands:
-  run        Start container if needed and open RDP; leave container running on exit
-  start      Start the Windows container only
-  stop       Stop the Windows container only
-  toggle     Stop the selected container if running, otherwise start it
-  connect    Connect RDP; start container if needed
-  web        Start the selected container if needed and open its Web Console
+  run        Connect directly to the local Windows VM; start it if needed
+  start      Start the local Windows container only
+  stop       Stop the local Windows container only
+  toggle     Stop the selected local container if running, otherwise start it
+  connect    Select local, custom, Tailscale RDP, or Moonlight access
+  web        Start the selected local container if needed and open its Web Console
   looking-glass
              Start the Lenovo VFIO Windows VM if needed and open Looking Glass
   status     Show the selected VM profile and RDP client
@@ -511,7 +775,7 @@ run) do_run ;;
 start) do_start ;;
 stop) do_stop ;;
 toggle) do_toggle ;;
-connect) do_connect ;;
+connect) do_choose_connect ;;
 web) do_web ;;
 status) do_status ;;
 looking-glass) do_looking_glass ;;

@@ -21,7 +21,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + CTRL + Return", hl.dsp.exec_cmd("kitty -e tmux new-session -A -s main"))
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
   hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("hypr-obsidian-open-or-focus"))
-  hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window"))
+  hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus"))
   hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("windows-rdp toggle"))
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))
 

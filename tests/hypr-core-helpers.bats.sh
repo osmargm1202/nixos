@@ -36,7 +36,7 @@ grep -Fq 'hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("app_launcher",
 grep -Fq 'hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hypr-rofi-calc"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())' "$keybindings"
-grep -Fq 'hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-firefox-new-window"))' "$keybindings"
+grep -Fq 'hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus"))' "$keybindings"
 grep -Fq 'hl.bind(mainMod .. " + CTRL + Return", hl.dsp.exec_cmd("kitty -e tmux new-session -A -s main"))' "$keybindings"
 grep -Fq 'bindsym $mod+Ctrl+Return exec --no-startup-id kitty -e tmux new-session -A -s main' "$repo_dir/dotfiles/config/profiles/i3/.config/i3/config"
 grep -Fq "entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'" "$bin/hypr-keybindings-help"
@@ -148,8 +148,6 @@ HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPR
 [[ "$(<"$tmp/hyprctl-args")" == '--instance test-instance eval hl.clear_crashed_lockscreen()' ]]
 grep -Fxq 'unlock-session 42' "$tmp/loginctl-args"
 grep -Fxq 'activate 42' "$tmp/loginctl-args"
-HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" FIREFOX_ARGS="$tmp/firefox-args" "$bin/hypr-firefox-new-window"
-[[ "$(<"$tmp/firefox-args")" == '--new' ]]
 HOME="$home" PATH="$test_bin:$bin:/run/current-system/sw/bin:/usr/bin:/bin" HYPRCTL_ARGS="$tmp/hyprctl-args" "$obsidian_helper"
 [[ "$(<"$tmp/hyprctl-args")" == 'dispatch hl.dsp.focus({ window = "address:0xobsidian" })' ]]
 printf '%s\n' 'hypr-core-helpers: ok'

@@ -63,7 +63,7 @@ entries() {
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'hyprfm'
-      entry 'Win+W' 'Firefox' 'hypr-firefox-new-window'
+      entry 'Win+W' 'Restaurar Firefox o abrir pestaña nueva' 'firefox-open-tab --restore-or-focus'
       entry 'Win+Ctrl+W' 'Iniciar/detener Windows VM' 'windows-rdp toggle'
       entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
       entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'

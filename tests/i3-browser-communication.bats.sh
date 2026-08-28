@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FIREFOX="$ROOT/nixos/firefox.nix"
 CHROMIUM="$ROOT/nixos/chromium.nix"
 COMMON="$ROOT/nixos/common.nix"
-HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-firefox-new-window"
+I3_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 DISCORD="$ROOT/nixos/packages/discord-webrtc.nix"
 VESKTOP="$ROOT/nixos/packages/vesktop-webrtc.nix"
@@ -43,24 +43,8 @@ for scheme in x-scheme-handler/http x-scheme-handler/https; do
     fail "activation must persist Firefox for URL scheme $scheme"
 done
 
-[[ -x "$HELPER" ]] || fail 'Firefox i3 helper missing or not executable'
-grep -Fq '".local/bin/i3-firefox-new-window"' "$DOTFILES" ||
-  fail 'Firefox i3 helper not deployed'
-bash -n "$HELPER"
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/bin"
-cat >"$tmp/bin/firefox-open-tab" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >"$FIREFOX_TAB_ARGS"
-EOF
-chmod +x "$tmp/bin/firefox-open-tab"
-FIREFOX_TAB_ARGS="$tmp/args" PATH="$tmp/bin:$PATH" "$HELPER"
-[[ "$(<"$tmp/args")" == '--new' ]] ||
-  fail 'Firefox i3 helper must request a new tab from the shared helper'
-FIREFOX_TAB_ARGS="$tmp/args" PATH="$tmp/bin:$PATH" "$HELPER" https://example.com/
-[[ "$(<"$tmp/args")" == '--new https://example.com/' ]] ||
-  fail 'Firefox i3 helper must forward URLs while requesting a new tab'
+grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$I3_CONFIG" ||
+  fail 'i3 Win+W must invoke the shared restore-or-focus launcher'
 
 grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interfaces' "$DISCORD" ||
   fail 'Discord WebRTC network policy disappeared'

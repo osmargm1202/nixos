@@ -41,10 +41,10 @@ required_bindings=(
 for binding in "${required_bindings[@]}"; do
   grep -Fq "$binding" "$CONFIG" || fail "missing parity binding: $binding"
 done
-grep -Fq 'set $browser $run i3-firefox-new-window' "$CONFIG" || fail 'Firefox helper must be the shared i3 browser'
+grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$CONFIG" ||
+  fail 'Firefox Win+W must use the shared restore-or-focus launcher'
 
-
-for helper in i3-firefox-new-window i3-obsidian-open-or-focus i3-pi-prompt; do
+for helper in i3-obsidian-open-or-focus i3-pi-prompt; do
   [ -x "$BIN/$helper" ] || fail "$helper missing or not executable"
   grep -Fq "\".local/bin/$helper\"" "$DOTFILES" || fail "$helper not deployed"
   bash -n "$BIN/$helper"

@@ -17,8 +17,10 @@
 
     packages = [
       "be.alexandervanhee.gradia"
+      "com.anydesk.Anydesk"
       "com.discordapp.Discord"
       "com.google.EarthPro"
+      "com.moonlight_stream.Moonlight"
       "com.obsproject.Studio"
       "com.spotify.Client"
       "io.dbeaver.DBeaverCommunity"
@@ -26,6 +28,7 @@
       "io.gitlab.theevilskeleton.Upscaler"
       "io.podman_desktop.PodmanDesktop"
       "md.obsidian.Obsidian"
+      "com.rustdesk.RustDesk"
       "org.mozilla.Thunderbird"
       "org.blender.Blender"
       "io.github.intoolswetrust.JSignPdf"

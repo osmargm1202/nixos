@@ -19,7 +19,7 @@ fail() {
 
 stub() {
   local name="$1" body="$2"
-  printf '#!/usr/bin/bash\n%s\n' "$body" >"$TMP/$name"
+  printf '#!/usr/bin/env bash\n%s\n' "$body" >"$TMP/$name"
   chmod +x "$TMP/$name"
 }
 
@@ -38,11 +38,20 @@ stub hyprctl 'case "$1 $2" in
   *) echo hyprctl "$@" >>"$CALLS" ;;
 esac'
 
+stub seq 'echo 1'
+stub head 'IFS= read -r line; printf "%s\n" "$line"'
+stub jq 'data="$(</dev/stdin)"
+case "$data" in
+  *\"id\"*) printf "5\n" ;;
+  *\"address\"*) printf "0xabc\n" ;;
+esac'
+printf '%s\n' test-password >"$TMP/rdp-password"
 PATH="$TMP:/usr/bin:/bin" CALLS="$TMP/calls" HOME="$TMP/home" XDG_CURRENT_DESKTOP= WAYLAND_DISPLAY=wayland-1 \
+  WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$TMP/rdp-password" \
   bash "$SCRIPT" run >"$TMP/out" 2>"$TMP/err"
 
 bash -n "$SCRIPT" || fail "syntax failed"
-/usr/bin/sleep 0.2
+/run/current-system/sw/bin/sleep 0.2
 grep -q 'xfreerdp3 /v:localhost:3389' "$TMP/calls" || fail "RDP did not launch"
 grep -q 'hyprctl dispatch movetoworkspacesilent 5,address:0xabc' "$TMP/calls" || fail "window was not moved to captured active workspace"
 

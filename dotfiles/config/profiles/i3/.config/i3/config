@@ -1,7 +1,7 @@
 set $mod Mod4
 set $run $HOME/.local/bin/i3-run
 set $term kitty
-set $browser $run i3-firefox-new-window
+set $browser $run firefox-open-tab --restore-or-focus
 set $files thunar "$HOME"
 set $launcher $run i3-rofi --drun
 

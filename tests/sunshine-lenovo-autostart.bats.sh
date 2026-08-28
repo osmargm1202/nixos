@@ -11,11 +11,20 @@ fail() {
   exit 1
 }
 
-for configuration in lenovo-hyprland lenovo-i3 lenovo-labwc
+for configuration in \
+  orgm-gnome orgm-cinnamon orgm-hyprland orgm-labwc orgm-i3 \
+  lenovo-gnome lenovo-hyprland lenovo-i3 lenovo-labwc
 do
   nix eval --json ".#nixosConfigurations.${configuration}.config.services.sunshine" |
     jq -e '.enable and .autoStart and .capSysAdmin and .openFirewall' >/dev/null ||
     fail "${configuration} must enable and autostart Sunshine"
+done
+
+for configuration in hyprland ero-labwc jarq-hyprland
+do
+  nix eval --json ".#nixosConfigurations.${configuration}.config.services.sunshine.enable" |
+    jq -e '. == false' >/dev/null ||
+    fail "${configuration} must leave Sunshine disabled"
 done
 
 grep -Fq 'systemctl --user --quiet start sunshine.service || true' "$HYPR" ||

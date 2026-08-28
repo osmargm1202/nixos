@@ -7,7 +7,7 @@ notify() {
 }
 
 usage() {
-  printf 'Usage: %s [--new | --new-tab] [--prompt] URL | %s --focus\n' "${0##*/}" "${0##*/}" >&2
+  printf 'Usage: %s [--new | --new-tab] [--prompt] URL | %s --focus | %s --restore-or-focus\n' "${0##*/}" "${0##*/}" "${0##*/}" >&2
 }
 
 fail() {
@@ -50,21 +50,89 @@ prompt_url() {
 }
 
 focus_firefox() {
+  local clients address tree id
+
   case "${XDG_CURRENT_DESKTOP:-}" in
     *Hyprland*)
-      command -v hyprctl >/dev/null 2>&1 &&
-        hyprctl dispatch 'hl.dsp.focus({ window = "class:^(firefox|Navigator)$" })'
+      command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 2
+      clients="$(hyprctl -j clients)" || return 2
+      jq -e 'type == "array"' >/dev/null <<<"$clients" || return 2
+      address="$(
+        jq -r '
+          [
+            .[]
+            | select(
+                ((.class // "") | test("^(firefox|navigator)$"; "i"))
+                or ((.initialClass // "") | test("^(firefox|navigator)$"; "i"))
+              )
+            | select((.address | type) == "string" and (.address | length) > 0)
+            | { address, focusHistoryID }
+          ]
+          | sort_by(
+              if ((.focusHistoryID | type) == "number" and .focusHistoryID >= 0)
+              then .focusHistoryID
+              else 1e30
+              end
+            )
+          | .[0].address // empty
+        ' <<<"$clients"
+      )" || return 2
+      [[ -n "$address" ]] || return 1
+      hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" || return 2
       ;;
     *i3*)
-      command -v i3-msg >/dev/null 2>&1 &&
-        i3-msg '[class="(?i)firefox"] focus'
+      command -v i3-msg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 2
+      tree="$(i3-msg -t get_tree)" || return 2
+      jq -e 'type == "object"' >/dev/null <<<"$tree" || return 2
+      id="$(
+        jq -r '
+          def ordered_children:
+            [(.nodes[]?, .floating_nodes[]?)] as $children
+            | (.focus // []) as $focus
+            | [
+                $focus[] as $child_id
+                | $children[]
+                | select(.id == $child_id)
+              ]
+              + [
+                $children[] as $child
+                | select($focus | index($child.id) | not)
+                | $child
+              ];
+          def descendants:
+            ordered_children[] as $child
+            | $child, ($child | descendants);
+          def firefox_window:
+            ((.window_properties.class // "") | test("^(firefox|navigator)$"; "i"))
+            or ((.window_properties.instance // "") | test("^(firefox|navigator)$"; "i"));
+          first(
+            . | descendants
+            | select(
+                ((.nodes // []) | length == 0)
+                and ((.floating_nodes // []) | length == 0)
+                and firefox_window
+              )
+            | .id
+          ) // empty
+        ' <<<"$tree"
+      )" || return 2
+      [[ -n "$id" ]] || return 1
+      [[ "$id" =~ ^[0-9]+$ ]] || return 2
+      i3-msg "[con_id=$id] focus" || return 2
       ;;
     *labwc*)
-      command -v wlrctl >/dev/null 2>&1 &&
-        wlrctl toplevel focus app_id:firefox
+      command -v wlrctl >/dev/null 2>&1 || return 2
+      if wlrctl toplevel find app_id:firefox app_id:org.mozilla.firefox >/dev/null 2>&1; then
+        :
+      else
+        find_status=$?
+        [[ "$find_status" == 1 ]] && return 1
+        return 2
+      fi
+      wlrctl toplevel focus app_id:firefox app_id:org.mozilla.firefox || return 2
       ;;
     *)
-      return 1
+      return 2
       ;;
   esac
 }
@@ -82,8 +150,8 @@ new_window=false
 new_tab=false
 prompt=false
 focus_only=false
+restore_or_focus=false
 input=""
-
 while (($#)); do
   case "$1" in
     --new)
@@ -97,6 +165,9 @@ while (($#)); do
       ;;
     --focus)
       focus_only=true
+      ;;
+    --restore-or-focus)
+      restore_or_focus=true
       ;;
     --help)
       usage
@@ -120,13 +191,54 @@ while (($#)); do
 done
 
 if "$focus_only"; then
-  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && -z "$input" ]] ||
+  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && "$restore_or_focus" == false && -z "$input" ]] ||
     fail "--focus cannot be combined with a URL or creation options"
   focus_firefox >/dev/null 2>&1 || {
     notify "No existing Firefox window could be focused"
     exit 1
   }
   exit 0
+fi
+
+if "$restore_or_focus"; then
+  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && -z "$input" ]] ||
+    fail "--restore-or-focus cannot be combined with a URL or other options"
+  if focus_firefox >/dev/null 2>&1; then
+    command -v firefox >/dev/null 2>&1 || {
+      notify "Firefox is not installed"
+      exit 1
+    }
+    firefox --new-tab about:blank >/dev/null 2>&1 &
+    exit 0
+  else
+    focus_status=$?
+  fi
+  case "$focus_status" in
+    1)
+      command -v firefox >/dev/null 2>&1 || {
+        notify "Firefox is not installed"
+        exit 1
+      }
+      firefox >/dev/null 2>&1 &
+      exit 0
+      ;;
+    2)
+      if pgrep -x firefox >/dev/null 2>&1; then
+        notify "Firefox is already running but no window could be focused"
+        exit 1
+      fi
+      command -v firefox >/dev/null 2>&1 || {
+        notify "Firefox is not installed"
+        exit 1
+      }
+      firefox >/dev/null 2>&1 &
+      exit 0
+      ;;
+    *)
+      notify "Firefox focus failed"
+      exit 1
+      ;;
+  esac
 fi
 
 if "$new_window" && "$new_tab"; then

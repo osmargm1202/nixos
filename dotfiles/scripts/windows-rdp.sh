@@ -155,7 +155,6 @@ rdp_connect() {
       /bpp:32 \
       /audio-mode:0 \
       +clipboard \
-      +home-drive \
       /cert:ignore \
       /wm-class:windows-rdp
     rc=$?

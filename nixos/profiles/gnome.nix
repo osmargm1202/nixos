@@ -56,6 +56,7 @@
     gnome-characters
     sushi
     gnome-software
+    rofi
 
     # Tweaks / themes
     gnome-tweaks

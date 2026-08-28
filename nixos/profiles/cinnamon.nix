@@ -181,6 +181,7 @@ in
     graphiteNord
     nordzyDark
     ulauncher
+    rofi
     cinnamonRiceExtensions
 
     # Gnome-keyring / desktop plumbing.

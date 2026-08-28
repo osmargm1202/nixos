@@ -81,24 +81,35 @@ cat >"$bin/jq" <<'EOF'
 #!/usr/bin/env bash
 [[ "$*" == *focused* ]] && printf '%s\n' '1600x900'
 EOF
-chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq"
+cat >"$bin/rofi" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' 0
+EOF
+chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
+rdp_password_file="$tmp/rdp-password"
+printf '%s\n' test-password >"$rdp_password_file"
+
 
 wayland_log="$tmp/wayland.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" "$helper" connect
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
 [[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
 [[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$wayland_log")" == *"/size:1600x900"* ]]
 [[ "$(<"$wayland_log")" != *"/f"* ]]
 [[ "$(<"$wayland_log")" == *"-grab-keyboard"* ]]
+[[ "$(<"$wayland_log")" == *"+clipboard"* ]]
+[[ "$(<"$wayland_log")" != *"+home-drive"* ]]
 [[ "$(<"$wayland_log")" != *"/dynamic-resolution"* ]]
 
 x11_log="$tmp/x11.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" "$helper" connect
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
 [[ "$(<"$x11_log")" == "xfreerdp /v:localhost:3389"* ]]
 [[ "$(<"$x11_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$x11_log")" == *"/size:1600x900"* ]]
 [[ "$(<"$x11_log")" == *"/f"* ]]
 [[ "$(<"$x11_log")" == *"-grab-keyboard"* ]]
+[[ "$(<"$x11_log")" == *"+clipboard"* ]]
+[[ "$(<"$x11_log")" != *"+home-drive"* ]]
 [[ "$(<"$x11_log")" != *"/dynamic-resolution"* ]]
 
 toggle_profile="$tmp/toggle-profile"
@@ -132,11 +143,27 @@ grep -Fqx 'profile=lenovo-vfio' <<<"$vfio_status"
 grep -Fqx 'container=lenovo-windows' <<<"$vfio_status"
 grep -Fqx 'client=xfreerdp ' <<<"$vfio_status"
 lg_log="$tmp/looking-glass.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true LG_LOG="$lg_log" "$helper" looking-glass
-[[ "$(<"$lg_log")" == "-m 88 -p 5901" ]]
+if [[ -e /dev/kvmfr0 ]]; then
+  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true LG_LOG="$lg_log" "$helper" looking-glass
+  [[ "$(<"$lg_log")" == "-m 88 -p 5901" ]]
+else
+  lg_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true "$helper" looking-glass 2>&1 || true)"
+  [[ "$lg_output" == *"Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled."* ]]
+fi
 vfio_start_docker_log="$tmp/vfio-start-docker.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true WINDOWS_COMPOSE_DIR="$repo_dir/containers/windows" DOCKER_LOG="$vfio_start_docker_log" "$helper" start
-grep -Fqx 'compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$vfio_start_docker_log"
+if [[ -e /dev/vfio/16 && -e /dev/kvmfr0 && "$(ulimit -Hl)" == unlimited ]]; then
+  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true WINDOWS_COMPOSE_DIR="$repo_dir/containers/windows" DOCKER_LOG="$vfio_start_docker_log" "$helper" start
+  grep -Fqx 'compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$vfio_start_docker_log"
+else
+  vfio_start_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true WINDOWS_COMPOSE_DIR="$repo_dir/containers/windows" "$helper" start 2>&1 || true)"
+  if [[ ! -e /dev/vfio/16 ]]; then
+    [[ "$vfio_start_output" == *"Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first."* ]]
+  elif [[ ! -e /dev/kvmfr0 ]]; then
+    [[ "$vfio_start_output" == *"Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled."* ]]
+  else
+    [[ "$vfio_start_output" == *"Error: VFIO requires an unlimited memlock limit;"* ]]
+  fi
+fi
 
 non_vfio_profile="$tmp/non-vfio-profile"
 printf '%s\n' render-node >"$non_vfio_profile"
