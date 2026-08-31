@@ -17,6 +17,13 @@ if [[ -z ${__ETC_BASHRC_SOURCED:-} && -r /etc/bashrc ]]; then
   . /etc/bashrc
 fi
 
+# Home Manager exposes its sessionVariables through this generated profile.
+hm_session_vars="/etc/profiles/per-user/$USER/etc/profile.d/hm-session-vars.sh"
+if [[ -r "$hm_session_vars" ]]; then
+  . "$hm_session_vars"
+fi
+unset hm_session_vars
+
 bash_config="${XDG_CONFIG_HOME:-$HOME/.config}/bash/config.bash"
 if [[ -r "$bash_config" ]]; then
   . "$bash_config"
