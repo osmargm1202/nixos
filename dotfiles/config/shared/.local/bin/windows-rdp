@@ -327,6 +327,7 @@ build_targets() {
   TARGET_HOSTNAMES=()
   TARGET_ADDRESSES=()
   append_target "Local | $LOCAL_WINDOWS_NAME | RDP" "rdp-local" "$LOCAL_WINDOWS_NAME" "localhost"
+  append_target "Local | $LOCAL_WINDOWS_NAME | Iniciar contenedor" "local-start" "$LOCAL_WINDOWS_NAME" "localhost"
   append_target "Custom | RDP" "rdp-custom" "" ""
 
   if ! command -v tailscale &>/dev/null || ! command -v jq &>/dev/null; then
@@ -516,6 +517,13 @@ do_choose_connect() {
   address="${TARGET_ADDRESSES[$SELECTED_TARGET_INDEX]}"
 
   case "$protocol" in
+    local-start)
+      if container_is_running; then
+        echo "Local Windows container '$CONTAINER' is already running."
+      else
+        do_start
+      fi
+      ;;
     rdp-local)
       do_connect
       ;;
@@ -659,7 +667,7 @@ do_connect() {
   rdp_connect "$target_workspace"
 }
 open_web_console() {
-  if command -v firefox-open-tab &>/dev/null && firefox-open-tab --new "$WEB_CONSOLE_URL"; then
+  if command -v firefox-open-tab &>/dev/null && firefox-open-tEB_CONSOLE_URL"; then
     return 0
   fi
 

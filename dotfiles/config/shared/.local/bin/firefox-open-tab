@@ -136,6 +136,15 @@ focus_firefox() {
       ;;
   esac
 }
+firefox_process_is_running() {
+  local status
+
+  while read -r status; do
+    [[ -n "$status" && "$status" != Z* ]] && return 0
+  done < <(ps -C firefox -o stat= 2>/dev/null || true)
+  return 1
+}
+
 
 focus_after_opening_tab() {
   (
@@ -223,7 +232,7 @@ if "$restore_or_focus"; then
       exit 0
       ;;
     2)
-      if pgrep -x firefox >/dev/null 2>&1; then
+      if firefox_process_is_running; then
         notify "Firefox is already running but no window could be focused"
         exit 1
       fi

@@ -222,7 +222,7 @@ test_remote_selector_rdp() {
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
     export TAILSCALE_STATUS="{}"
     export JQ_OUTPUT=$'"'"'alpha-linux\t100.64.0.3\tonline\nbeta-windows\t100.64.0.4\toffline\nhp-windows\tsin-ip\toffline\nlenovo\t100.64.0.7\toffline\norgm\t100.64.0.6\tonline\norgm-windows\t100.64.0.5\tonline'"'"'
-    selection_input="$(printf "%s\n" invalid 9 5)"
+    selection_input="$(printf "%s\n" invalid 10 6)"
     run_script "$script" connect "$tmp" "$selection_input"
     assert_stdout_empty "$tmp" "numeric selector does not add connection chatter"
     assert_calls_contains "$tmp" "tailscale status --json" "selector queries Tailscale once"
@@ -230,6 +230,8 @@ test_remote_selector_rdp() {
     assert_calls_not_contains "$tmp" "docker" "remote RDP never touches containers"
     grep -Fq "1) Local | osmar-windows | RDP" "$tmp/err" ||
       fail "local Windows is selector row zero"
+    grep -Fq "2) Local | osmar-windows | Iniciar contenedor" "$tmp/err" ||
+      fail "local container start is selectable"
     grep -Fq "Tailscale | beta-windows | RDP | offline" "$tmp/err" ||
       fail "offline Windows peer remains selectable"
     grep -Fq "Tailscale | orgm-windows | RDP | online" "$tmp/err" ||
@@ -254,7 +256,7 @@ test_remote_selector_rdp() {
     printf "%s\n" lenovo-password >"$tmp/lenovo-password"
     export WINDOWS_RDP_LENOVO_WINDOWS_USER=osmarg
     export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE="$tmp/lenovo-password"
-    run_script "$script" connect "$tmp" 4
+    run_script "$script" connect "$tmp" 5
     assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 .* /p:lenovo-password" "lenovo uses lenovo-windows credentials"
   ' bash "$script"
 }
@@ -272,7 +274,7 @@ test_graphical_selector_and_moonlight() {
     export WINDOWS_RDP_TONY_WINDOWS_USER=osmarg
     export WINDOWS_RDP_TONY_WINDOWS_PASSWORD_FILE="$tmp/tony-password"
     export JQ_OUTPUT=$'"'"'tony-windows\t100.64.0.4\toffline\norgm\t100.64.0.6\tonline'"'"'
-    export ROFI_INDEX=2 WINDOWS_RDP_TEST_DISPLAY=:1
+    export ROFI_INDEX=3 WINDOWS_RDP_TEST_DISPLAY=:1
     run_script "$script" connect "$tmp"
     assert_calls_contains "$tmp" "rofi -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "desktop selector uses Rofi indexes"
     assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.4:3389" "Rofi index dispatches remote RDP"
@@ -283,7 +285,7 @@ test_graphical_selector_and_moonlight() {
     script="$1"; tmp="$2"
     make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
-    make_stub "$tmp" rofi "printf \"%s\\n\" 3"
+    make_stub "$tmp" rofi "printf \"%s\\n\" 4"
     make_stub "$tmp" flatpak "echo flatpak \"\$@\" >>\"\$CALLS\"; if [[ \"\$1\" == info ]]; then exit 0; fi; if [[ \"\$3\" == list ]]; then [[ \"\${FLATPAK_LIST_MODE:-desktop}\" == desktop ]] && { echo Desktop; exit 0; }; exit 1; fi; exit 0"
     export TAILSCALE_STATUS="{}"
     export JQ_OUTPUT=$'"'"'orgm\t100.64.0.6\tonline'"'"'
@@ -295,6 +297,18 @@ test_graphical_selector_and_moonlight() {
     run_script "$script" connect "$tmp"
     assert_calls_not_contains "$tmp" "stream 100.64.0.6 Desktop" "Moonlight does not stream an unavailable Desktop app"
     assert_calls_contains "$tmp" "flatpak run com.moonlight_stream.Moonlight$" "Moonlight opens its GUI when listing fails"
+  ' bash "$script"
+}
+
+test_gum_cancellation() {
+	local script="$1"
+	with_tmp bash -c '
+    script="$1"; tmp="$2"
+    make_stub "$tmp" gum "echo gum \"\$@\" >>\"\$CALLS\"; exit 1"
+    PATH="$tmp" \
+      CALLS="$tmp/calls" \
+ p"
+    assert_calls_not_contains "$tmp" "docker|freerdp|flatpak" "Rofi cancellation does not start or connect anything"
   ' bash "$script"
 }
 
@@ -329,14 +343,24 @@ test_selector_local_starts_container() {
   ' bash "$script"
 }
 
+test_selector_local_start_only() {
+	local script="$1"
+	with_tmp bash -c '
+    script="$1"; tmp="$2"
+    run_script "$script" connect "$tmp" 2
+    assert_calls_contains "$tmp" "docker start windows" "selector local-start row starts the local container"
+    assert_calls_not_contains "$tmp" "freerdp" "selector local-start row does not open RDP"
+  ' bash "$script"
+}
+
 test_custom_rdp_connection() {
 	local script="$1"
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
-    custom_input="$(printf "%s\n" 2 192.0.2.44 custom-user custom-password)"
+    custom_input="$(printf "%s\n" 3 192.0.2.44 custom-user custom-password)"
     run_script "$script" connect "$tmp" "$custom_input"
-    grep -Fq "2) Custom | RDP" "$tmp/err" ||
+    grep -Fq "3) Custom | RDP" "$tmp/err" ||
       fail "custom RDP is selector row one"
     assert_calls_contains "$tmp" "xfreerdp3 /v:192.0.2.44:3389 /u:custom-user /p:custom-password" "custom RDP uses supplied connection details"
     assert_calls_not_contains "$tmp" "docker" "custom RDP never touches containers"
@@ -345,7 +369,7 @@ test_custom_rdp_connection() {
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
-    make_stub "$tmp" rofi "count=0; [[ -r \"\$ROFI_STATE\" ]] && read -r count <\"\$ROFI_STATE\"; count=\$((count + 1)); printf \"%s\\n\" \"\$count\" >\"\$ROFI_STATE\"; echo rofi \"\$@\" >>\"\$CALLS\"; case \"\$count\" in 1) echo 1 ;; 2) echo 192.0.2.45 ;; 3) echo rofi-user ;; 4) echo rofi-password ;; esac"
+    make_stub "$tmp" rofi "count=0; [[ -r \"\$ROFI_STATE\" ]] && read -r count <\"\$ROFI_STATE\"; count=\$((count + 1)); printf \"%s\\n\" \"\$count\" >\"\$ROFI_STATE\"; echo rofi \"\$@\" >>\"\$CALLS\"; case \"\$count\" in 1) echo 2 ;; 2) echo 192.0.2.45 ;; 3) echo rofi-user ;; 4) echo rofi-password ;; esac"
     export ROFI_STATE="$tmp/rofi-state" WINDOWS_RDP_TEST_DISPLAY=:1
     run_script "$script" connect "$tmp"
     assert_calls_contains "$tmp" "xfreerdp3 /v:192.0.2.45:3389 /u:rofi-user /p:rofi-password" "Rofi custom RDP uses supplied connection details"
@@ -361,6 +385,8 @@ for script in "${SCRIPTS[@]}"; do
 	test_direct_connection_reports_failure_without_retry_waits "$script"
 	test_remote_selector_rdp "$script"
 	test_graphical_selector_and_moonlight "$script"
+	test_selector_local_start_only "$script"
+	test_rofi_cancellation "$script"
 	test_gum_cancellation "$script"
 	test_selector_local_starts_container "$script"
 	test_custom_rdp_connection "$script"

@@ -256,6 +256,7 @@ in
     enable = true;
     enableBashIntegration = true;
   };
+  environment.etc."atuin/config.toml".text = "";
   programs.git = {
     enable = true;
     config.user.name = "osmar";

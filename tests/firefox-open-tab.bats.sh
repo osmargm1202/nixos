@@ -21,6 +21,8 @@ fail() {
 
 bash -n "$HELPER"
 grep -Fq 'Homepage.StartPage = "previous-session";' "$FIREFOX_POLICY" || fail 'Firefox must restore the previous session on a cold launch'
+grep -Fq 'home.file.".zen/native-messaging-hosts/windows_manager_linux_orgm.json".source' "$FIREFOX_POLICY" || fail 'Zen must receive the ORGM native messaging host manifest'
+grep -Fq 'home.activation.installZenTabBridge' "$FIREFOX_POLICY" || fail 'Zen must install the signed ORGM tab bridge extension in its default profile'
 grep -Fq 'bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt' "$I3" || fail 'i3 Win+M must open a new tab from the web prompt'
 grep -Fq 'bindsym $mod+w exec --no-startup-id $browser' "$I3" || fail 'i3 Win+W binding missing'
 grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$I3" || fail 'i3 Win+W must use restore-or-focus'
@@ -63,9 +65,9 @@ cat >"$tmp/bin/notify-send" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${NOTIFY_ARGS:-/dev/null}"
 EOF
-cat >"$tmp/bin/pgrep" <<'EOF'
+cat >"$tmp/bin/ps" <<'EOF'
 #!/usr/bin/env bash
-exit "${PGREP_STATUS:-1}"
+printf '%s\n' "${FIREFOX_PROCESS_STATUS:-}"
 EOF
 cat >"$tmp/bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
@@ -225,11 +227,17 @@ run_restore_no_match labwc '[]' '{}' 1
 
 reset_logs
 if FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" NOTIFY_ARGS="$tmp/notify-args" \
-  HYPR_QUERY_STATUS=2 PGREP_STATUS=0 XDG_CURRENT_DESKTOP=Hyprland PATH="$tmp/bin:$PATH" "$HELPER" --restore-or-focus; then
+  HYPR_QUERY_STATUS=2 FIREFOX_PROCESS_STATUS=Sl+ XDG_CURRENT_DESKTOP=Hyprland PATH="$tmp/bin:$PATH" "$HELPER" --restore-or-focus; then
   fail 'query failure with a running Firefox process must fail'
 fi
 [[ ! -e "$tmp/firefox-args" ]] || fail 'query failure with running Firefox must not launch another window'
 grep -Fq 'already running' "$tmp/notify-args" || fail 'query failure with running Firefox must notify the user'
+
+reset_logs
+FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" \
+  HYPR_QUERY_STATUS=2 FIREFOX_PROCESS_STATUS=Z+ XDG_CURRENT_DESKTOP=Hyprland PATH="$tmp/bin:$PATH" "$HELPER" --restore-or-focus
+wait_for_file "$tmp/firefox-args"
+[[ "$(<"$tmp/firefox-args")" == '<>' ]] || fail 'a zombie Firefox process must not block session restoration'
 
 for invalid in '--restore-or-focus --new' '--restore-or-focus --new-tab' '--restore-or-focus --prompt' '--restore-or-focus --focus' '--restore-or-focus example.com'; do
   reset_logs

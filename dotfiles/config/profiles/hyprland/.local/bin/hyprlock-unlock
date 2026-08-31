@@ -18,8 +18,26 @@ collect_sessions() {
     [[ -n "$session" ]] && sessions["$session"]=1
   done < <(pgrep -x "$process" || true)
 
-  printf '%s\n' "${!sessions[@]}"
+  if ((${#sessions[@]} > 0)); then
+    printf '%s\n' "${!sessions[@]}"
+  fi
 }
+collect_active_hyprland_sessions() {
+  local pid session active
+  local -A sessions=()
+
+  while IFS= read -r pid; do
+    session="$(session_for_pid "$pid")"
+    [[ -n "$session" ]] || continue
+    active="$(loginctl show-session "$session" -p Active --value)"
+    [[ "$active" == yes ]] && sessions["$session"]=1
+  done < <(pgrep -f '/Hyprland --watchdog-fd' || true)
+
+  if ((${#sessions[@]} > 0)); then
+    printf '%s\n' "${!sessions[@]}"
+  fi
+}
+
 
 if (($# > 1)); then
   usage
@@ -30,9 +48,8 @@ target_session="${1:-}"
 if [[ -z "$target_session" ]]; then
   mapfile -t sessions < <(collect_sessions hyprlock)
   if ((${#sessions[@]} == 0)); then
-    mapfile -t sessions < <(collect_sessions Hyprland)
+    mapfile -t sessions < <(collect_active_hyprland_sessions)
   fi
-
   if ((${#sessions[@]} != 1)); then
     printf '%s\n' 'hyprlock-unlock: unable to identify one Hyprland session; pass its session ID explicitly.' >&2
     exit 1
@@ -54,7 +71,7 @@ for process in hypridle hyprlock; do
   done < <(pgrep -x "$process" || true)
 done
 
-hyprctl --instance "${HYPRLAND_INSTANCE_SIGNATURE:-0}" eval 'hl.clear_crashed_lockscreen()'
+hyprctl --instance "${HYPRLAND_INSTANCE_SIGNATURE:-0}" eval 'hl.clear_crashed_lockscreen()' || true
 loginctl unlock-session "$target_session"
 loginctl activate "$target_session"
 printf 'Recovered Hyprland session %s.\n' "$target_session"

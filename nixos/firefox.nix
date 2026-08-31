@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  userName,
   ...
 }:
 let
@@ -46,6 +47,34 @@ in
           };
         };
     };
+  };
+
+  home-manager.users.${userName} = { lib, ... }: {
+    home.file.".zen/native-messaging-hosts/windows_manager_linux_orgm.json".source =
+      "${windowsManagerLinuxOrgm}/lib/mozilla/native-messaging-hosts/windows_manager_linux_orgm.json";
+
+    home.activation.installZenTabBridge = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      profiles_ini="$HOME/.zen/profiles.ini"
+      if [[ -r "$profiles_ini" ]]; then
+        profile_path=""
+        while IFS= read -r line; do
+          case "$line" in
+            "[Profile"*"]") profile_path="" ;;
+            "Path="*) profile_path="''${line#Path=}" ;;
+            "Default=1") [[ -n "$profile_path" ]] && break ;;
+          esac
+        done < "$profiles_ini"
+
+        case "$profile_path" in
+          "" | /* | .. | ../* | */../*) ;;
+          *)
+            target_dir="$HOME/.zen/$profile_path/extensions"
+            $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$target_dir"
+            $DRY_RUN_CMD ${pkgs.coreutils}/bin/ln -sfn ${signedWindowsManagerLinuxOrgm} "$target_dir/windows_manager_linux_orgm@or-gm.com.xpi"
+            ;;
+        esac
+      fi
+    '';
   };
 
   xdg.mime = {
