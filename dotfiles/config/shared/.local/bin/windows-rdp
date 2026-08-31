@@ -667,7 +667,7 @@ do_connect() {
   rdp_connect "$target_workspace"
 }
 open_web_console() {
-  if command -v firefox-open-tab &>/dev/null && firefox-open-tEB_CONSOLE_URL"; then
+  if command -v firefox-open-tab &>/dev/null && firefox-open-tab --new "$WEB_CONSOLE_URL"; then
     return 0
   fi
 
