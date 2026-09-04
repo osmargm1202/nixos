@@ -191,7 +191,6 @@ let
       ".config/orgm-hypr/notify-focus.json"
       ".config/orgm-hypr/themes.json"
       ".config/orgm-theme"
-      ".config/hyprfm/config.toml"
 
       ".config/waybar-hypr"
       ".config/rofi"
@@ -680,7 +679,7 @@ in
       # Keep user-level MIME preferences in sync with declarative defaults,
       # which take precedence over /etc/xdg/mimeapps.list.
       home.activation.setPreferredFileHandlers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default yazi.desktop inode/directory
+        $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "yazi.desktop"} inode/directory
         ${lib.optionalString (profileName != "terminal") ''
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default chromium-browser.desktop text/html
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default chromium-browser.desktop application/xhtml+xml

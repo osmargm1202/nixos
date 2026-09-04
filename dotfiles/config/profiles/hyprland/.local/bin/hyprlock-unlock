@@ -25,16 +25,20 @@ collect_sessions() {
 collect_active_hyprland_sessions() {
   local pid session active
   local -A sessions=()
+  local -A active_sessions=()
 
   while IFS= read -r pid; do
     session="$(session_for_pid "$pid")"
     [[ -n "$session" ]] || continue
+    sessions["$session"]=1
     active="$(loginctl show-session "$session" -p Active --value)"
-    [[ "$active" == yes ]] && sessions["$session"]=1
+    [[ "$active" == yes ]] && active_sessions["$session"]=1
   done < <(pgrep -f '/Hyprland --watchdog-fd' || true)
 
-  if ((${#sessions[@]} > 0)); then
+  if ((${#sessions[@]} == 1)); then
     printf '%s\n' "${!sessions[@]}"
+  elif ((${#active_sessions[@]} > 0)); then
+    printf '%s\n' "${!active_sessions[@]}"
   fi
 }
 

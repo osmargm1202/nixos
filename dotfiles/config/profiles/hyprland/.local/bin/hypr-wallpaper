@@ -7,17 +7,21 @@ export PATH="/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH"
 
 hyprctl_bin="${HYPRCTL_BIN:-hyprctl}"
 hyprpaper_bin="${HYPRPAPER_BIN:-hyprpaper}"
+mpvpaper_bin="${MPVPAPER_BIN:-mpvpaper}"
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
 state_file="$state_dir/current"
 runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
 runtime_link="$runtime_dir/hypr-current-wallpaper"
+video_pid_file="$runtime_dir/hypr-wallpaper-mpvpaper.pid"
+video_log="$state_dir/video-wallpaper.log"
 default_dir="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
 
 usage() {
   cat >&2 <<'EOF'
-usage: hypr-wallpaper set IMAGE
+usage: hypr-wallpaper set FILE
        hypr-wallpaper restore
+       hypr-wallpaper hide
        hypr-wallpaper random [DIRECTORY]
 EOF
   exit 2
@@ -30,12 +34,69 @@ is_image() {
   esac
 }
 
+is_video() {
+  case "${1,,}" in
+    *.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_supported_media() {
+  is_image "$1" || is_video "$1"
+}
+
+atomic_write() {
+  local target="$1" value="$2" temporary
+  mkdir -p "$(dirname "$target")"
+  temporary="$(mktemp "$target.tmp.XXXXXX")"
+  printf '%s\n' "$value" >"$temporary"
+  mv -f -- "$temporary" "$target"
+}
+
+process_starttime() {
+  local pid="$1"
+  [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/stat" ]] || return 1
+  awk '{ print $22 }' "/proc/$pid/stat" 2>/dev/null
+}
+
+tracked_process_alive() {
+  local pid="$1" expected_start="$2" actual_start
+  actual_start="$(process_starttime "$pid" || true)"
+  [[ -n "$actual_start" && "$actual_start" == "$expected_start" ]]
+}
+
+process_group_alive() {
+  kill -0 -- "-$1" 2>/dev/null
+}
+
+stop_managed_video() {
+  local pid expected_start attempt
+  [[ -s "$video_pid_file" ]] || return 0
+  read -r pid expected_start <"$video_pid_file" || {
+    rm -f -- "$video_pid_file"
+    return 0
+  }
+  if tracked_process_alive "$pid" "$expected_start"; then
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    for attempt in {1..10}; do
+      process_group_alive "$pid" || break
+      sleep 0.05
+    done
+    process_group_alive "$pid" && kill -KILL -- "-$pid" 2>/dev/null || true
+  fi
+  rm -f -- "$video_pid_file"
+}
+
 ensure_hyprpaper() {
   if "$hyprctl_bin" hyprpaper listactive >/dev/null 2>&1; then
     return 0
   fi
 
-  "$hyprpaper_bin" >/dev/null 2>&1 &
+  (
+    # Hyprpaper must not retain the transaction lock after this invocation.
+    exec {wallpaper_lock_fd}>&-
+    exec "$hyprpaper_bin"
+  ) >/dev/null 2>&1 &
   for _ in {1..30}; do
     if "$hyprctl_bin" hyprpaper listactive >/dev/null 2>&1; then
       return 0
@@ -47,23 +108,85 @@ ensure_hyprpaper() {
   return 1
 }
 
+start_video() {
+  local video="$1" pid starttime
+  if ! command -v "$mpvpaper_bin" >/dev/null 2>&1; then
+    printf '%s\n' 'hypr-wallpaper: mpvpaper is unavailable' >&2
+    return 1
+  fi
+
+  mkdir -p "$state_dir"
+  (
+    # Long-lived wallpaper children must not inherit the transaction lock.
+    exec {wallpaper_lock_fd}>&-
+    exec setsid "$mpvpaper_bin" -o "no-audio loop hwdec=auto panscan=1.0" ALL "$video"
+  ) >>"$video_log" 2>&1 &
+  pid=$!
+  sleep 0.1
+  if ! kill -0 "$pid" 2>/dev/null; then
+    printf 'hypr-wallpaper: mpvpaper exited while starting: %s\n' "$video" >&2
+    return 1
+  fi
+  starttime="$(process_starttime "$pid" || true)"
+  if [[ -z "$starttime" ]]; then
+    printf 'hypr-wallpaper: could not identify mpvpaper process: %s\n' "$video" >&2
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    return 1
+  fi
+  started_video_pid="$pid"
+  started_video_starttime="$starttime"
+}
+
+publish_runtime_wallpaper() {
+  local wallpaper="$1" lockscreen_wallpaper="$HOME/Pictures/Wallpapers/xnm1-background.png"
+  is_image "$wallpaper" && lockscreen_wallpaper="$wallpaper"
+  ln -sfn "$lockscreen_wallpaper" "$runtime_link"
+}
+
+apply_image() {
+  local wallpaper="$1"
+  ensure_hyprpaper
+  "$hyprctl_bin" hyprpaper wallpaper ", $wallpaper, cover" >/dev/null
+  stop_managed_video
+  atomic_write "$state_file" "$wallpaper"
+  publish_runtime_wallpaper "$wallpaper"
+}
+
+apply_video() {
+  local wallpaper="$1"
+  start_video "$wallpaper" || return 1
+
+
+  # The new group is live. It is now safe to replace the old group and clear
+  # Hyprpaper without leaving the desktop empty.
+  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
+  stop_managed_video
+  atomic_write "$video_pid_file" "$started_video_pid $started_video_starttime"
+  atomic_write "$state_file" "$wallpaper"
+  publish_runtime_wallpaper "$wallpaper"
+}
+
+hide_wallpaper() {
+  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
+  stop_managed_video
+}
+
 apply() {
   local wallpaper="$1"
   [[ -f "$wallpaper" ]] || {
     printf 'hypr-wallpaper: no existe: %s\n' "$wallpaper" >&2
     return 1
   }
-  is_image "$wallpaper" || {
+  is_supported_media "$wallpaper" || {
     printf 'hypr-wallpaper: formato no admitido: %s\n' "$wallpaper" >&2
     return 1
   }
 
-  ensure_hyprpaper
-  "$hyprctl_bin" hyprpaper wallpaper ", $wallpaper, cover" >/dev/null
-
-  mkdir -p "$state_dir"
-  printf '%s\n' "$wallpaper" >"$state_file"
-  ln -sfn "$wallpaper" "$runtime_link"
+  if is_video "$wallpaper"; then
+    apply_video "$wallpaper"
+  else
+    apply_image "$wallpaper"
+  fi
 }
 
 random() {
@@ -81,6 +204,12 @@ random() {
   apply "$selected"
 }
 
+mkdir -p "$state_dir"
+# Lock the state directory itself: unlike `> wallpaper.lock`, this cannot
+# follow and truncate a stale or malicious lock-file symlink.
+exec {wallpaper_lock_fd}<"$state_dir"
+flock -x "$wallpaper_lock_fd"
+
 case "${1:-}" in
   set)
     [[ $# -eq 2 ]] || usage
@@ -88,11 +217,15 @@ case "${1:-}" in
     ;;
   restore)
     [[ $# -eq 1 ]] || usage
-    if [[ -s "$state_file" ]] && [[ -f "$(<"$state_file")" ]]; then
-      apply "$(<"$state_file")"
+    if [[ -s "$state_file" ]] && wallpaper="$(<"$state_file")" && [[ -f "$wallpaper" ]] && is_supported_media "$wallpaper"; then
+      apply "$wallpaper"
     else
       random "$default_dir"
     fi
+    ;;
+  hide)
+    [[ $# -eq 1 ]] || usage
+    hide_wallpaper
     ;;
   random)
     [[ $# -le 2 ]] || usage

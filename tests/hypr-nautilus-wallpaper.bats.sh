@@ -24,4 +24,14 @@ NAUTILUS_SCRIPT_SELECTED_FILE_PATHS="$image" \
 "$script"
 
 [[ "$(<"$received")" == "set $image" ]]
+video="$tmp/selected video.mp4"
+printf 'video' >"$video"
+HOME="$tmp/home" \
+PATH=/usr/bin:/bin \
+RECEIVED="$received" \
+HYPR_WALLPAPER_HELPER="$helper" \
+NAUTILUS_SCRIPT_SELECTED_FILE_PATHS="$video" \
+"$script"
+[[ "$(<"$received")" == "set $video" ]]
+
 printf '%s\n' 'hypr-nautilus-wallpaper: ok'

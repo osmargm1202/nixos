@@ -59,9 +59,9 @@ jq -e '
 
 grep -Fq 'home.activation.setPreferredFileHandlers' "$DOTFILES_MODULE" ||
   fail 'Home Manager must migrate preferred file handlers'
-grep -Fq 'xdg-mime default yazi.desktop inode/directory' "$DOTFILES_MODULE" ||
-  fail 'Yazi must be the default file manager'
+grep -Fq 'if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "yazi.desktop"' "$DOTFILES_MODULE" ||
+  fail 'Hyprland must use Nautilus while other profiles use Yazi'
 grep -Fq 'xdg-mime default nvim.desktop "$mime"' "$DOTFILES_MODULE" ||
   fail 'Neovim must be the default text editor'
 
-printf 'PASS: Kitty loads its runtime theme and Yazi uses its defaults\n'
+printf 'PASS: Kitty loads its runtime theme and file handlers branch by profile\n'

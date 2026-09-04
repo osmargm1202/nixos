@@ -20,7 +20,4 @@ selection="$({
 
 [ -n "${selection:-}" ] || exit 0
 dir="$(dirname "$HOME/$selection")"
-if command -v hyprfm >/dev/null 2>&1; then
-  exec hyprfm "$dir"
-fi
-exec nautilus "$dir"
+exec nautilus --new-window "$dir"

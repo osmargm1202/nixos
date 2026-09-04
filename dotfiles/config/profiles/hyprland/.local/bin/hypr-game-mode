@@ -4,6 +4,7 @@ set -euo pipefail
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr"
 state_file="$state_dir/game-mode"
 lock_file="$state_dir/game-mode.lock"
+wallpaper_bin="${HYPR_WALLPAPER_BIN:-$HOME/.local/bin/hypr-wallpaper}"
 
 read_state() {
   if [[ -r "$state_file" ]] && [[ "$(<"$state_file")" == "activated" ]]; then
@@ -29,16 +30,25 @@ refresh_waybar() {
   done < <(pgrep -x waybar || true)
 }
 
+apply_wallpaper_state() {
+  case "$1" in
+    activated) "$wallpaper_bin" hide ;;
+    deactivated) "$wallpaper_bin" restore ;;
+  esac
+}
+
 apply_state() {
   local previous="$1"
   local next="$2"
 
   write_state "$next"
-  if ! hyprctl reload; then
+  if ! hyprctl reload || ! apply_wallpaper_state "$next"; then
     write_state "$previous"
     hyprctl reload || true
+    apply_wallpaper_state "$previous" || true
     return 1
   fi
+
   refresh_waybar
 
   if command -v notify-send >/dev/null 2>&1; then
@@ -64,6 +74,11 @@ case "${1:-}" in
     esac
     apply_state "$previous" "$next"
     ;;
+  sync)
+    exec 9>"$lock_file"
+    flock 9
+    apply_wallpaper_state "$(read_state)"
+    ;;
   status)
     read_state
     ;;
@@ -75,7 +90,7 @@ case "${1:-}" in
     fi
     ;;
   *)
-    printf 'Usage: %s {toggle|on|off|status|waybar}\n' "${0##*/}" >&2
+    printf 'Usage: %s {toggle|on|off|status|waybar|sync}\n' "${0##*/}" >&2
     exit 64
     ;;
 esac

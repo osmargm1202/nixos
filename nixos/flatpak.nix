@@ -22,7 +22,6 @@
       "com.google.EarthPro"
       "com.moonlight_stream.Moonlight"
       "com.obsproject.Studio"
-      "com.spotify.Client"
       "io.dbeaver.DBeaverCommunity"
       "io.github.hmlendea.geforcenow-electron"
       "io.gitlab.theevilskeleton.Upscaler"

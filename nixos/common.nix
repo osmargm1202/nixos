@@ -34,6 +34,7 @@ let
     gtk3
     libnotify
     git
+    git-lfs
     tmux
     age
     fd
@@ -362,7 +363,7 @@ in
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = lib.mkForce [ "yazi.desktop" ];
+      "inode/directory" = lib.mkForce [ (if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "yazi.desktop") ];
       "text/plain" = lib.mkForce [ "nvim.desktop" ];
       "text/markdown" = lib.mkForce [ "nvim.desktop" ];
       "text/x-markdown" = lib.mkForce [ "nvim.desktop" ];

@@ -9,7 +9,7 @@ done
 
 if ((${#files[@]} != 1)); then
   command -v notify-send >/dev/null 2>&1 &&
-    notify-send 'Set as Hyprland Wallpaper' 'Selecciona exactamente una imagen local.' || true
+    notify-send 'Set as Hyprland Wallpaper' 'Selecciona exactamente una imagen o video local.' || true
   exit 1
 fi
 

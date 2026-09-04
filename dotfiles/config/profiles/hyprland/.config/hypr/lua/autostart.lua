@@ -7,8 +7,8 @@ local exec_once = {
   "hypr-tray-applets",
   -- Keep the lightweight Waybar process and its helper modules alive.
   "sh -lc 'hypr-display-targets ensure || true; exec waybar-watch \"$HOME/.config/waybar-hypr\"'",
-  -- Restore the selected static wallpaper without a persistent selector daemon.
-  "hypr-wallpaper restore",
+  -- Synchronize wallpaper visibility with the persisted game-mode state.
+  "hypr-game-mode sync",
   "hyprpolkitagent",
   "sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'",
   "kdeconnect-indicator",

@@ -40,6 +40,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+    fastpotify.url = "github:tomsch/fastpotify-nix";
     cinnamon-spices-extensions = {
       url = "github:linuxmint/cinnamon-spices-extensions";
       flake = false;

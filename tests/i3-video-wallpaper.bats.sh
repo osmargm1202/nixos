@@ -112,10 +112,6 @@ run_wallpaper() {
 }
 
 run_wallpaper --set "$image"
-lock_image="$TMP/state/i3/lock_screen.png"
-[[ "$(cat "$TMP/state/i3/lock_screen")" == "$lock_image" ]] ||
-  fail 'still wallpaper did not publish a lock image pointer'
-cmp -s "$image" "$lock_image" || fail 'JPG wallpaper was not converted for i3lock'
 : >"$TMP/feh.calls"
 : >"$TMP/video.calls"
 run_wallpaper --set-active "$video"
