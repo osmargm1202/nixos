@@ -276,7 +276,6 @@ in
     loupe
     evince
     mpv
-    inputs.fastpotify.packages.${pkgs.stdenv.hostPlatform.system}.default
     file-roller
     gnome-calculator
     gnome-system-monitor

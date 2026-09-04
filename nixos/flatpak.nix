@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   services.fwupd.enable = true;
@@ -28,6 +28,14 @@
       "io.podman_desktop.PodmanDesktop"
       "md.obsidian.Obsidian"
       "com.rustdesk.RustDesk"
+      rec {
+        appId = "rocks.fastpotify.Fastpotify";
+        bundle = "${pkgs.fetchurl {
+          url = "https://github.com/crmne/fastpotify/releases/download/v0.6.0/fastpotify-v0.6.0-x86_64.flatpak";
+          hash = "sha256-BC14bYQqQm+dsUFLE600ApnPFqORPKVVCn1CXI7HSt4=";
+        }}";
+        sha256 = "sha256-BC14bYQqQm+dsUFLE600ApnPFqORPKVVCn1CXI7HSt4=";
+      }
       "org.mozilla.Thunderbird"
       "org.blender.Blender"
       "io.github.intoolswetrust.JSignPdf"
