@@ -5,7 +5,6 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 profile="$repo_dir/dotfiles/config/profiles/hyprland"
 bin="$profile/.local/bin"
 obsidian_helper="$bin/hypr-obsidian-open-or-focus"
-dank_window_switcher="$repo_dir/dotfiles/config/hosts/orgm/.config/DankMaterialShell/plugins/.repos/0026f1eba8dedaec/DankHyprlandWindows/DankHyprlandWindows.qml"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
@@ -20,8 +19,6 @@ if grep -Fq 'SDL_VIDEODRIVER' "$profile/.config/hypr/lua/environment.lua" ||
 fi
 grep -Fq 'waybar-watch' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fq 'dunstctl reload >/dev/null 2>&1 || exec dunst' "$profile/.config/hypr/lua/autostart.lua"
-grep -Fq 'hl.dsp.focus({ window = "address:${address}" })' "$dank_window_switcher"
-! grep -Fq 'focuswindow address:' "$dank_window_switcher"
 grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland.nix"
 grep -Fxq '    pulsemixer' "$repo_dir/nixos/profiles/hyprland.nix"

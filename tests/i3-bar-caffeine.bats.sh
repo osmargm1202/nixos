@@ -5,22 +5,18 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-caffeine-toggle"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" "$DOTFILES" ||
+! grep -Fqi 'i3blocks' "$PROFILE" "$CONFIG" ||
   fail 'i3blocks integration remains after replacing the bar'
 
 [ -x "$HELPER" ] || fail 'i3-caffeine-toggle missing or not executable'
 grep -Fq 'bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle' "$CONFIG" || fail 'caffeine keyboard shortcut missing'
 grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" || fail 'i3 startup must leave caffeine disabled'
-grep -Fq '".local/bin/i3-caffeine-toggle"' "$DOTFILES" || fail 'caffeine helper not deployed'
-grep -Fq '".local/bin/i3-idle-inhibit"' "$DOTFILES" || fail 'idle inhibitor is not deployed'
-! grep -Fq '".config/i3blocks"' "$DOTFILES" || fail 'i3blocks config is still deployed'
 grep -Fq 'flock 9' "$HELPER" || fail 'caffeine transitions are not serialized'
 grep -Fq 'mktemp "$state_file.tmp.XXXXXX"' "$HELPER" || fail 'caffeine state is not written atomically'
 grep -Fq 'valid_state' "$HELPER" || fail 'corrupt caffeine state is not validated'

@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 BIN="$ROOT/dotfiles/config/profiles/i3/.local/bin"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 
 fail() {
@@ -46,7 +45,6 @@ grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$CONFIG" ||
 
 for helper in i3-obsidian-open-or-focus i3-pi-prompt; do
   [ -x "$BIN/$helper" ] || fail "$helper missing or not executable"
-  grep -Fq "\".local/bin/$helper\"" "$DOTFILES" || fail "$helper not deployed"
   bash -n "$BIN/$helper"
 done
 

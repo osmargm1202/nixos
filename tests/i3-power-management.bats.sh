@@ -18,8 +18,8 @@ for setting in \
 done
 
 for host in orgm lenovo ero jarq; do
-  lid_action="$(nix eval --raw ".#nixosConfigurations.${host}-i3.config.services.logind.settings.Login.HandleLidSwitch" 2>/dev/null)"
-  idle_action="$(nix eval --raw ".#nixosConfigurations.${host}-i3.config.services.logind.settings.Login.IdleAction" 2>/dev/null)"
+  lid_action="$(nix eval --raw "path:$ROOT#nixosConfigurations.${host}-i3.config.services.logind.settings.Login.HandleLidSwitch" 2>/dev/null)"
+  idle_action="$(nix eval --raw "path:$ROOT#nixosConfigurations.${host}-i3.config.services.logind.settings.Login.IdleAction" 2>/dev/null)"
   [[ "$lid_action" == ignore ]] || fail "${host}-i3 suspends when its lid closes"
   [[ "$idle_action" == ignore ]] || fail "${host}-i3 may act on idle time"
 done

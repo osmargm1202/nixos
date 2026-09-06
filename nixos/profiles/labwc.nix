@@ -65,13 +65,6 @@
     };
   };
 
-  xdg.mime = {
-    enable = true;
-    defaultApplications = {
-      "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
-    };
-  };
-
   security.polkit.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;

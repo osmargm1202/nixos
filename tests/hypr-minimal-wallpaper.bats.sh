@@ -8,11 +8,16 @@ tmp="$(mktemp -d)"
 unmanaged_pid=''
 
 cleanup() {
-  local pid starttime
+  local pid starttime pid_file
   if [[ -s "$runtime/hypr-wallpaper-mpvpaper.pid" ]]; then
     read -r pid starttime <"$runtime/hypr-wallpaper-mpvpaper.pid" || true
     [[ -n "${pid:-}" ]] && kill -TERM -- "-$pid" 2>/dev/null || true
   fi
+  for pid_file in "$runtime/hypr-wallpaper-mpvpaper-monitors"/*.pid; do
+    [[ -s "$pid_file" ]] || continue
+    read -r pid starttime <"$pid_file" || true
+    [[ -n "${pid:-}" ]] && kill -TERM -- "-$pid" 2>/dev/null || true
+  done
   if [[ -s "$tmp/hyprpaper.pid" ]]; then
     kill -TERM "$(cat "$tmp/hyprpaper.pid")" 2>/dev/null || true
   fi
@@ -39,6 +44,10 @@ cat >"$bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
 if [[ "$*" == 'hyprpaper listactive' ]]; then
   [[ -f "$HYPRPAPER_READY" ]] || exit 1
+  exit 0
+fi
+if [[ "$*" == '-j monitors' ]]; then
+  printf '%s\n' '[{"name":"DP-1"},{"name":"HDMI-A-1"},{"name":"eDP-1"}]'
   exit 0
 fi
 printf '%s\n' "$*" >>"$HYPRPAPER_CALLS"
@@ -159,5 +168,68 @@ read -r second_pid second_start <"$runtime/hypr-wallpaper-mpvpaper.pid"
 ! kill -0 -- "-$second_pid" 2>/dev/null
 kill -0 "$unmanaged_pid" 2>/dev/null
 [[ "$(readlink "$runtime/hypr-current-wallpaper")" == "$custom" ]]
+
+global_video="$home/global background.avi"
+monitor_static="$home/monitor static.png"
+monitor_video="$home/monitor video.mkv"
+printf 'video' >"$global_video"
+printf 'static' >"$monitor_static"
+printf 'video' >"$monitor_video"
+"$script" set "$global_video"
+read -r global_pid global_start <"$runtime/hypr-wallpaper-mpvpaper.pid"
+"$script" set "$monitor_static" --monitor DP-1
+[[ "$(<"$state/hypr-wallpaper/current")" == "$global_video" ]]
+grep -Fxq 'mode=static' "$state/hypr-wallpaper/monitors/DP-1.state"
+grep -Fxq "path=$monitor_static" "$state/hypr-wallpaper/monitors/DP-1.state"
+grep -Fq "DP-1, $monitor_static, cover" "$HYPRPAPER_CALLS"
+[[ ! -e "$runtime/hypr-wallpaper-mpvpaper.pid" ]]
+! kill -0 -- "-$global_pid" 2>/dev/null
+read -r default_pid default_start <"$runtime/hypr-wallpaper-mpvpaper-monitors/eDP-1.pid"
+kill -0 "$default_pid" 2>/dev/null
+grep -Fq "<-o><no-audio loop hwdec=auto panscan=1.0><eDP-1><$global_video>" "$MPVPAPER_CALLS"
+
+"$script" set "$monitor_video" --monitor HDMI-A-1
+grep -Fxq 'mode=video' "$state/hypr-wallpaper/monitors/HDMI-A-1.state"
+grep -Fxq "path=$monitor_video" "$state/hypr-wallpaper/monitors/HDMI-A-1.state"
+read -r monitor_pid monitor_start <"$runtime/hypr-wallpaper-mpvpaper-monitors/HDMI-A-1.pid"
+kill -0 "$monitor_pid" 2>/dev/null
+grep -Fq "<-o><no-audio loop hwdec=auto panscan=1.0><HDMI-A-1><$monitor_video>" "$MPVPAPER_CALLS"
+read -r default_pid default_start <"$runtime/hypr-wallpaper-mpvpaper-monitors/eDP-1.pid"
+kill -0 "$default_pid" 2>/dev/null
+
+if "$script" set "$monitor_static" --monitor '../unsafe' >/dev/null 2>&1; then
+  echo 'FAIL: monitor wallpaper must reject unsafe output names' >&2
+  exit 1
+fi
+
+"$script" hide
+! kill -0 -- "-$monitor_pid" 2>/dev/null
+! kill -0 -- "-$default_pid" 2>/dev/null
+grep -Fxq 'mode=static' "$state/hypr-wallpaper/monitors/DP-1.state"
+grep -Fxq 'mode=video' "$state/hypr-wallpaper/monitors/HDMI-A-1.state"
+"$script" restore
+[[ ! -e "$runtime/hypr-wallpaper-mpvpaper.pid" ]]
+read -r restored_monitor_pid restored_monitor_start <"$runtime/hypr-wallpaper-mpvpaper-monitors/HDMI-A-1.pid"
+kill -0 "$restored_monitor_pid" 2>/dev/null
+read -r restored_default_pid restored_default_start <"$runtime/hypr-wallpaper-mpvpaper-monitors/eDP-1.pid"
+kill -0 "$restored_default_pid" 2>/dev/null
+grep -Fq "DP-1, $monitor_static, cover" "$HYPRPAPER_CALLS"
+grep -Fq "<-o><no-audio loop hwdec=auto panscan=1.0><HDMI-A-1><$monitor_video>" "$MPVPAPER_CALLS"
+
+"$script" set "$custom"
+[[ ! -e "$state/hypr-wallpaper/monitors/DP-1.state" ]]
+[[ ! -e "$state/hypr-wallpaper/monitors/HDMI-A-1.state" ]]
+[[ ! -e "$runtime/hypr-wallpaper-mpvpaper-monitors/HDMI-A-1.pid" ]]
+! kill -0 -- "-$restored_monitor_pid" 2>/dev/null
+! kill -0 -- "-$restored_default_pid" 2>/dev/null
+kill -0 "$unmanaged_pid" 2>/dev/null
+
+# A first-run per-monitor selection must not need a global/default wallpaper.
+rm "$state/hypr-wallpaper/current"
+"$script" set "$monitor_static" --monitor DP-1
+"$script" hide
+: >"$HYPRPAPER_CALLS"
+HYPR_WALLPAPER_DIR="$tmp/no-default-directory" "$script" restore
+grep -Fq "DP-1, $monitor_static, cover" "$HYPRPAPER_CALLS"
 
 printf '%s\n' 'hypr-minimal-wallpaper: ok'

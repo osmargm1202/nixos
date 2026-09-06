@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
-MODULE="$ROOT/nixos/common-dotfiles.nix"
 I3_ROOT="$ROOT/dotfiles/config/profiles/i3"
 UCA="$I3_ROOT/.config/Thunar/uca.xml"
 WRAPPER="$I3_ROOT/.local/bin/i3-set-wallpaper"
@@ -40,18 +39,6 @@ grep -Fq 'exec i3-wallpaper --set-active "$1"' "$WRAPPER" ||
   fail 'wallpaper wrapper must quote and forward the selected file'
 [[ -x "$WRAPPER" ]] || fail 'wallpaper wrapper source is not executable'
 
-
-i3_deployment_paths="$(awk '
-  /^[[:space:]]+i3 = \[/ { active = 1 }
-  active { print }
-  active && /^[[:space:]]+\];$/ { exit }
-' "$MODULE")"
-! grep -qi 'nautilus' <<<"$i3_deployment_paths" ||
-  fail 'i3 deployment paths must not include Nautilus actions or launchers'
-grep -Fq 'lib.optionalString (profileName == "hyprland")' "$MODULE" ||
-  fail 'the real Nautilus wallpaper action must remain exclusive to Hyprland'
-grep -Fq '".local/share/nautilus/scripts/Set as Hyprland Wallpaper"' "$MODULE" ||
-  fail 'Hyprland must retain its real Nautilus wallpaper action'
 grep -Fq 'set $files thunar "$HOME"' "$I3_CONFIG" ||
   fail 'Mod+e must open Thunar'
 

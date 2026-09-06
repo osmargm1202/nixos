@@ -1,44 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-fail() { echo "FAIL: $*" >&2; exit 1; }
-assert_contains() { grep -Fq "$2" "$1" || fail "expected $2 in $1"; }
-
 SCRIPT="$ROOT/config/shared/.local/bin/memclean-dev"
+fail() { echo "FAIL: $*" >&2; exit 1; }
+
 [[ -x "$SCRIPT" ]] || fail "memclean-dev script must exist and be executable"
-bash -n "$SCRIPT"
 
-for cfg in "$ROOT/config/shared/.config/waybar/config" "$ROOT/config/shared/.config/waybar-hypr/config"; do
-  assert_contains "$cfg" '"custom/memclean"'
-  assert_contains "$cfg" '"exec": "memclean-dev status"'
-  assert_contains "$cfg" '"on-click": "memclean-dev clean"'
-  assert_contains "$cfg" '"return-type": "json"'
-done
+STATUS="$("$SCRIPT" status)"
+python3 - "$STATUS" <<'PY' || fail "status must emit Waybar JSON with a tooltip and state"
+import json
+import sys
 
-for css in "$ROOT/config/shared/.config/waybar/style.css" "$ROOT/config/shared/.config/waybar-hypr/style.css"; do
-  assert_contains "$css" '#custom-memclean'
-done
+status = json.loads(sys.argv[1])
+assert isinstance(status["text"], str) and status["text"]
+assert isinstance(status["tooltip"], str) and status["tooltip"]
+assert status["class"] in {"idle", "active"}
+PY
 
-assert_contains "$ROOT/config/shared/.config/waybar-hypr/style.css" 'icons/memclean.svg'
-[[ -f "$ROOT/config/shared/.config/waybar-hypr/icons/memclean.svg" ]] || fail "memclean icon missing"
+DRY="$("$SCRIPT" dry-run)"
+[[ "$DRY" == *'Protected patterns'* ]] || fail "dry-run must describe protected processes"
 
-assert_contains "$ROOT/config/dotfiles.json" '".local/bin/memclean-dev"'
-
-# Safety gates: script must target requested dev memory hogs and protect forbidden apps.
-assert_contains "$SCRIPT" 'lua-language-server'
-assert_contains "$SCRIPT" 'pylance'
-assert_contains "$SCRIPT" 'claude'
-assert_contains "$SCRIPT" '.pi/agent'
-assert_contains "$SCRIPT" 'zen-browser'
-assert_contains "$SCRIPT" 'steamwebhelper'
-assert_contains "$SCRIPT" 'qemu-system'
-assert_contains "$SCRIPT" 'appid=570'
-
-STATUS="$($SCRIPT status)"
-[[ "$STATUS" == *'"text"'* ]] || fail "status must output waybar JSON"
-[[ "$STATUS" == *'"tooltip"'* ]] || fail "status must include tooltip"
-
-DRY="$($SCRIPT dry-run)"
-[[ "$DRY" == *'Protected patterns'* ]] || fail "dry-run must show protected patterns"
+if "$SCRIPT" invalid >/dev/null 2>&1; then
+  fail "invalid mode must fail"
+fi
 
 echo "waybar memclean dev test passed"

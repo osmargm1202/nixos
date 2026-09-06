@@ -1,7 +1,10 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./sddm.nix ./printer.nix ];
+  imports = [
+    ./sddm.nix
+    ./printer.nix
+  ];
 
   services.xserver.enable = true;
   security.polkit.enable = true;
@@ -26,7 +29,6 @@
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
       "image/png" = [ "org.gnome.Loupe.desktop" ];

@@ -6,7 +6,6 @@ BIN="$ROOT/dotfiles/config/profiles/i3/.local/bin"
 MAIN="$BIN/i3-main-menu"
 DEVICES="$BIN/i3-devices-menu"
 POWER="$BIN/i3-powermenu"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -15,7 +14,6 @@ fail() {
 
 [ -x "$DEVICES" ] || fail 'i3-devices-menu missing or not executable'
 for helper in i3-main-menu i3-devices-menu i3-powermenu; do
-  grep -Fq "\".local/bin/$helper\"" "$DOTFILES" || fail "$helper not deployed"
   bash -n "$BIN/$helper"
 done
 

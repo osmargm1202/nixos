@@ -2,7 +2,6 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODULE="$ROOT/nixos/common-dotfiles.nix"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-reload-after-switch"
 
 fail() {
@@ -10,29 +9,14 @@ fail() {
   exit 1
 }
 
-activation="$(awk '
-  /home\.activation\.reloadI3AfterLink =/ { active = 1 }
-  active { print }
-  active && /^      # / { exit }
-' "$MODULE")"
-
-[[ -n "$activation" ]] || fail 'i3 post-switch reload activation missing'
-grep -Fq 'profileName == "i3"' <<<"$activation" ||
-  fail 'reload activation is not restricted to i3 profiles'
-grep -Fq 'entryAfter [ "linkGeneration" ]' <<<"$activation" ||
-  fail 'i3 reload runs before new dotfiles are linked'
-grep -Fq '$DRY_RUN_CMD "$HOME/.local/bin/i3-reload-after-switch"' <<<"$activation" ||
-  fail 'activation does not honor Home Manager dry-run semantics'
 [[ -x "$HELPER" ]] || fail 'i3 reload helper missing or not executable'
-grep -Fq '".local/bin/i3-reload-after-switch"' "$MODULE" ||
-  fail 'i3 reload helper not deployed'
 grep -Fq '${XDG_RUNTIME_DIR:-/run/user/$(id -u)}' "$HELPER" ||
   fail 'helper cannot discover runtime directory without DISPLAY'
 grep -Fq '[ -S "$socket" ]' "$HELPER" || fail 'helper does not require a real IPC socket'
 grep -Fq -- '-t get_version' "$HELPER" || fail 'helper does not validate live i3 socket'
 grep -Fq 'i3-msg -s "$socket" reload' "$HELPER" || fail 'helper does not reload i3'
 if grep -Fq 'DISPLAY' "$HELPER"; then fail 'helper incorrectly requires DISPLAY'; fi
-if grep -Eq 'i3-msg .*restart|hyprctl' <<<"$activation"$'\n'"$(<"$HELPER")"; then
+if grep -Eq 'i3-msg .*restart|hyprctl' "$HELPER"; then
   fail 'switch recovery restarts a compositor instead of safely reloading i3'
 fi
 

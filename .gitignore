@@ -9,3 +9,8 @@ dotfiles/config/shared/.config/btop/themes/caelestia.theme
 
 # Per-machine Windows VM credentials and persistent-path settings.
 containers/windows/.env
+
+# Ephemeral orchestration state.
+.superpowers/
+dotfiles/sdd-orchestrator/
+dotfiles/openspec/

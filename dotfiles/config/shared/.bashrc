@@ -29,3 +29,5 @@ if [[ -r "$bash_config" ]]; then
   . "$bash_config"
 fi
 unset bash_config
+
+source '/home/osmarg/.bash_completions/orgm-todo.sh'

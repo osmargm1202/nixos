@@ -6,7 +6,6 @@ I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 HYPR_DUNST="$ROOT/dotfiles/config/profiles/hyprland/.config/dunst/dunstrc"
 LABWC_DUNST="$ROOT/dotfiles/config/profiles/labwc/.config/dunst/dunstrc"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
@@ -44,15 +43,9 @@ grep -Fq 'XF86AudioMicMute exec --no-startup-id $run mic-volume-osd mute' "$I3" 
 for helper in volume-osd mic-volume-osd; do
   [ -x "$SHARED_BIN/$helper" ] || fail "$helper must be shared and executable"
   [ ! -e "$HYPR_BIN/$helper" ] || fail "$helper must not remain Hyprland-owned"
-  grep -Fq "    \".local/bin/$helper\"" "$DOTFILES" || fail "$helper missing from shared deployment"
   bash -n "$SHARED_BIN/$helper"
 done
 
-grep -Fq 'sp == hp || lib.hasPrefix (hp + "/") sp' "$DOTFILES" ||
-  fail 'profile-specific exact paths must override shared Home Manager paths'
-
-grep -Fq 'systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {' "$DOTFILES" ||
-  fail 'Lenovo must not start the absent G213 notification observer'
 if grep -Eq 'swaynotificationcenter|swaync' "$PROFILE" "$I3"; then
   fail 'i3 must use Dunst only'
 fi

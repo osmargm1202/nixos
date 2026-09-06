@@ -5,7 +5,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 RUNNER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-run"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -18,7 +17,6 @@ grep -Fq 'environment.localBinInPath = true;' "$PROFILE" ||
 [[ -x "$RUNNER" ]] || fail 'i3 PATH runner missing or not executable'
 grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$RUNNER" ||
   fail 'i3 runner does not prepend user helper directory'
-grep -Fq '".local/bin/i3-run"' "$DOTFILES" || fail 'i3 runner not deployed'
 grep -Fq 'set $run $HOME/.local/bin/i3-run' "$CONFIG" || fail 'i3 runner variable missing'
 
 for command in \

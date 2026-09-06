@@ -7,8 +7,8 @@ if rg --hidden -n 'Exec=/nix/store/.*/distrobox|Exec=orgmos menu|Exec=orgm prop|
   fail "found stale desktop launcher Exec"
 fi
 
-for host in orgm lenovo; do
-  appdir="$ROOT/config/hosts/$host/.local/share/applications"
+for host in orgm; do
+  appdir="$ROOT/config/hosts/$host/shared/.local/share/applications"
   [ -d "$appdir" ] || continue
   [ ! -e "$appdir/orgmos.desktop" ] || fail "$host orgmos.desktop should be removed"
   [ ! -e "$appdir/propuestas.desktop" ] || fail "$host propuestas.desktop should be removed"

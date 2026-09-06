@@ -54,8 +54,8 @@
     #   url = "github:Darkkal44/qylock";
     # };
     herdr = {
-      # tmux replacement (agent multiplexer). Own nixpkgs pin -- needs
-      # zig_0_15 which may not exist on our stable 25.11 input.
+      # tmux replacement (agent multiplexer). Retain upstream's own nixpkgs
+      # pin so its Zig toolchain follows the version tested by the project.
       url = "github:ogulcancelik/herdr";
     };
   };
@@ -128,6 +128,7 @@
           braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
           engram = pkgs.callPackage ./nixos/packages/engram.nix { };
           rtk = pkgs.callPackage ./nixos/packages/rtk.nix { };
+          orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { };
         in
         {
           formatter = pkgs.nixfmt-rfc-style;
@@ -139,12 +140,11 @@
               braveOrigin
               ;
             "brave-origin" = braveOrigin;
+            "orgm-themes" = orgmThemes;
             default = braveOrigin;
           };
 
           # Dev shell for hacking on this NixOS repo. Enter with `nix develop`.
-          # The old FHS env (nixos/packages/dev-shell.nix) is kept on disk as
-          # reference but no longer wired anywhere.
           devShells.default = pkgsDev.mkShell {
             packages = with pkgsDev; [
               # Nix tooling

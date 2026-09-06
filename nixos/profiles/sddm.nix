@@ -1,8 +1,20 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  profileName ? null,
+  ...
+}:
 
 let
   hostThemeFile = ../hosts/${config.networking.hostName}/sddm-theme.nix;
   hostTheme = if builtins.pathExists hostThemeFile then import hostThemeFile else "black_hole";
+  useGreenShift = profileName == "hyprland";
+  themePackage =
+    if useGreenShift then
+      pkgs.callPackage ../packages/sddm-greenshift.nix { }
+    else
+      pkgs.sddm-astronaut.override { embeddedTheme = hostTheme; };
 in
 {
   services.displayManager.sddm = {
@@ -12,13 +24,28 @@ in
     autoNumlock = true;
     enableHidpi = true;
     settings.General.Numlock = "on";
-    theme = "sddm-astronaut-theme";
-    extraPackages = with pkgs; [ kdePackages.qtmultimedia ];
+    theme = if useGreenShift then "GreenShift" else "sddm-astronaut-theme";
+    extraPackages =
+      if useGreenShift then
+        with pkgs.kdePackages;
+        [
+          qt5compat
+          qtsvg
+        ]
+      else
+        [ pkgs.kdePackages.qtmultimedia ];
+    # GreenShift reads battery state from sysfs through QML XMLHttpRequest.
+    settings.General.GreeterEnvironment = lib.mkIf useGreenShift (
+      lib.concatStringsSep "," (
+        [ "QML_XHR_ALLOW_FILE_READ=1" ]
+        ++ lib.optional (
+          config.services.displayManager.sddm.wayland.compositor == "kwin"
+        ) "QT_WAYLAND_SHELL_INTEGRATION=layer-shell"
+      )
+    );
   };
 
-  environment.systemPackages = [
-    (pkgs.sddm-astronaut.override { embeddedTheme = hostTheme; })
-  ];
+  environment.systemPackages = [ themePackage ];
 
   # NVIDIA + KWin Wayland: hardware cursor plane no compone en NVIDIA.
   # KWIN_FORCE_SW_CURSOR fuerza KWin a dibujar el cursor via software.

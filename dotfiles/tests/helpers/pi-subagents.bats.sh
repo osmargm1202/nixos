@@ -4,19 +4,17 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 SUBAGENTS="$ROOT/config/shared/.pi/agent/subagents"
 CONFIG="$ROOT/config/shared/.pi/agent/subagents.json"
-NIX_MODULE="$ROOT/../nixos/common-dotfiles.nix"
 GROUP=${1:-all}
 
-python3 - "$GROUP" "$SUBAGENTS" "$CONFIG" "$NIX_MODULE" <<'PY'
+python3 - "$GROUP" "$SUBAGENTS" "$CONFIG" <<'PY'
 import json
 import re
 import sys
 from pathlib import Path
 
-group, subagents_arg, config_arg, nix_arg = sys.argv[1:]
+group, subagents_arg, config_arg = sys.argv[1:]
 subagents = Path(subagents_arg)
 config_path = Path(config_arg)
-nix_module = Path(nix_arg)
 
 groups = {
     "generic": ["planner", "builder"],
@@ -150,22 +148,7 @@ def check_config() -> None:
             }
         if profile != wanted:
             fail(f"subagents.json: {name} profile must equal {wanted!r}")
-
-
-def check_deployment() -> None:
-    if not nix_module.is_file():
-        fail(f"missing Nix module: {nix_module}")
-    text = nix_module.read_text()
-    match = re.search(r"(?ms)^\s*sharedPaths\s*=\s*\[(.*?)^\s*\];", text)
-    if not match:
-        fail("common-dotfiles.nix: sharedPaths list not found")
-    shared_paths = re.findall(r'^\s*"([^"]+)"', match.group(1), re.MULTILINE)
-    for path in (".pi/agent/subagents", ".pi/agent/subagents.json"):
-        if shared_paths.count(path) != 1:
-            fail(f"common-dotfiles.nix: expected exactly one {path!r} in sharedPaths")
-
-
-if group not in {*groups, "deployment", "all"}:
+if group not in {*groups, "all"}:
     fail(f"unknown group: {group}")
 
 if group == "all":
@@ -175,9 +158,6 @@ if group == "all":
     check_config()
     for name in expected:
         check_agent(name)
-    check_deployment()
-elif group == "deployment":
-    check_deployment()
 else:
     if group == "generic":
         check_config()

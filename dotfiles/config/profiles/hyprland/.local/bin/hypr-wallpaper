@@ -11,15 +11,17 @@ mpvpaper_bin="${MPVPAPER_BIN:-mpvpaper}"
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper"
 state_file="$state_dir/current"
+monitor_state_dir="$state_dir/monitors"
 runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
 runtime_link="$runtime_dir/hypr-current-wallpaper"
 video_pid_file="$runtime_dir/hypr-wallpaper-mpvpaper.pid"
+monitor_video_pid_dir="$runtime_dir/hypr-wallpaper-mpvpaper-monitors"
 video_log="$state_dir/video-wallpaper.log"
 default_dir="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
 
 usage() {
   cat >&2 <<'EOF'
-usage: hypr-wallpaper set FILE
+usage: hypr-wallpaper set FILE [--monitor OUTPUT]
        hypr-wallpaper restore
        hypr-wallpaper hide
        hypr-wallpaper random [DIRECTORY]
@@ -53,6 +55,59 @@ atomic_write() {
   mv -f -- "$temporary" "$target"
 }
 
+is_safe_monitor() {
+  [[ "$1" =~ ^[[:alnum:]][[:alnum:]._-]*$ ]]
+}
+
+validate_monitor() {
+  is_safe_monitor "$1" && return 0
+  printf 'hypr-wallpaper: salida no válida: %s\n' "$1" >&2
+  return 1
+}
+
+monitor_state_file() {
+  printf '%s/%s.state\n' "$monitor_state_dir" "$1"
+}
+
+monitor_video_pid_file() {
+  printf '%s/%s.pid\n' "$monitor_video_pid_dir" "$1"
+}
+
+managed_monitor_outputs() {
+  local file output
+  declare -A seen=()
+
+  for file in "$monitor_state_dir"/*.state "$monitor_video_pid_dir"/*.pid; do
+    [[ -e "$file" ]] || continue
+    output="${file##*/}"
+    output="${output%.state}"
+    output="${output%.pid}"
+    is_safe_monitor "$output" || continue
+    [[ -n "${seen[$output]+x}" ]] && continue
+    seen["$output"]=1
+    printf '%s\n' "$output"
+  done
+}
+
+active_monitor_outputs() {
+  command -v jq >/dev/null 2>&1 || return 0
+  "$hyprctl_bin" -j monitors 2>/dev/null |
+    jq -r '.[] | .name // empty' 2>/dev/null |
+    while IFS= read -r output; do
+      is_safe_monitor "$output" && printf '%s\n' "$output"
+    done
+}
+
+has_monitor_states() {
+  local state output
+  for state in "$monitor_state_dir"/*.state; do
+    output="${state##*/}"
+    output="${output%.state}"
+    is_safe_monitor "$output" && read_monitor_state "$output" && return 0
+  done
+  return 1
+}
+
 process_starttime() {
   local pid="$1"
   [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/stat" ]] || return 1
@@ -69,11 +124,11 @@ process_group_alive() {
   kill -0 -- "-$1" 2>/dev/null
 }
 
-stop_managed_video() {
-  local pid expected_start attempt
-  [[ -s "$video_pid_file" ]] || return 0
-  read -r pid expected_start <"$video_pid_file" || {
-    rm -f -- "$video_pid_file"
+stop_managed_video_file() {
+  local pid_file="$1" pid expected_start attempt
+  [[ -s "$pid_file" ]] || return 0
+  read -r pid expected_start <"$pid_file" || {
+    rm -f -- "$pid_file"
     return 0
   }
   if tracked_process_alive "$pid" "$expected_start"; then
@@ -84,7 +139,30 @@ stop_managed_video() {
     done
     process_group_alive "$pid" && kill -KILL -- "-$pid" 2>/dev/null || true
   fi
-  rm -f -- "$video_pid_file"
+  rm -f -- "$pid_file"
+}
+
+stop_managed_video() {
+  stop_managed_video_file "$video_pid_file"
+}
+
+stop_monitor_video() {
+  stop_managed_video_file "$(monitor_video_pid_file "$1")"
+}
+
+stop_all_monitor_videos() {
+  local output
+  while IFS= read -r output; do
+    stop_monitor_video "$output"
+  done < <(managed_monitor_outputs)
+}
+
+clear_monitor_states() {
+  local output
+  while IFS= read -r output; do
+    stop_monitor_video "$output"
+    rm -f -- "$(monitor_state_file "$output")"
+  done < <(managed_monitor_outputs)
 }
 
 ensure_hyprpaper() {
@@ -109,7 +187,7 @@ ensure_hyprpaper() {
 }
 
 start_video() {
-  local video="$1" pid starttime
+  local output="$1" video="$2" pid starttime
   if ! command -v "$mpvpaper_bin" >/dev/null 2>&1; then
     printf '%s\n' 'hypr-wallpaper: mpvpaper is unavailable' >&2
     return 1
@@ -119,7 +197,7 @@ start_video() {
   (
     # Long-lived wallpaper children must not inherit the transaction lock.
     exec {wallpaper_lock_fd}>&-
-    exec setsid "$mpvpaper_bin" -o "no-audio loop hwdec=auto panscan=1.0" ALL "$video"
+    exec setsid "$mpvpaper_bin" -o "no-audio loop hwdec=auto panscan=1.0" "$output" "$video"
   ) >>"$video_log" 2>&1 &
   pid=$!
   sleep 0.1
@@ -137,41 +215,26 @@ start_video() {
   started_video_starttime="$starttime"
 }
 
+start_global_video_defaults() {
+  local wallpaper="$1" selected_output="$2" output
+  while IFS= read -r output; do
+    [[ "$output" == "$selected_output" ]] && continue
+    # Explicit monitor snapshots own their output. The global video is only
+    # recreated for active outputs that still use the global default.
+    [[ -e "$(monitor_state_file "$output")" ]] && continue
+    start_video "$output" "$wallpaper"
+    stop_monitor_video "$output"
+    atomic_write "$(monitor_video_pid_file "$output")" "$started_video_pid $started_video_starttime"
+  done < <(active_monitor_outputs)
+}
+
 publish_runtime_wallpaper() {
   local wallpaper="$1" lockscreen_wallpaper="$HOME/Pictures/Wallpapers/xnm1-background.png"
   is_image "$wallpaper" && lockscreen_wallpaper="$wallpaper"
   ln -sfn "$lockscreen_wallpaper" "$runtime_link"
 }
 
-apply_image() {
-  local wallpaper="$1"
-  ensure_hyprpaper
-  "$hyprctl_bin" hyprpaper wallpaper ", $wallpaper, cover" >/dev/null
-  stop_managed_video
-  atomic_write "$state_file" "$wallpaper"
-  publish_runtime_wallpaper "$wallpaper"
-}
-
-apply_video() {
-  local wallpaper="$1"
-  start_video "$wallpaper" || return 1
-
-
-  # The new group is live. It is now safe to replace the old group and clear
-  # Hyprpaper without leaving the desktop empty.
-  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
-  stop_managed_video
-  atomic_write "$video_pid_file" "$started_video_pid $started_video_starttime"
-  atomic_write "$state_file" "$wallpaper"
-  publish_runtime_wallpaper "$wallpaper"
-}
-
-hide_wallpaper() {
-  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
-  stop_managed_video
-}
-
-apply() {
+validate_wallpaper() {
   local wallpaper="$1"
   [[ -f "$wallpaper" ]] || {
     printf 'hypr-wallpaper: no existe: %s\n' "$wallpaper" >&2
@@ -181,27 +244,171 @@ apply() {
     printf 'hypr-wallpaper: formato no admitido: %s\n' "$wallpaper" >&2
     return 1
   }
+}
 
+apply_global_image() {
+  local wallpaper="$1"
+  ensure_hyprpaper
+  "$hyprctl_bin" hyprpaper wallpaper ", $wallpaper, cover" >/dev/null
+  stop_managed_video
+  publish_runtime_wallpaper "$wallpaper"
+}
+
+apply_global_video() {
+  local wallpaper="$1"
+  start_video ALL "$wallpaper" || return 1
+
+  # The new group is live. It is now safe to replace the old group and clear
+  # Hyprpaper without leaving the desktop empty.
+  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
+  stop_managed_video
+  atomic_write "$video_pid_file" "$started_video_pid $started_video_starttime"
+  publish_runtime_wallpaper "$wallpaper"
+}
+
+apply_global() {
+  local wallpaper="$1"
   if is_video "$wallpaper"; then
-    apply_video "$wallpaper"
+    apply_global_video "$wallpaper"
   else
-    apply_image "$wallpaper"
+    apply_global_image "$wallpaper"
+  fi
+  atomic_write "$state_file" "$wallpaper"
+}
+
+write_monitor_state() {
+  local output="$1" mode="$2" wallpaper="$3"
+  atomic_write "$(monitor_state_file "$output")" "mode=$mode"$'\n'"path=$wallpaper"
+}
+
+read_monitor_state() {
+  local output="$1" state mode_line path_line
+  state="$(monitor_state_file "$output")"
+  [[ -s "$state" ]] || return 1
+  {
+    IFS= read -r mode_line
+    IFS= read -r path_line
+  } <"$state" || return 1
+  [[ "$mode_line" == mode=* && "$path_line" == path=* ]] || return 1
+  restored_monitor_mode="${mode_line#mode=}"
+  restored_monitor_path="${path_line#path=}"
+  case "$restored_monitor_mode" in
+    static) is_image "$restored_monitor_path" || return 1 ;;
+    video) is_video "$restored_monitor_path" || return 1 ;;
+    *) return 1 ;;
+  esac
+  [[ -f "$restored_monitor_path" ]]
+}
+
+apply_monitor_image() {
+  local wallpaper="$1" output="$2" replace_global="$3"
+  ensure_hyprpaper
+  "$hyprctl_bin" hyprpaper wallpaper "$output, $wallpaper, cover" >/dev/null
+  [[ "$replace_global" == true ]] && stop_managed_video
+  stop_monitor_video "$output"
+  write_monitor_state "$output" static "$wallpaper"
+}
+
+apply_monitor_video() {
+  local wallpaper="$1" output="$2" replace_global="$3"
+  start_video "$output" "$wallpaper" || return 1
+
+  # Do not unload other outputs: monitor video state is independent.
+  "$hyprctl_bin" hyprpaper unload "$output" >/dev/null 2>&1 || true
+  [[ "$replace_global" == true ]] && stop_managed_video
+  stop_monitor_video "$output"
+  atomic_write "$(monitor_video_pid_file "$output")" "$started_video_pid $started_video_starttime"
+  write_monitor_state "$output" video "$wallpaper"
+}
+
+apply_monitor() {
+  local wallpaper="$1" output="$2" replace_global="$3"
+  if is_video "$wallpaper"; then
+    apply_monitor_video "$wallpaper" "$output" "$replace_global"
+  else
+    apply_monitor_image "$wallpaper" "$output" "$replace_global"
   fi
 }
 
-random() {
-  local directory="$1" selected
+set_global() {
+  local wallpaper="$1"
+  validate_wallpaper "$wallpaper"
+  apply_global "$wallpaper"
+  clear_monitor_states
+}
+
+set_monitor() {
+  local wallpaper="$1" output="$2" global_wallpaper
+  validate_wallpaper "$wallpaper"
+  validate_monitor "$output"
+  if [[ -s "$state_file" ]] && global_wallpaper="$(<"$state_file")" && [[ -f "$global_wallpaper" ]] && is_video "$global_wallpaper"; then
+    # Convert the global ALL process to independently tracked defaults before
+    # replacing one output, so unchanged outputs keep their global video.
+    start_global_video_defaults "$global_wallpaper" "$output"
+  fi
+  # A global mpvpaper process owns ALL outputs. Start the replacement first,
+  # then retire only that tracked process group.
+  apply_monitor "$wallpaper" "$output" true
+}
+
+restore_monitor_wallpapers() {
+  local output
+  while IFS= read -r output; do
+    if read_monitor_state "$output"; then
+      # A global mpvpaper process owns ALL outputs, including this one. Start
+      # the target replacement before retiring that tracked process group.
+      apply_monitor "$restored_monitor_path" "$output" true
+    fi
+  done < <(managed_monitor_outputs)
+}
+
+hide_wallpaper() {
+  "$hyprctl_bin" hyprpaper unload all >/dev/null 2>&1 || true
+  stop_managed_video
+  stop_all_monitor_videos
+}
+
+select_random() {
+  local directory="$1"
   [[ -d "$directory" ]] || {
     printf 'hypr-wallpaper: directorio no existe: %s\n' "$directory" >&2
     return 1
   }
 
-  selected="$(find -L "$directory" -type d -name .thumb -prune -o -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1)"
+  find -L "$directory" -type d -name .thumb -prune -o -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print | shuf -n 1
+}
+
+random() {
+  local selected
+  selected="$(select_random "$1")"
   [[ -n "$selected" ]] || {
-    printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$directory" >&2
+    printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$1" >&2
     return 1
   }
-  apply "$selected"
+  set_global "$selected"
+}
+
+restore_wallpaper() {
+  local wallpaper
+  if [[ -s "$state_file" ]] && wallpaper="$(<"$state_file")" && [[ -f "$wallpaper" ]] && is_supported_media "$wallpaper"; then
+    apply_global "$wallpaper"
+  elif has_monitor_states; then
+    restore_monitor_wallpapers
+    return
+  else
+    wallpaper="$(select_random "$default_dir")"
+    [[ -n "$wallpaper" ]] || {
+      printf 'hypr-wallpaper: no hay imágenes en: %s\n' "$default_dir" >&2
+      return 1
+    }
+    apply_global "$wallpaper"
+  fi
+  if is_video "$wallpaper" && has_monitor_states; then
+    # Recreate the global video as per-output defaults before target snapshots
+    # replace their own output and retire the ALL process.
+    start_global_video_defaults "$wallpaper" ""
+  fi
+  restore_monitor_wallpapers
 }
 
 mkdir -p "$state_dir"
@@ -212,16 +419,15 @@ flock -x "$wallpaper_lock_fd"
 
 case "${1:-}" in
   set)
-    [[ $# -eq 2 ]] || usage
-    apply "$2"
+    case "$#" in
+      2) set_global "$2" ;;
+      4) [[ "$3" == --monitor ]] || usage; set_monitor "$2" "$4" ;;
+      *) usage ;;
+    esac
     ;;
   restore)
     [[ $# -eq 1 ]] || usage
-    if [[ -s "$state_file" ]] && wallpaper="$(<"$state_file")" && [[ -f "$wallpaper" ]] && is_supported_media "$wallpaper"; then
-      apply "$wallpaper"
-    else
-      random "$default_dir"
-    fi
+    restore_wallpaper
     ;;
   hide)
     [[ $# -eq 1 ]] || usage

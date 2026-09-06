@@ -7,10 +7,10 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 mkdir -p "$TMP/config/orgm-theme/themes" "$TMP/state" "$TMP/runtime" "$TMP/bin"
-cp "$ROOT/config/shared/.config/orgm-theme/themes/orgm-light.env" "$TMP/config/orgm-theme/themes/orgm-light.env"
-cp "$ROOT/config/shared/.config/orgm-theme/themes/orgm-dark.env" "$TMP/config/orgm-theme/themes/orgm-dark.env"
+cp "$ROOT/config/profiles/hyprland/.config/orgm-theme/themes/orgm-light.env" "$TMP/config/orgm-theme/themes/orgm-light.env"
+cp "$ROOT/config/profiles/hyprland/.config/orgm-theme/themes/orgm-dark.env" "$TMP/config/orgm-theme/themes/orgm-dark.env"
 
-for bin in hyprctl kitty swaync-client nautilus systemctl waybar-watch orgm-wallpaper; do
+for bin in hyprctl hypr-wallpaper kitty swaync-client nautilus systemctl waybar-watch; do
   cat >"$TMP/bin/$bin" <<'SH'
 #!/usr/bin/env bash
 exit 0
@@ -31,102 +31,112 @@ XDG_STATE_HOME="$TMP/state" \
 XDG_RUNTIME_DIR="$TMP/runtime" \
 PATH="$TMP/bin:$PATH" \
 GSETTINGS_LOG="$TMP/gsettings.log" \
-"$SCRIPT" apply orgm-light >/tmp/orgm-theme-light-contrast.out
+"$SCRIPT" apply orgm-light >"$TMP/apply.out"
 
-WAYBAR="$TMP/config/waybar-hypr/orgm-current.css"
-GTK="$TMP/config/gtk-4.0/gtk.css"
-GTK3_SETTINGS="$TMP/config/gtk-3.0/settings.ini"
-GTK4_SETTINGS="$TMP/config/gtk-4.0/settings.ini"
-QT5="$TMP/config/qt5ct/qt5ct.conf"
-QT6="$TMP/config/qt6ct/qt6ct.conf"
-KITTY="$TMP/config/kitty/current-theme.conf"
-
-assert_contains() {
-  local file="$1"
-  local expected="$2"
-  if ! grep -Fqx "$expected" "$file"; then
-    echo "FAIL: expected line not found in $file:" >&2
-    echo "$expected" >&2
-    echo "--- file ---" >&2
-    cat "$file" >&2
+for settings in "$TMP/config/gtk-3.0/settings.ini" "$TMP/config/gtk-4.0/settings.ini"; do
+  if [ -e "$settings" ]; then
+    echo "FAIL: orgm-themes must leave GTK preferences runtime-owned: $settings" >&2
     exit 1
   fi
-}
+done
 
-assert_contains "$WAYBAR" '@define-color text     #4c4f69;'
-assert_contains "$WAYBAR" '@define-color subtext0 #6c6f85;'
-assert_contains "$WAYBAR" '@define-color overlay0 #9ca0b0;'
-assert_contains "$WAYBAR" '@define-color blue      #1e66f5;'
-assert_contains "$WAYBAR" '@define-color panel_bg rgba(239, 241, 245, 0.867);'
-assert_contains "$WAYBAR" '@define-color panel_border rgba(30, 102, 245, 1);'
-if grep -Eq '@define-color [^;]+#[0-9a-fA-F]{8};' "$WAYBAR"; then
-  echo "FAIL: Waybar generated colors must avoid 8-digit hex syntax" >&2
-  cat "$WAYBAR" >&2
-  exit 1
-fi
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color panel_bg rgba(239, 241, 245, 0.867);'
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color swaync_bg rgba(239, 241, 245, 0.8);'
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface0 #ccd0da;'
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color blue      #1e66f5;'
-assert_contains "$GTK" '@define-color window_fg_color #4c4f69;'
-assert_contains "$GTK" '@define-color accent_color #1e66f5;'
-assert_contains "$GTK3_SETTINGS" 'gtk-font-name=Inter 11'
-assert_contains "$GTK4_SETTINGS" 'gtk-font-name=Inter 11'
-assert_contains "$QT5" 'general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
-assert_contains "$QT5" 'fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
-assert_contains "$QT6" 'general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
-assert_contains "$QT6" 'fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
 if [ -s "$TMP/gsettings.log" ]; then
   echo "FAIL: orgm-themes must not mutate system gsettings during dark/light preset switch" >&2
   cat "$TMP/gsettings.log" >&2
   exit 1
 fi
-assert_contains "$KITTY" 'background_opacity 1.0'
 
-HYPR_RULES=$(ROOT="$ROOT" XDG_STATE_HOME="$TMP/state" HOME="$TMP/home" lua - <<'LUA'
-hl = {}
-function hl.window_rule(rule)
-  if rule.match and rule.match.class and rule.opacity then
-    print(rule.match.class .. "=" .. rule.opacity)
-  end
-end
-dofile(os.getenv("ROOT") .. "/config/shared/.config/hypr/lua/windows-workspaces.lua")
-LUA
-)
-if ! grep -Fqx '^(kitty)$=1.0 override 1.0 override 1.0 override' <<<"$HYPR_RULES"; then
-  echo "FAIL: light mode should make kitty fully opaque at Hyprland level" >&2
-  echo "--- hypr rules ---" >&2
-  printf '%s\n' "$HYPR_RULES" >&2
-  exit 1
-fi
-if ! grep -Fqx '.*=1.0 override 1.0 override 1.0 override' <<<"$HYPR_RULES"; then
-  echo "FAIL: light mode should make global Hyprland opacity fully opaque" >&2
-  echo "--- hypr rules ---" >&2
-  printf '%s\n' "$HYPR_RULES" >&2
-  exit 1
-fi
-
-for style in "$ROOT/config/shared/.config/waybar/style.css" "$ROOT/config/shared/.config/waybar-hypr/style.css"; do
-  python3 - "$style" <<'PY'
+python3 - \
+  "$TMP/config/waybar-hypr/orgm-current.css" \
+  "$TMP/config/swaync/orgm-current.css" \
+  "$TMP/config/gtk-4.0/gtk.css" <<'PY'
 import re
 import sys
-path = sys.argv[1]
-content = open(path, encoding='utf-8').read()
-for selector in ("#group-usage", "#usage"):
-    match = re.search(rf"{re.escape(selector)}[^{{]*\{{([^}}]*)\}}", content, re.S)
-    if not match or "color: @text;" not in match.group(1):
-        print(f"FAIL: Waybar status modules should use @text, not muted gray: {path}")
-        raise SystemExit(1)
+
+HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
+RGBA = re.compile(r"^rgba\((\d+),\s*(\d+),\s*(\d+),\s*(0(?:\.\d+)?|1(?:\.0+)?)\)$")
+DEFINE = re.compile(r"^@define-color\s+(\w+)\s+(.+);$")
+
+
+def fail(message):
+    print(f"FAIL: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def parse_color(value):
+    if match := HEX.fullmatch(value):
+        digits = match.group(1)
+        return tuple(int(digits[index:index + 2], 16) / 255 for index in (0, 2, 4)) + (1.0,)
+    if match := RGBA.fullmatch(value):
+        red, green, blue, alpha = match.groups()
+        channels = tuple(int(channel) / 255 for channel in (red, green, blue))
+        if any(channel > 1 for channel in channels):
+            fail(f"invalid rgb channel in {value}")
+        return channels + (float(alpha),)
+    fail(f"unsupported generated CSS color {value!r}")
+
+
+def luminance(color):
+    def linear(channel):
+        return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+
+    red, green, blue = (linear(channel) for channel in color[:3])
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def opaque(color, background):
+    red, green, blue, alpha = color
+    return tuple(channel * alpha + backdrop * (1 - alpha) for channel, backdrop in zip((red, green, blue), background))
+
+
+def contrast(foreground, background):
+    foreground_luminance = luminance(foreground)
+    background_luminance = luminance(background)
+    lighter, darker = sorted((foreground_luminance, background_luminance), reverse=True)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def palette(path):
+    content = open(path, encoding="utf-8").read()
+    if re.search(r"#[0-9a-fA-F]{8}\b", content):
+        fail(f"{path} uses unsafe eight-digit hex CSS colors")
+    colors = {}
+    for line in content.splitlines():
+        if match := DEFINE.fullmatch(line):
+            colors[match.group(1)] = match.group(2)
+    return colors
+
+
+waybar_path, swaync_path, gtk_path = sys.argv[1:]
+waybar = palette(waybar_path)
+swaync = palette(swaync_path)
+gtk = palette(gtk_path)
+
+for path, colors, names in (
+    (waybar_path, waybar, ("base", "text", "panel_bg", "panel_border")),
+    (swaync_path, swaync, ("base", "text", "panel_bg", "swaync_bg")),
+    (gtk_path, gtk, ("window_bg_color", "window_fg_color")),
+):
+    missing = set(names) - colors.keys()
+    if missing:
+        fail(f"{path} is missing generated colors: {', '.join(sorted(missing))}")
+    for name in names:
+        parse_color(colors[name])
+
+waybar_base = parse_color(waybar["base"])[:3]
+swaync_base = parse_color(swaync["base"])[:3]
+waybar_text = parse_color(waybar["text"])
+swaync_text = parse_color(swaync["text"])
+gtk_window_foreground = parse_color(gtk["window_fg_color"])
+gtk_window_background = parse_color(gtk["window_bg_color"])
+if luminance(waybar_base) <= luminance(waybar_text):
+    fail("Waybar light palette does not render dark text on a light surface")
+if contrast(waybar_text, opaque(parse_color(waybar["panel_bg"]), waybar_base)) < 4.5:
+    fail("Waybar text lacks WCAG AA contrast against its panel")
+if contrast(swaync_text, opaque(parse_color(swaync["swaync_bg"]), swaync_base)) < 4.5:
+    fail("SwayNC text lacks WCAG AA contrast against its notification surface")
+if contrast(gtk_window_foreground, gtk_window_background) < 4.5:
+    fail("GTK window text lacks WCAG AA contrast")
 PY
-  if ! grep -Fq '#custom-day_month, #custom-date {' "$style" ||
-      ! grep -A4 -F '#custom-day_month, #custom-date {' "$style" | grep -Fq 'color: @text;'; then
-    echo "FAIL: Waybar date should use @text, not muted gray: $style" >&2
-    exit 1
-  fi
-  grep -Fq '@panel_bg' "$style" || {
-    echo "FAIL: Waybar should use generated @panel_bg instead of hardcoded translucent alpha: $style" >&2
-    exit 1
-  }
-done
 
 echo "orgm-theme light contrast smoke test passed"

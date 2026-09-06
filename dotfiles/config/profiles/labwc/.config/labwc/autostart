@@ -24,6 +24,7 @@ pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &
 
 # Red / Bluetooth.
 pgrep -u "$USER" -x nm-applet >/dev/null 2>&1 || nm-applet --indicator >/dev/null 2>&1 &
+pgrep -u "$USER" -f '(^|/)tailscale systray($| )' >/dev/null 2>&1 || tailscale systray >/dev/null 2>&1 &
 pgrep -u "$USER" -x blueman-applet >/dev/null 2>&1 || blueman-applet >/dev/null 2>&1 &
 
 # KDE Connect mirrors the i3 and Hyprland session indicator.

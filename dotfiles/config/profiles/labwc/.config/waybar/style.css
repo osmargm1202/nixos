@@ -91,11 +91,11 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   padding: 0;
   margin: 0 2px 0 0;
 }
-#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-memclean, #bluetooth, #network, #privacy, #tray { color: @text; }
+#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-memclean, #bluetooth, #network, #privacy, #tray { color: @text; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
@@ -112,7 +112,6 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #network.disconnected, #battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
 #custom-logout_menu { color: @red; font-weight: bold; font-size: 23px; }
-#custom-usb_devices { color: @sky; font-size: 20px; }
 #custom-memclean { color: @peach; font-size: 20px; }
 #custom-nixclean { color: @green; font-size: 20px; }
 #custom-user { color: @text; font-weight: bold; }

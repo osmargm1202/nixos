@@ -6,8 +6,8 @@ cd "$repo_dir"
 
 profile='nixos/profiles/hyprland.nix'
 tray_helper='dotfiles/config/profiles/hyprland/.local/bin/hypr-tray-applets'
-host_dir='dotfiles/config/hosts/orgm'
-attr='.#nixosConfigurations.orgm.config.home-manager.users.osmarg.home.file'
+host_dir='dotfiles/config/hosts/orgm/shared'
+attr="path:$repo_dir#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file"
 
 grep -Fxq '    pasystray' "$profile"
 grep -Fxq 'pasystray &' "$tray_helper"

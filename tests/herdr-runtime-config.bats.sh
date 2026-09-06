@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HERDR_DOTFILES="$ROOT/dotfiles/config/shared/.config/herdr"
-DOTFILES_MODULE="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -13,8 +12,9 @@ fail() {
 [ ! -e "$HERDR_DOTFILES" ] ||
   fail 'Herdr runtime directory must not exist inside dotfiles'
 
-if grep -Fq '.config/herdr' "$DOTFILES_MODULE"; then
-  fail 'Nix/Home Manager must not link or own the Herdr runtime directory'
-fi
+home_files="$(nix eval --json \
+  "path:$ROOT#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file")"
+jq -e 'keys | all(. != ".config/herdr" and (startswith(".config/herdr/") | not))' <<<"$home_files" >/dev/null ||
+  fail 'Home Manager must not link or own the Herdr runtime directory'
 
 printf 'PASS: Herdr configuration and state are exclusively runtime-owned\n'

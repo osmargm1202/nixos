@@ -25,6 +25,16 @@ let
     };
     vendorHash = "sha256-AJGyBCTWtgTpn+e4HLlX/8EgWITw25py4UJJJDLhoOM=";
   });
+  mpvpaper19 = pkgs.mpvpaper.overrideAttrs (_: {
+    version = "1.9";
+    src = pkgs.fetchFromGitHub {
+      owner = "GhostNaN";
+      repo = "mpvpaper";
+      rev = "1.9";
+      hash = "sha256-FpwMhzYmbjwvbpJd6xDRka6h2bvgsqdopqP5deQKXSA=";
+    };
+  });
+
   waybarWithCaffeineSignal = pkgs.waybar.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       substituteInPlace include/modules/idle_inhibitor.hpp \
@@ -37,12 +47,14 @@ let
         $'auto waybar::modules::IdleInhibitor::refresh(int sig) -> void {\n#ifdef SIGRTMIN\n  if (config_["signal"].isInt() && sig == SIGRTMIN + config_["signal"].asInt()) {\n    toggleStatus();\n    for (auto const& module : IdleInhibitor::modules) {\n      module->update();\n    }\n  }\n#endif\n}\n\nvoid waybar::modules::IdleInhibitor::toggleStatus() {'
     '';
   });
-  scrollOverview = (pkgs.callPackage ../packages/hyprland-scroll-overview.nix {
-    hyprland = hyprlandPackage;
-  }).overrideAttrs (_: {
-    src = inputs.scrollOverview;
-    version = inputs.scrollOverview.shortRev or inputs.scrollOverview.rev;
-  });
+  scrollOverview =
+    (pkgs.callPackage ../packages/hyprland-scroll-overview.nix {
+      hyprland = hyprlandPackage;
+    }).overrideAttrs
+      (_: {
+        src = inputs.scrollOverview;
+        version = inputs.scrollOverview.shortRev or inputs.scrollOverview.rev;
+      });
   hyprGlass = pkgs.callPackage ../packages/hyprglass.nix {
     hyprland = hyprlandPackage;
     src = inputs.hyprglass;
@@ -53,6 +65,7 @@ let
     niriShaders = inputs.niriShaders;
   };
   hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };
+  orgmThemes = pkgs.callPackage ../packages/orgm-themes.nix { };
   scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
     ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
   '';
@@ -65,6 +78,7 @@ let
 in
 {
   imports = [
+    ./sddm.nix
     ./printer.nix
     ./vesktop.nix
   ];
@@ -83,16 +97,8 @@ in
   # Deliberately only expose the ABI-coupled plugin. After switching generations,
   # unload any prior instance, then manually load /etc/HyprWindowShade.so; never replace it while loaded.
   environment.etc."HyprWindowShade.so".source = hyprWindowShadeLibrary;
-  environment.etc."hyprwindowshade-shaders".source = "${hyprWindowShade}/share/hyprwindowshade/shaders";
-  programs.bash.loginShellInit = lib.mkAfter ''
-    if [[ $- == *i* && "$USER" = "${userName}" && "$(tty)" = /dev/tty1 && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
-      if pgrep -x gamescope >/dev/null; then
-        printf '%s\n' 'Steam Gaming Mode sigue activo en TTY1; ciérralo antes de iniciar Hyprland.' >&2
-      else
-        exec start-hyprland
-      fi
-    fi
-  '';
+  environment.etc."hyprwindowshade-shaders".source =
+    "${hyprWindowShade}/share/hyprwindowshade/shaders";
 
   security.polkit = {
     enable = true;
@@ -238,7 +244,8 @@ in
     xwayland
     hyprGlass
     hyprpaper
-    mpvpaper
+    mpvpaper19
+    orgmThemes
     hyprpolkitagent
 
     # Portal / XDG

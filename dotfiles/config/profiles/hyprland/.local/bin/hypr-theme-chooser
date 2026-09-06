@@ -6,13 +6,7 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 orgm_themes_cmd() {
-  if [ -x "$HOME/go/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/go/bin/orgm-themes"
-  elif [ -x "$HOME/.local/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/.local/bin/orgm-themes"
-  else
-    command -v orgm-themes
-  fi
+  command -v orgm-themes
 }
 
 theme_cmd="$(orgm_themes_cmd || true)"

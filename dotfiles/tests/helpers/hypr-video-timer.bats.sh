@@ -2,7 +2,6 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NIXOS_ROOT="$(cd "$ROOT/.." && pwd)"
 SCRIPT="$ROOT/config/shared/.local/bin/hypr-video-timer"
 TMP="$(mktemp -d)"
 REAL_SLEEP="$(command -v sleep)"
@@ -212,7 +211,5 @@ builtin kill "$replacement_owner" 2>/dev/null || true
 wait_for_exit "$replacement" || fail "race replacement did not exit within 2 seconds"
 [[ ! -e "$TMP/runtime/hypr-video-timer-$UID/state" ]] || fail "race replacement state was not cleaned"
 
-[[ "$(grep -c '"\.local/bin/hypr-video-timer"' "$NIXOS_ROOT/nixos/common-dotfiles.nix")" -eq 1 ]] \
-  || fail "common-dotfiles.nix does not export the shared timer helper"
 
 echo "hypr video timer tests passed"

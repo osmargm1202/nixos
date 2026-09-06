@@ -16,53 +16,62 @@ let
   zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
     exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 18 "$@"
   '';
-  x11TerminalPackages = lib.optionals (builtins.elem profileName [ "cinnamon" "i3" ]) [
-    pkgs.zutty
-    zuttyFast
-  ];
-  minimalPackages = with pkgs; [
-    wget
-    curl
-    rsync
-    vim
-    fzf
-    bash-completion
-    blesh
-    starship
-    zoxide
-    python3
-    gtk3
-    libnotify
-    git
-    git-lfs
-    tmux
-    age
-    fd
-    jq
-    trash-cli
-    eza
-    ntfs3g
-    kitty
-    bat
-    ripgrep
-    neovim
-    marksman
-    wl-clipboard
-    xclip
-    zip
-    unzip
-    unrar
-    btop
-    yazi
-    superfile
-    ncdu
-    fastfetch
-    sops
-    just
-    figlet
-    termdown
-    nix-search-tv
-  ] ++ x11TerminalPackages;
+  x11TerminalPackages =
+    lib.optionals
+      (builtins.elem profileName [
+        "cinnamon"
+        "i3"
+      ])
+      [
+        pkgs.zutty
+        zuttyFast
+      ];
+  minimalPackages =
+    with pkgs;
+    [
+      wget
+      curl
+      rsync
+      vim
+      fzf
+      bash-completion
+      blesh
+      starship
+      zoxide
+      python3
+      gtk3
+      libnotify
+      git
+      git-lfs
+      tmux
+      age
+      fd
+      jq
+      trash-cli
+      eza
+      ntfs3g
+      kitty
+      bat
+      ripgrep
+      neovim
+      marksman
+      wl-clipboard
+      xclip
+      zip
+      unzip
+      unrar
+      btop
+      yazi
+      superfile
+      ncdu
+      fastfetch
+      sops
+      just
+      figlet
+      termdown
+      nix-search-tv
+    ]
+    ++ x11TerminalPackages;
   desktopOnlyPackages = with pkgs; [
     nextcloud-client
     uv
@@ -141,6 +150,7 @@ in
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.${userName} = {
+    # Compatibility baseline for existing home data, not the Home Manager release.
     home.stateVersion = "25.11";
   };
 
@@ -176,7 +186,7 @@ in
   services.earlyoom = {
     enable = true;
     freeMemThreshold = 8;
-    freeMemKillThreshold = 4;
+    freeMemKillThreshold = 2;
     freeSwapThreshold = 100;
     freeSwapKillThreshold = 100;
     extraArgs = [ "--sort-by-rss" ];
@@ -354,7 +364,11 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages = minimalPackages ++ desktopOnlyPackages;
+  environment.systemPackages =
+    minimalPackages
+    ++ desktopOnlyPackages
+    # i3 already supplies its Thunar variant without the wallpaper plugin.
+    ++ lib.optional (profileName != "hyprland" && profileName != "i3") pkgs.thunar;
   environment.variables = {
     EDITOR = "nvim";
     VISUAL = "nvim";
@@ -363,7 +377,9 @@ in
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = lib.mkForce [ (if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "yazi.desktop") ];
+      "inode/directory" = lib.mkForce [
+        (if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "thunar.desktop")
+      ];
       "text/plain" = lib.mkForce [ "nvim.desktop" ];
       "text/markdown" = lib.mkForce [ "nvim.desktop" ];
       "text/x-markdown" = lib.mkForce [ "nvim.desktop" ];
@@ -436,5 +452,6 @@ in
     allowedUDPPorts = [ 53317 ];
   };
 
-  system.stateVersion = "25.11"; # Did you read comment?
+  # Compatibility baseline for existing system data; the release follows flake.nix.
+  system.stateVersion = "25.11";
 }

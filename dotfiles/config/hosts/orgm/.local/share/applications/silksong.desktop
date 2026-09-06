@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Hollow Knight: Silksong
-Exec=steam steam://rungameid/1030300
-Icon=/home/osmarg/.local/share/icons/silksong.png
-StartupWMClass=Hollow Knight Silksong
-Terminal=false
-Categories=Game;

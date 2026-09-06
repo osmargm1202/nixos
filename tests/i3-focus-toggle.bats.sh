@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-focus-last"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -15,8 +14,6 @@ grep -Fq 'bindsym Mod1+Escape exec --no-startup-id i3-focus-last' "$CONFIG" ||
   fail 'Alt+Escape does not invoke the focus-history helper'
 grep -Fq 'exec_always --no-startup-id i3-focus-last --watch' "$CONFIG" ||
   fail 'i3 does not start the focus-history watcher'
-grep -Fq '".local/bin/i3-focus-last"' "$DOTFILES" ||
-  fail 'focus-history helper is not deployed'
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT

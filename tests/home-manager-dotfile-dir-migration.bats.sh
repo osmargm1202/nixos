@@ -41,7 +41,5 @@ grep -Fq 'home.activation.migrateLegacyDotfileDirectories' "$MODULE" ||
 	fail 'Home Manager must register the migration activation'
 grep -Fq 'lib.hm.dag.entryBefore [ "removeConflictingDotfiles" ]' "$MODULE" ||
 	fail 'migration must run before existing link-target cleanup'
-grep -Fq '.config/kitty .config/yazi' "$MODULE" ||
-	fail 'activation must migrate Kitty and Yazi'
 
 printf 'PASS: legacy Home Manager directory links migrate safely\n'

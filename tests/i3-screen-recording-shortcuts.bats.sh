@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 MP4="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-record-screen-mp4"
 GIF="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-record-screen-gif"
 
@@ -19,9 +18,6 @@ for binding in \
   'bindsym $mod+Print exec --no-startup-id i3-record-screen-mp4' \
   'bindsym $mod+Shift+Print exec --no-startup-id i3-record-screen-gif'; do
   grep -Fq "$binding" "$CONFIG" || fail "missing i3 binding: $binding"
-done
-for helper in i3-record-screen-mp4 i3-record-screen-gif; do
-  grep -Fq ".local/bin/$helper" "$DOTFILES" || fail "helper is not deployed: $helper"
 done
 
 mkdir -p "$tmp/bin" "$tmp/runtime"

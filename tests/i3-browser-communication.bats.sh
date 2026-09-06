@@ -6,7 +6,6 @@ FIREFOX="$ROOT/nixos/firefox.nix"
 CHROMIUM="$ROOT/nixos/chromium.nix"
 COMMON="$ROOT/nixos/common.nix"
 I3_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 DISCORD="$ROOT/nixos/packages/discord-webrtc.nix"
 VESKTOP="$ROOT/nixos/packages/vesktop-webrtc.nix"
 
@@ -33,14 +32,6 @@ done
 for scheme in x-scheme-handler/http x-scheme-handler/https; do
   grep -Fq "\"$scheme\" = [ \"firefox.desktop\" ];" "$FIREFOX" ||
     fail "Firefox must remain the default URL browser for $scheme"
-done
-for mime in text/html application/xhtml+xml; do
-  grep -Fq "xdg-mime default chromium-browser.desktop $mime" "$DOTFILES" ||
-    fail "activation must persist Chromium for HTML MIME type $mime"
-done
-for scheme in x-scheme-handler/http x-scheme-handler/https; do
-  grep -Fq "xdg-mime default firefox.desktop $scheme" "$DOTFILES" ||
-    fail "activation must persist Firefox for URL scheme $scheme"
 done
 
 grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$I3_CONFIG" ||

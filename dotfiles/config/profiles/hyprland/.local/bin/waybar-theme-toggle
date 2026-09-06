@@ -2,13 +2,7 @@
 set -euo pipefail
 
 orgm_theme_cmd() {
-  if [ -x "$HOME/go/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/go/bin/orgm-themes"
-  elif [ -x "$HOME/.local/bin/orgm-themes" ]; then
-    printf '%s\n' "$HOME/.local/bin/orgm-themes"
-  else
-    command -v orgm-themes
-  fi
+  command -v orgm-themes
 }
 
 current_theme() {

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -7,24 +8,24 @@ fail() {
 }
 
 assert_json() {
-  local expression="$1" expected="$2"
+  local expression="path:$ROOT#${1#.#}" expected="$2"
   [[ "$(nix eval --json "$expression")" == "$expected" ]] || fail "$expression is not $expected"
 }
 assert_host_alias() {
-  local expression="$1" alias="$2"
+  local expression="path:$ROOT#${1#.#}" alias="$2"
   nix eval --raw "$expression" | grep -Fxq -- "$alias" ||
     fail "$expression does not contain $alias"
 }
 
 assert_host_alias_absent() {
-  local expression="$1" alias="$2"
+  local expression="path:$ROOT#${1#.#}" alias="$2"
   if nix eval --raw "$expression" | grep -Fq -- "$alias"; then
     fail "$expression unexpectedly contains $alias"
   fi
 }
 
-assert_json '.#nixosConfigurations.orgm-terminal.config.services.zerotierone.enable' true
-assert_json '.#nixosConfigurations.orgm-hyprland.config.services.zerotierone.enable' true
+assert_json '.#nixosConfigurations.orgm-terminal.config.services.zerotierone.enable' false
+assert_json '.#nixosConfigurations.orgm-hyprland.config.services.zerotierone.enable' false
 assert_json '.#nixosConfigurations.lenovo-terminal.config.services.zerotierone.enable' false
 assert_json '.#nixosConfigurations.jarq-terminal.config.services.zerotierone.enable' false
 
@@ -54,4 +55,8 @@ do
 done
 assert_host_alias_absent '.#nixosConfigurations.lenovo-terminal.config.networking.extraHosts' 'orgm-iphone-12-pro-max'
 assert_host_alias_absent '.#nixosConfigurations.lenovo-terminal.config.networking.extraHosts' 'orgm-windows'
+assert_json '.#nixosConfigurations.server.config.users.users.osmarg.shell.pname' '"bash-interactive"'
+[[ "$(nix eval --json "path:$ROOT#nixosConfigurations.jarq-server.config" \
+  --apply 'config: config ? home-manager')" == false ]] ||
+  fail 'Jarq server must evaluate without a Home Manager module'
 printf 'PASS: host modules apply consistently across roles\n'

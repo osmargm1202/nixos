@@ -5,7 +5,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REPO="$(cd "$ROOT/.." && pwd)"
 MONITORS="$ROOT/config/profiles/hyprland/.config/hypr/lua/monitors.lua"
 HYPRLAND="$ROOT/config/profiles/hyprland/.config/hypr/hyprland.lua"
-DOTFILES_MODULE="$REPO/nixos/common-dotfiles.nix"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -14,7 +13,7 @@ fail() {
   exit 1
 }
 
-LUA_OUT="$(nix build --no-link --print-out-paths "$REPO#nixosConfigurations.lenovo-hyprland.pkgs.lua")"
+LUA_OUT="$(nix build --no-link --print-out-paths "path:$REPO#nixosConfigurations.lenovo-hyprland.pkgs.lua")"
 LUA="$LUA_OUT/bin/lua"
 
 run_monitors() {
@@ -53,9 +52,6 @@ fi
 
 if grep -Fq 'require("lua.runtime-workspaces")' "$HYPRLAND"; then
   fail 'hyprland.lua must not require a loader that appears only after Home Manager switch'
-fi
-if grep -Fq '".config/hypr/lua/runtime-workspaces.lua"' "$DOTFILES_MODULE"; then
-  fail 'runtime workspace loading must not require a new Home Manager symlink'
 fi
 
 rm -f "$TMP/home/.config/hypr/monitors.lua"

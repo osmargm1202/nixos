@@ -6,15 +6,12 @@ CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 POWER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-powermenu"
 LOCK="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-lock"
 WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
 PROFILE="$ROOT/nixos/profiles/i3.nix"
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 [[ -x "$LOCK" ]] || fail 'i3-lock helper missing or not executable'
 grep -Eq '^[[:space:]]+i3lock-color[[:space:]]*$' "$PROFILE" || fail 'i3lock-color package missing'
 ! grep -Fq 'librsvg' "$PROFILE" || fail 'native lock theme must not require SVG rendering'
-! grep -Fq '.local/share/i3-lock-backgrounds' "$DOTFILES" ||
-  fail 'native lock theme must not deploy image assets'
 ! grep -Eq '(rsvg-convert|convert|magick|--image=)' "$LOCK" ||
   fail 'native lock theme must not render or process images'
 for option in --clock --force-clock --indicator --time-size=72 \

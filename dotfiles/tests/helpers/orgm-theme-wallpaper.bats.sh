@@ -9,21 +9,17 @@ trap 'rm -rf "$TMP"' EXIT
 CALLS="$TMP/calls.log"
 export CALLS
 
-mkdir -p "$TMP/bin" "$TMP/config/orgm-theme/themes" "$TMP/state/hypr-wallpaper/monitors" "$TMP/state/orgm-theme/wallpapers/orgm-light.monitors" "$TMP/runtime"
+mkdir -p "$TMP/bin" "$TMP/config/orgm-theme/themes" "$TMP/state/hypr-wallpaper/monitors" "$TMP/state/orgm-theme/wallpapers" "$TMP/runtime"
 
-cat >"$TMP/bin/orgm-wallpaper" <<'SH'
+cat >"$TMP/bin/hypr-wallpaper" <<'SH'
 #!/usr/bin/env bash
-echo "orgm-wallpaper $*" >>"$CALLS"
+echo "hypr-wallpaper $*" >>"$CALLS"
 SH
-chmod +x "$TMP/bin/orgm-wallpaper"
+chmod +x "$TMP/bin/hypr-wallpaper"
 
 cat >"$TMP/bin/hyprctl" <<'SH'
 #!/usr/bin/env bash
 echo "hyprctl $*" >>"$CALLS"
-if [ "${1:-}" = reload ]; then
-  echo "orgm-wallpaper random video (reload side effect)" >>"$CALLS"
-fi
-exit 0
 SH
 chmod +x "$TMP/bin/hyprctl"
 
@@ -119,12 +115,14 @@ QS_HOVER=bcc0ccaa
 ON_ACCENT=eff1f5
 EOF
 
+mkdir -p "$TMP/state/orgm-theme/wallpapers/orgm-light.monitors"
 printf 'orgm-dark\n' >"$TMP/state/orgm-theme/current"
-printf 'mode=static\npath=/wallpapers/dark.png\n' >"$TMP/state/hypr-wallpaper/state"
-printf 'mode=static\npath=/wallpapers/light.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.state"
-printf 'mode=static\npath=/wallpapers/current-dp.png\n' >"$TMP/state/hypr-wallpaper/monitors/DP-3.state"
-printf 'mode=static\npath=/wallpapers/light-dp.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/DP-3.state"
-printf 'mode=static\npath=/wallpapers/light-hdmi.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/HDMI-A-1.state"
+printf '/wallpapers/dark.png\n' >"$TMP/state/hypr-wallpaper/current"
+printf 'mode=static\npath=/wallpapers/dark-dp.png\n' >"$TMP/state/hypr-wallpaper/monitors/DP-1.state"
+printf 'mode=video\npath=/wallpapers/dark-edp.mp4\n' >"$TMP/state/hypr-wallpaper/monitors/eDP-1.state"
+printf 'path=/wallpapers/light.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.state"
+printf 'mode=static\npath=/wallpapers/light-dp.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/DP-1.state"
+printf 'mode=video\npath=/wallpapers/light-edp.mp4\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/eDP-1.state"
 
 HOME="$TMP/home" \
 XDG_CONFIG_HOME="$TMP/config" \
@@ -133,45 +131,26 @@ XDG_RUNTIME_DIR="$TMP/runtime" \
 PATH="$TMP/bin:$PATH" \
 "$SCRIPT" apply orgm-light >/tmp/orgm-theme-wallpaper.out
 
-grep -q '^mode=static$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.state" || {
-  echo "FAIL: outgoing dark wallpaper mode was not saved" >&2
-  cat "$TMP/state/orgm-theme/wallpapers/orgm-dark.state" >&2 || true
-  exit 1
-}
-
 grep -q '^path=/wallpapers/dark.png$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.state" || {
-  echo "FAIL: outgoing dark wallpaper path was not saved" >&2
+  echo "FAIL: outgoing dark global wallpaper path was not saved" >&2
   cat "$TMP/state/orgm-theme/wallpapers/orgm-dark.state" >&2 || true
   exit 1
 }
 
-grep -q '^mode=static$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-3.state" || {
-  echo "FAIL: outgoing monitor wallpaper mode was not saved" >&2
-  find "$TMP/state/orgm-theme/wallpapers" -type f -maxdepth 2 -print -exec cat {} \; >&2 || true
+grep -qx 'mode=static' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-1.state" &&
+  grep -qx 'path=/wallpapers/dark-dp.png' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-1.state" || {
+  echo "FAIL: outgoing dark DP-1 wallpaper snapshot was not saved" >&2
+  exit 1
+}
+grep -qx 'mode=video' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/eDP-1.state" &&
+  grep -qx 'path=/wallpapers/dark-edp.mp4' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/eDP-1.state" || {
+  echo "FAIL: outgoing dark eDP-1 wallpaper snapshot was not saved" >&2
   exit 1
 }
 
-grep -q '^path=/wallpapers/current-dp.png$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-3.state" || {
-  echo "FAIL: outgoing monitor wallpaper path was not saved" >&2
-  find "$TMP/state/orgm-theme/wallpapers" -type f -maxdepth 2 -print -exec cat {} \; >&2 || true
-  exit 1
-}
-
-grep -q '^orgm-wallpaper set-static /wallpapers/light-dp.png --monitor DP-3$' "$CALLS" || {
-  echo "FAIL: incoming light DP monitor wallpaper was not restored" >&2
-  cat "$CALLS" >&2
-  exit 1
-}
-
-grep -q '^orgm-wallpaper set-static /wallpapers/light-hdmi.png --monitor HDMI-A-1$' "$CALLS" || {
-  echo "FAIL: incoming light HDMI monitor wallpaper was not restored" >&2
-  cat "$CALLS" >&2
-  exit 1
-}
-
-last_wallpaper_call="$(grep '^orgm-wallpaper ' "$CALLS" | tail -n 1)"
-if [ "$last_wallpaper_call" != 'orgm-wallpaper set-static /wallpapers/light-hdmi.png --monitor HDMI-A-1' ]; then
-  echo "FAIL: incoming theme wallpaper must be restored after live reload" >&2
+expected_calls=$'hyprctl reload\nhypr-wallpaper set /wallpapers/light.png\nhypr-wallpaper set /wallpapers/light-dp.png --monitor DP-1\nhypr-wallpaper set /wallpapers/light-edp.mp4 --monitor eDP-1'
+if [ "$(cat "$CALLS")" != "$expected_calls" ]; then
+  echo "FAIL: reload must precede global and per-monitor wallpaper restoration via hypr-wallpaper" >&2
   cat "$CALLS" >&2
   exit 1
 fi

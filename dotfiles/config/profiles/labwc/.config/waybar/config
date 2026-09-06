@@ -39,23 +39,6 @@
     "custom/time": { "exec": "waybar-time-ampm", "interval": 1, "tooltip": false },
     "custom/date": { "exec": "waybar-date-es", "interval": 60, "tooltip": false },
 
-    "custom/wallpaper": {
-      "format": "󰸉",
-      "tooltip": true,
-      "tooltip-format": "Cambiar fondo aleatorio",
-      "on-click": "~/.local/bin/sway-random-wallpaper next"
-    },
-
-    "custom/usb_devices": {
-      "exec": "hypr-usb-menu status",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "hypr-usb-menu open",
-      "on-click-right": "hypr-usb-menu nickname"
-    },
-
     "custom/memclean": {
       "exec": "memclean-dev status",
       "return-type": "json",
@@ -142,7 +125,7 @@
     "margin-right": 0,
     "modules-left": ["custom/orgm_logo", "custom/user", "sway/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
-    "modules-right": ["group/usage", "custom/wallpaper", "custom/usb_devices", "custom/memclean", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
+    "modules-right": ["group/usage", "custom/memclean", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
 
     "custom/orgm_logo": { "format": " ", "tooltip": true, "tooltip-format": "Abrir fuzzel", "on-click": "fuzzel" },
     "custom/user": { "format": "  osmarg", "tooltip": false },
@@ -164,23 +147,6 @@
     },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
-    "custom/wallpaper": {
-      "format": "󰸉",
-      "tooltip": true,
-      "tooltip-format": "Cambiar fondo aleatorio",
-      "on-click": "~/.local/bin/sway-random-wallpaper next"
-    },
-
-    "custom/usb_devices": {
-      "exec": "hypr-usb-menu status",
-      "return-type": "json",
-      "interval": 5,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "hypr-usb-menu open",
-      "on-click-right": "hypr-usb-menu nickname"
-    },
-
     "custom/memclean": {
       "exec": "memclean-dev status",
       "return-type": "json",

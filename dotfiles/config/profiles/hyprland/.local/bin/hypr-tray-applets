@@ -7,6 +7,7 @@ hypr-session-import-env
 systemctl --user start nixos-fake-graphical-session.target || true
 
 nm-applet --indicator &
+tailscale systray &
 blueman-applet &
 nextcloud --background &
 pasystray &

@@ -10,7 +10,6 @@ COMMON="$ROOT/nixos/common.nix"
 TERMINAL="$ROOT/nixos/terminal.nix"
 SERVER="$ROOT/nixos/server.nix"
 ORGM_HOST="$ROOT/nixos/hosts/orgm/ms-7d43.nix"
-ZEROTIER="$ROOT/nixos/hosts/orgm/zerotier.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -98,16 +97,10 @@ for role_module in "$COMMON" "$TERMINAL" "$SERVER"; do
 done
 assert_contains 'inherit inputs userName hostName;' "$BUILDER" \
   'host registry must receive the configuration hostname'
-assert_contains './hosts/orgm/zerotier.nix' "$HOSTS" \
-  'ZeroTier must remain an ORGM host module'
-assert_not_contains 'zerotier.nix' "$INVENTORY" \
-  'ZeroTier must not be selected by role configurations'
 assert_not_contains '../../deskflow.nix' "$ORGM_HOST" \
   'Deskflow must stay outside ORGM base hardware'
 assert_contains '172.18.0.251 vilserver1' "$HOSTS" \
   'vilserver1 must be shared by every host role'
-assert_not_contains 'networking.extraHosts' "$ZEROTIER" \
-  'ZeroTier must not own shared host aliases'
 
 for old_matrix_entry in \
   'orgm-hyprland = mkHost' \

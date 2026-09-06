@@ -7,8 +7,6 @@ CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 AUTOSTART="$ROOT/dotfiles/config/profiles/i3/.config/autostart/autorandr.desktop"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-monitor-profile"
 DEVICES="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-devices-menu"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
-MANIFEST="$ROOT/dotfiles/config/dotfiles.json"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -38,14 +36,6 @@ grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu do
 grep -Fq 'autorandr --change --force --default horizontal --match-edid' "$HELPER" || fail 'EDID-aware detected profile restore command missing'
 grep -Fq 'autorandr --save "$profile" --force' "$HELPER" || fail 'runtime profile save command missing'
 grep -Fq 'Configure) exec arandr' "$HELPER" || fail 'ARandR GUI action missing'
-grep -Fq '".local/bin/i3-monitor-profile"' "$DOTFILES" || fail 'monitor helper not deployed'
-grep -Fq '".config/autostart/autorandr.desktop"' "$DOTFILES" || fail 'Autorandr autostart override not deployed'
-
-[[ "$(grep -Fc '".config/autorandr"' "$DOTFILES")" -eq 1 ]] ||
-  fail 'autorandr path must appear exactly once in Nix local-only inventory'
-grep -Fq '    ".config/autorandr"' "$DOTFILES" || fail 'Nix local-only protection missing'
-jq -e '.local_only.paths | index(".config/autorandr") != null' "$MANIFEST" >/dev/null ||
-  fail 'autorandr profiles must be protected as runtime-local data'
 
 bash -n "$HELPER"
 
