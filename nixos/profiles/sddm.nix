@@ -44,7 +44,8 @@ in
       lib.concatStringsSep "," (
         [ "QML_XHR_ALLOW_FILE_READ=1" ]
         ++ lib.optional (
-          config.services.displayManager.sddm.wayland.compositor == "kwin"
+          config.services.displayManager.sddm.wayland.enable
+          && config.services.displayManager.sddm.wayland.compositor == "kwin"
         ) "QT_WAYLAND_SHELL_INTEGRATION=layer-shell"
       )
     );
@@ -57,7 +58,7 @@ in
   # QT_WAYLAND_CLIENT_BUFFER_INTEGRATION=shm evita que el greeter intente
   # exportar buffers VAAPI/dmabuf hacia KWin (que falla silenciosamente
   # en NVIDIA y se lleva el cursor con ella).
-  systemd.services.display-manager.environment = {
+  systemd.services.display-manager.environment = lib.mkIf config.services.displayManager.sddm.wayland.enable {
     KWIN_FORCE_SW_CURSOR = "1";
     QT_WAYLAND_CLIENT_BUFFER_INTEGRATION = "shm";
   };

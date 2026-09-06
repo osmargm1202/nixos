@@ -30,10 +30,8 @@ for host in orgm lenovo ero jarq; do
     || fail "${host}-i3 must not autologin"
   [[ "$(nix eval "${prefix}.services.xserver.displayManager.startx.enable" 2>/dev/null)" == false ]] \
     || fail "${host}-i3 must not enable StartX"
+  [[ "$(nix eval "${prefix}.services.displayManager.sddm.wayland.enable" 2>/dev/null)" == false ]] \
+    || fail "${host}-i3 must use the X11 SDDM greeter"
 done
-[[ "$(nix eval --raw "path:$ROOT#nixosConfigurations.orgm-i3.config.services.displayManager.sddm.wayland.compositor" 2>/dev/null)" == 'kwin' ]] \
-  || fail 'i3 SDDM must retain the KWin greeter compositor'
-[[ "$(nix eval --raw "path:$ROOT#nixosConfigurations.orgm-i3.config.systemd.services.display-manager.environment.KWIN_FORCE_SW_CURSOR" 2>/dev/null)" == '1' ]] \
-  || fail 'i3 SDDM must retain the KWin software-cursor workaround'
 
 printf 'PASS: i3 profile tests\n'

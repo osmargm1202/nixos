@@ -26,6 +26,10 @@ in
   };
   services.displayManager.defaultSession = "none+i3";
 
+  # i3 is an X11 session. The KWin Wayland greeter exits immediately on this
+  # hardware, leaving SDDM running without a visible login screen.
+  services.displayManager.sddm.wayland.enable = lib.mkForce false;
+
   # i3 is selected explicitly from SDDM; never sign in automatically.
   services.displayManager.autoLogin.enable = lib.mkForce false;
 
