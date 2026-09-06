@@ -5,7 +5,6 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-repo="${DOTFILES_REPO:-$HOME/Hobby/nixos/dotfiles}"
 choice="$(printf '%s\n' \
   '󰑓 Reload Hyprland' \
   '󰑓 Reload nwg-dock' \
@@ -22,11 +21,11 @@ case "$choice" in
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Reload nwg-dock') exec hypr-nwg-dock-reload ;;
   *'Restore wallpaper') exec hypr-wallpaper restore ;;
-  *'Random wallpaper') exec hypr-wallpaper random ;;
+  *'Random wallpaper') exec hypr-wallpaper random-menu ;;
   *'Restart Waybar') exec waybar-watch --restart "$HOME/.config/waybar-hypr" ;;
   *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
   *'Hardware details') exec kitty --title hardware-fastfetch -e bash -ic 'fastfetch-hardware; printf "\n"; exec bash -i' ;;
-  *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
+  *'User logs') exec kitty --hold --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'Power') exec hypr-power-menu ;;
   *) exec hypr-main-menu ;;
 esac

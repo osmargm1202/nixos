@@ -10,6 +10,7 @@ bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
 choice="$(printf '%s\n' \
   '󰀻 Apps' \
   '󰆧 Programas y ventanas' \
+  '󰖟 Set random wallpaper' \
   '󰎔 Shaders de apertura' \
   '󰒓 Tools' \
   '󰖩 Devices' \
@@ -21,6 +22,7 @@ choice="$(printf '%s\n' \
 case "$choice" in
   *'Apps') exec "$bin_dir/hypr-apps-menu" ;;
   *'Programas y ventanas') exec "$bin_dir/hypr-config-editor" "lua/windows-workspaces.lua" ;;
+  *'Set random wallpaper') exec "$bin_dir/hypr-wallpaper" random-menu ;;
   *'Shaders de apertura') exec "$bin_dir/hypr-shader-menu" ;;
   *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
   *'Devices') exec "$bin_dir/hypr-devices-menu" ;;

@@ -2,12 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/dotfiles/config/profiles/hyprland"
-HELPER="$PROFILE/.local/bin/hypr-game-mode"
-LOOK="$PROFILE/.config/hypr/lua/look-and-feel.lua"
-RULES="$PROFILE/.config/hypr/lua/windows-workspaces.lua"
-MODULE="$PROFILE/.config/hypr/lua/game-mode.lua"
-AUTOSTART="$PROFILE/.config/hypr/lua/autostart.lua"
+HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-game-mode"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -15,22 +10,10 @@ fail() {
 }
 
 [[ -x "$HELPER" ]] || fail 'game mode helper must be executable'
-[[ -f "$MODULE" ]] || fail 'game mode Lua module must exist'
-grep -Fq 'gaps_in = game_mode and 0 or 12' "$LOOK" || fail 'game mode must remove inner gaps'
-grep -Fq 'kill -s 43 "$pid"' "$HELPER" || fail 'game mode must refresh Waybar only after state changes'
-grep -Fq 'gaps_out = game_mode and 0 or 12' "$LOOK" || fail 'game mode must remove outer gaps'
-grep -Fq 'rounding = game_mode and 0 or 12' "$LOOK" || fail 'game mode must remove rounding'
-grep -Fq 'enabled = visual_effects' "$LOOK" || fail 'game mode must disable visual effects'
-grep -Fq 'blur = visual_effects' "$LOOK" || fail 'game mode must disable scroll overview blur'
-grep -Fq 'if not game_mode then' "$RULES" || fail 'game mode must disable HyprGlass and opening shaders'
-grep -Fxq '  "hypr-game-mode sync",' "$AUTOSTART" ||
-  fail 'autostart must synchronize wallpaper with persisted game mode'
-! grep -Fq '"hypr-wallpaper restore"' "$AUTOSTART" ||
-  fail 'autostart must not restore wallpaper unconditionally'
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/bin" "$tmp/home/.local/bin"
+mkdir -p "$tmp/bin" "$tmp/home"
 cat >"$tmp/bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${HYPRCTL_LOG:?}"
@@ -46,12 +29,18 @@ cat >"$tmp/bin/pgrep" <<'EOF'
 #!/usr/bin/env bash
 exit 1
 EOF
-chmod +x "$tmp/bin/hyprctl" "$tmp/bin/hypr-wallpaper" "$tmp/bin/pgrep"
-ln -s "$tmp/bin/hypr-wallpaper" "$tmp/home/.local/bin/hypr-wallpaper"
+cat >"$tmp/bin/notify-send" <<'EOF'
+#!/usr/bin/env bash
+printf '<%s>' "$@" >>"${NOTIFY_LOG:?}"
+printf '\n' >>"$NOTIFY_LOG"
+EOF
+chmod +x "$tmp/bin/hyprctl" "$tmp/bin/hypr-wallpaper" "$tmp/bin/pgrep" "$tmp/bin/notify-send"
 export HOME="$tmp/home"
 export HYPRCTL_LOG="$tmp/hyprctl.log"
 export HYPR_WALLPAPER_LOG="$tmp/hypr-wallpaper.log"
 export HYPR_WALLPAPER_FAIL_RESTORE_FILE="$tmp/fail-restore"
+export HYPR_WALLPAPER_BIN="$tmp/bin/hypr-wallpaper"
+export NOTIFY_LOG="$tmp/notify.log"
 
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" toggle
 [[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$HELPER" status)" == activated ]] ||

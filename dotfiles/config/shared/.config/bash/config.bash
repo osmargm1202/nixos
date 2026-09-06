@@ -137,6 +137,7 @@ alias dolphin-emu='flatpak run org.DolphinEmu.dolphin-emu --'
 alias pcsx2='flatpak run net.pcsx2.PCSX2 --'
 alias rpcs3='flatpak run net.rpcs3.RPCS3 --'
 alias herdr='nix run herdr --'
+alias za='zellij attach'
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then
   cheat() {

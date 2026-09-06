@@ -6,14 +6,14 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 choice="$(printf '%s\n' \
-  '󰸉 Wallpaper selector' \
+  '󰖟 Set random wallpaper' \
   '󰹹 Transitions' \
   '󰌌 Keyboard layout next' \
   '󰒓 Hypr config editor' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
 case "$choice" in
-  *'Wallpaper selector') exec hypr-wallpaper random ;;
+  *'Set random wallpaper') exec hypr-wallpaper random-menu ;;
   *'Transitions') exec hypr-transition-menu ;;
   *'Keyboard layout next') exec kbd-layout-next ;;
   *'Hypr config editor') exec hypr-config-editor ;;

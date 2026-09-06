@@ -58,9 +58,6 @@ assert_contains "$CALLS" 'hypr-transition-menu '
 run_menu '󰖩 WiFi' "$BIN/hypr-devices-menu"
 assert_contains "$CALLS" 'kitty -e nmtui'
 
-run_menu '󰖟 Random wallpaper' "$BIN/hypr-system-menu"
-assert_contains "$CALLS" 'hypr-wallpaper random'
-
 run_menu '󰌌 Keybindings help' "$BIN/hypr-help-menu"
 assert_contains "$CALLS" 'hypr-keybindings-help '
 

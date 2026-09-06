@@ -14,7 +14,7 @@ function M.setup(programs)
 
   -- Help / launchers.
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keybindings-help"))
-  hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("hypr-wallpaper random"))
+  hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("hypr-wallpaper random-menu"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus"))
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(programs.terminal))

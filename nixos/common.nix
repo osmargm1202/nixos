@@ -44,6 +44,7 @@ let
       git
       git-lfs
       tmux
+      zellij
       age
       fd
       jq

@@ -7,6 +7,8 @@
 }:
 
 let
+  cursorPackage = pkgs.catppuccin-cursors.macchiatoTeal;
+  cursorTheme = "catppuccin-macchiato-teal-cursors";
   hostThemeFile = ../hosts/${config.networking.hostName}/sddm-theme.nix;
   hostTheme = if builtins.pathExists hostThemeFile then import hostThemeFile else "black_hole";
   useGreenShift = builtins.elem profileName [
@@ -29,6 +31,10 @@ in
     autoNumlock = true;
     enableHidpi = true;
     settings.General.Numlock = "on";
+    settings.Theme = {
+      CursorTheme = cursorTheme;
+      CursorSize = 24;
+    };
     theme = if useGreenShift then "GreenShift" else "sddm-astronaut-theme";
     extraPackages =
       if useGreenShift then
@@ -51,7 +57,10 @@ in
     );
   };
 
-  environment.systemPackages = [ themePackage ];
+  environment.systemPackages = [
+    themePackage
+    cursorPackage
+  ];
 
   # NVIDIA + KWin Wayland: hardware cursor plane no compone en NVIDIA.
   # KWIN_FORCE_SW_CURSOR fuerza KWin a dibujar el cursor via software.
@@ -59,6 +68,10 @@ in
   # exportar buffers VAAPI/dmabuf hacia KWin (que falla silenciosamente
   # en NVIDIA y se lleva el cursor con ella).
   systemd.services.display-manager.environment = lib.mkIf config.services.displayManager.sddm.wayland.enable {
+    # The sddm user has no Home Manager cursor configuration or icon search path.
+    XCURSOR_THEME = cursorTheme;
+    XCURSOR_SIZE = "24";
+    XCURSOR_PATH = "${cursorPackage}/share/icons";
     KWIN_FORCE_SW_CURSOR = "1";
     QT_WAYLAND_CLIENT_BUFFER_INTEGRATION = "shm";
   };

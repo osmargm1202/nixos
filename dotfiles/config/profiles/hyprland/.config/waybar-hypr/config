@@ -204,7 +204,7 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Fondo aleatorio",
-      "on-click": "hypr-wallpaper random"
+      "on-click": "hypr-wallpaper random-menu"
     },
     "custom/keybindings_help": {
       "format": "?",

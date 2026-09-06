@@ -6,13 +6,19 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 power_width="${HYPR_ROFI_POWER_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 360 * s }')}"
-choice="$(printf '%s\n' '󰌾 Lock' '󰤄 Suspend' '󰒲 Hibernate' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' | hypr_rofi_dmenu 'Power' 7 "$power_width" || true)"
+choice="$({
+  printf '%s\n' '󰌾 Lock' '󰤄 Suspend'
+  case "$(busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanHibernate 2>/dev/null || true)" in
+    's "yes"'|'s "challenge"') printf '%s\n' '󰒲 Hibernate' ;;
+  esac
+  printf '%s\n' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel'
+} | hypr_rofi_dmenu 'Power' 7 "$power_width" || true)"
 
 case "$choice" in
   *'Lock') exec "$HOME/.local/bin/hypr-lock" ;;
   *'Suspend') systemctl suspend ;;
   *'Hibernate') systemctl hibernate ;;
-  *'Logout') hyprctl dispatch exit ;;
+  *'Logout') hyprctl dispatch 'hl.dsp.exit()' ;;
   *'Reboot') systemctl reboot ;;
   *'Power off') systemctl poweroff ;;
   *) exec hypr-main-menu ;;

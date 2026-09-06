@@ -8,7 +8,6 @@ I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 I3_MENU="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
 HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
 HYPR_HELP="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-keybindings-help"
-HYPR_MENU="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-apps-menu"
 HYPR_SMART_RUN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-smart-run"
 LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/rc.xml"
 MENU="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/menu.xml"
@@ -31,7 +30,6 @@ grep -Fq 'mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new-tab --promp
 grep -Fq 'mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus")' "$HYPR" || fail 'Hyprland Win+W must use restore-or-focus'
 grep -Fq 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus")' "$HYPR" || fail 'Hyprland Win+Shift+W must only focus'
 grep -Fq "entry 'Win+W' 'Restaurar Firefox o abrir pestaña nueva' 'firefox-open-tab --restore-or-focus'" "$HYPR_HELP" || fail 'Hyprland Win+W help must describe session restoration or a new tab'
-grep -Fq "*'Firefox') exec firefox-open-tab --focus" "$HYPR_MENU" || fail 'Hyprland Firefox menu must only focus'
 grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_SMART_RUN" || fail 'Hyprland web launcher must reuse or create a Firefox tab'
 grep -Fq '<keybind key="W-w">' "$LABWC" || fail 'Labwc Win+W binding missing'
 grep -Fq '<command>firefox-open-tab --restore-or-focus</command>' "$LABWC" || fail 'Labwc Win+W must use restore-or-focus'

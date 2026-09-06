@@ -15,7 +15,7 @@ choice="$(printf '%s\n' \
 case "$choice" in
   *'App launcher') hypr_rofi_drun ;;
   *'Kitty') exec kitty ;;
-  *'Firefox') exec firefox-open-tab --focus ;;
+  *'Firefox') exec firefox-open-tab --restore-or-focus ;;
   *'Obsidian') exec hypr-obsidian-open-or-focus ;;
   *) exec hypr-main-menu ;;
 esac
