@@ -89,12 +89,6 @@ in
     DefaultLimitMEMLOCK=infinity
   '';
 
-  # i3 starts X from the tty1 login shell. Declaring a service override creates
-  # the tty1 instance, so explicitly attach it to getty.target as well.
-  systemd.services."getty@tty1" = {
-    wantedBy = [ "getty.target" ];
-    serviceConfig.LimitMEMLOCK = "infinity";
-  };
   boot.blacklistedKernelModules = [
     "nouveau"
     "nvidia"

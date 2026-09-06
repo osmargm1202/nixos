@@ -265,6 +265,23 @@ load_rdp_credentials() {
   RDP_USER="${!user_var:-}"
   RDP_PASSWORD_FILE="${!password_file_var:-}"
 
+  # Desktop launchers may retain an environment from before HM activation.
+  # Load the same generated defaults as Bash without sourcing interactive rc.
+  if [[ -z "$RDP_USER" || -z "$RDP_PASSWORD_FILE" ]]; then
+    local session_vars
+    local __HM_SESS_VARS_SOURCED=""
+    for session_vars in \
+      "/etc/profiles/per-user/${USER:-$(id -un)}/etc/profile.d/hm-session-vars.sh" \
+      "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"; do
+      [[ -r "$session_vars" ]] || continue
+      # shellcheck source=/dev/null
+      source "$session_vars" || return 1
+      RDP_USER="${RDP_USER:-${!user_var:-}}"
+      RDP_PASSWORD_FILE="${RDP_PASSWORD_FILE:-${!password_file_var:-}}"
+      break
+    done
+  fi
+
   if [[ -z "$RDP_USER" || -z "$RDP_PASSWORD_FILE" || ! -r "$RDP_PASSWORD_FILE" || ! -s "$RDP_PASSWORD_FILE" ]]; then
     echo "Error: RDP host '$selected_host' requires $user_var and $password_file_var." >&2
     return 1

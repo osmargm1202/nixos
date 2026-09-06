@@ -11,9 +11,25 @@ for relative_path in "$@"; do
 			rm "$target"
 			;;
 		*)
-			printf 'Refusing to remove unexpected symlink: %s -> %s\n' \
-				"$target" "$link_target" >&2
-			exit 1
+			if [ ! -d "$target" ]; then
+				printf 'Refusing to migrate symlink without a readable directory: %s -> %s\n' \
+					"$target" "$link_target" >&2
+				exit 1
+			fi
+
+			# Detach external directories before leaf cleanup. Dereference nested
+			# links too, so cleanup can never reach back into their source trees.
+			staging="$(mktemp -d "${target}.hm-migration.XXXXXX")"
+			if ! cp -aL "$target/." "$staging/"; then
+				rm -rf "$staging"
+				exit 1
+			fi
+			# Keep the original relative link in the same parent directory.
+			backup="${staging}.original-link"
+			mv -T "$target" "$backup"
+			mv -T "$staging" "$target"
+			printf 'Migrated external directory: %s (original link: %s)\n' \
+				"$target" "$backup"
 			;;
 		esac
 	fi

@@ -9,7 +9,10 @@
 let
   hostThemeFile = ../hosts/${config.networking.hostName}/sddm-theme.nix;
   hostTheme = if builtins.pathExists hostThemeFile then import hostThemeFile else "black_hole";
-  useGreenShift = profileName == "hyprland";
+  useGreenShift = builtins.elem profileName [
+    "hyprland"
+    "i3"
+  ];
   themePackage =
     if useGreenShift then
       pkgs.callPackage ../packages/sddm-greenshift.nix { }
@@ -21,6 +24,8 @@ in
     enable = true;
     package = pkgs.kdePackages.sddm;
     wayland.enable = true;
+    # The software-cursor workaround below requires KWin, not default Weston.
+    wayland.compositor = "kwin";
     autoNumlock = true;
     enableHidpi = true;
     settings.General.Numlock = "on";

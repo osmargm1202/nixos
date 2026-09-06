@@ -34,6 +34,7 @@ if command -v sops-shared-env >/dev/null; then
   alias opencode='sops-shared-env opencode'
   alias pi='sops-shared-env pi'
   alias nvim-ai='sops-shared-env nvim'
+  alias pypi-publish='sops-shared-env --with UV_PUBLISH_TOKEN -- uv publish dist/*'
 fi
 # Keep fnm's managed Node versions available when fnm is installed locally.
 if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then

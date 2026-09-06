@@ -15,6 +15,8 @@ exec --no-startup-id nm-applet
 exec --no-startup-id tailscale systray
 exec --no-startup-id blueman-applet
 exec --no-startup-id kdeconnect-indicator
+# Firefox's declarative startup policy restores the previous session.
+exec --no-startup-id firefox
 # Keep chat and games ready without opening either client window.
 exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'
 exec --no-startup-id sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'

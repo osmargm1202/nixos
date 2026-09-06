@@ -24,6 +24,7 @@
         INSFORGE_API_BASE_URL = { };
         AVANTE_ANTHROPIC_API_KEY = { };
         ORGM_TOKEN = { };
+        UV_PUBLISH_TOKEN = { };
 
         WINDOWS_RDP_PASSWORD_OSMAR_WINDOWS = {
           sopsFile = ../secrets/shared/windows-rdp.yaml;

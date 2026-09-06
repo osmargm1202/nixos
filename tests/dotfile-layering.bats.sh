@@ -64,6 +64,7 @@ for output, host, profile in (("orgm-hyprland", "orgm", "hyprland"), ("lenovo-hy
     in {
       targets = builtins.attrNames hm.home.file;
       migration = hm.home.activation.migrateLegacyDotfileDirectories.data;
+      cleanup = hm.home.activation.removeConflictingDotfiles.data;
       sourcesMatch = builtins.mapAttrs (target: relative:
         builtins.hasAttr target hm.home.file &&
         toString hm.home.file.${target}.source ==
@@ -94,9 +95,23 @@ for output, host, profile in (("orgm-hyprland", "orgm", "hyprland"), ("lenovo-hy
                 (home / target).symlink_to(f"/nix/store/test-home-manager-files/{target}")
             marker = home / ".config/bash/user-local.bash"
             marker.write_text("preserve\n")
+            skill = home / ".pi/agent/skills/find-skills"
+            external = home / ".agents/skills/find-skills"
+            skill.parent.mkdir(parents=True)
+            external.mkdir(parents=True)
+            (external / "SKILL.md").write_text("external original\n")
+            (external / "local-notes.txt").write_text("preserve notes\n")
+            skill.symlink_to("../../../.agents/skills/find-skills")
             subprocess.run([str(root / "nixos/scripts/migrate-home-manager-dotfile-dirs.sh"), *command[2:]], env=os.environ | {"HOME": str(home)}, check=True)
             assert all((home / target).is_dir() and not (home / target).is_symlink() for target in (".config/btop", ".config/bash/icons"))
             assert marker.read_text() == "preserve\n"
+            subprocess.run(["bash", "-euc", evaluated["cleanup"]], env=os.environ | {"HOME": str(home), "DRY_RUN_CMD": ""}, check=True)
+            assert not skill.is_symlink() and skill.is_dir()
+            assert (external / "SKILL.md").read_text() == "external original\n"
+            assert (skill / "local-notes.txt").read_text() == "preserve notes\n"
+            assert not (skill / "SKILL.md").exists(), "Cleanup must remove only the independent managed copy"
+            backups = list(skill.parent.glob("find-skills.hm-migration.*.original-link"))
+            assert len(backups) == 1 and backups[0].resolve() == external
     if output == "lenovo-hyprland":
         assert ".config/hypr/lua/monitors/orgm.lua" not in targets, output
     if profile == "i3":

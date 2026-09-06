@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Track current Tailscale releases without moving the system off stable.
+    nixpkgs-tailscale.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Upstream v0.56.2 retains its release-locked dependency graph.
     hyprland.url = "github:hyprwm/Hyprland/v0.56.2";
     scrollOverview = {

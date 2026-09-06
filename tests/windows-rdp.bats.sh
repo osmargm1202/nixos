@@ -35,6 +35,7 @@ run_script() {
 			PATH="$tmp" \
 			CALLS="$tmp/calls" \
 			HOME="$tmp/home" \
+			USER="windows-rdp-test-$$" \
 			XDG_CURRENT_DESKTOP= \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
 			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
@@ -47,6 +48,7 @@ run_script() {
 		PATH="$tmp" \
 			CALLS="$tmp/calls" \
 			HOME="$tmp/home" \
+			USER="windows-rdp-test-$$" \
 			XDG_CURRENT_DESKTOP= \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
 			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
@@ -300,14 +302,14 @@ test_graphical_selector_and_moonlight() {
   ' bash "$script"
 }
 
-test_gum_cancellation() {
+test_rofi_cancellation() {
 	local script="$1"
 	with_tmp bash -c '
     script="$1"; tmp="$2"
-    make_stub "$tmp" gum "echo gum \"\$@\" >>\"\$CALLS\"; exit 1"
-    PATH="$tmp" \
-      CALLS="$tmp/calls" \
- p"
+    make_stub "$tmp" rofi "echo rofi \"\$@\" >>\"\$CALLS\"; exit 1"
+    make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
+    export WINDOWS_RDP_TEST_DISPLAY=:1
+    run_script "$script" connect "$tmp"
     assert_calls_not_contains "$tmp" "docker|freerdp|flatpak" "Rofi cancellation does not start or connect anything"
   ' bash "$script"
 }
@@ -377,6 +379,43 @@ test_custom_rdp_connection() {
   ' bash "$script"
 }
 
+test_graphical_home_manager_credentials() {
+	local script="$1"
+	with_tmp bash -c '
+    script="$1"; tmp="$2"
+    make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
+    make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
+    make_stub "$tmp" rofi "printf \"%s\\n\" 3"
+    make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
+    export TAILSCALE_STATUS="{}" WINDOWS_RDP_TEST_DISPLAY=:1
+    export JQ_OUTPUT=$'"'"'lenovo-windows\t100.64.0.7\tonline'"'"'
+    export __HM_SESS_VARS_SOURCED=1
+    unset WINDOWS_RDP_LENOVO_WINDOWS_USER WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE
+    mkdir -p "$tmp/home/.nix-profile/etc/profile.d"
+    printf "%s\n" profile-password >"$tmp/profile-password"
+    printf "%s\n" \
+      "if [ -n \"\${__HM_SESS_VARS_SOURCED:-}\" ]; then return; fi" \
+      "export __HM_SESS_VARS_SOURCED=1" \
+      "export WINDOWS_RDP_LENOVO_WINDOWS_USER=profile-user" \
+      "export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE=\"$tmp/profile-password\"" \
+      >"$tmp/home/.nix-profile/etc/profile.d/hm-session-vars.sh"
+    run_script "$script" connect "$tmp"
+    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 /u:profile-user /p:profile-password" "graphical launch loads current HM credentials despite inherited source guard"
+    assert_calls_not_contains "$tmp" "docker" "graphical remote connection does not manage the local VM"
+
+    : >"$tmp/calls"
+    export WINDOWS_RDP_LENOVO_WINDOWS_USER=override-user
+    run_script "$script" connect "$tmp"
+    assert_calls_contains "$tmp" "/u:override-user /p:profile-password" "explicit username takes precedence while missing password path comes from HM"
+
+    : >"$tmp/calls"
+    printf "%s\n" override-password >"$tmp/override-password"
+    export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE="$tmp/override-password"
+    run_script "$script" connect "$tmp"
+    assert_calls_contains "$tmp" "/u:override-user /p:override-password" "explicit credentials retain precedence"
+  ' bash "$script"
+}
+
 for script in "${SCRIPTS[@]}"; do
 	test_command_selection "$script"
 	test_direct_connection_is_silent_and_immediate "$script"
@@ -385,6 +424,7 @@ for script in "${SCRIPTS[@]}"; do
 	test_direct_connection_reports_failure_without_retry_waits "$script"
 	test_remote_selector_rdp "$script"
 	test_graphical_selector_and_moonlight "$script"
+	test_graphical_home_manager_credentials "$script"
 	test_selector_local_start_only "$script"
 	test_rofi_cancellation "$script"
 	test_gum_cancellation "$script"

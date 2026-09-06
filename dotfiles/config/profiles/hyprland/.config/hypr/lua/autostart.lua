@@ -12,6 +12,8 @@ local exec_once = {
   "hyprpolkitagent",
   "sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'",
   "kdeconnect-indicator",
+  -- Firefox's declarative startup policy restores the previous session.
+  "firefox",
   -- Keep chat and games ready without opening either client window.
   "hypr-start-discord",
   "sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'",

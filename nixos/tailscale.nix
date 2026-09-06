@@ -5,7 +5,7 @@
 # to 100.100.100.100 and every DNS query depends on the daemon (broken
 # internet on restarts/sleep). sshgo connects by Tailscale IP, so
 # MagicDNS names aren't needed.
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
   peerMonitorServiceName = "tailscale-peer-monitor";
   peerNotifierServiceName = "tailscale-peer-notifier";
@@ -205,6 +205,13 @@ let
   };
 in
 {
+  # Keep tailscaled, the CLI/systray and peer-monitor tooling on one version.
+  nixpkgs.overlays = [
+    (_final: prev: {
+      tailscale = inputs.nixpkgs-tailscale.legacyPackages.${prev.stdenv.hostPlatform.system}.tailscale;
+    })
+  ];
+
   services.tailscale.enable = true;
   services.tailscale.useRoutingFeatures = "client";
 

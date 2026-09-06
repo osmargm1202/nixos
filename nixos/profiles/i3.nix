@@ -15,32 +15,19 @@ let
 in
 {
   imports = [
+    ./sddm.nix
     ./printer.nix
     ./vesktop.nix
   ];
 
   services.xserver = {
     enable = true;
-    displayManager.startx = {
-      enable = true;
-      generateScript = true;
-    };
     windowManager.i3.enable = true;
   };
+  services.displayManager.defaultSession = "none+i3";
 
-  # i3 begins only after an authenticated tty1 login; neither a display manager
-  # nor the Lenovo host's tty1 autologin may bypass that boundary.
+  # i3 is selected explicitly from SDDM; never sign in automatically.
   services.displayManager.autoLogin.enable = lib.mkForce false;
-  systemd.services = {
-    "getty@tty1".serviceConfig.ExecStart = lib.mkForce [
-      ""
-      "${pkgs.util-linux}/sbin/agetty --noclear --keep-baud %I 115200,38400,9600 $TERM"
-    ];
-    "autovt@tty1".serviceConfig.ExecStart = lib.mkForce [
-      ""
-      "${pkgs.util-linux}/sbin/agetty --noclear %I $TERM"
-    ];
-  };
 
   # A manual i3 session must remain usable when the lid is closed. Logind
   # cannot scope lid handling to a VT, so disable lid-initiated suspend for
@@ -68,13 +55,6 @@ in
     };
   };
 
-  # The tty1 login unlocks GNOME Keyring through PAM before X starts.
-  programs.bash.loginShellInit = lib.mkAfter ''
-    if [ "$(tty)" = /dev/tty1 ] && [ -z "$DISPLAY" ]; then
-      exec startx /etc/X11/xinit/xinitrc
-    fi
-  '';
-
   services.libinput.enable = true;
   security.polkit.enable = true;
   services.dbus.enable = true;
@@ -91,8 +71,6 @@ in
   nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
 
   programs.dconf.enable = true;
-  security.pam.services.login.enableGnomeKeyring = true;
-
   services.pulseaudio.enable = false;
 
   xdg.portal = {
