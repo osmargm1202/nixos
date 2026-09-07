@@ -27,13 +27,14 @@ refresh_waybar() {
   local pid
   while IFS= read -r pid; do
     kill -s 43 "$pid" 2>/dev/null || true
-  done < <(pgrep -x waybar || true)
+  done < <(pgrep -u "$(id -u)" -f '(^|/)waybar( |$)' || true)
 }
 
 apply_wallpaper_state() {
   case "$1" in
-    activated) "$wallpaper_bin" hide ;;
-    deactivated) "$wallpaper_bin" restore ;;
+    # Keep the transaction lock in this process, never in wallpaper daemons.
+    activated) "$wallpaper_bin" hide 9>&- ;;
+    deactivated) "$wallpaper_bin" restore 9>&- ;;
   esac
 }
 
