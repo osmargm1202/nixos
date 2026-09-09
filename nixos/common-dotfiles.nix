@@ -231,6 +231,19 @@ in
       ...
     }:
     {
+      # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
+      # and Labwc start the same command explicitly.
+      xdg.configFile."autostart/tailscale-systray.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Tailscale
+        Comment=Manage Tailscale from the system tray
+        Exec=tailscale systray --theme light
+        Terminal=false
+        X-GNOME-Autostart-enabled=true
+        OnlyShowIn=GNOME;X-Cinnamon;
+      '';
+
       # Keep user-level MIME preferences in sync with declarative defaults,
       # which take precedence over /etc/xdg/mimeapps.list.
       home.activation.setPreferredFileHandlers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

@@ -185,6 +185,8 @@ in
       blueman
       pavucontrol
       pasystray
+      # i3bar hosts XEmbed only; bridge StatusNotifier items such as Tailscale.
+      snixembed
       polkit_gnome
       dex
       xss-lock

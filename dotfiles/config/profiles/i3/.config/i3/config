@@ -12,7 +12,8 @@ tiling_drag modifier titlebar
 exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1
 exec --no-startup-id nm-applet
-exec --no-startup-id tailscale systray
+# Start the SNI bridge and wait up to five seconds for its watcher.
+exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
 exec --no-startup-id blueman-applet
 exec --no-startup-id kdeconnect-indicator
 # Firefox's declarative startup policy restores the previous session.
@@ -225,6 +226,7 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
+  tray_output primary
   status_command ~/.local/bin/i3status-localized
   separator_symbol "│"
 }
