@@ -413,6 +413,7 @@ in
     noto-fonts
     font-awesome
     nerd-fonts.jetbrains-mono
+    nerd-fonts.roboto-mono
     nerd-fonts.symbols-only
     noto-fonts-color-emoji
   ];
