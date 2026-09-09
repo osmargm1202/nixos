@@ -523,8 +523,14 @@ func startPi(session string, cfg config) (*rpcClient, error) {
 	} else {
 		args = append(args, "--session", session, "--provider", cfg.Provider, "--model", cfg.Model, "--thinking", cfg.Thinking, "--system-prompt", systemPrompt)
 	}
-	cmd := exec.Command("pi", args...)
-	cmd.Env = withoutPackageDir(os.Environ())
+	pi, err := findPi()
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(pi, args...)
+	// A managed Pi script may use /usr/bin/env node. Keep its own runtime
+	// directory available even when the desktop did not initialize FNM.
+	cmd.Env = append(withoutPackageDir(os.Environ()), "PATH="+filepath.Dir(pi)+string(os.PathListSeparator)+os.Getenv("PATH"))
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("open Pi input: %w", err)
@@ -545,6 +551,43 @@ func startPi(session string, cfg config) (*rpcClient, error) {
 	go client.readStderr(stderr)
 	go func() { _ = cmd.Wait(); close(client.done) }()
 	return client, nil
+}
+
+func findPi() (string, error) {
+	if path, err := exec.LookPath("pi"); err == nil {
+		return path, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("locate native Pi: %w", err)
+	}
+	bunHome := os.Getenv("BUN_INSTALL")
+	if bunHome == "" {
+		bunHome = filepath.Join(home, ".bun")
+	}
+	npmPrefix := os.Getenv("NPM_CONFIG_PREFIX")
+	if npmPrefix == "" {
+		npmPrefix = filepath.Join(home, ".npm-global")
+	}
+	fnmHome := os.Getenv("FNM_DIR")
+	if fnmHome == "" {
+		dataHome := os.Getenv("XDG_DATA_HOME")
+		if dataHome == "" {
+			dataHome = filepath.Join(home, ".local", "share")
+		}
+		fnmHome = filepath.Join(dataHome, "fnm")
+	}
+	for _, directory := range []string{
+		filepath.Join(home, ".local", "bin"),
+		filepath.Join(bunHome, "bin"),
+		filepath.Join(npmPrefix, "bin"),
+		filepath.Join(fnmHome, "aliases", "default", "bin"),
+	} {
+		if path, err := exec.LookPath(filepath.Join(directory, "pi")); err == nil {
+			return path, nil
+		}
+	}
+	return "", errors.New("native Pi was not found; run pi-install or add pi to PATH")
 }
 
 func withoutPackageDir(environment []string) []string {

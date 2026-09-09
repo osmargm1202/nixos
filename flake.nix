@@ -99,6 +99,7 @@
           lib = systemBuilders;
 
           nixosModules = {
+            orgm = ./nixos/orgm/default.nix;
             gpu = {
               intel = ./nixos/hardware/gpu/intel.nix;
               radeon = ./nixos/hardware/gpu/radeon.nix;
@@ -129,15 +130,14 @@
           };
           braveOrigin = pkgs.callPackage ./nixos/apps/brave-origin.nix { };
           engram = pkgs.callPackage ./nixos/apps/engram.nix { };
-          orgmai = pkgs.callPackage ./nixos/apps/orgmai.nix { };
+          orgmPackages = import ./nixos/orgm/packages.nix { inherit pkgs; };
         in
         {
           formatter = pkgs.nixfmt-rfc-style;
 
-          packages = {
+          packages = orgmPackages // {
             inherit
               engram
-              orgmai
               braveOrigin
               ;
             "brave-origin" = braveOrigin;

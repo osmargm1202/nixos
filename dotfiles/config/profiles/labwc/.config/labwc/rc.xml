@@ -8,7 +8,7 @@
     <primarySelection>yes</primarySelection>
   </core>
   <regions>
-    <region name="orgmai-chat" x="5%" y="5%" width="90%" height="90%"/>
+    <region name="orgmai-chat" x="7.5%" y="7.5%" width="85%" height="85%"/>
     <region name="orgmai-config" x="10%" y="10%" width="80%" height="80%"/>
   </regions>
 
@@ -103,6 +103,11 @@
       </action>
     </keybind>
     <keybind key="W-S-a">
+      <action name="Execute">
+        <command>kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai prev</command>
+      </action>
+    </keybind>
+    <keybind key="W-C-S-a">
       <action name="Execute">
         <command>kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config</command>
       </action>

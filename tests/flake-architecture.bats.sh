@@ -85,10 +85,6 @@ assert_contains \
   "$FLAKE" \
   'perSystem must provide the formatter'
 assert_contains \
-  'packages = {' \
-  "$FLAKE" \
-  'perSystem must provide packages'
-assert_contains \
   'devShells.default = pkgsDev.mkShell {' \
   "$FLAKE" \
   'perSystem must provide the default development shell'

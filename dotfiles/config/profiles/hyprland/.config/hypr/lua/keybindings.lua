@@ -24,7 +24,8 @@ function M.setup(programs)
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus"))
   hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("windows-rdp toggle"))
   hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new"))
-  hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config"))
+  hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai prev"))
+  hl.bind(mainMod .. " + CTRL + SHIFT + A", hl.dsp.exec_cmd("kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config"))
 
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))
 

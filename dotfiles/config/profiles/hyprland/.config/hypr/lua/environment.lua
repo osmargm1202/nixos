@@ -1,7 +1,7 @@
 local home = os.getenv("HOME") or ""
 local path = os.getenv("PATH") or "/run/current-system/sw/bin"
 if home ~= "" then
-  path = path .. ":" .. home .. "/.local/bin"
+  path = "/run/wrappers/bin:" .. home .. "/.local/bin:" .. path
 end
 
 local env = {

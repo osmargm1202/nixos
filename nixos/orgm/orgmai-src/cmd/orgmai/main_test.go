@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -181,5 +183,70 @@ func TestNewConversationAppearsFirstInHistory(t *testing.T) {
 	resumed, err := a.sessionPath(false)
 	if err != nil || resumed != newPath {
 		t.Fatalf("explicit resume did not select latest conversation: %q, %v", resumed, err)
+	}
+}
+
+func isolatedNativeRuntime(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", filepath.Join(home, "empty-path"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	t.Setenv("BUN_INSTALL", "")
+	t.Setenv("NPM_CONFIG_PREFIX", "")
+	t.Setenv("FNM_DIR", "")
+	return home
+}
+
+func TestStartPiFindsFNMRuntimeWithoutShellInitialization(t *testing.T) {
+	envPath, err := exec.LookPath("env")
+	if err != nil {
+		t.Fatal(err)
+	}
+	shPath, err := exec.LookPath("sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+	home := isolatedNativeRuntime(t)
+	bin := filepath.Join(home, "data", "fnm", "aliases", "default", "bin")
+	if err := os.MkdirAll(bin, 0700); err != nil {
+		t.Fatal(err)
+	}
+	// Like native Pi, this entrypoint requires its managed Node interpreter.
+	if err := os.WriteFile(filepath.Join(bin, "pi"), []byte("#!"+envPath+" node\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	node := "#!" + shPath + "\n" + `
+while IFS= read -r command; do
+  case "$command" in
+    *get_available_models*)
+      printf '%s\n' '{"type":"response","id":"models","success":true,"data":{"models":[{"provider":"test","id":"native-runtime"}]}}'
+      ;;
+    *abort*) exit 0 ;;
+  esac
+done
+`
+	if err := os.WriteFile(filepath.Join(bin, "node"), []byte(node), 0700); err != nil {
+		t.Fatal(err)
+	}
+	client, err := startPi("", config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.close()
+	models, err := client.availableModels()
+	if err != nil || len(models) != 1 || models[0].ID != "native-runtime" {
+		t.Fatalf("Pi could not run with the managed interpreter: %v, %v", models, err)
+	}
+}
+
+func TestMissingPiExplainsHowToInstall(t *testing.T) {
+	isolatedNativeRuntime(t)
+	client, err := startPi("", config{})
+	if client != nil {
+		client.close()
+	}
+	if err == nil || !strings.Contains(err.Error(), "pi-install") {
+		t.Fatalf("missing Pi should give an actionable error: %v", err)
 	}
 }

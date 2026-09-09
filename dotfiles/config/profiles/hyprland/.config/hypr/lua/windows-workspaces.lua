@@ -111,7 +111,7 @@ local utilities = {
   { class = "^(blueman-manager)$", size = "760 520" },
   { class = "^(nm-connection-editor)$", size = "820 560" },
   { class = "^(org.gnome.FileRoller)$", size = "820 560" },
-  { class = "^(orgmai-chat)$", size = "monitor_w*0.9 monitor_h*0.9" },
+  { class = "^(orgmai-chat)$", size = "monitor_w*0.85 monitor_h*0.85" },
   { class = "^(orgmai-config)$", size = "monitor_w*0.8 monitor_h*0.8" },
 }
 

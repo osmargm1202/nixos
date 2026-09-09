@@ -7,9 +7,9 @@
 
 buildGoModule {
   pname = "orgmai";
-  version = "0.2.2";
+  version = "0.2.3";
   # Snapshot of ~/Code/orgm-ai; no host-specific paths or network Go dependencies.
-  src = ../ai/orgmai-src;
+  src = ./orgmai-src;
   vendorHash = null;
   subPackages = [ "cmd/orgmai" ];
   nativeBuildInputs = [ makeWrapper ];

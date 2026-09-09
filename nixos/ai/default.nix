@@ -9,7 +9,6 @@
     ./copilot.nix
     ./engram.nix
     ./pi.nix
-    ./orgmai.nix
     ./opencode.nix
     ./omp.nix
   ];
