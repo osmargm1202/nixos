@@ -38,7 +38,7 @@ mapfile -t fastfetch_args <"$temp_dir/fastfetch-args"
 [[ "${fastfetch_args[1]}" == "$HOME/.config/fastfetch/hardware.jsonc" ]]
 
 nix eval --impure --raw --expr '
-  let c = (builtins.getFlake (toString ./.)).nixosConfigurations.lenovo-hyprland;
+  let c = (builtins.getFlake "path:${toString ./.}").nixosConfigurations.lenovo-hyprland;
   in if builtins.elem c.pkgs.fastfetch c.config.environment.systemPackages
     then "fastfetch installed"
     else throw "fastfetch missing from system packages"

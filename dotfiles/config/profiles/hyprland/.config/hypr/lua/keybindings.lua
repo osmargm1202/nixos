@@ -23,10 +23,12 @@ function M.setup(programs)
   hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("hypr-obsidian-open-or-focus"))
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus"))
   hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("windows-rdp toggle"))
+  hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new"))
+  hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config"))
+
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("woomer"))
 
   hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
-
   -- Launchers and control center.
   hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("app_launcher", "hypr-app-launcher")))
   hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(program("control_center", "hypr-main-menu")))

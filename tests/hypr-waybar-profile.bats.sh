@@ -8,8 +8,7 @@ attr="path:$repo_dir#nixosConfigurations.lenovo-hyprland.config.home-manager.use
 paths=(
   '.config/waybar-hypr/config'
   '.config/waybar-hypr/style.css'
-  '.config/nwg-dock-hyprland/style.css'
-  '.config/nwg-dock-hyprland/pinned'
+  '.config/waybar-hypr/orgm-current.css'
   '.local/bin/waybar-date-es'
   '.local/bin/waybar-day-month-es'
   '.local/bin/waybar-time-ampm'
@@ -17,17 +16,15 @@ paths=(
   '.local/bin/waybar-caffeine-state'
   '.local/bin/hypr-game-mode'
   '.local/bin/hypr-reload-after-switch'
-  '.local/bin/hypr-nwg-dock'
-  '.local/bin/hypr-nwg-dock-reload'
 )
 
 for path in "${paths[@]}"; do
   [[ -e "dotfiles/config/profiles/hyprland/$path" ]]
   nix eval --raw "$attr.\"$path\".source" >/dev/null
 done
+grep -Fxq '@import "orgm-current.css";' \
+  'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 
-! nix eval --raw "$attr.\".config/nwg-dock-hyprland/orgm-current.css\".source" >/dev/null 2>&1
-[[ ! -e 'dotfiles/config/profiles/hyprland/.config/nwg-dock-hyprland/orgm-current.css' ]]
 
 caffeine_helper='dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-state'
 tmp="$(mktemp -d)"

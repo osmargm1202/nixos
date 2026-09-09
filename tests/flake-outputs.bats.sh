@@ -15,7 +15,7 @@ assert_eq() {
 }
 
 actual_names="$(
-  nix eval --json "$REPO_DIR#nixosConfigurations" --apply builtins.attrNames \
+  nix eval --json "path:$REPO_DIR#nixosConfigurations" --apply builtins.attrNames \
     | jq -r '.[]'
 )"
 
@@ -32,21 +32,21 @@ for mapping in \
   'jarq jarq-hyprland'
 do
   read -r alias target <<<"$mapping"
-  alias_drv="$(nix eval --raw "$REPO_DIR#nixosConfigurations.$alias.config.system.build.toplevel.drvPath")"
-  target_drv="$(nix eval --raw "$REPO_DIR#nixosConfigurations.$target.config.system.build.toplevel.drvPath")"
+  alias_drv="$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.$alias.config.system.build.toplevel.drvPath")"
+  target_drv="$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.$target.config.system.build.toplevel.drvPath")"
   assert_eq "$alias_drv" "$target_drv" "$alias must remain an alias of $target"
 done
 
 assert_eq \
-  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.ero-server.config.networking.hostName")" \
+  "$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.ero-server.config.networking.hostName")" \
   'ero' \
   'ero-server hostname'
 assert_eq \
-  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.jarq-hyprland.config.system.nixos.label")" \
+  "$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.jarq-hyprland.config.system.nixos.label")" \
   'hyprland' \
   'jarq-hyprland profile label'
 assert_eq \
-  "$(nix eval --raw "$REPO_DIR#nixosConfigurations.cinnamon.config.system.nixos.label")" \
+  "$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.cinnamon.config.system.nixos.label")" \
   'cinnamon' \
   'generic cinnamon profile label'
 

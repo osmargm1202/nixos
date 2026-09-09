@@ -118,7 +118,6 @@ class ConfiguredRuntimeTests(unittest.TestCase):
             {rule.name: rule.color for rule in rules},
             {
                 "Discord": RGBColor(255, 0, 0),
-                "Vesktop": RGBColor(255, 0, 0),
                 "Dota": RGBColor(255, 0, 0),
                 "Steam": RGBColor(0, 0, 255),
             },

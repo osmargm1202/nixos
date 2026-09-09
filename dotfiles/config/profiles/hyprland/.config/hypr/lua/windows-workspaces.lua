@@ -17,7 +17,6 @@ local opacity_rules = {
   { class = "^(org.gnome.Nautilus)$", opacity = file_opacity },
   { class = "^(kitty)$", opacity = terminal_opacity },
   { class = "^(dev.warp.Warp)$", opacity = terminal_opacity },
-  { class = "^(vesktop)$", opacity = browser_opacity },
   { class = "^(firefox|Firefox)$", opacity = browser_opacity },
   { class = "^(discord)$", opacity = browser_opacity },
   { class = "^(com.discordapp.Discord)$", opacity = browser_opacity },
@@ -43,7 +42,6 @@ local opening_transition_rules = {
   { match = { class = "^(obsidian)$" }, shader = "ink-splash", duration_ms = 200 },
   { match = { class = "^(com.obsproject.Studio|obs)$" }, shader = "plasma-flow", duration_ms = 200 },
   { match = { title = "^[Bb][Tt][Oo][Pp]$" }, shader = "static-fade", duration_ms = 200 },
-  { match = { class = "^(vesktop)$" }, shader = "pixelate", duration_ms = 200 },
   { match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", duration_ms = 200 },
   { match = { class = "^(discord|com.discordapp.Discord)$" }, shader = "pixelate", duration_ms = 200 },
   { match = { class = "^(libreoffice.*|LibreOffice.*)$" }, shader = "circle", duration_ms = 200 },
@@ -113,6 +111,8 @@ local utilities = {
   { class = "^(blueman-manager)$", size = "760 520" },
   { class = "^(nm-connection-editor)$", size = "820 560" },
   { class = "^(org.gnome.FileRoller)$", size = "820 560" },
+  { class = "^(orgmai-chat)$", size = "monitor_w*0.9 monitor_h*0.9" },
+  { class = "^(orgmai-config)$", size = "monitor_w*0.8 monitor_h*0.8" },
 }
 
 for _, rule in ipairs(utilities) do
@@ -139,6 +139,14 @@ for _, cls in ipairs(browser_notification_classes) do
 end
 
 hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
+
+-- Chromium app windows can request floating through XWayland size/type hints.
+-- Keep webapps tiled without changing the behavior of their modal dialogs.
+hl.window_rule({
+  name = "webapps-tiled",
+  match = { class = "^orgm-webapp-[a-z0-9]+(-[a-z0-9]+)*$", modal = false },
+  tile = true,
+})
 
 hl.window_rule({ match = { modal = true }, float = true })
 

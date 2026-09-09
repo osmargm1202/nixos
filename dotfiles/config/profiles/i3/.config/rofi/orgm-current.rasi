@@ -1,4 +1,4 @@
-/* Default ORGM dark theme. orgm-theme regenerates this in ~/.config/rofi/orgm-current.rasi. */
+/* Static ORGM dark palette. */
 * {
     bg-col: #000000dd;
     surface-col: #22363a4f;

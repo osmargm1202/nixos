@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER="$ROOT/dotfiles/config/shared/.local/bin/firefox-open-tab"
-FIREFOX_POLICY="$ROOT/nixos/firefox.nix"
+FIREFOX_POLICY="$ROOT/nixos/apps/firefox/firefox.nix"
 I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 I3_MENU="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
 HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
@@ -11,7 +11,6 @@ HYPR_HELP="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-keybindings-h
 HYPR_SMART_RUN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-smart-run"
 LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/rc.xml"
 MENU="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/menu.xml"
-WEBAPPS="$ROOT/nixos/webapps.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -36,7 +35,6 @@ grep -Fq '<command>firefox-open-tab --restore-or-focus</command>' "$LABWC" || fa
 grep -Fq '<keybind key="W-m">' "$LABWC" || fail 'Labwc Win+M binding missing'
 grep -Fq '<command>firefox-open-tab --new-tab --prompt</command>' "$LABWC" || fail 'Labwc Win+M must open a new tab from the web prompt'
 grep -Fq '<command>firefox-open-tab --focus</command>' "$MENU" || fail 'Labwc browser menu must only focus'
-grep -Fq 'exec = "/home/${userName}/.local/bin/firefox-open-tab ${app.url}";' "$WEBAPPS" || fail 'webapps must use the Firefox reuse-or-create helper'
 [[ ! -e "$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-firefox-new-window" ]] || fail 'obsolete i3 Firefox wrapper remains'
 [[ ! -e "$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-firefox-new-window" ]] || fail 'obsolete Hyprland Firefox wrapper remains'
 

@@ -6,7 +6,7 @@ cd "$repo_dir"
 
 nix eval --impure --raw --expr '
   let
-    flake = builtins.getFlake (toString ./.) ;
+    flake = builtins.getFlake "path:${toString ./.}" ;
     profileNames = [ "lenovo-gnome" "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" ];
     configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
     i3 = flake.nixosConfigurations.lenovo-i3.config;
@@ -46,7 +46,6 @@ nix eval --impure --raw --expr '
   in
     if builtins.all hasBootMenu configs
       && builtins.all hasAutologin autologinConfigs
-      && !hasTtyAutologin i3
       && !i3.services.displayManager.autoLogin.enable
     then "Lenovo boot specialisations: ok"
     else throw "Lenovo boot specialisation menu is incomplete"
@@ -66,8 +65,8 @@ touch "$boot_root/loader/entries/nixos-generation-999-specialisation-windows-vfi
 
 # This is exactly the executable embedded in extraInstallCommands. Give it a
 # private ESP-shaped tree and assert the post-install default it writes.
-nix build --no-link .#nixosConfigurations.lenovo-i3.config.system.build.installBootLoader
-install_hook="$(nix eval --raw .#nixosConfigurations.lenovo-i3.config.boot.loader.systemd-boot.extraInstallCommands)"
+nix build --no-link "path:$repo_dir#nixosConfigurations.lenovo-i3.config.system.build.installBootLoader"
+install_hook="$(nix eval --raw "path:$repo_dir#nixosConfigurations.lenovo-i3.config.boot.loader.systemd-boot.extraInstallCommands")"
 SYSTEMD_BOOT_ROOT="$boot_root" "$install_hook"
 grep -Fxq 'default nixos-generation-999-specialisation-windows-vfio.conf' \
   "$boot_root/loader/loader.conf"

@@ -2,21 +2,20 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FIREFOX="$ROOT/nixos/firefox.nix"
-CHROMIUM="$ROOT/nixos/chromium.nix"
+FIREFOX="$ROOT/nixos/apps/firefox/firefox.nix"
+CHROMIUM="$ROOT/nixos/apps/chromium.nix"
 COMMON="$ROOT/nixos/common.nix"
 I3_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-DISCORD="$ROOT/nixos/packages/discord-webrtc.nix"
-VESKTOP="$ROOT/nixos/packages/vesktop-webrtc.nix"
+DISCORD="$ROOT/nixos/apps/discord-webrtc.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-grep -Fq './firefox.nix' "$COMMON" ||
+grep -Fq './apps/firefox/firefox.nix' "$COMMON" ||
   fail 'common configuration must import Firefox'
-grep -Fq './chromium.nix' "$COMMON" ||
+grep -Fq './apps/chromium.nix' "$COMMON" ||
   fail 'common configuration must import Chromium'
 grep -Fq 'orgm.chromium.enable = true;' "$COMMON" ||
   fail 'common configuration must enable Chromium for every desktop profile'
@@ -39,9 +38,5 @@ grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$I3_CONFIG" ||
 
 grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interfaces' "$DISCORD" ||
   fail 'Discord WebRTC network policy disappeared'
-grep -Fq -- '--force-webrtc-ip-handling-policy=default_public_and_private_interfaces' "$VESKTOP" ||
-  fail 'Vesktop WebRTC network policy disappeared'
-grep -Fq -- '--disable-features=WebRtcAllowInputVolumeAdjustment' "$VESKTOP" ||
-  fail 'Vesktop microphone gain policy disappeared'
 
 printf 'PASS: desktop profiles use Chromium for HTML and Firefox for URLs\n'

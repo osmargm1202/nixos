@@ -2,8 +2,8 @@
 
 {
   imports = [
-    ./sddm.nix
-    ./printer.nix
+    ../sddm/sddm.nix
+    ../print/printer.nix
   ];
 
   services.xserver.enable = true;

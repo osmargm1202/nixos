@@ -1,0 +1,269 @@
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  userName,
+  ...
+}:
+
+let
+  sshPort = 22;
+  sshAuthorizedKeys = [
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD3E7OGvfciRdntcDX3SpWlnu5pBw+RycYPIQO4a7h6Zz5WeUc8gB2YbUXZPdQFTVbvjZnAjMqQGhi89GG3K+xlbAZyXl69fL8+75dbicbzygPK3UJi/57zEIANp1u1EF3+w5WBXBXkIKBUbu5IsNAClYr3jX/yQEl1MOZ+o1q1MwAGFS9eJNnyNEroN9cnoFKXmXIS1INKSoPjDL4CE0dWaenQySkNGJY7gRe3w+/YMR4B6vx5G4JfuRBoegF/O0+x7aEPN2RL1MCNzZ6LAM9KwIC72BVyIW1lDsUv6+UzN/S0LGrAV11KcxaEDFtnenX7L5o2i04jd8BAxZLlDvuz4802qIfiHqC8Q/ez9LNIdXLFTPMe04u6HOSxgJVP3Mfh31ZjVmRKUn93oUQwQYmyAq4TvtyNmGQVDOMLboQsU48lMx4k8HObGm4SuUbLNkIOVqnnnax+XhOuylPou9lV77Wtonxj2lgbKufvbnULIdp5+TXPGGPl/+/mLvKCvKoETGFEkQx7hTJg3rwbt/wcpVLyp3lfzKZQt84cD42qQW1bK4/3C4DDZLZ8XVmSVucM8PEFKPE5uSubF6j1tN/J8CFnhvGGgjRihX8GVhL8UbiVeutTowf/eooQsx2/tymWMF6F3nHXOi4qODR6JI26eMLDBfK0wThHMsFYxJnYaQ== osmarg@orgm"
+  ];
+
+  allowedTCPPorts = [ sshPort ];
+  allowedUDPPorts = [ ];
+
+  fail2ban = {
+    enable = true;
+    maxretry = 5;
+    bantime = "1h";
+    findtime = "10m";
+  };
+
+  autoUpgrade = {
+    enable = false;
+    flake = "/home/${userName}/Hobby/nixos#${config.networking.hostName}-server";
+    dates = "Sun 04:00";
+    randomizedDelaySec = "45min";
+    allowReboot = false;
+  };
+
+  dockerPrune = {
+    enable = false;
+    dates = "weekly";
+    flags = [ "--all" ];
+  };
+
+  resticBackup = {
+    enable = false;
+    repositoryFile = "/run/secrets/restic-repository";
+    passwordFile = "/run/secrets/restic-password";
+    paths = [
+      "/home/${userName}"
+      "/var/lib/docker/volumes"
+    ];
+    exclude = [
+      "/home/${userName}/.cache"
+      "/home/${userName}/**/node_modules"
+      "/home/${userName}/**/.venv"
+      "/var/lib/docker/overlay2"
+      "/var/lib/docker/tmp"
+    ];
+  };
+in
+{
+  imports = [
+    ../dns/hosts.nix
+    ../apps/tailscale.nix
+    ../functions/clean.nix
+  ];
+
+  # Zen 7.0.10 pinned from nixpkgs-zen70.
+  boot.kernelPackages =
+    lib.mkDefault
+      inputs.nixpkgs-zen70.legacyPackages.${pkgs.system}.linuxPackages_zen;
+  boot.tmp.cleanOnBoot = true;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+    trusted-users = [
+      "root"
+      userName
+    ];
+  };
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
+  nix.optimise.automatic = true;
+
+  hardware.enableRedistributableFirmware = true;
+
+  networking = {
+    networkmanager.enable = true; # nmtui / nmcli for network config
+    firewall = {
+      enable = true;
+      inherit allowedTCPPorts allowedUDPPorts;
+      checkReversePath = "loose";
+    };
+  };
+
+  services.resolved.enable = false;
+
+  time.timeZone = "America/Santo_Domingo";
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  users.mutableUsers = true;
+  users.users.${userName} = {
+    isNormalUser = true;
+    description = userName;
+    extraGroups = [
+      "wheel"
+      "docker"
+      "systemd-journal"
+      "networkmanager"
+    ];
+    openssh.authorizedKeys.keys = sshAuthorizedKeys;
+  };
+
+  programs.bash = {
+    enable = true;
+    completion.enable = true;
+    blesh.enable = true;
+    loginShellInit = ''
+      if [[ $- == *i* && -r "$HOME/.bashrc" ]]; then
+        . "$HOME/.bashrc"
+      fi
+    '';
+  };
+  programs.git.enable = true;
+
+  security.sudo.wheelNeedsPassword = false;
+
+  services.openssh = {
+    enable = true;
+    ports = [ sshPort ];
+    openFirewall = false;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+      X11Forwarding = false;
+    };
+  };
+
+  services.fail2ban = {
+    inherit (fail2ban) enable maxretry bantime;
+    bantime-increment.enable = true;
+    jails.sshd.settings = {
+      enabled = true;
+      port = toString sshPort;
+      filter = "sshd";
+      backend = "systemd";
+      maxretry = fail2ban.maxretry;
+      findtime = fail2ban.findtime;
+      bantime = fail2ban.bantime;
+    };
+  };
+
+  virtualisation.podman.enable = lib.mkForce false;
+
+  virtualisation.docker = {
+    enable = true;
+    package = pkgs.docker_29;
+    autoPrune = {
+      inherit (dockerPrune) enable dates flags;
+    };
+    daemon.settings = {
+      "live-restore" = true;
+      "log-driver" = "json-file";
+      "log-opts" = {
+        "max-size" = "50m";
+        "max-file" = "5";
+      };
+    };
+  };
+
+  services.restic.backups.server = lib.mkIf resticBackup.enable {
+    inherit (resticBackup)
+      repositoryFile
+      passwordFile
+      paths
+      exclude
+      ;
+    initialize = true;
+    timerConfig = {
+      OnCalendar = "daily";
+      RandomizedDelaySec = "2h";
+      Persistent = true;
+    };
+    pruneOpts = [
+      "--keep-daily 7"
+      "--keep-weekly 4"
+      "--keep-monthly 6"
+    ];
+  };
+
+  system.autoUpgrade = {
+    inherit (autoUpgrade)
+      enable
+      flake
+      dates
+      randomizedDelaySec
+      allowReboot
+      ;
+    operation = "switch";
+  };
+
+  environment.systemPackages =
+    with pkgs;
+    [
+      age
+      bat
+      dnsutils
+      ctop
+      curl
+      dive
+      docker-buildx
+      docker-compose
+      dust
+      duf
+      eza
+      fd
+      bashInteractive
+      bash-completion
+      blesh
+      fzf
+      git
+      gum
+      htop
+      iftop
+      inetutils
+      iotop
+      jq
+      lazydocker
+      lsof
+      mosh
+      mtr
+      nano
+      nethogs
+      nmap
+      openssl
+      pciutils
+      restic
+      ripgrep
+      rsync
+      smartmontools
+      tcpdump
+      tree
+      unzip
+      usbutils
+      vim
+      wget
+      yq-go
+      zoxide
+      starship
+    ]
+    ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ];
+
+  # Apps efimeras (btop, ncdu, herdr): `nix run nixpkgs#app` / `nix run
+  # herdr` — registry pineado al input del sistema, comparte el store.
+  nix.registry = {
+    nixpkgs.flake = inputs.nixpkgs;
+    herdr.flake = inputs.herdr;
+  };
+
+  services.fstrim.enable = true;
+  services.smartd.enable = true;
+
+  system.stateVersion = "25.11";
+}

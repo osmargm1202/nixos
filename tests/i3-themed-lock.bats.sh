@@ -6,7 +6,7 @@ CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 POWER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-powermenu"
 LOCK="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-lock"
 WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 [[ -x "$LOCK" ]] || fail 'i3-lock helper missing or not executable'

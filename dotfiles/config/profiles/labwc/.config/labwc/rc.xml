@@ -7,6 +7,11 @@
     <xwaylandPersistence>yes</xwaylandPersistence>
     <primarySelection>yes</primarySelection>
   </core>
+  <regions>
+    <region name="orgmai-chat" x="5%" y="5%" width="90%" height="90%"/>
+    <region name="orgmai-config" x="10%" y="10%" width="80%" height="80%"/>
+  </regions>
+
   <placement>
     <policy>center</policy>
     <cascadeOffset x="40" y="30"/>
@@ -94,12 +99,12 @@
     </keybind>
     <keybind key="W-a">
       <action name="Execute">
-        <command>kitty --class orgmai-chat -e orgmai chat</command>
+        <command>kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new</command>
       </action>
     </keybind>
     <keybind key="W-S-a">
       <action name="Execute">
-        <command>kitty --class orgmai-chat -e orgmai prev</command>
+        <command>kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config</command>
       </action>
     </keybind>
     <!-- Standalone stack: fuzzel, cliphist, swaync, DMS lock, playerctl, pamixer, brightnessctl. -->
@@ -561,6 +566,12 @@
     </context>
   </mouse>
   <windowRules>
+    <windowRule identifier="orgmai-chat">
+      <action name="SnapToRegion" region="orgmai-chat"/>
+    </windowRule>
+    <windowRule identifier="orgmai-config">
+      <action name="SnapToRegion" region="orgmai-config"/>
+    </windowRule>
     <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes"/>
     <windowRule identifier="*" serverDecoration="no"/>
   </windowRules>

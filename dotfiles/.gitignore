@@ -25,29 +25,11 @@ config/tmux/.tmux/plugins/
 # Superpowers visual brainstorming artifacts
 .superpowers/
 
-# orgm-themes compiled binary (built from cmd/orgm-themes)
-/orgm-themes
-
-# orgm-themes generated files — managed at runtime, not in git
-config/shared/.config/waybar/orgm-current.css
-config/shared/.config/waybar-hypr/orgm-current.css
-config/shared/.config/nwg-dock-hyprland/orgm-current.css
-config/profiles/hyprland/.config/nwg-dock-hyprland/orgm-current.css
-config/shared/.config/swaync/orgm-current.css
-config/shared/.config/rofi/orgm-current.rasi
+# Runtime-generated configuration.
+# Matugen owns the Kitty theme; Home Manager initializes GTK settings.
 config/shared/.config/kitty/current-theme.conf
-config/shared/.config/kitty/skwd-theme.conf
-config/shared/.config/gtk-4.0/gtk.css
-config/shared/.config/gtk-4.0/gtk-dark.css
+# LazyVim records local install/news metadata here; the plugin lock stays tracked.
+config/shared/.config/nvim/lazyvim.json
 config/shared/.config/gtk-4.0/settings.ini
-config/shared/.config/qt5ct/qt5ct.conf
-config/shared/.config/qt5ct/colors/orgm-current.colors
-config/shared/.config/qt6ct/qt6ct.conf
-config/shared/.config/qt6ct/colors/orgm-current.colors
-config/shared/.config/Kvantum/kvantum.kvconfig
-config/shared/.config/kdeglobals
-config/shared/.config/hypr/scheme/current.conf
-config/shared/.config/quickshell/theme/theme.json
-config/shared/.config/quickshell/theme/current.json
+# Hyprland display-targets runtime state.
 config/shared/.config/orgm-hypr/display-targets.json
-config/shared/.config/Kvantum/catppuccin-macchiato-teal-standard#

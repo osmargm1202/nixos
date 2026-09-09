@@ -6,7 +6,7 @@ cd "$repo_dir"
 
 nix eval --impure --raw --expr '
   let
-    flake = builtins.getFlake (toString ./.) ;
+    flake = builtins.getFlake ("path:" + toString ./.);
     profileNames = [ "jarq-hyprland" "orgm-hyprland" "lenovo-hyprland" ];
     configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
     hasOneHyprlandPortal = config:

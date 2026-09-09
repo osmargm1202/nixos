@@ -6,7 +6,7 @@
   ...
 }:
 let
-  lookingGlassIddClient = pkgs.callPackage ../../packages/looking-glass-idd-client.nix { };
+  lookingGlassIddClient = pkgs.callPackage ../../containers/windows/looking-glass-idd-client.nix { };
   virtioInputIso =
     pkgs.runCommand "virtio-input.iso"
       {
@@ -46,10 +46,10 @@ in
     };
 
     home.file = {
-      "Apps/windows/compose.yml".source = ../../../containers/windows/compose.yml;
+      "Apps/windows/compose.yml".source = ../../containers/windows/compose.yml;
       "Apps/windows/compose.lenovo-vfio.yml".source =
-        ../../../containers/windows/hosts/lenovo-windows/compose.yml;
-      "Apps/windows/Containerfile.spice".source = ../../../containers/windows/Containerfile.spice;
+        ../../containers/windows/hosts/lenovo-windows/compose.yml;
+      "Apps/windows/Containerfile.spice".source = ../../containers/windows/Containerfile.spice;
       "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
   };

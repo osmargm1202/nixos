@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-MODULE="$ROOT/nixos/udiskie.nix"
+MODULE="$ROOT/nixos/apps/udiskie.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

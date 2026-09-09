@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 BIN="$ROOT/dotfiles/config/profiles/i3/.local/bin"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

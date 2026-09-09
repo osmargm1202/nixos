@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 SWALLOW="$ROOT/dotfiles/config/profiles/i3/.config/i3/swallow.conf"
 XLOGOUT="$ROOT/dotfiles/config/profiles/i3/.config/xlogout/xlogout.conf"
@@ -12,7 +12,7 @@ fail() {
   exit 1
 }
 
-grep -Fq 'ngcbgI3Tools = pkgs.callPackage ../packages/ngcbg-i3-tools.nix { };' "$PROFILE" || fail 'ngcbg i3 tools package set is not imported'
+grep -Fq 'ngcbgI3Tools = pkgs.callPackage ./ngcbg-i3-tools.nix { };' "$PROFILE" || fail 'ngcbg i3 tools package set is not imported'
 for package in autotiling rootbtnd i3swallow xlogout; do
   grep -Eq "^[[:space:]]+ngcbgI3Tools\\.${package}[[:space:]]*$" "$PROFILE" || fail "ngcbg ${package} package missing from i3 profile"
 done

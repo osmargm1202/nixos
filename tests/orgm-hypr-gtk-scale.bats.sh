@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-orgm_hypr_settings="$(nix eval --json '.#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.dconf.settings')"
-orgm_i3_settings="$(nix eval --json '.#nixosConfigurations.orgm-i3.config.home-manager.users.osmarg.dconf.settings')"
-lenovo_hypr_settings="$(nix eval --json '.#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.dconf.settings')"
+orgm_hypr_settings="$(nix eval --json "path:$ROOT#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.dconf.settings")"
+orgm_i3_settings="$(nix eval --json "path:$ROOT#nixosConfigurations.orgm-i3.config.home-manager.users.osmarg.dconf.settings")"
+lenovo_hypr_settings="$(nix eval --json "path:$ROOT#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.dconf.settings")"
 
 jq -e '
   .["org/gnome/desktop/interface"] == {

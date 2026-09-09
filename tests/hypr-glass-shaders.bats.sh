@@ -8,7 +8,7 @@ RULES="$PROFILE/.config/hypr/lua/windows-workspaces.lua"
 MAIN_MENU="$PROFILE/.local/bin/hypr-main-menu"
 SHADER_MENU="$PROFILE/.local/bin/hypr-shader-menu"
 ROFI_LIB="$PROFILE/.local/bin/hypr-rofi-lib"
-PACKAGING="$ROOT/nixos/packages/hyprwindowshade.nix"
+PACKAGING="$ROOT/nixos/profiles/hyprland/hyprwindowshade.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

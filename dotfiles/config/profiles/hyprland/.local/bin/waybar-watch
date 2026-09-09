@@ -30,7 +30,7 @@ kill_pid() {
   fi
 }
 
-# One watcher only per profile. Lock prevents orgm-themes + existing watcher races.
+# One watcher only per profile. Lock enforces single-instance ownership.
 if ! mkdir "$lock_dir" 2>/dev/null; then
   old="$(cat "$pid_file" 2>/dev/null || true)"
   if [ -n "${old:-}" ] && kill -0 "$old" 2>/dev/null; then

@@ -2,10 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/hyprland.nix"
+PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
 AUTOSTART="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
 WAYBAR="$ROOT/dotfiles/config/profiles/hyprland/.config/waybar-hypr/config"
-STYLE="$ROOT/dotfiles/config/profiles/hyprland/.config/nwg-dock-hyprland/style.css"
 HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-nwg-dock"
 PINS="$ROOT/dotfiles/config/profiles/hyprland/.config/nwg-dock-hyprland/pinned"
 RELOAD="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-nwg-dock-reload"
@@ -32,8 +31,6 @@ grep -Fq -- '-c hypr-app-launcher' "$HELPER" ||
 grep -Fxq 'kitty' "$PINS" && grep -Fxq 'thunar' "$PINS" &&
   grep -Fxq 'firefox' "$PINS" && ! grep -Fxq 'zen' "$PINS" ||
   fail 'dock must seed Firefox without a Zen pin'
-grep -Fq '@import url("orgm-current.css");' "$STYLE" ||
-  fail 'dock style must import the generated translucent palette'
 ! jq -e 'any(.[]; .position == "bottom")' "$WAYBAR" >/dev/null ||
   fail 'Waybar must not restore a bottom bar alongside the dock'
 

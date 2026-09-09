@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODULE="$REPO_DIR/nixos/binary-cache.nix"
+MODULE="$REPO_DIR/nixos/functions/binary-cache.nix"
 FIXTURE="$REPO_DIR/tests/fixtures/nixos-configurations.txt"
 
 fail() {
@@ -25,7 +25,7 @@ assert_any_path_suffix() {
   ' <<<"$json_path" >/dev/null || fail "$target"
 }
 
-[[ -f "$MODULE" ]] || fail "nixos/binary-cache.nix must exist"
+[[ -f "$MODULE" ]] || fail "nixos/functions/binary-cache.nix must exist"
 [[ -f "$FIXTURE" ]] || fail "fixtures file missing: $FIXTURE"
 
 # Module-level checks (documented payload expectations)
@@ -49,10 +49,10 @@ fi
 while IFS= read -r output; do
   [[ -z "$output" ]] && continue
 
-  substituters="$(nix eval --json ".#nixosConfigurations.${output}.config.nix.settings.substituters" )"
-  public_keys="$(nix eval --json ".#nixosConfigurations.${output}.config.nix.settings.trusted-public-keys" )"
-  trusted_users="$(nix eval --json ".#nixosConfigurations.${output}.config.nix.settings.trusted-users" )"
-  system_packages="$(nix eval --json ".#nixosConfigurations.${output}.config.environment.systemPackages" )"
+  substituters="$(nix eval --json "path:$REPO_DIR#nixosConfigurations.${output}.config.nix.settings.substituters" )"
+  public_keys="$(nix eval --json "path:$REPO_DIR#nixosConfigurations.${output}.config.nix.settings.trusted-public-keys" )"
+  trusted_users="$(nix eval --json "path:$REPO_DIR#nixosConfigurations.${output}.config.nix.settings.trusted-users" )"
+  system_packages="$(nix eval --json "path:$REPO_DIR#nixosConfigurations.${output}.config.environment.systemPackages" )"
 
   assert_includes "$substituters" 'https://orgm.cachix.org' "$output is missing cachix substituter"
   assert_includes "$public_keys" 'orgm.cachix.org-1:8Be6uDm2ivJw4MPJBuCaoJfZtfp6RBbjh2IzI4JmqVA=' "$output is missing cachix key"

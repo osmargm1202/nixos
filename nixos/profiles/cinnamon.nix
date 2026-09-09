@@ -47,8 +47,7 @@ let
 in
 {
   imports = [
-    ./printer.nix
-    ./vesktop.nix
+    ../print/printer.nix
   ];
 
   services.xserver.enable = true;

@@ -33,7 +33,6 @@ if command -v sops-shared-env >/dev/null; then
   alias claude='sops-shared-env claude'
   alias opencode='sops-shared-env opencode'
   alias pi='sops-shared-env pi'
-  alias nvim-ai='sops-shared-env nvim'
   alias pypi-publish='sops-shared-env --with UV_PUBLISH_TOKEN -- uv publish dist/*'
 fi
 # Keep fnm's managed Node versions available when fnm is installed locally.
@@ -109,13 +108,8 @@ fi
 
 export EDITOR=nvim
 export VISUAL=nvim
-alias bashconfig='nvim ~/.bashrc'
-alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
-alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
 alias fastfetch-hardware='fastfetch --config "$HOME/.config/fastfetch/hardware.jsonc"'
 
-
-alias y='yazi'
 
 if command -v zutty-fast >/dev/null; then
   alias zutty='zutty-fast'
@@ -136,8 +130,8 @@ function , {
 alias dolphin-emu='flatpak run org.DolphinEmu.dolphin-emu --'
 alias pcsx2='flatpak run net.pcsx2.PCSX2 --'
 alias rpcs3='flatpak run net.rpcs3.RPCS3 --'
-alias herdr='nix run herdr --'
 alias za='zellij attach'
+alias ta='tmux attach'
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then
   cheat() {

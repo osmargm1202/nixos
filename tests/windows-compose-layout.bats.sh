@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-compose_dir="$repo_dir/containers/windows"
+compose_dir="$repo_dir/nixos/containers/windows"
 common_env=(
   WINDOWS_PASSWORD=verification-password
   WINDOWS_SHARED_DIR=/tmp/windows-shared

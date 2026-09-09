@@ -1,7 +1,7 @@
 # Engram — memoria persistente local y compartida entre agentes mediante MCP.
 { pkgs, ... }:
 let
-  engram = pkgs.callPackage ../packages/engram.nix { };
+  engram = pkgs.callPackage ../apps/engram.nix { };
 in
 {
   environment.systemPackages = [ engram ];

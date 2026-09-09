@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 RUNNER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-run"
 

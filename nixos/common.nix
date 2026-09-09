@@ -54,8 +54,6 @@ let
       kitty
       bat
       ripgrep
-      neovim
-      marksman
       wl-clipboard
       xclip
       zip
@@ -124,7 +122,7 @@ in
     "es_DO.UTF-8/UTF-8"
   ];
 
-  # GC lo maneja nh.clean (semanal, keep 3 + 30d) en clean.nix.
+  # GC lo maneja nh.clean (semanal, keep 3 + 30d) en functions/clean.nix.
   # nix.gc no se activa para no conflictuar con nh clean.
 
   imports =
@@ -132,20 +130,21 @@ in
       inputs.home-manager.nixosModules.home-manager
       inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.sops-nix.nixosModules.sops
-      ./sops.nix
-      ./flatpak.nix
+      ./apps/sops.nix
+      ./apps/flatpak.nix
       ./common-dotfiles.nix
-      ./chromium.nix
-      ./firefox.nix
-      ./webapps.nix
-      ./rmatrix.nix
+      ./apps/chromium.nix
+      ./apps/firefox/firefox.nix
+      ./apps/webapps.nix
+      ./apps/rmatrix.nix
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
-      ./hosts.nix
-      ./tailscale.nix
-      ./clean.nix
-      ./udiskie.nix
+      ./apps/lazyvim.nix
+      ./dns/hosts.nix
+      ./apps/tailscale.nix
+      ./functions/clean.nix
+      ./apps/udiskie.nix
     ];
 
   home-manager.useGlobalPkgs = true;
@@ -176,7 +175,7 @@ in
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
   ];
 
-  # nh clean schedule lives in ./clean.nix
+  # nh clean schedule lives in ./functions/clean.nix
   programs.nh = {
     enable = true;
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
@@ -196,7 +195,7 @@ in
   # Resolve conflicting EarlyOOM/smartd defaults while preserving desktop notifications.
   services.systembus-notify.enable = true;
 
-  # Weekly auto-upgrade moved to ./autoupdate.nix — import it per host
+  # Weekly auto-upgrade moved to ./functions/autoupdate.nix — import it per host
   # when we decide which machines should self-update.
 
   # Zen 7.0.10 pinned from nixpkgs-zen70. Host-specific overrides in each

@@ -4,7 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
-profile='nixos/profiles/hyprland.nix'
+profile='nixos/profiles/hyprland/hyprland.nix'
 tray_helper='dotfiles/config/profiles/hyprland/.local/bin/hypr-tray-applets'
 host_dir='dotfiles/config/hosts/orgm/shared'
 attr="path:$repo_dir#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file"

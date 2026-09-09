@@ -59,6 +59,8 @@ bindsym $mod+w exec --no-startup-id $browser
 bindsym $mod+Ctrl+w exec --no-startup-id windows-rdp toggle
 bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus
 bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
+bindsym $mod+a exec --no-startup-id kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new
+bindsym $mod+Shift+a exec --no-startup-id kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config
 bindsym $mod+e exec --no-startup-id $files
 bindsym $mod+F10 exec --no-startup-id pavucontrol
 bindsym $mod+Mod1+e exec --no-startup-id xlogout
@@ -209,6 +211,8 @@ for_window [class="Pavucontrol"] floating enable
 for_window [class="Nm-connection-editor"] floating enable
 for_window [class="Blueman-manager"] floating enable
 for_window [class="flameshot"] floating enable
+for_window [class="^orgmai-chat$"] floating enable, resize set width 90 ppt height 90 ppt, move position center
+for_window [class="^orgmai-config$"] floating enable, resize set width 80 ppt height 80 ppt, move position center
 for_window [all] border pixel 1
 
 gaps inner 8

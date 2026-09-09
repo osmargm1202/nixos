@@ -9,7 +9,7 @@ const vm = require("node:vm");
 
 const backgroundPath = path.resolve(
   __dirname,
-  "../nixos/packages/windows-manager-linux-orgm/background.js",
+  "../nixos/apps/firefox/windows-manager-linux-orgm/background.js",
 );
 const source = fs.readFileSync(backgroundPath, "utf8");
 

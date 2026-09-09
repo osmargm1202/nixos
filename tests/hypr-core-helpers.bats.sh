@@ -13,17 +13,17 @@ bash -n "$bin"/waybar-*
 
 grep -Fq 'PATH = path' "$profile/.config/hypr/lua/environment.lua"
 if grep -Fq 'SDL_VIDEODRIVER' "$profile/.config/hypr/lua/environment.lua" ||
-  grep -Fq 'SDL_VIDEODRIVER' "$repo_dir/nixos/profiles/hyprland.nix"; then
+  grep -Fq 'SDL_VIDEODRIVER' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"; then
   printf '%s\n' 'Hyprland must not globally force an SDL video backend' >&2
   exit 1
 fi
 grep -Fq 'waybar-watch' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fq 'dunstctl reload >/dev/null 2>&1 || exec dunst' "$profile/.config/hypr/lua/autostart.lua"
-grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland.nix"
-grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland.nix"
-grep -Fxq '    pulsemixer' "$repo_dir/nixos/profiles/hyprland.nix"
-grep -Fxq '    waybarWithCaffeineSignal' "$repo_dir/nixos/profiles/hyprland.nix"
-grep -Fxq '    woomer' "$repo_dir/nixos/profiles/hyprland.nix"
+grep -Fxq '    bluetui' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"
+grep -Fxq '    nwg-displays' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"
+grep -Fxq '    pulsemixer' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"
+grep -Fxq '    waybarWithCaffeineSignal' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"
+grep -Fxq '    woomer' "$repo_dir/nixos/profiles/hyprland/hyprland.nix"
 grep -Fxq '  "hypridle",' "$profile/.config/hypr/lua/autostart.lua"
 grep -Fq 'timeout = 600' "$profile/.config/hypr/hypridle.conf"
 grep -Fq 'timeout = 900' "$profile/.config/hypr/hypridle.conf"
@@ -127,7 +127,7 @@ rofi_helpers=(
   hypr-keybindings-help hypr-keyboard-menu hypr-main-menu hypr-pi-prompt
   hypr-power-menu hypr-rofi-calc hypr-rofi-clipboard hypr-rofi-open-file
   hypr-rofi-open-file-dir hypr-rofi-open-file-terminal hypr-rofi-ssh-host
-  hypr-rofi-window hypr-system-menu hypr-theme-chooser hypr-tools-menu
+  hypr-rofi-window hypr-system-menu hypr-tools-menu
   hypr-transition-menu hypr-tweaks-menu
 )
 for helper in "${rofi_helpers[@]}"; do

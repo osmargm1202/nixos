@@ -6,7 +6,7 @@ cd "$repo_dir"
 
 installed="$(nix eval --quiet --raw --impure --expr '
   let
-    flake = builtins.getFlake (toString ./.) ;
+    flake = builtins.getFlake "path:${toString ./.}" ;
     packages = flake.nixosConfigurations.lenovo-hyprland.config.environment.systemPackages;
     firewallPorts = flake.nixosConfigurations.lenovo-hyprland.config.networking.firewall.allowedTCPPorts;
   in

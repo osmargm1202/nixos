@@ -6,7 +6,7 @@ DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 CLIPBOARD="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-clipboard"
 CLIPCAT_CONFIG="$ROOT/dotfiles/config/shared/.config/clipcat/clipcatd.toml"
 CLIPCAT_MENU="$ROOT/dotfiles/config/shared/.config/clipcat/clipcat-menu.toml"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 MENU="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
 
@@ -44,12 +44,12 @@ printf '%s\n' started >>"$DUNST_LOG"
 EOF
 chmod +x "$tmp/bin/dunstctl" "$tmp/bin/dunst"
 DUNST_LOG="$tmp/log" DUNSTCTL_STATUS=0 PATH="$tmp/bin:$PATH" \
-  sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
+  sh -c 'dunstctl reload >/dev/null 2>&1 || exec dunst'
 grep -Fxq reload "$tmp/log" || fail 'Dunst startup must first reload the active Dunst instance'
 [[ "$(wc -l <"$tmp/log")" == 1 ]] || fail 'Dunst must not start a second instance after a successful reload'
 : >"$tmp/log"
 DUNST_LOG="$tmp/log" DUNSTCTL_STATUS=1 PATH="$tmp/bin:$PATH" \
-  sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
+  sh -c 'dunstctl reload >/dev/null 2>&1 || exec dunst'
 grep -Fxq started "$tmp/log" || fail 'Dunst startup must launch Dunst when no active instance exists'
 
 printf 'PASS: i3 starts or reloads Dunst and clipboard uses UID-independent Clipcat\n'

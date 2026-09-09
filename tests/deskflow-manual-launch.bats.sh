@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODULE="$ROOT/nixos/deskflow.nix"
+MODULE="$ROOT/nixos/apps/deskflow.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

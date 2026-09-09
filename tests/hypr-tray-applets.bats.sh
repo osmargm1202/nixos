@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/hyprland.nix"
+PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
 AUTOSTART="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
 WAYBAR="$ROOT/dotfiles/config/profiles/hyprland/.config/waybar-hypr/config"
 HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-tray-applets"

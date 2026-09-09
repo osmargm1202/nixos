@@ -4,13 +4,13 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
-module='nixos/udiskie.nix'
+module='nixos/apps/udiskie.nix'
 common='nixos/common.nix'
-profile='nixos/profiles/hyprland.nix'
-configuration='.#nixosConfigurations.lenovo-hyprland'
+profile='nixos/profiles/hyprland/hyprland.nix'
+configuration="path:$repo_dir#nixosConfigurations.lenovo-hyprland"
 
 [[ -f "$module" ]]
-grep -Fq './udiskie.nix' "$common"
+grep -Fq './apps/udiskie.nix' "$common"
 ! grep -Fq '../udiskie.nix' "$profile"
 grep -Fq 'services.udisks2.enable = true;' "$module"
 grep -Fq 'services.usbmuxd.enable = true;' "$module"
@@ -21,7 +21,7 @@ grep -Fq -- '--automount --notify --tray' "$module"
 
 [[ "$(nix eval --json "$configuration.config.services.udisks2.enable")" == true ]]
 [[ "$(nix eval --json "$configuration.config.services.usbmuxd.enable")" == true ]]
-[[ "$(nix eval --json '.#nixosConfigurations.lenovo-i3.config.services.usbmuxd.enable')" == true ]]
+[[ "$(nix eval --json "path:$repo_dir#nixosConfigurations.lenovo-i3.config.services.usbmuxd.enable")" == true ]]
 udiskie_command="$(nix eval --raw "$configuration.config.systemd.user.services.udiskie.serviceConfig.ExecStart")"
 [[ "$udiskie_command" == *'/bin/udiskie --automount --notify --tray' ]]
 wanted_by="$(nix eval --json "$configuration.config.systemd.user.services.udiskie.wantedBy")"
@@ -35,7 +35,7 @@ gvfs="$(nix eval --raw "$configuration.config.services.gvfs.package")"
 [[ -x "$gvfs/libexec/gvfsd-mtp" ]]
 
 nix eval --impure --raw --expr '
-  let c = (builtins.getFlake (toString ./.)).nixosConfigurations.lenovo-hyprland;
+  let c = (builtins.getFlake ("path:" + toString ./.)).nixosConfigurations.lenovo-hyprland;
   in if builtins.all (package: builtins.elem package c.config.environment.systemPackages) [
     c.pkgs.udiskie c.pkgs.usbutils c.pkgs.gphoto2 c.pkgs.ifuse c.pkgs.libimobiledevice
   ] then "device packages present" else throw "device packages missing"

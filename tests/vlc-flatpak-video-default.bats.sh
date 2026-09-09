@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FLATPAK="$ROOT/nixos/flatpak.nix"
-I3="$ROOT/nixos/profiles/i3.nix"
+FLATPAK="$ROOT/nixos/apps/flatpak.nix"
+I3="$ROOT/nixos/profiles/i3/i3.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

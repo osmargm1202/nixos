@@ -2,9 +2,9 @@
 
 {
   imports = [
-    ./sddm.nix
+    ../sddm/sddm.nix
     inputs.dms.nixosModules.dank-material-shell
-    ./printer.nix
+    ../print/printer.nix
   ];
 
   services.xserver.enable = true;

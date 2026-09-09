@@ -5,10 +5,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FLAKE="$ROOT/flake.nix"
 INVENTORY="$ROOT/configurations.nix"
 BUILDER="$ROOT/lib/mk-system.nix"
-HOSTS="$ROOT/nixos/hosts.nix"
+HOSTS="$ROOT/nixos/dns/hosts.nix"
 COMMON="$ROOT/nixos/common.nix"
-TERMINAL="$ROOT/nixos/terminal.nix"
-SERVER="$ROOT/nixos/server.nix"
+TERMINAL="$ROOT/nixos/profiles/terminal.nix"
+SERVER="$ROOT/nixos/profiles/server.nix"
 ORGM_HOST="$ROOT/nixos/hosts/orgm/ms-7d43.nix"
 
 fail() {
@@ -92,8 +92,9 @@ assert_contains \
   'devShells.default = pkgsDev.mkShell {' \
   "$FLAKE" \
   'perSystem must provide the default development shell'
-for role_module in "$COMMON" "$TERMINAL" "$SERVER"; do
-  assert_contains './hosts.nix' "$role_module" "host registry missing from $role_module"
+assert_contains './dns/hosts.nix' "$COMMON" 'host registry missing from common desktop role'
+for role_module in "$TERMINAL" "$SERVER"; do
+  assert_contains '../dns/hosts.nix' "$role_module" "host registry missing from $role_module"
 done
 assert_contains 'inherit inputs userName hostName;' "$BUILDER" \
   'host registry must receive the configuration hostname'

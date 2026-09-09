@@ -4,8 +4,8 @@ let
   profiles = {
     cinnamon = ./nixos/profiles/cinnamon.nix;
     gnome = ./nixos/profiles/gnome.nix;
-    hyprland = ./nixos/profiles/hyprland.nix;
-    i3 = ./nixos/profiles/i3.nix;
+    hyprland = ./nixos/profiles/hyprland/hyprland.nix;
+    i3 = ./nixos/profiles/i3/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
   };
 
@@ -64,7 +64,7 @@ let
     };
 
   orgmDesktopModules = [
-    ./nixos/deskflow.nix
+    ./nixos/apps/deskflow.nix
     ./nixos/gaming/default.nix
   ];
   lenovoDesktopModules = [

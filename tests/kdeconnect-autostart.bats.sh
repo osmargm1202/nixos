@@ -6,9 +6,9 @@ I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
 CINNAMON="$ROOT/nixos/profiles/cinnamon.nix"
 COMMON="$ROOT/nixos/common.nix"
-HYPR_PROFILE="$ROOT/nixos/profiles/hyprland.nix"
+HYPR_PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
 LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/autostart"
-HYPR_KDECONNECT_PORTAL="$ROOT/nixos/packages/hypr-kdeconnect-fix.nix"
+HYPR_KDECONNECT_PORTAL="$ROOT/nixos/profiles/hyprland/hypr-kdeconnect-fix.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -27,7 +27,7 @@ grep -Fq 'xdg.configFile."autostart/kdeconnect-indicator.desktop".text' "$CINNAM
   fail 'Cinnamon must install the KDE Connect autostart entry'
 grep -Fq 'Exec=kdeconnect-indicator' "$CINNAMON" ||
   fail 'Cinnamon autostart entry must launch the KDE Connect indicator'
-grep -Fq 'hyprKdeconnectFix = pkgs.callPackage ../packages/hypr-kdeconnect-fix.nix { };' "$HYPR_PROFILE" ||
+grep -Fq 'hyprKdeconnectFix = pkgs.callPackage ./hypr-kdeconnect-fix.nix { };' "$HYPR_PROFILE" ||
   fail 'Hyprland must package the KDE Connect RemoteDesktop portal'
 grep -Fq 'hyprKdeconnectFix' "$HYPR_PROFILE" ||
   fail 'Hyprland must install the KDE Connect RemoteDesktop portal'

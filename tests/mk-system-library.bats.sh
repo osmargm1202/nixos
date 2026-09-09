@@ -9,14 +9,14 @@ fail() {
 }
 
 expected_exports='["mkGeneralHost","mkHost","mkMinimalHost","mkProfile","mkServerHost","mkSystem","mkTerminalHost"]'
-actual_exports="$(nix eval --json "$ROOT#lib" --apply builtins.attrNames)"
+actual_exports="$(nix eval --json "path:$ROOT#lib" --apply builtins.attrNames)"
 [[ "$actual_exports" == "$expected_exports" ]] \
   || fail "unexpected flake.lib exports: $actual_exports"
 
 general_host="$(
   nix eval --impure --raw --expr "
     let
-      flake = builtins.getFlake (toString $ROOT);
+      flake = builtins.getFlake \"path:$ROOT\";
     in
     (flake.lib.mkGeneralHost {
       hardware = $ROOT/nixos/hosts/generic/hardware-configuration.nix;

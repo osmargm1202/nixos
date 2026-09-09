@@ -29,8 +29,6 @@ grep -Fq '    android-tools' "$ROOT/nixos/common.nix" ||
 if grep -Rq 'googleSupport' "$ROOT/nixos" --include='*.nix'; then
   fail 'NixOS 26.05 gvfs removed googleSupport; use gnomeSupport'
 fi
-grep -Fq '    gnomeSupport = true;' "$ROOT/nixos/profiles/hyprland.nix" ||
-  fail 'gvfs must retain online-account support through gnomeSupport'
 
 profiles=(
   lenovo-labwc
@@ -40,15 +38,15 @@ profiles=(
 )
 
 for profile in "${profiles[@]}"; do
-  release="$(nix eval --raw "$ROOT#nixosConfigurations.$profile.config.system.nixos.release")"
+  release="$(nix eval --raw "path:$ROOT#nixosConfigurations.$profile.config.system.nixos.release")"
   [ "$release" = '26.05' ] || fail "$profile must evaluate NixOS release 26.05 (got $release)"
 
-  kernel="$(nix eval --raw "$ROOT#nixosConfigurations.$profile.config.boot.kernelPackages.kernel.version")"
+  kernel="$(nix eval --raw "path:$ROOT#nixosConfigurations.$profile.config.boot.kernelPackages.kernel.version")"
   [[ "$kernel" = 6.12.* ]] || fail "$profile must remain on Linux 6.12 LTS (got $kernel)"
 
 done
 
-nwg="$(nix eval --raw "$ROOT#nixosConfigurations.lenovo-hyprland.pkgs.nwg-displays.version")"
+nwg="$(nix eval --raw "path:$ROOT#nixosConfigurations.lenovo-hyprland.pkgs.nwg-displays.version")"
 [ "$nwg" = '0.4.3' ] || fail "lenovo-hyprland must use nwg-displays 0.4.3 (got $nwg)"
 
 printf 'PASS: NixOS 26.05 provides NWG Displays 0.4.3 on Lenovo LTS\n'

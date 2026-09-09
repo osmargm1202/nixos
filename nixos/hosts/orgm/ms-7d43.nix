@@ -30,7 +30,7 @@
   # replacing every graphical login path with the server role.
   boot.loader.systemd-boot.sortKey = "nixos-00-normal";
   specialisation.server.configuration = {
-    imports = [ ../../server.nix ];
+    imports = [ ../../profiles/server.nix ];
     boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-01-server";
     systemd.defaultUnit = "multi-user.target";
 

@@ -2,11 +2,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOST="$ROOT/nixos/packages/windows-manager-linux-orgm/native-host.py"
-MANIFEST="$ROOT/nixos/packages/windows-manager-linux-orgm/manifest.json"
-PACKAGE="$ROOT/nixos/packages/windows-manager-linux-orgm.nix"
-MODULE="$ROOT/nixos/firefox.nix"
-SIGNED_XPI="$ROOT/nixos/packages/windows-manager-linux-orgm/windows-manager-linux-orgm-signed.xpi"
+HOST="$ROOT/nixos/apps/firefox/windows-manager-linux-orgm/native-host.py"
+MANIFEST="$ROOT/nixos/apps/firefox/windows-manager-linux-orgm/manifest.json"
+PACKAGE="$ROOT/nixos/apps/firefox/windows-manager-linux-orgm.nix"
+MODULE="$ROOT/nixos/apps/firefox/firefox.nix"
+SIGNED_XPI="$ROOT/nixos/apps/firefox/windows-manager-linux-orgm/windows-manager-linux-orgm-signed-1.0.6.xpi"
 
 fail() {
 	printf 'FAIL: %s\n' "$*" >&2
@@ -23,10 +23,10 @@ grep -Fq '"nativeMessaging"' "$MANIFEST" || fail 'Firefox extension lacks native
 grep -Fq '"data_collection_permissions"' "$MANIFEST" || fail 'Firefox extension must declare its data collection policy'
 grep -Fq '"required": ["none"]' "$MANIFEST" || fail 'Firefox extension must declare that it collects no data'
 grep -Fq 'nativeMessagingHosts.packages = [ windowsManagerLinuxOrgm ];' "$MODULE" || fail 'browser must expose the native host'
-grep -Fq 'windows-manager-linux-orgm-signed.xpi' "$MODULE" || fail 'browser must await the signed XPI before activation'
+grep -Fq 'windows-manager-linux-orgm-signed-1.0.6.xpi' "$MODULE" || fail 'browser must await the signed XPI before activation'
 grep -Fq 'lib/mozilla/native-messaging-hosts/windows_manager_linux_orgm.json' "$PACKAGE" || fail 'package must install the native host manifest'
 grep -Fq 'windows-manager-linux-orgm-tabs' "$PACKAGE" || fail 'package must install the tab-list client'
-python3 - "$MANIFEST" "$ROOT/nixos/packages/windows-manager-linux-orgm/background.js" "$SIGNED_XPI" <<'PY'
+python3 - "$MANIFEST" "$ROOT/nixos/apps/firefox/windows-manager-linux-orgm/background.js" "$SIGNED_XPI" <<'PY'
 import json
 import sys
 import zipfile
@@ -41,7 +41,7 @@ with zipfile.ZipFile(signed_xpi_path) as archive:
     assert signed_manifest == source_manifest, "signed XPI manifest differs from tracked source"
     assert archive.read("background.js") == source_background, "signed XPI background differs from tracked source"
     assert signed_manifest["browser_specific_settings"]["gecko"]["id"] == "windows_manager_linux_orgm@or-gm.com"
-    assert signed_manifest["version"] == "1.0.5"
+    assert signed_manifest["version"] == "1.0.6"
     required_signatures = {
         "META-INF/manifest.mf",
         "META-INF/mozilla.sf",
@@ -54,7 +54,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 (
 	cd "$ROOT"
-	nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/packages/windows-manager-linux-orgm.nix { }'
+	nix build --impure --out-link "$tmp/package" --expr 'let pkgs = (builtins.getFlake "path:${toString ./.}").inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./nixos/apps/firefox/windows-manager-linux-orgm.nix { }'
 )
 mkdir "$tmp/no-socket-runtime"
 if XDG_RUNTIME_DIR="$tmp/no-socket-runtime" "$tmp/package/bin/windows-manager-linux-orgm-tab" https://example.com/ 2>"$tmp/wrapper-error"; then

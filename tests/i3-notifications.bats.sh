@@ -8,7 +8,7 @@ HYPR_DUNST="$ROOT/dotfiles/config/profiles/hyprland/.config/dunst/dunstrc"
 LABWC_DUNST="$ROOT/dotfiles/config/profiles/labwc/.config/dunst/dunstrc"
 SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

@@ -127,10 +127,9 @@
             inherit system;
             config.allowUnfree = true;
           };
-          braveOrigin = pkgs.callPackage ./nixos/packages/brave-origin.nix { };
-          engram = pkgs.callPackage ./nixos/packages/engram.nix { };
-          rtk = pkgs.callPackage ./nixos/packages/rtk.nix { };
-          orgmThemes = pkgs.callPackage ./nixos/packages/orgm-themes.nix { };
+          braveOrigin = pkgs.callPackage ./nixos/apps/brave-origin.nix { };
+          engram = pkgs.callPackage ./nixos/apps/engram.nix { };
+          orgmai = pkgs.callPackage ./nixos/apps/orgmai.nix { };
         in
         {
           formatter = pkgs.nixfmt-rfc-style;
@@ -138,11 +137,10 @@
           packages = {
             inherit
               engram
-              rtk
+              orgmai
               braveOrigin
               ;
             "brave-origin" = braveOrigin;
-            "orgm-themes" = orgmThemes;
             default = braveOrigin;
           };
 

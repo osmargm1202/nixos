@@ -65,8 +65,8 @@ entries() {
       entry 'Win+E' 'Archivos' 'nautilus --new-window'
       entry 'Win+W' 'Restaurar Firefox o abrir pestaña nueva' 'firefox-open-tab --restore-or-focus'
       entry 'Win+Ctrl+W' 'Iniciar/detener Windows VM' 'windows-rdp toggle'
-      entry 'Win+A' 'Buscar / ChatGPT' 'hypr-smart-run'
-      entry 'Win+Shift+A' 'ORGM AI previo' 'orgmai prev'
+      entry 'Win+A' 'Chat ORGM AI' 'kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new'
+      entry 'Win+Shift+A' 'Configurar ORGM AI' 'kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config'
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 I3_ROOT="$ROOT/dotfiles/config/profiles/i3"
 UCA="$I3_ROOT/.config/Thunar/uca.xml"
 WRAPPER="$I3_ROOT/.local/bin/i3-set-wallpaper"

@@ -9,8 +9,8 @@ fail() {
   exit 1
 }
 
-for configuration in cinnamon orgm-cinnamon lenovo-windows-cinnamon; do
-  prefix=".#nixosConfigurations.${configuration}.config"
+for configuration in cinnamon orgm-cinnamon; do
+  prefix="path:$ROOT#nixosConfigurations.${configuration}.config"
 
   [[ "$(nix eval --json "${prefix}.services.displayManager.sddm.enable" 2>/dev/null)" == false ]] \
     || fail "${configuration} must disable SDDM"

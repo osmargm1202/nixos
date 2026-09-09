@@ -6,7 +6,10 @@
       <action name="Execute"><command>kitty</command></action>
     </item>
     <item label="Chat · orgmai" icon="utilities-terminal">
-      <action name="Execute"><command>kitty --class orgmai-chat -e orgmai chat</command></action>
+      <action name="Execute"><command>kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new</command></action>
+    </item>
+    <item label="Configure AI · orgmai" icon="preferences-system">
+      <action name="Execute"><command>kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config</command></action>
     </item>
     <item label="Files · Nautilus" icon="org.gnome.Nautilus">
       <action name="Execute"><command>nautilus</command></action>

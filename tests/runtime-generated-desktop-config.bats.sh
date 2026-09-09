@@ -16,7 +16,7 @@ for path in \
   '.config/gtk-4.0/settings.ini' \
   '.icons/default/index.theme' \
   '.config/kitty/current-theme.conf' \
-  '.config/hypr/scheme/current.conf'; do
+  '.local/state/hypr/game-mode'; do
   [[ -f "$HOME/$path" && ! -L "$HOME/$path" ]]
   printf 'custom runtime value\n' >"$HOME/$path"
 done
@@ -25,7 +25,7 @@ for path in \
   '.config/gtk-4.0/settings.ini' \
   '.icons/default/index.theme' \
   '.config/kitty/current-theme.conf' \
-  '.config/hypr/scheme/current.conf'; do
+  '.local/state/hypr/game-mode'; do
   [[ "$(cat "$HOME/$path")" == 'custom runtime value' ]]
 done
 printf 'PASS: defaults initialize missing files without overwriting runtime configuration\n'

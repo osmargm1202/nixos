@@ -46,14 +46,14 @@ let
         else if role == "server" then
           [
             hardware
-            ../nixos/server.nix
+            ../nixos/profiles/server.nix
             { networking.hostName = hostName; }
           ]
         else if role == "terminal" then
           [
             ../nixos/ai/default.nix
             hardware
-            ../nixos/terminal.nix
+            ../nixos/profiles/terminal.nix
             { networking.hostName = hostName; }
           ]
         else
@@ -69,7 +69,7 @@ let
         };
       modules = [
         { nixpkgs.hostPlatform = system; }
-        ../nixos/binary-cache.nix
+        ../nixos/functions/binary-cache.nix
       ]
       ++ roleModules
       ++ extraModules;

@@ -6,7 +6,9 @@ helper="$repo_dir/dotfiles/config/shared/.local/bin/windows-rdp"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 bin="$tmp/bin"
-mkdir -p "$bin" "$tmp/home"
+mkdir -p "$bin" "$tmp/home/Apps/windows"
+ln -s "$repo_dir/nixos/containers/windows/compose.yml" "$tmp/home/Apps/windows/compose.yml"
+ln -s "$repo_dir/nixos/containers/windows/hosts/lenovo-windows/compose.yml" "$tmp/home/Apps/windows/compose.lenovo-vfio.yml"
 ln -s "$BASH" "$bin/bash"
 ln -s "$(command -v grep)" "$bin/grep"
 
@@ -152,10 +154,10 @@ else
 fi
 vfio_start_docker_log="$tmp/vfio-start-docker.log"
 if [[ -e /dev/vfio/16 && -e /dev/kvmfr0 && "$(ulimit -Hl)" == unlimited ]]; then
-  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true WINDOWS_COMPOSE_DIR="$repo_dir/containers/windows" DOCKER_LOG="$vfio_start_docker_log" "$helper" start
+  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true DOCKER_LOG="$vfio_start_docker_log" "$helper" start
   grep -Fqx 'compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$vfio_start_docker_log"
 else
-  vfio_start_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true WINDOWS_COMPOSE_DIR="$repo_dir/containers/windows" "$helper" start 2>&1 || true)"
+  vfio_start_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true "$helper" start 2>&1 || true)"
   if [[ ! -e /dev/vfio/16 ]]; then
     [[ "$vfio_start_output" == *"Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first."* ]]
   elif [[ ! -e /dev/kvmfr0 ]]; then

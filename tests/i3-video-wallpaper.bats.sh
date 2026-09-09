@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
 WRAPPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-set-wallpaper"
-PROFILE="$ROOT/nixos/profiles/i3.nix"
+PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 TMP="$(mktemp -d)"
 cleanup() {
   local pid child

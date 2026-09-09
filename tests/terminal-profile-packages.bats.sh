@@ -7,7 +7,7 @@ cd "$repo_dir"
 profile_has_zutty() {
   local configuration="$1"
   nix eval --impure --raw --expr "
-    let c = (builtins.getFlake (toString ./.)).nixosConfigurations.${configuration};
+    let c = (builtins.getFlake \"path:$repo_dir\").nixosConfigurations.${configuration};
     in if builtins.elem c.pkgs.zutty c.config.environment.systemPackages then \"present\" else \"absent\"
   "
 }

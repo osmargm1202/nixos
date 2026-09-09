@@ -6,7 +6,7 @@ cd "$repo_dir"
 
 nix eval --impure --raw --expr '
   let
-    flake = builtins.getFlake (toString ./.) ;
+    flake = builtins.getFlake "path:${toString ./.}" ;
     profileNames = [ "orgm-cinnamon" "orgm-gnome" "orgm-hyprland" "orgm-i3" "orgm-labwc" ];
     configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
     hasServerMode = config:

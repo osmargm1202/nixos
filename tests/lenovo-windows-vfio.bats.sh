@@ -6,7 +6,7 @@ cd "$repo_dir"
 
 nix eval --impure --raw --expr '
   let
-    flake = builtins.getFlake (toString ./.) ;
+    flake = builtins.getFlake "path:${toString ./.}" ;
     desktopProfileNames = [ "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" ];
     vfioProfiles = builtins.map (
       name: flake.nixosConfigurations.${name}.config.specialisation.windows-vfio.configuration

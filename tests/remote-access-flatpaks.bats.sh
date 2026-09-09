@@ -9,7 +9,7 @@ fail() {
   exit 1
 }
 
-flatpaks="$(nix eval --json '.#nixosConfigurations.orgm-hyprland.config.services.flatpak.packages')"
+flatpaks="$(nix eval --json "path:$ROOT#nixosConfigurations.orgm-hyprland.config.services.flatpak.packages")"
 for app_id in \
   com.moonlight_stream.Moonlight \
   com.anydesk.Anydesk \
@@ -19,7 +19,7 @@ for app_id in \
 done
 
 for profile in orgm-cinnamon orgm-gnome; do
-  packages="$(nix eval --json ".#nixosConfigurations.${profile}.config.environment.systemPackages")"
+  packages="$(nix eval --json "path:$ROOT#nixosConfigurations.${profile}.config.environment.systemPackages")"
   jq -e 'any(.[]; test("-rofi-[^/]+$"))' <<<"$packages" >/dev/null ||
     fail "$profile is missing Rofi"
 done

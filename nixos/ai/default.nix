@@ -8,8 +8,8 @@
     ./codex.nix
     ./copilot.nix
     ./engram.nix
-    ./rtk.nix
     ./pi.nix
+    ./orgmai.nix
     ./opencode.nix
     ./omp.nix
   ];
