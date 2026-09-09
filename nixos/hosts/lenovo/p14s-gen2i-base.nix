@@ -28,6 +28,11 @@ in
   };
 
   config = {
+    orgm.sddm = {
+      profile = lib.mkDefault "qylock";
+      qylockTheme = lib.mkDefault "winter";
+    };
+
     # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2
     # profile, kept in-repo so Lenovo carries its own host-specific GPU setup.
     boot.blacklistedKernelModules = lib.optionals (!config.hardware.enableRedistributableFirmware) [

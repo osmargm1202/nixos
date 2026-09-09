@@ -18,14 +18,19 @@ done
   || fail 'Xserver disabled'
 for host in orgm lenovo ero jarq; do
   prefix="path:$ROOT#nixosConfigurations.${host}-i3.config"
+  case "$host" in
+    orgm) expected_sddm_theme='star-rail' ;;
+    lenovo) expected_sddm_theme='winter' ;;
+    *) expected_sddm_theme='GreenShift' ;;
+  esac
   [[ "$(nix eval "${prefix}.services.xserver.windowManager.i3.enable" 2>/dev/null)" == true ]] \
     || fail "${host}-i3 must enable i3"
   [[ "$(nix eval --raw "${prefix}.services.displayManager.defaultSession" 2>/dev/null)" == 'none+i3' ]] \
     || fail "${host}-i3 must select the i3 X11 session in SDDM"
   [[ "$(nix eval "${prefix}.services.displayManager.sddm.enable" 2>/dev/null)" == true ]] \
     || fail "${host}-i3 must enable SDDM"
-  [[ "$(nix eval --raw "${prefix}.services.displayManager.sddm.theme" 2>/dev/null)" == 'GreenShift' ]] \
-    || fail "${host}-i3 must use the GreenShift SDDM theme"
+  [[ "$(nix eval --raw "${prefix}.services.displayManager.sddm.theme" 2>/dev/null)" == "$expected_sddm_theme" ]] \
+    || fail "${host}-i3 must use its configured SDDM theme"
   [[ "$(nix eval "${prefix}.services.displayManager.autoLogin.enable" 2>/dev/null)" == false ]] \
     || fail "${host}-i3 must not autologin"
   [[ "$(nix eval "${prefix}.services.xserver.displayManager.startx.enable" 2>/dev/null)" == false ]] \
