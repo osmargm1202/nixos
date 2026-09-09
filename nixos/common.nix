@@ -16,6 +16,10 @@ let
   zuttyFast = pkgs.writeShellScriptBin "zutty-fast" ''
     exec ${pkgs.zutty}/bin/zutty -font JetBrainsMonoNerdFontMono -fontsize 18 "$@"
   '';
+  spf = pkgs.writeShellScriptBin "spf" ''
+    exec ${pkgs.superfile}/bin/superfile "$@"
+  '';
+
   x11TerminalPackages =
     lib.optionals
       (builtins.elem profileName [
@@ -60,8 +64,7 @@ let
       unzip
       unrar
       btop
-      yazi
-      superfile
+      spf
       ncdu
       fastfetch
       sops

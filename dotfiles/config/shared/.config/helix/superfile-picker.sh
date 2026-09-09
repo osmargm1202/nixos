@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-tmp="$(mktemp -t "yazi-chooser-XXXXXX")"
+tmp="$(mktemp -t "spf-chooser-XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 
-yazi "$2" --chooser-file="$tmp"
+spf "$2" --chooser-file="$tmp"
 zellij action toggle-floating-panes
 
 if [[ -s "$tmp" ]]; then

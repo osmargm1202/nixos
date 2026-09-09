@@ -146,7 +146,6 @@ in
       i3
       i3status
       clipcat
-      yazi
       ueberzugpp
       ffmpegthumbnailer
       mediainfo
