@@ -12,7 +12,6 @@ fail() {
   exit 1
 }
 
-! grep -qi 'picom' "$PROFILE" "$CONFIG" || fail 'i3 must not install or start Picom'
 ! grep -Fq 'order += "ipv6"' "$STATUS_CONFIG" || fail 'IPv6 block must be absent from i3status'
 grep -Fq 'order += "wireless _first_"' "$STATUS_CONFIG" || fail 'Wi-Fi status block missing'
 grep -Fq 'order += "ethernet _first_"' "$STATUS_CONFIG" || fail 'Ethernet status block missing'
@@ -35,4 +34,4 @@ for name in ("wireless", "ethernet"):
     assert down["color"] == wrapper.CRITICAL
 PY
 
-printf 'PASS: i3 runs without Picom and uses subdued network status\n'
+printf 'PASS: i3 network status uses subdued status colors\n'

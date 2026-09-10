@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+state_file="$state_dir/picom-effects-disabled"
+lock_file="$state_dir/picom-effects.lock"
+mkdir -p "$state_dir"
+exec 9>"$lock_file"
+flock 9
+
+notify() {
+  notify-send -a i3-picom-effects -t 1500 'Efectos visuales' "$1" 2>/dev/null || true
+}
+
+effects_enabled() {
+  [[ ! -f "$state_file" ]]
+}
+
+set_enabled() {
+  rm -f "$state_file"
+  if ! systemctl --user restart picom; then
+    printf 'disabled\n' >"$state_file"
+    notify 'No se pudieron activar los efectos'
+    return 1
+  fi
+  notify 'Activados — animaciones, sombras, redondeo y transparencia restaurados'
+}
+
+set_disabled() {
+  local temporary
+  temporary="$(mktemp "$state_file.tmp.XXXXXX")"
+  printf 'disabled\n' >"$temporary"
+  mv -f "$temporary" "$state_file"
+  if ! systemctl --user stop picom; then
+    rm -f "$state_file"
+    notify 'No se pudieron desactivar los efectos'
+    return 1
+  fi
+  notify 'Desactivados — ventanas opacas y sin redondeo'
+}
+
+status() {
+  if effects_enabled; then
+    printf 'enabled\n'
+  else
+    printf 'disabled\n'
+  fi
+}
+
+case "${1:-toggle}" in
+  toggle)
+    if effects_enabled; then set_disabled; else set_enabled; fi
+    ;;
+  on)
+    if ! effects_enabled; then set_enabled; fi
+    ;;
+  off)
+    if effects_enabled; then set_disabled; fi
+    ;;
+  status) status ;;
+  *) printf 'usage: %s [toggle|on|off|status]\n' "${0##*/}" >&2; exit 2 ;;
+esac

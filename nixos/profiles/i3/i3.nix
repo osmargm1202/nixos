@@ -12,6 +12,105 @@ let
         "$out/lib/thunarx-3/thunar-wallpaper-plugin.la"
     '';
   });
+  # Picom's animation/rule lists need libconfig parentheses, so keep its
+  # runtime configuration native instead of serializing through the module.
+  picomEffectsConfig = pkgs.writeText "picom-i3-effects.conf" ''
+    backend = "glx";
+    vsync = true;
+    use-damage = true;
+    detect-rounded-corners = true;
+    detect-client-opacity = true;
+    detect-transient = true;
+    transparent-clipping = false;
+
+    fading = true;
+    fade-delta = 5;
+    fade-in-step = 0.045;
+    fade-out-step = 0.045;
+
+    shadow = true;
+    shadow-radius = 20;
+    shadow-offset-x = -8;
+    shadow-offset-y = -8;
+    shadow-opacity = 0.35;
+    shadow-color = "#000000";
+
+    corner-radius = 12;
+    blur-method = "dual_kawase";
+    blur-strength = 7;
+    blur-background = true;
+    blur-background-frame = true;
+    blur-background-fixed = false;
+
+    rules = ({
+      animations = ({
+        triggers = [ "open", "show" ];
+        preset = "appear";
+        scale = 0.96;
+        duration = 0.18;
+      }, {
+        triggers = [ "close", "hide" ];
+        preset = "disappear";
+        scale = 0.96;
+        duration = 0.14;
+      }, {
+        triggers = [ "geometry" ];
+        preset = "geometry-change";
+        duration = 0.20;
+      });
+    }, {
+      match = "!focused && !group_focused";
+      opacity = 0.84;
+    }, {
+      match = "focused || group_focused";
+      opacity = 0.92;
+    }, {
+      match = "window_type = 'dock'";
+      opacity = 1.0;
+      blur-background = true;
+      corner-radius = 0;
+      shadow = false;
+    }, {
+      match = "fullscreen || window_type = 'desktop'";
+      opacity = 1.0;
+      corner-radius = 0;
+      shadow = false;
+      blur-background = false;
+    }, {
+      match = "class_g = 'i3lock'";
+      opacity = 1.0;
+      corner-radius = 0;
+      shadow = false;
+      fade = false;
+      blur-background = false;
+      animations = ({
+        triggers = [ "open", "show" ];
+        preset = "appear";
+        scale = 1.0;
+        duration = 0.001;
+      }, {
+        triggers = [ "close", "hide" ];
+        preset = "disappear";
+        scale = 1.0;
+        duration = 0.001;
+      });
+    }, {
+      match = "window_type = 'tooltip' || window_type = 'popup_menu' || window_type = 'dropdown_menu'";
+      opacity = 0.88;
+      corner-radius = 8;
+      shadow = true;
+      blur-background = true;
+    });
+  '';
+  picomRunner = pkgs.writeShellApplication {
+    name = "i3-picom-run";
+    runtimeInputs = [ pkgs.coreutils pkgs.picom-pijulius ];
+    text = ''
+      state_file="''${XDG_STATE_HOME:-$HOME/.local/state}/i3/picom-effects-disabled"
+      [[ -f "$state_file" ]] && exit 0
+      exec picom --config ${picomEffectsConfig}
+    '';
+  };
 in
 {
   imports = [
@@ -53,6 +152,17 @@ in
     partOf = [ "graphical-session.target" ];
     serviceConfig = {
       ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
+      Restart = "on-failure";
+      RestartSec = 3;
+    };
+  };
+
+  systemd.user.services.picom = {
+    description = "Picom visual effects for i3";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${picomRunner}/bin/i3-picom-run";
       Restart = "on-failure";
       RestartSec = 3;
     };
@@ -160,6 +270,7 @@ in
       ngcbgI3Tools.rootbtnd
       ngcbgI3Tools.i3swallow
       ngcbgI3Tools.xlogout
+      pkgs.picom-pijulius
 
       # Launchers, notifications, wallpaper and X11 helpers.
       (rofi.override { plugins = [ rofi-calc ]; })

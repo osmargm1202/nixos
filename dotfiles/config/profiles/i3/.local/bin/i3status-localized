@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
+import time
 
 NORMAL = "#c0caf5"
 CPU_WARNING = "#ff9e64"
@@ -14,9 +15,13 @@ CRITICAL = "#f7768e"
 CAFFEINE_ON = "#9ece6a"
 CAFFEINE_OFF = "#565f89"
 NETWORK = "#7aa2f7"
+PICOM_EFFECTS_ON = "#bb9af7"
+PICOM_EFFECTS_OFF = "#565f89"
 ICON_KEYBOARD = ""
 ICON_CAFFEINE_ON = ""
 ICON_CAFFEINE_OFF = "󰅶"
+ICON_PICOM_EFFECTS_ON = "✦"
+ICON_PICOM_EFFECTS_OFF = "○"
 ICON_CPU = ""
 ICON_MEMORY = "󰍛"
 ICON_DISK = "󰋊"
@@ -27,6 +32,15 @@ BATTERY_ICONS = ("", "", "", "", "", "", "", "", "", 
 BATTERY_CHARGING = ""
 GIB = 1024**3
 POWER_SUPPLY_PATH = Path(os.environ.get("I3_POWER_SUPPLY_PATH", "/sys/class/power_supply"))
+DESKTOP_PROFILE_PATH = Path(os.environ.get("ORGM_DESKTOP_PROFILE_FILE", "/etc/orgm/desktop-profile"))
+PICOM_EFFECTS_STATE = Path(
+    os.environ.get("I3_PICOM_EFFECTS_STATE", Path.home() / ".local" / "state" / "i3" / "picom-effects-disabled")
+)
+DESKTOP_PROFILES = {
+    "normal": ("NORMAL", NETWORK),
+    "windows": ("WINDOWS", "#00a4ef"),
+    "gaming": ("GAMING", CAFFEINE_ON),
+}
 
 TRANSLATIONS = (
     ("Monday ", "Lunes "),
@@ -81,9 +95,28 @@ def click_action(click):
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
+    elif click.get("name") == "picom-effects":
+        toggle = Path.home() / ".local" / "bin" / "i3-picom-effects"
+        subprocess.Popen(
+            [str(toggle), "toggle"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
     elif click.get("name") == "keyboard":
         subprocess.Popen(["xkb-switch", "-n"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    elif click.get("name") == "orgm-status":
+        helper = Path.home() / ".local" / "bin" / "orgm-status"
+        try:
+            subprocess.Popen(
+                [str(helper), "open"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except OSError:
+            pass
 
 
 
@@ -122,6 +155,15 @@ def keyboard_block():
     return {"name": "keyboard", "full_text": f"{ICON_KEYBOARD} {layout}", "color": NORMAL}
 
 
+
+def picom_effects_block():
+    enabled = not PICOM_EFFECTS_STATE.is_file()
+    return {
+        "name": "picom-effects",
+        "instance": "enabled" if enabled else "disabled",
+        "full_text": ICON_PICOM_EFFECTS_ON if enabled else ICON_PICOM_EFFECTS_OFF,
+        "color": PICOM_EFFECTS_ON if enabled else PICOM_EFFECTS_OFF,
+    }
 def resource_blocks(cpu_percent, mem_total_kib, mem_available_kib, disk_available_bytes, caffeine_on):
     cpu_color = CRITICAL if cpu_percent > 90 else CPU_WARNING if cpu_percent >= 75 else NORMAL
     memory_used_percent = 100 * (mem_total_kib - mem_available_kib) / mem_total_kib
@@ -185,6 +227,68 @@ class CpuUsage:
         return round(100 * (total_delta - idle_delta) / total_delta)
 
 
+class InfrastructureStatus:
+    def __init__(self):
+        self.block = {
+            "name": "orgm-status",
+            "instance": "summary",
+            "full_text": (
+                '<span foreground="#f87171">N </span> '
+                '<span foreground="#f87171">F </span> '
+                '<span foreground="#f87171">V </span> '
+                '<span foreground="#f87171">O </span> '
+                '<span foreground="#565f89">│</span> '
+            ),
+            "markup": "pango",
+            "separator": False,
+            "separator_block_width": 0,
+        }
+        self.last_update = 0.0
+
+    def current(self):
+        now = time.monotonic()
+        if now - self.last_update >= 5:
+            self.last_update = now
+            helper = Path.home() / ".local" / "bin" / "orgm-status"
+            try:
+                result = subprocess.run(
+                    [str(helper), "i3bar"],
+                    capture_output=True,
+                    check=True,
+                    text=True,
+                    timeout=2,
+                )
+                candidate = json.loads(result.stdout)
+                if candidate.get("name") == "orgm-status":
+                    self.block = candidate
+            except (
+                OSError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+                json.JSONDecodeError,
+            ):
+                pass
+        return self.block.copy()
+
+def desktop_profile_block():
+    try:
+        profile = DESKTOP_PROFILE_PATH.read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        profile = "normal"
+    label, color = DESKTOP_PROFILES.get(profile, DESKTOP_PROFILES["normal"])
+    return {
+        "name": "desktop-profile",
+        "instance": profile,
+        "full_text": (
+            f'<span foreground="{color}">[{label}]</span> '
+            '<span foreground="#565f89">│</span> '
+        ),
+        "markup": "pango",
+        "separator": False,
+        "separator_block_width": 0,
+    }
+
+
 def localize(block):
     if "full_text" not in block:
         return block
@@ -211,7 +315,7 @@ def localize(block):
     return block
 
 
-def decorate(blocks, cpu_usage):
+def decorate(blocks, cpu_usage, infrastructure_status):
     localized = [localize(block) for block in blocks]
     regular = [block for block in localized if block.get("name") != "tztime"]
     clock = [block for block in localized if block.get("name") == "tztime"]
@@ -219,7 +323,7 @@ def decorate(blocks, cpu_usage):
     if keyboard is not None:
         regular.append(keyboard)
     total_kib, available_kib = memory_sample()
-    return regular + resource_blocks(
+    return [desktop_profile_block(), infrastructure_status.current()] + regular + [picom_effects_block()] + resource_blocks(
         cpu_usage.percent(),
         total_kib,
         available_kib,
@@ -249,6 +353,7 @@ def main():
         text=True,
     )
     cpu_usage = CpuUsage()
+    infrastructure_status = InfrastructureStatus()
     wrote_header = False
     wrote_array = False
     first_update = True
@@ -265,7 +370,7 @@ def main():
             print("[", flush=True)
             wrote_array = True
         elif line != "]":
-            blocks = decorate(json.loads(line.lstrip(",")), cpu_usage)
+            blocks = decorate(json.loads(line.lstrip(",")), cpu_usage, infrastructure_status)
             prefix = "" if first_update else ","
             print(f"{prefix}{json.dumps(blocks, ensure_ascii=False, separators=(',', ':'))}", flush=True)
             first_update = False
