@@ -61,7 +61,7 @@ let
     in
     lib.nixosSystem {
       specialArgs = {
-        inherit inputs userName hostName;
+        inherit inputs userName hostName role;
       }
       // lib.optionalAttrs (effectiveProfileName != null) {
         profileName = effectiveProfileName;

@@ -106,6 +106,9 @@ in
   # to the profile instead of the default version string.
   system.nixos.label = lib.mkIf (profileName != null) profileName;
 
+  # Every host exposes a stable status-bar profile; specialisations override it.
+  environment.etc."orgm/desktop-profile".text = lib.mkDefault "normal\n";
+
   # Firefox remains the URL/default browser. Chromium is available in every
   # desktop profile for local HTML documents and DRM-dependent sites.
   orgm.chromium.enable = true;

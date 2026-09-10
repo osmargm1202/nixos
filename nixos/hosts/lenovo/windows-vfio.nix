@@ -29,22 +29,6 @@ in
   environment.systemPackages = [ lookingGlassIddClient ];
 
   home-manager.users.${userName} = {
-    xdg.desktopEntries.windows-looking-glass = {
-      name = "Windows VM (Looking Glass)";
-      comment = "Open the Windows VFIO display without RDP";
-      exec = "/home/${userName}/.local/bin/windows-rdp looking-glass";
-      icon = "windows";
-      terminal = false;
-      categories = [
-        "System"
-        "RemoteAccess"
-      ];
-      settings = {
-        Keywords = "windows;looking glass;vm;vfio;";
-        StartupWMClass = "looking-glass-client";
-      };
-    };
-
     home.file = {
       "Apps/windows/compose.yml".source = ../../containers/windows/compose.yml;
       "Apps/windows/compose.lenovo-vfio.yml".source =
@@ -98,4 +82,5 @@ in
   ];
 
   environment.etc."orgm/windows-vm-profile".text = "lenovo-vfio\n";
+  environment.etc."orgm/desktop-profile".text = lib.mkForce "windows\n";
 }

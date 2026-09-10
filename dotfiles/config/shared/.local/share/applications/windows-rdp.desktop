@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Windows VM (RDP)
-Comment=Connect to Windows via RDP
+Name=Windows VM
+Comment=Open local, RDP, Moonlight, web console, or Looking Glass options
 Exec=/home/osmarg/.local/bin/windows-rdp connect
 Icon=/home/osmarg/.local/share/icons/windows.png
 Terminal=false
 Type=Application
-Categories=System;RemoteAccess;
+Categories=Network;RemoteAccess;
 Keywords=windows;rdp;vm;container;
 StartupWMClass=windows-rdp

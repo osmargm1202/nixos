@@ -40,6 +40,8 @@ DESKTOP_PROFILES = {
     "normal": ("NORMAL", NETWORK),
     "windows": ("WINDOWS", "#00a4ef"),
     "gaming": ("GAMING", CAFFEINE_ON),
+    "battery": ("BATTERY", RAM_WARNING),
+    "server": ("SERVER", "#bb9af7"),
 }
 
 TRANSLATIONS = (

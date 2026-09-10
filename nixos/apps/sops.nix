@@ -26,7 +26,15 @@
         ORGM_TOKEN = { };
         UV_PUBLISH_TOKEN = { };
 
+        WINDOWS_RDP_USER_OSMAR_WINDOWS = {
+          sopsFile = ../../secrets/shared/windows-rdp.yaml;
+          mode = "0400";
+        };
         WINDOWS_RDP_PASSWORD_OSMAR_WINDOWS = {
+          sopsFile = ../../secrets/shared/windows-rdp.yaml;
+          mode = "0400";
+        };
+        WINDOWS_RDP_USER_LENOVO_WINDOWS = {
           sopsFile = ../../secrets/shared/windows-rdp.yaml;
           mode = "0400";
         };
@@ -34,11 +42,23 @@
           sopsFile = ../../secrets/shared/windows-rdp.yaml;
           mode = "0400";
         };
+        WINDOWS_RDP_USER_TONY_WINDOWS = {
+          sopsFile = ../../secrets/shared/windows-rdp.yaml;
+          mode = "0400";
+        };
         WINDOWS_RDP_PASSWORD_TONY_WINDOWS = {
           sopsFile = ../../secrets/shared/windows-rdp.yaml;
           mode = "0400";
         };
+        WINDOWS_RDP_USER_HP_WINDOWS = {
+          sopsFile = ../../secrets/shared/windows-rdp.yaml;
+          mode = "0400";
+        };
         WINDOWS_RDP_PASSWORD_HP_WINDOWS = {
+          sopsFile = ../../secrets/shared/windows-rdp.yaml;
+          mode = "0400";
+        };
+        WINDOWS_RDP_USER_INTEGRA_WINDOWS = {
           sopsFile = ../../secrets/shared/windows-rdp.yaml;
           mode = "0400";
         };
@@ -50,15 +70,15 @@
     };
 
     home.sessionVariables = {
-      WINDOWS_RDP_OSMAR_WINDOWS_USER = "osmarg";
+      WINDOWS_RDP_OSMAR_WINDOWS_USER_FILE = config.sops.secrets.WINDOWS_RDP_USER_OSMAR_WINDOWS.path;
       WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE = config.sops.secrets.WINDOWS_RDP_PASSWORD_OSMAR_WINDOWS.path;
-      WINDOWS_RDP_LENOVO_WINDOWS_USER = "osmarg";
+      WINDOWS_RDP_LENOVO_WINDOWS_USER_FILE = config.sops.secrets.WINDOWS_RDP_USER_LENOVO_WINDOWS.path;
       WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE = config.sops.secrets.WINDOWS_RDP_PASSWORD_LENOVO_WINDOWS.path;
-      WINDOWS_RDP_TONY_WINDOWS_USER = "osmarg";
+      WINDOWS_RDP_TONY_WINDOWS_USER_FILE = config.sops.secrets.WINDOWS_RDP_USER_TONY_WINDOWS.path;
       WINDOWS_RDP_TONY_WINDOWS_PASSWORD_FILE = config.sops.secrets.WINDOWS_RDP_PASSWORD_TONY_WINDOWS.path;
-      WINDOWS_RDP_HP_WINDOWS_USER = "osmarg";
+      WINDOWS_RDP_HP_WINDOWS_USER_FILE = config.sops.secrets.WINDOWS_RDP_USER_HP_WINDOWS.path;
       WINDOWS_RDP_HP_WINDOWS_PASSWORD_FILE = config.sops.secrets.WINDOWS_RDP_PASSWORD_HP_WINDOWS.path;
-      WINDOWS_RDP_INTEGRA_WINDOWS_USER = "osmarg";
+      WINDOWS_RDP_INTEGRA_WINDOWS_USER_FILE = config.sops.secrets.WINDOWS_RDP_USER_INTEGRA_WINDOWS.path;
       WINDOWS_RDP_INTEGRA_WINDOWS_PASSWORD_FILE = config.sops.secrets.WINDOWS_RDP_PASSWORD_INTEGRA_WINDOWS.path;
     };
     home.activation.initializeSopsAgeKey = lib.hm.dag.entryBefore [ "sops-nix" ] ''

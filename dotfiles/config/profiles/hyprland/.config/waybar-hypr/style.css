@@ -144,6 +144,16 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #bluetooth, #network {
   padding: 0 6px;
 }
+#custom-separator-monitoring, #custom-separator-network {
+  color: @overlay0;
+  padding: 0 4px;
+}
+#custom-desktop-profile {
+  font-weight: bold;
+  padding: 0 6px;
+}
+
+
 #group-usage #custom-metric_cpu, #group-usage #custom-metric_gpu, #group-usage #custom-metric_ram, #group-usage #custom-metric_ssd, #group-usage #custom-metric_swap,
 #usage #custom-metric_cpu, #usage #custom-metric_gpu, #usage #custom-metric_ram, #usage #custom-metric_ssd, #usage #custom-metric_swap,
 #group-system #backlight, #group-system #pulseaudio, #group-system #pulseaudio-slider, #group-system #battery,
@@ -239,6 +249,11 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
 #keyboard-state label.capslock.locked { color: @text; }
 #custom-kbd_layout { color: @text; font-weight: bold; }
+#custom-orgm-status {
+  font-weight: bold;
+  padding: 0 8px;
+}
+
 #idle_inhibitor, #custom-game_mode, #custom-keybindings_help {
   background: transparent;
   border-radius: 12px;

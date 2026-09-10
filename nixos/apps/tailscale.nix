@@ -1,14 +1,33 @@
 # Mesh VPN for remote access to machines behind NAT we don't control
-# (e.g. jarq's). Auth is manual per host, not declarative:
-#   sudo tailscale up --auth-key=tskey-auth-... --accept-dns=false
-# accept-dns stays OFF: with it on, tailscaled rewrites /etc/resolv.conf
-# to 100.100.100.100 and every DNS query depends on the daemon (broken
-# internet on restarts/sleep). sshgo connects by Tailscale IP, so
-# MagicDNS names aren't needed.
-{ inputs, pkgs, ... }:
+# (e.g. jarq's). Authentication remains manual per host:
+#   sudo tailscale up --auth-key=tskey-auth-...
+# `tailscale set --accept-dns=false` keeps Tailscale from replacing the
+# resolver globally. tailscale-magicdns instead configures systemd-resolved at
+# runtime to route only the discovered tailnet suffix to 100.100.100.100.
+{ config, inputs, pkgs, ... }:
 let
   peerMonitorServiceName = "tailscale-peer-monitor";
   peerNotifierServiceName = "tailscale-peer-notifier";
+  magicDnsServiceName = "tailscale-magicdns";
+  tailscaleMagicDns = pkgs.writeShellApplication {
+    name = magicDnsServiceName;
+    runtimeInputs = with pkgs; [
+      jq
+      systemd
+      tailscale
+    ];
+    text = ''
+      set -euo pipefail
+
+      suffix="$(
+        tailscale status --json --peers=false \
+          | jq -er '.MagicDNSSuffix | strings | select(length > 0)'
+      )"
+
+      resolvectl dns tailscale0 100.100.100.100
+      resolvectl domain tailscale0 "~$suffix" "$suffix"
+    '';
+  };
 
   tailscalePeerMonitor = pkgs.writeShellApplication {
     name = peerMonitorServiceName;
@@ -212,20 +231,37 @@ in
     })
   ];
 
-  services.tailscale.enable = true;
-  services.tailscale.useRoutingFeatures = "client";
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    extraSetFlags = [ "--accept-dns=false" ];
+  };
 
-  networking.extraHosts = ''
-    100.67.39.12 fifrex.tailb870fa.ts.net fifrex
-    100.112.28.88 lenovo.tailb870fa.ts.net lenovo
-    100.82.81.79 lenovo-windows.tailb870fa.ts.net lenovo-windows
-    100.89.45.64 nextcloud.tailb870fa.ts.net nextcloud
-    100.100.134.21 or-gm.tailb870fa.ts.net or-gm
-    100.94.177.77 orgm.tailb870fa.ts.net orgm
-    100.90.219.91 osmar-iphone-12-pro-max.tailb870fa.ts.net osmar-iphone-12-pro-max
-    100.97.77.10 osmar-windows.tailb870fa.ts.net osmar-windows
-    100.71.179.123 tony-windows.tailb870fa.ts.net tony-windows
-  '';
+  # Normal DNS stays with NetworkManager. The runtime service obtains the
+  # current tailnet suffix and routes only it through Tailscale's DNS server.
+  services.resolved.enable = true;
+
+  systemd.services.${magicDnsServiceName} = {
+    description = "Configure split MagicDNS for the local tailnet";
+    after = [
+      "tailscaled.service"
+      "tailscaled-set.service"
+      "systemd-resolved.service"
+    ];
+    wants = [
+      "tailscaled.service"
+      "tailscaled-set.service"
+      "systemd-resolved.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${tailscaleMagicDns}/bin/${magicDnsServiceName}";
+      Restart = "on-failure";
+      RestartSec = "5s";
+    };
+  };
+
 
   systemd.services.${peerMonitorServiceName} = {
     description = "Detect Tailscale peer connection changes";

@@ -32,6 +32,11 @@ nix eval --impure --raw --expr '
       && config.specialisation.gaming.configuration.boot.loader.systemd-boot.sortKey == "nixos-02-gaming"
       && config.specialisation.battery.configuration.boot.loader.systemd-boot.sortKey == "nixos-03-battery"
       && config.specialisation.server.configuration.boot.loader.systemd-boot.sortKey == "nixos-04-server"
+      && config.environment.etc."orgm/desktop-profile".text == "normal\n"
+      && config.specialisation.windows-vfio.configuration.environment.etc."orgm/desktop-profile".text == "windows\n"
+      && config.specialisation.gaming.configuration.environment.etc."orgm/desktop-profile".text == "gaming\n"
+      && config.specialisation.battery.configuration.environment.etc."orgm/desktop-profile".text == "battery\n"
+      && config.specialisation.server.configuration.environment.etc."orgm/desktop-profile".text == "server\n"
       && builtins.match ".*/bin/set-vfio-boot-default"
         config.boot.loader.systemd-boot.extraInstallCommands != null
       && config.specialisation.gaming.configuration.orgm.gaming.gamescopeTty1.enable

@@ -26,7 +26,6 @@ in
     100.100.134.21 dagendang
     100.100.134.21 adm-dagendang
     100.100.134.21 analisis-edes
-    100.100.134.21 or
     100.100.134.21 dronemap
     100.100.134.21 vaultwarden
     100.100.134.21 qbittorrent
@@ -37,6 +36,8 @@ in
     100.67.39.12 portainer-fifrex
     100.100.134.21 pihole-orgm
     100.100.134.21 romm
+    100.89.45.64 grafana
+
 
   '';
 }

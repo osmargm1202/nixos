@@ -13,6 +13,7 @@ COMPOSE_FILES=()
 RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER=""
+RDP_USER_FILE=""
 RDP_PASSWORD_FILE=""
 LOCAL_WINDOWS_NAME="osmar-windows"
 WEB_CONSOLE_URL="http://127.0.0.1:8006"
@@ -258,7 +259,7 @@ rdp_command() {
 
 load_rdp_credentials() {
   local selected_host="${1,,}"
-  local credential_host credential_key user_var password_file_var
+  local credential_host credential_key user_var user_file_var password_file_var legacy_user
 
   case "$selected_host" in
     orgm | orgm-windows) credential_host="osmar-windows" ;;
@@ -268,13 +269,15 @@ load_rdp_credentials() {
   credential_key="${credential_host^^}"
   credential_key="${credential_key//-/_}"
   user_var="WINDOWS_RDP_${credential_key}_USER"
+  user_file_var="WINDOWS_RDP_${credential_key}_USER_FILE"
   password_file_var="WINDOWS_RDP_${credential_key}_PASSWORD_FILE"
-  RDP_USER="${!user_var:-}"
+  legacy_user="${!user_var:-}"
+  RDP_USER_FILE="${!user_file_var:-}"
   RDP_PASSWORD_FILE="${!password_file_var:-}"
 
   # Desktop launchers may retain an environment from before HM activation.
   # Load the same generated defaults as Bash without sourcing interactive rc.
-  if [[ -z "$RDP_USER" || -z "$RDP_PASSWORD_FILE" ]]; then
+  if [[ -z "$RDP_USER_FILE" || -z "$RDP_PASSWORD_FILE" ]]; then
     local session_vars
     local __HM_SESS_VARS_SOURCED=""
     for session_vars in \
@@ -283,16 +286,28 @@ load_rdp_credentials() {
       [[ -r "$session_vars" ]] || continue
       # shellcheck source=/dev/null
       source "$session_vars" || return 1
-      RDP_USER="${RDP_USER:-${!user_var:-}}"
+      legacy_user="${legacy_user:-${!user_var:-}}"
+      RDP_USER_FILE="${RDP_USER_FILE:-${!user_file_var:-}}"
       RDP_PASSWORD_FILE="${RDP_PASSWORD_FILE:-${!password_file_var:-}}"
       break
     done
   fi
 
+  if [[ -r "$RDP_USER_FILE" && -s "$RDP_USER_FILE" ]]; then
+    RDP_USER="$(<"$RDP_USER_FILE")"
+  else
+    # Compatibility for explicitly supplied credentials and test harnesses.
+    RDP_USER="$legacy_user"
+  fi
+
   if [[ -z "$RDP_USER" || -z "$RDP_PASSWORD_FILE" || ! -r "$RDP_PASSWORD_FILE" || ! -s "$RDP_PASSWORD_FILE" ]]; then
-    echo "Error: RDP host '$selected_host' requires $user_var and $password_file_var." >&2
+    echo "Error: RDP host '$selected_host' requires SOPS credentials ($user_file_var and $password_file_var)." >&2
     return 1
   fi
+}
+
+rdp_credentials_available() {
+  load_rdp_credentials "$1" >/dev/null 2>&1
 }
 
 rdp_connect() {
@@ -352,6 +367,10 @@ build_targets() {
   TARGET_ADDRESSES=()
   append_target "Local | $LOCAL_WINDOWS_NAME | RDP" "rdp-local" "$LOCAL_WINDOWS_NAME" "localhost"
   append_target "Local | $LOCAL_WINDOWS_NAME | Iniciar contenedor" "local-start" "$LOCAL_WINDOWS_NAME" "localhost"
+  append_target "Local | $LOCAL_WINDOWS_NAME | Consola web" "local-web" "$LOCAL_WINDOWS_NAME" "localhost"
+  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio && -e /dev/kvmfr0 ]]; then
+    append_target "Local | $LOCAL_WINDOWS_NAME | Looking Glass" "looking-glass" "$LOCAL_WINDOWS_NAME" "localhost"
+  fi
   append_target "Custom | RDP" "rdp-custom" "" ""
 
   if ! command -v tailscale &>/dev/null || ! command -v jq &>/dev/null; then
@@ -388,20 +407,22 @@ build_targets() {
       *windows* | orgm | lenovo) ;;
       *) continue ;;
     esac
+    [[ "$state" == online ]] || continue
     if [[ "$ip" == sin-ip ]]; then
       echo "Warning: Tailscale peer '$host' has no usable Tailscale IP; skipping RDP." >&2
       continue
     fi
-    append_target "Tailscale | $host | RDP | $state" "rdp-tailscale" "$host" "$ip"
+    if rdp_credentials_available "$host"; then
+      append_target "Tailscale | $host | RDP" "rdp-tailscale" "$host" "$ip"
+    else
+      append_target "Tailscale | $host | RDP | clave interactiva" "rdp-tailscale-interactive" "$host" "$ip"
+    fi
   done <<<"$peers"
 
   while IFS=$'\t' read -r host ip state; do
-    [[ "$host" == orgm || "$host" == lenovo ]] || continue
-    if [[ "$ip" == sin-ip ]]; then
-      echo "Warning: Tailscale peer '$host' has no usable Tailscale IP; skipping Moonlight." >&2
-      continue
-    fi
-    append_target "Tailscale | $host | Moonlight | $state" "moonlight" "$host" "$ip"
+    [[ "$state" == online && ( "$host" == orgm || "$host" == lenovo ) ]] || continue
+    [[ "$ip" == sin-ip ]] && continue
+    append_target "Tailscale | $host | Moonlight" "moonlight" "$host" "$ip"
   done <<<"$peers"
 }
 
@@ -530,6 +551,38 @@ do_custom_rdp_connect() {
   return "$result"
 }
 
+do_interactive_rdp_connect() {
+  local hostname="$1" address="$2" password=""
+
+  printf 'Usuario RDP para %s: ' "$hostname" >&2
+  IFS= read -r RDP_USER || return 0
+  printf 'Clave RDP para %s: ' "$hostname" >&2
+  IFS= read -r -s password
+  if [[ -z "$password" ]]; then
+    printf '\n' >&2
+    return 0
+  fi
+  printf '\n' >&2
+  [[ -n "$RDP_USER" && -n "$password" ]] || {
+    echo "Error: usuario y clave RDP son obligatorios." >&2
+    return 1
+  }
+
+  RDP_HOST="$address"
+  RDP_PORT=3389
+  rdp_connect "$(current_hypr_workspace)" "$password"
+}
+
+open_interactive_rdp_terminal() {
+  local hostname="$1" address="$2"
+
+  if [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && command -v kitty &>/dev/null; then
+    exec kitty --class windows-rdp-prompt --title "RDP: $hostname" \
+      -e "$BIN_DIR/$SCRIPT_NAME" rdp-interactive "$hostname" "$address"
+  fi
+  do_interactive_rdp_connect "$hostname" "$address"
+}
+
 do_choose_connect() {
   local protocol hostname address
 
@@ -551,6 +604,12 @@ do_choose_connect() {
     rdp-local)
       do_connect
       ;;
+    local-web)
+      do_web
+      ;;
+    looking-glass)
+      do_looking_glass
+      ;;
     rdp-custom)
       do_custom_rdp_connect
       ;;
@@ -559,6 +618,9 @@ do_choose_connect() {
       RDP_PORT=3389
       load_rdp_credentials "$hostname" || return 1
       rdp_connect "$(current_hypr_workspace)"
+      ;;
+    rdp-tailscale-interactive)
+      open_interactive_rdp_terminal "$hostname" "$address"
       ;;
     moonlight)
       do_moonlight_connect "$address"
@@ -680,7 +742,10 @@ do_connect() {
 
   RDP_HOST=localhost
   RDP_PORT=3389
-  load_rdp_credentials "$LOCAL_WINDOWS_NAME" || return 1
+  if ! load_rdp_credentials "$LOCAL_WINDOWS_NAME"; then
+    open_interactive_rdp_terminal "$LOCAL_WINDOWS_NAME" "$RDP_HOST"
+    return
+  fi
   target_workspace="$(current_hypr_workspace)"
 
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
@@ -739,36 +804,23 @@ do_install() {
   fi
   echo "  Icon    -> $ICON_FILE"
 
-  # Create desktop launchers.
+  # Create the single desktop launcher; all access methods are menu options.
   mkdir -p "$APPS_DIR"
   cat >"$APPS_DIR/$SCRIPT_NAME.desktop" <<EOF
 [Desktop Entry]
-Name=Windows VM (RDP)
-Comment=Connect to Windows via RDP
+Name=Windows VM
+Comment=Open local, RDP, Moonlight, web console, or Looking Glass options
 Exec=$BIN_DIR/$SCRIPT_NAME connect
 Icon=$ICON_FILE
 Terminal=false
 Type=Application
-Categories=System;RemoteAccess;
-Keywords=windows;rdp;vm;container;
+Categories=Network;RemoteAccess;
+Keywords=windows;rdp;vm;container;looking glass;
 StartupWMClass=windows-rdp
 EOF
   chmod +x "$APPS_DIR/$SCRIPT_NAME.desktop"
+  rm -f "$APPS_DIR/windows-web-console.desktop"
   echo "  Desktop -> $APPS_DIR/$SCRIPT_NAME.desktop"
-
-  cat >"$APPS_DIR/windows-web-console.desktop" <<EOF
-[Desktop Entry]
-Name=Windows VM (Web Console)
-Comment=Open the Windows VM web console
-Exec=$BIN_DIR/$SCRIPT_NAME web
-Icon=$ICON_FILE
-Terminal=false
-Type=Application
-Categories=System;RemoteAccess;
-Keywords=windows;web;console;vm;container;
-EOF
-  chmod +x "$APPS_DIR/windows-web-console.desktop"
-  echo "  Web     -> $APPS_DIR/windows-web-console.desktop"
 
   echo "Install complete. '$SCRIPT_NAME' is now available."
 }
@@ -782,16 +834,15 @@ usage() {
 Usage: $SCRIPT_NAME <command>
 
 Commands:
-  run        Connect directly to the local Windows VM; start it if needed
-  start      Start the local Windows container only
-  stop       Stop the local Windows container only
-  toggle     Stop the selected local container if running, otherwise start it
-  connect    Select local, custom, Tailscale RDP, or Moonlight access
+  connect    Choose local, online Tailscale, custom RDP, Moonlight, web console,
+             or Looking Glass when the active profile supports it
+  rdp-interactive HOST IP
+             Prompt for credentials in a terminal and connect to a known host
   web        Start the selected local container if needed and open its Web Console
   looking-glass
              Start the Lenovo VFIO Windows VM if needed and open Looking Glass
   status     Show the selected VM profile and RDP client
-  install    Install script, icon and desktop launchers
+  install    Install script, icon and the single desktop launcher
 
 EOF
 }
@@ -808,6 +859,13 @@ start) do_start ;;
 stop) do_stop ;;
 toggle) do_toggle ;;
 connect) do_choose_connect ;;
+rdp-interactive)
+  [[ $# -eq 3 ]] || {
+    echo "Usage: $SCRIPT_NAME rdp-interactive HOST IP" >&2
+    exit 1
+  }
+  do_interactive_rdp_connect "$2" "$3"
+  ;;
 web) do_web ;;
 status) do_status ;;
 looking-glass) do_looking_glass ;;

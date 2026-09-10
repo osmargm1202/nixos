@@ -43,6 +43,7 @@ in
       extraInstallCommands = "${setVfioBootDefault}/bin/set-vfio-boot-default";
     };
 
+
     # Desktop profiles without a display manager start from tty1; SDDM profiles
     # use its equivalent auto-login path. Both land directly in the selected
     # normal, battery, or Windows session without exposing other VTs.
@@ -68,6 +69,7 @@ in
         services.displayManager.sddm.enable = lib.mkForce false;
         services.displayManager.autoLogin.enable = lib.mkForce false;
         powerManagement.cpuFreqGovernor = "performance";
+        environment.etc."orgm/desktop-profile".text = lib.mkForce "gaming\n";
       };
       windows-vfio.configuration = {
         imports = [ ./windows-vfio.nix ];
@@ -78,9 +80,11 @@ in
         boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-03-battery";
         powerManagement.cpuFreqGovernor = "powersave";
         boot.blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" "nvidia_uvm" ];
+        environment.etc."orgm/desktop-profile".text = lib.mkForce "battery\n";
       };
       server.configuration = {
         boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-04-server";
+        environment.etc."orgm/desktop-profile".text = lib.mkForce "server\n";
         systemd.services = {
           "getty@tty1".serviceConfig.ExecStart = lib.mkForce [
             ""

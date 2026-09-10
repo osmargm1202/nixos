@@ -23,9 +23,7 @@ nix eval --impure --raw --expr '
       && builtins.substring 0 (builtins.stringLength requiredKvmfrModprobe) vfio.boot.extraModprobeConfig == requiredKvmfrModprobe
       && builtins.any (pkg: builtins.match "kvmfr-.*" pkg.name != null) vfio.boot.extraModulePackages
       && builtins.any (pkg: pkg.name == requiredLookingGlassClient) vfio.environment.systemPackages
-      && builtins.match ".*${requiredKvmfrUdevRule}.*" vfio.services.udev.extraRules != null
-      && vfio.home-manager.users.osmarg.xdg.desktopEntries."windows-looking-glass".exec
-        == "/home/osmarg/.local/bin/windows-rdp looking-glass";
+      && builtins.match ".*${requiredKvmfrUdevRule}.*" vfio.services.udev.extraRules != null;
     isVfio = vfio:
       builtins.all (value: builtins.elem value vfio.boot.kernelParams) requiredParams
       && builtins.all (value: builtins.elem value vfio.boot.initrd.kernelModules) requiredModules

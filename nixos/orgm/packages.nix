@@ -4,4 +4,5 @@
   orgm-organize = pkgs.callPackage ./orgm-organize.nix { };
   orgm-rnc = pkgs.callPackage ./orgm-rnc.nix { };
   orgm-bt = pkgs.callPackage ./orgm-bt.nix { };
+  orgm-todo = pkgs.callPackage ./orgm-todo.nix { };
 }

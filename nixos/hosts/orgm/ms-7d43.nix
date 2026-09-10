@@ -1,11 +1,7 @@
-{ lib, ... }:
+{ lib, profileName ? null, ... }:
 
 {
   imports = [ ./audio.nix ];
-  orgm.sddm = {
-    profile = lib.mkDefault "qylock";
-    qylockTheme = lib.mkDefault "star-rail";
-  };
 
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.
@@ -62,5 +58,11 @@
         fi
       '';
     };
+  };
+}
+// lib.optionalAttrs (builtins.elem profileName [ "gnome" "hyprland" "i3" "labwc" ]) {
+  orgm.sddm = {
+    profile = lib.mkDefault "qylock";
+    qylockTheme = lib.mkDefault "star-rail";
   };
 }

@@ -90,10 +90,12 @@ EOF
 chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
 rdp_password_file="$tmp/rdp-password"
 printf '%s\n' test-password >"$rdp_password_file"
+rdp_user_file="$tmp/rdp-user"
+printf '%s\n' osmarg >"$rdp_user_file"
 
 
 wayland_log="$tmp/wayland.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 RDP_LOG="$wayland_log" WINDOWS_RDP_OSMAR_WINDOWS_USER_FILE="$rdp_user_file" WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
 [[ "$(<"$wayland_log")" == "sdl-freerdp /v:localhost:3389"* ]]
 [[ "$(<"$wayland_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$wayland_log")" == *"/size:1600x900"* ]]
@@ -104,7 +106,7 @@ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY=wayland-1 DISPLAY=:0 
 [[ "$(<"$wayland_log")" != *"/dynamic-resolution"* ]]
 
 x11_log="$tmp/x11.log"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 RDP_LOG="$x11_log" WINDOWS_RDP_OSMAR_WINDOWS_USER_FILE="$rdp_user_file" WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$rdp_password_file" "$helper" connect
 [[ "$(<"$x11_log")" == "xfreerdp /v:localhost:3389"* ]]
 [[ "$(<"$x11_log")" == *"/gdi:sw"* ]]
 [[ "$(<"$x11_log")" == *"/size:1600x900"* ]]

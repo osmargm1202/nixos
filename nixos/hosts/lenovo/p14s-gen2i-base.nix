@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  profileName ? null,
   ...
 }:
 
@@ -28,10 +29,6 @@ in
   };
 
   config = {
-    orgm.sddm = {
-      profile = lib.mkDefault "qylock";
-      qylockTheme = lib.mkDefault "winter";
-    };
 
     # Local equivalent of nixos-hardware's Lenovo ThinkPad P14s Intel Gen 2
     # profile, kept in-repo so Lenovo carries its own host-specific GPU setup.
@@ -76,5 +73,11 @@ in
     services.fstrim.enable = lib.mkDefault true;
     hardware.trackpoint.enable = lib.mkDefault true;
     hardware.trackpoint.emulateWheel = lib.mkDefault config.hardware.trackpoint.enable;
+  }
+  // lib.optionalAttrs (builtins.elem profileName [ "gnome" "hyprland" "i3" "labwc" ]) {
+    orgm.sddm = {
+      profile = lib.mkDefault "qylock";
+      qylockTheme = lib.mkDefault "winter";
+    };
   };
 }

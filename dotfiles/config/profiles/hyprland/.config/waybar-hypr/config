@@ -37,7 +37,12 @@
       "custom/date"
     ],
     "modules-right": [
+      "custom/desktop-profile",
       "hyprland/window",
+      "custom/orgm-status",
+      "custom/separator#monitoring",
+      "network",
+      "custom/separator#network",
       "mpris",
       "custom/power",
       "tray"
@@ -53,6 +58,34 @@
       "tooltip": true,
       "tooltip-format": "Menú de energía",
       "on-click": "hypr-power-menu"
+    },
+    "custom/orgm-status": {
+      "exec": "orgm-status waybar",
+      "return-type": "json",
+      "interval": 5,
+      "escape": false,
+      "on-click": "orgm-status open"
+    },
+    "custom/desktop-profile": {
+      "exec": "orgm-status profile-waybar",
+      "return-type": "json",
+      "interval": 5,
+      "escape": false
+    },
+    "custom/separator#monitoring": {
+      "format": "│",
+      "tooltip": false
+    },
+    "custom/separator#network": {
+      "format": "│",
+      "tooltip": false
+    },
+    "network": {
+      "format-wifi": "",
+      "format-ethernet": "󰈀",
+      "format-disconnected": "󰖪",
+      "tooltip-format-wifi": "{essid}\n{ipaddr}",
+      "tooltip-format-ethernet": "{ifname}\n{ipaddr}"
     },
     "custom/ws_1": {
       "exec": "hypr-workspace-button status 1",

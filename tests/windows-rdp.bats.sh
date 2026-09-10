@@ -30,6 +30,7 @@ make_default_stubs() {
 run_script() {
 	local script="$1" command="$2" tmp="$3"
 	local password_file="$tmp/osmar-password"
+	local user_file="$tmp/osmar-user"
 	if [[ $# -eq 4 ]]; then
 		printf '%s' "$4" | \
 			PATH="$tmp" \
@@ -38,7 +39,7 @@ run_script() {
 			USER="windows-rdp-test-$$" \
 			XDG_CURRENT_DESKTOP="${WINDOWS_RDP_TEST_DESKTOP:-}" \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
-			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
+			WINDOWS_RDP_OSMAR_WINDOWS_USER_FILE="$user_file" \
 			WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$password_file" \
 			SWAYSOCK= \
 			WAYLAND_DISPLAY= \
@@ -51,7 +52,7 @@ run_script() {
 			USER="windows-rdp-test-$$" \
 			XDG_CURRENT_DESKTOP="${WINDOWS_RDP_TEST_DESKTOP:-}" \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
-			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
+			WINDOWS_RDP_OSMAR_WINDOWS_USER_FILE="$user_file" \
 			WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$password_file" \
 			SWAYSOCK= \
 			WAYLAND_DISPLAY= \
@@ -116,6 +117,7 @@ with_tmp() {
 	: >"$tmp/calls"
 	mkdir -p "$tmp/home"
 	printf '%s\n' osmar-password >"$tmp/osmar-password"
+	printf '%s\n' osmarg >"$tmp/osmar-user"
 	make_default_stubs "$tmp"
 	printf '%s\n' render-node >"$tmp/profile"
 	"$@" "$tmp"
@@ -223,8 +225,8 @@ test_remote_selector_rdp() {
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
     export TAILSCALE_STATUS="{}"
-    export JQ_OUTPUT=$'"'"'alpha-linux\t100.64.0.3\tonline\nbeta-windows\t100.64.0.4\toffline\nhp-windows\tsin-ip\toffline\nlenovo\t100.64.0.7\toffline\norgm\t100.64.0.6\tonline\norgm-windows\t100.64.0.5\tonline'"'"'
-    selection_input="$(printf "%s\n" invalid 10 6)"
+    export JQ_OUTPUT=$'"'"'alpha-linux\t100.64.0.3\tonline\nbeta-windows\t100.64.0.4\toffline\nhp-windows\tsin-ip\toffline\nlenovo\t100.64.0.7\toffline\norgm\t100.64.0.6\tonline\norgm-windows\t100.64.0.5\tonline\nnew-windows\t100.64.0.8\tonline'"'"'
+    selection_input="$(printf "%s\n" invalid 5)"
     run_script "$script" connect "$tmp" "$selection_input"
     assert_stdout_empty "$tmp" "numeric selector does not add connection chatter"
     assert_calls_contains "$tmp" "tailscale status --json" "selector queries Tailscale once"
@@ -234,32 +236,36 @@ test_remote_selector_rdp() {
       fail "local Windows is selector row zero"
     grep -Fq "2) Local | osmar-windows | Iniciar contenedor" "$tmp/err" ||
       fail "local container start is selectable"
-    grep -Fq "Tailscale | beta-windows | RDP | offline" "$tmp/err" ||
-      fail "offline Windows peer remains selectable"
-    grep -Fq "Tailscale | orgm-windows | RDP | online" "$tmp/err" ||
-      fail "online Windows peer remains selectable"
-    grep -Fq "Tailscale | orgm | RDP | online" "$tmp/err" ||
-      fail "orgm offers RDP to its Windows VM"
-    grep -Fq "Tailscale | lenovo | RDP | offline" "$tmp/err" ||
-      fail "lenovo offers RDP to its Windows VM"
-    grep -Fq "Tailscale | orgm | Moonlight | online" "$tmp/err" ||
-      fail "orgm offers Moonlight"
-    grep -Fq "Tailscale | lenovo | Moonlight | offline" "$tmp/err" ||
-      fail "lenovo offers Moonlight"
+    grep -Fq "3) Local | osmar-windows | Consola web" "$tmp/err" ||
+      fail "local web console is selectable"
+    grep -Fq "4) Custom | RDP" "$tmp/err" ||
+      fail "custom RDP remains selectable"
+    ! grep -Fq "beta-windows" "$tmp/err" ||
+      fail "offline Windows peers are omitted"
+    ! grep -Fq "lenovo | RDP" "$tmp/err" ||
+      fail "offline Lenovo is omitted"
+    grep -Fq "Tailscale | orgm-windows | RDP" "$tmp/err" ||
+      fail "online Windows peer with saved credentials is selectable"
+    grep -Fq "Tailscale | new-windows | RDP | clave interactiva" "$tmp/err" ||
+      fail "online Windows peer without SOPS credentials opens an interactive terminal"
     ! grep -Fq "alpha-linux" "$tmp/err" ||
       fail "unrelated Tailscale peers are omitted"
-    grep -Fq "hp-windows" "$tmp/err" && grep -Fq "no usable Tailscale IP" "$tmp/err" || {
-      dump_case "$tmp"
-      fail "Windows peers without an IP are reported and skipped"
-    }
+    ! grep -Fq "hp-windows" "$tmp/err" ||
+      fail "offline peers without an IP are omitted"
     grep -Fq "Selecciona un número válido." "$tmp/err" ||
       fail "numeric selector rejects invalid and out-of-range input"
     : >"$tmp/calls"
+    interactive_input="$(printf "%s\n" 7 interactive-user interactive-password)"
+    run_script "$script" connect "$tmp" "$interactive_input"
+    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.8:3389 /u:interactive-user /p:interactive-password" "unsaved online Windows credentials are collected interactively"
+    : >"$tmp/calls"
     printf "%s\n" lenovo-password >"$tmp/lenovo-password"
-    export WINDOWS_RDP_LENOVO_WINDOWS_USER=osmarg
+    printf "%s\n" osmarg >"$tmp/lenovo-user"
+    export WINDOWS_RDP_LENOVO_WINDOWS_USER_FILE="$tmp/lenovo-user"
     export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE="$tmp/lenovo-password"
+    export JQ_OUTPUT=$'"'"'lenovo\t100.64.0.7\tonline'"'"'
     run_script "$script" connect "$tmp" 5
-    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 .* /p:lenovo-password" "lenovo uses lenovo-windows credentials"
+    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 .* /p:lenovo-password" "online Lenovo uses SOPS credentials"
   ' bash "$script"
 }
 
@@ -274,13 +280,14 @@ test_graphical_selector_and_moonlight() {
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
     export TAILSCALE_STATUS="{}"
     printf "%s\n" tony-password >"$tmp/tony-password"
-    export WINDOWS_RDP_TONY_WINDOWS_USER=osmarg
+    printf "%s\n" osmarg >"$tmp/tony-user"
+    export WINDOWS_RDP_TONY_WINDOWS_USER_FILE="$tmp/tony-user"
     export WINDOWS_RDP_TONY_WINDOWS_PASSWORD_FILE="$tmp/tony-password"
-    export JQ_OUTPUT=$'"'"'tony-windows\t100.64.0.4\toffline\norgm\t100.64.0.6\tonline'"'"'
-    export ROFI_INDEX=3 WINDOWS_RDP_TEST_DISPLAY=:1 WINDOWS_RDP_TEST_DESKTOP=Hyprland
+    export JQ_OUTPUT=$'"'"'tony-windows\t100.64.0.4\tonline\norgm\t100.64.0.6\tonline'"'"'
+    export ROFI_INDEX=4 WINDOWS_RDP_TEST_DISPLAY=:1 WINDOWS_RDP_TEST_DESKTOP=Hyprland
     run_script "$script" connect "$tmp"
     assert_calls_contains "$tmp" "rofi -theme .*/.config/orgm-hypr/rofi/hypr-menu.rasi -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "desktop selector uses the shared themed Rofi menu"
-    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.4:3389" "Rofi index dispatches remote RDP"
+    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.4:3389" "Rofi dispatches online RDP"
     assert_calls_not_contains "$tmp" "docker" "graphical remote RDP leaves the local VM untouched"
   ' bash "$script"
 
@@ -288,7 +295,7 @@ test_graphical_selector_and_moonlight() {
     script="$1"; tmp="$2"
     make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
-    make_stub "$tmp" rofi "printf \"%s\\n\" 4"
+    make_stub "$tmp" rofi "printf \"%s\\n\" 5"
     make_stub "$tmp" flatpak "echo flatpak \"\$@\" >>\"\$CALLS\"; if [[ \"\$1\" == info ]]; then exit 0; fi; if [[ \"\$3\" == list ]]; then [[ \"\${FLATPAK_LIST_MODE:-desktop}\" == desktop ]] && { echo Desktop; exit 0; }; exit 1; fi; exit 0"
     export TAILSCALE_STATUS="{}"
     export JQ_OUTPUT=$'"'"'orgm\t100.64.0.6\tonline'"'"'
@@ -361,10 +368,10 @@ test_custom_rdp_connection() {
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
-    custom_input="$(printf "%s\n" 3 192.0.2.44 custom-user custom-password)"
+    custom_input="$(printf "%s\n" 4 192.0.2.44 custom-user custom-password)"
     run_script "$script" connect "$tmp" "$custom_input"
-    grep -Fq "3) Custom | RDP" "$tmp/err" ||
-      fail "custom RDP is selector row one"
+    grep -Fq "4) Custom | RDP" "$tmp/err" ||
+      fail "custom RDP is selector row four"
     assert_calls_contains "$tmp" "xfreerdp3 /v:192.0.2.44:3389 /u:custom-user /p:custom-password" "custom RDP uses supplied connection details"
     assert_calls_not_contains "$tmp" "docker" "custom RDP never touches containers"
   ' bash "$script"
@@ -372,7 +379,7 @@ test_custom_rdp_connection() {
 	with_tmp bash -c '
     script="$1"; tmp="$2"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\"; exit 0"
-    make_stub "$tmp" rofi "count=0; [[ -r \"\$ROFI_STATE\" ]] && read -r count <\"\$ROFI_STATE\"; count=\$((count + 1)); printf \"%s\\n\" \"\$count\" >\"\$ROFI_STATE\"; echo rofi \"\$@\" >>\"\$CALLS\"; case \"\$count\" in 1) echo 2 ;; 2) echo 192.0.2.45 ;; 3) echo rofi-user ;; 4) echo rofi-password ;; esac"
+    make_stub "$tmp" rofi "count=0; [[ -r \"\$ROFI_STATE\" ]] && read -r count <\"\$ROFI_STATE\"; count=\$((count + 1)); printf \"%s\\n\" \"\$count\" >\"\$ROFI_STATE\"; echo rofi \"\$@\" >>\"\$CALLS\"; case \"\$count\" in 1) echo 3 ;; 2) echo 192.0.2.45 ;; 3) echo rofi-user ;; 4) echo rofi-password ;; esac"
     export ROFI_STATE="$tmp/rofi-state" WINDOWS_RDP_TEST_DISPLAY=:1
     run_script "$script" connect "$tmp"
     assert_calls_contains "$tmp" "xfreerdp3 /v:192.0.2.45:3389 /u:rofi-user /p:rofi-password" "Rofi custom RDP uses supplied connection details"
@@ -386,34 +393,24 @@ test_graphical_home_manager_credentials() {
     script="$1"; tmp="$2"
     make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
-    make_stub "$tmp" rofi "printf \"%s\\n\" 3"
+    make_stub "$tmp" rofi "printf \"%s\\n\" 4"
     make_stub "$tmp" xfreerdp3 "echo xfreerdp3 \"\$@\" >>\"\$CALLS\""
     export TAILSCALE_STATUS="{}" WINDOWS_RDP_TEST_DISPLAY=:1
     export JQ_OUTPUT=$'"'"'lenovo-windows\t100.64.0.7\tonline'"'"'
     export __HM_SESS_VARS_SOURCED=1
-    unset WINDOWS_RDP_LENOVO_WINDOWS_USER WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE
+    unset WINDOWS_RDP_LENOVO_WINDOWS_USER WINDOWS_RDP_LENOVO_WINDOWS_USER_FILE WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE
     mkdir -p "$tmp/home/.nix-profile/etc/profile.d"
+    printf "%s\n" profile-user >"$tmp/profile-user"
     printf "%s\n" profile-password >"$tmp/profile-password"
     printf "%s\n" \
       "if [ -n \"\${__HM_SESS_VARS_SOURCED:-}\" ]; then return; fi" \
       "export __HM_SESS_VARS_SOURCED=1" \
-      "export WINDOWS_RDP_LENOVO_WINDOWS_USER=profile-user" \
+      "export WINDOWS_RDP_LENOVO_WINDOWS_USER_FILE=\"$tmp/profile-user\"" \
       "export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE=\"$tmp/profile-password\"" \
       >"$tmp/home/.nix-profile/etc/profile.d/hm-session-vars.sh"
     run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 /u:profile-user /p:profile-password" "graphical launch loads current HM credentials despite inherited source guard"
+    assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.7:3389 /u:profile-user /p:profile-password" "graphical launch loads current SOPS credential paths despite inherited source guard"
     assert_calls_not_contains "$tmp" "docker" "graphical remote connection does not manage the local VM"
-
-    : >"$tmp/calls"
-    export WINDOWS_RDP_LENOVO_WINDOWS_USER=override-user
-    run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "/u:override-user /p:profile-password" "explicit username takes precedence while missing password path comes from HM"
-
-    : >"$tmp/calls"
-    printf "%s\n" override-password >"$tmp/override-password"
-    export WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE="$tmp/override-password"
-    run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "/u:override-user /p:override-password" "explicit credentials retain precedence"
   ' bash "$script"
 }
 

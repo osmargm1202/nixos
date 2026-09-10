@@ -227,6 +227,7 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
+  tray_output HDMI-1
   tray_output primary
   status_command ~/.local/bin/i3status-localized
   separator_symbol "│"
