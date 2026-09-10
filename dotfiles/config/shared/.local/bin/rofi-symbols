@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${ROFI_MENU_LIB:-$HOME/.local/bin/rofi-menu-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+theme="$(rofi_menu_theme)"
+exec rofimoji \
+  --selector rofi \
+  --selector-args="-theme $theme" \
+  --action clipboard \
+  --files 'emojis_*' nerd_font math miscellaneous_symbols miscellaneous_symbols_and_arrows \
+  --prompt 'Símbolo'

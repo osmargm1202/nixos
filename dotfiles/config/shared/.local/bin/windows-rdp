@@ -25,6 +25,13 @@ APPS_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons"
 ICON_URL="https://icones.pro/wp-content/uploads/2021/06/icone-windows-bleu.png"
 ICON_FILE="$ICON_DIR/windows.png"
+ROFI_MENU_LIB="${ROFI_MENU_LIB:-$HOME/.local/bin/rofi-menu-lib}"
+if [[ -r "$ROFI_MENU_LIB" ]]; then
+  # shellcheck disable=SC1090
+  . "$ROFI_MENU_LIB"
+else
+  rofi_menu() { rofi "$@"; }
+fi
 
 # Seconds to wait after port is open for RDP to fully initialize
 RDP_BOOT_DELAY=10
@@ -421,7 +428,7 @@ choose_target() {
       notify_user "Selector remoto no disponible" "Rofi no está instalado."
       return 1
     fi
-    selected="$(printf '%s\n' "${TARGET_LABELS[@]}" | rofi -dmenu -i -no-custom -only-match -format i -p "Conectar remoto")" || return 0
+    selected="$(printf '%s\n' "${TARGET_LABELS[@]}" | rofi_menu -dmenu -i -no-custom -only-match -format i -p "Conectar remoto")" || return 0
     [[ -n "$selected" ]] || return 0
     [[ "$selected" =~ ^[0-9]+$ && "$selected" -lt "${#TARGET_LABELS[@]}" ]] || {
       echo "Error: Rofi returned an invalid target index." >&2
@@ -485,9 +492,9 @@ do_custom_rdp_connect() {
       notify_user "RDP personalizado no disponible" "Rofi no está instalado."
       return 1
     fi
-    address="$(printf '\n' | rofi -dmenu -i -p "IP RDP")" || return 0
-    user="$(printf '\n' | rofi -dmenu -i -p "Usuario RDP")" || return 0
-    password="$(printf '\n' | rofi -dmenu -password -p "Clave RDP")" || return 0
+    address="$(printf '\n' | rofi_menu -dmenu -i -p "IP RDP")" || return 0
+    user="$(printf '\n' | rofi_menu -dmenu -i -p "Usuario RDP")" || return 0
+    password="$(printf '\n' | rofi_menu -dmenu -password -p "Clave RDP")" || return 0
   else
     printf 'IP RDP: ' >&2
     address=""

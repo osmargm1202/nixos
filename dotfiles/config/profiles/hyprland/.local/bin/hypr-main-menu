@@ -13,6 +13,7 @@ choice="$(printf '%s\n' \
   '󰖟 Set random wallpaper' \
   '󰎔 Shaders de apertura' \
   '󰒓 Tools' \
+  '󰞅 Symbols and emoji' \
   '󰖩 Devices' \
   '󰒓 System' \
   '󰌌 Help' \
@@ -25,6 +26,7 @@ case "$choice" in
   *'Set random wallpaper') exec "$bin_dir/hypr-wallpaper" random-menu ;;
   *'Shaders de apertura') exec "$bin_dir/hypr-shader-menu" ;;
   *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
+  *'Symbols and emoji') exec rofi-symbols ;;
   *'Devices') exec "$bin_dir/hypr-devices-menu" ;;
   *'System') exec "$bin_dir/hypr-system-menu" ;;
   *'Help') exec "$bin_dir/hypr-help-menu" ;;

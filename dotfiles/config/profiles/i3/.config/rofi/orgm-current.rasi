@@ -1,6 +1,6 @@
 /* Static ORGM dark palette. */
 * {
-    bg-col: #000000dd;
+    bg-col: #000000cc;
     surface-col: #22363a4f;
     border-col: #8aadf4;
     selected-col: #33494d64;

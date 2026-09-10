@@ -163,6 +163,7 @@ in
 
       # Launchers, notifications, wallpaper and X11 helpers.
       (rofi.override { plugins = [ rofi-calc ]; })
+      rofimoji
       networkmanager_dmenu
       # Clipboard history is supplied by the persistent Clipcat user service.
       dunst

@@ -36,7 +36,7 @@ run_script() {
 			CALLS="$tmp/calls" \
 			HOME="$tmp/home" \
 			USER="windows-rdp-test-$$" \
-			XDG_CURRENT_DESKTOP= \
+			XDG_CURRENT_DESKTOP="${WINDOWS_RDP_TEST_DESKTOP:-}" \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
 			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
 			WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$password_file" \
@@ -49,7 +49,7 @@ run_script() {
 			CALLS="$tmp/calls" \
 			HOME="$tmp/home" \
 			USER="windows-rdp-test-$$" \
-			XDG_CURRENT_DESKTOP= \
+			XDG_CURRENT_DESKTOP="${WINDOWS_RDP_TEST_DESKTOP:-}" \
 			WINDOWS_VM_PROFILE_FILE="$tmp/profile" \
 			WINDOWS_RDP_OSMAR_WINDOWS_USER=osmarg \
 			WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE="$password_file" \
@@ -267,6 +267,7 @@ test_graphical_selector_and_moonlight() {
 	local script="$1"
 	with_tmp bash -c '
     script="$1"; tmp="$2"
+    export ROFI_MENU_LIB="${script%/windows-rdp}/rofi-menu-lib"
     make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
     make_stub "$tmp" rofi "echo rofi \"\$@\" >>\"\$CALLS\"; printf \"%s\\n\" \"\$ROFI_INDEX\""
@@ -276,9 +277,9 @@ test_graphical_selector_and_moonlight() {
     export WINDOWS_RDP_TONY_WINDOWS_USER=osmarg
     export WINDOWS_RDP_TONY_WINDOWS_PASSWORD_FILE="$tmp/tony-password"
     export JQ_OUTPUT=$'"'"'tony-windows\t100.64.0.4\toffline\norgm\t100.64.0.6\tonline'"'"'
-    export ROFI_INDEX=3 WINDOWS_RDP_TEST_DISPLAY=:1
+    export ROFI_INDEX=3 WINDOWS_RDP_TEST_DISPLAY=:1 WINDOWS_RDP_TEST_DESKTOP=Hyprland
     run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "rofi -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "desktop selector uses Rofi indexes"
+    assert_calls_contains "$tmp" "rofi -theme .*/.config/orgm-hypr/rofi/hypr-menu.rasi -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "desktop selector uses the shared themed Rofi menu"
     assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.4:3389" "Rofi index dispatches remote RDP"
     assert_calls_not_contains "$tmp" "docker" "graphical remote RDP leaves the local VM untouched"
   ' bash "$script"

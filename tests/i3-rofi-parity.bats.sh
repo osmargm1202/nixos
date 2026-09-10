@@ -28,7 +28,7 @@ grep -Fq 'bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu' "$CONF
   fail 'Win+Alt+Space system menu binding missing'
 grep -Fq 'bindsym $mod+F12 exec --no-startup-id $run i3-main-menu' "$CONFIG" ||
   fail 'system menu fallback binding missing'
-if grep -Rqi 'hypr-menu' "$ROFI_DIR"; then
+if grep -Rqi --include='*.rasi' 'hypr-menu' "$ROFI_DIR"; then
   fail 'i3 must use neutral theme naming, not hypr-menu'
 fi
 

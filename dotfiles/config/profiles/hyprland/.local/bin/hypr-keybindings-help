@@ -78,6 +78,7 @@ entries() {
       entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
       entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
       entry 'Win+V' 'Clipboard' 'cliphist + rofi'
+      entry 'Win+Ctrl+.' 'Símbolos, emoji e iconos Nerd Font' 'rofi-symbols'
       entry 'Print' 'Screenshot área' 'grim/slurp/swappy'
       entry 'Ctrl+Print' 'Screenshot pantalla' 'grim/swappy'
       entry 'Win+Print' 'Grabar pantalla MP4' 'record_screen_mp4'

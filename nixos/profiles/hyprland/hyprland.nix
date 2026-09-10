@@ -309,6 +309,7 @@ in
     hyprlock
     hypridle
     (rofi.override { plugins = [ rofi-calc ]; })
+    rofimoji
     libqalculate
     dunst
     bluetui
