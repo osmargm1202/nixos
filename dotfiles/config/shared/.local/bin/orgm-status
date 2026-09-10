@@ -20,11 +20,11 @@ UP_COLOR = "#38bdf8"
 DOWN_COLOR = "#f87171"
 DESKTOP_PROFILE_PATH = "/etc/orgm/desktop-profile"
 DESKTOP_PROFILES = {
-    "normal": ("NORMAL", "#7aa2f7"),
-    "windows": ("WINDOWS", "#00a4ef"),
-    "gaming": ("GAMING", "#9ece6a"),
-    "battery": ("BATTERY", "#e0af68"),
-    "server": ("SERVER", "#bb9af7"),
+    "normal": ("N", "#7aa2f7"),
+    "windows": ("W", "#00a4ef"),
+    "gaming": ("G", "#9ece6a"),
+    "battery": ("B", "#e0af68"),
+    "server": ("S", "#bb9af7"),
 }
 TARGETS = (
     ("nextcloud", "N", "", "Nextcloud"),
@@ -86,23 +86,24 @@ def state_label(state: str) -> str:
     return "CONECTADO" if state == "up" else "DESCONECTADO" if state == "down" else "SIN DATOS"
 
 
-def desktop_profile() -> tuple[str, str]:
+def desktop_profile() -> tuple[str, str, str]:
     try:
         with open(os.environ.get("ORGM_DESKTOP_PROFILE_FILE", DESKTOP_PROFILE_PATH), encoding="utf-8") as profile_file:
             profile = profile_file.read().strip().lower()
     except OSError:
         profile = "normal"
-    return DESKTOP_PROFILES.get(profile, DESKTOP_PROFILES["normal"])
+    label, color_value = DESKTOP_PROFILES.get(profile, DESKTOP_PROFILES["normal"])
+    return profile, label, color_value
 
 
 def profile_waybar() -> None:
-    label, color_value = desktop_profile()
+    profile, label, color_value = desktop_profile()
     print(
         json.dumps(
             {
                 "text": f'<span foreground="{color_value}">[{label}]</span>',
-                "tooltip": f"Perfil de arranque: {label}",
-                "class": ["desktop-profile", label.lower()],
+                "tooltip": f"Perfil de arranque: {profile.upper()}",
+                "class": ["desktop-profile", profile],
                 "markup": "pango",
             },
             ensure_ascii=False,
@@ -112,7 +113,7 @@ def profile_waybar() -> None:
 
 def pango_text(snapshot: Snapshot) -> str:
     return " ".join(
-        f'<span foreground="{color(state)}">{html.escape(letter)} {icon}</span>'
+        f'<span foreground="{color(state)}">{icon} {html.escape(letter)}</span>'
         for _, letter, icon, _, state in target_states(snapshot)
     )
 

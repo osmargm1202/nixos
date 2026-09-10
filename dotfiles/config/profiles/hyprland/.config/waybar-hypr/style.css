@@ -144,10 +144,6 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #bluetooth, #network {
   padding: 0 6px;
 }
-#custom-separator-monitoring, #custom-separator-network {
-  color: @overlay0;
-  padding: 0 4px;
-}
 #custom-desktop-profile {
   font-weight: bold;
   padding: 0 6px;

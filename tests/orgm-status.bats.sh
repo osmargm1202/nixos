@@ -31,7 +31,7 @@ snapshot = module.Snapshot({"nextcloud": "up", "fifrex": "down", "vilserver1": "
 module.fetch_snapshot = lambda: snapshot
 
 pango = module.pango_text(snapshot)
-for token in ("N ", "F ", "V ", "O "):
+for token in (" N", " F", " V", " O"):
     assert token in pango, token
 assert pango.count(module.UP_COLOR) == 2
 assert pango.count(module.DOWN_COLOR) == 2
@@ -88,11 +88,11 @@ with tempfile.TemporaryDirectory() as directory:
     profile_file = Path(directory) / "desktop-profile"
     module.DESKTOP_PROFILE_PATH = str(profile_file)
     for profile, expected in (
-        ("normal", "[NORMAL]"),
-        ("windows", "[WINDOWS]"),
-        ("gaming", "[GAMING]"),
-        ("battery", "[BATTERY]"),
-        ("server", "[SERVER]"),
+        ("normal", "[N]"),
+        ("windows", "[W]"),
+        ("gaming", "[G]"),
+        ("battery", "[B]"),
+        ("server", "[S]"),
     ):
         profile_file.write_text(profile + "\n", encoding="utf-8")
         stdout = io.StringIO()
@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory() as directory:
         assert expected in profile_status["text"]
         assert profile_status["class"][-1] == profile
 PY
-python3 "$HELPER" profile-waybar | jq --exit-status '(.text | test("\\[(NORMAL|WINDOWS|GAMING|BATTERY|SERVER)\\]")) and (.class[0] == "desktop-profile")' >/dev/null \
+python3 "$HELPER" profile-waybar | jq --exit-status '(.text | test("\\[(N|W|G|B|S)\\]")) and (.class[0] == "desktop-profile")' >/dev/null \
   || fail 'shared ORGM helper cannot execute profile-waybar mode'
 
 
@@ -125,11 +125,11 @@ with tempfile.TemporaryDirectory() as directory:
     profile_file = Path(directory) / "desktop-profile"
     module.DESKTOP_PROFILE_PATH = profile_file
     for profile, expected in (
-        ("normal", "[NORMAL]"),
-        ("windows", "[WINDOWS]"),
-        ("gaming", "[GAMING]"),
-        ("battery", "[BATTERY]"),
-        ("server", "[SERVER]"),
+        ("normal", "[N]"),
+        ("windows", "[W]"),
+        ("gaming", "[G]"),
+        ("battery", "[B]"),
+        ("server", "[S]"),
     ):
         profile_file.write_text(profile + "\n", encoding="utf-8")
         block = module.desktop_profile_block()
@@ -169,14 +169,17 @@ import sys
 
 modules = json.load(open(sys.argv[1], encoding="utf-8"))[0]["modules-right"]
 expected = [
+    "hyprland/window",
+    "custom/desktop-profile",
     "custom/orgm-status",
-    "custom/separator#monitoring",
     "network",
-    "custom/separator#network",
 ]
-start = modules.index("custom/orgm-status")
+start = modules.index("hyprland/window")
 assert modules[start:start + len(expected)] == expected
+assert not any(module.startswith("custom/separator#") for module in modules)
 PY
+! grep -Fq 'custom/separator#' "$WAYBAR_CONFIG" || fail 'Waybar keeps status separators'
+! grep -Fq '#custom-separator-' "$WAYBAR_STYLE" || fail 'Waybar keeps separator styling'
 grep -Fq '#custom-orgm-status' "$WAYBAR_STYLE" || fail 'Waybar ORGM status lacks spacing style'
 grep -Fq 'InfrastructureStatus' "$I3_WRAPPER" || fail 'i3 wrapper does not include ORGM status block'
 grep -Fq 'click.get("name") == "orgm-status"' "$I3_WRAPPER" || fail 'i3 ORGM status is not clickable'

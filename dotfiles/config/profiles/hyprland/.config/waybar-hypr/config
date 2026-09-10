@@ -37,12 +37,10 @@
       "custom/date"
     ],
     "modules-right": [
-      "custom/desktop-profile",
       "hyprland/window",
+      "custom/desktop-profile",
       "custom/orgm-status",
-      "custom/separator#monitoring",
       "network",
-      "custom/separator#network",
       "mpris",
       "custom/power",
       "tray"
@@ -71,14 +69,6 @@
       "return-type": "json",
       "interval": 5,
       "escape": false
-    },
-    "custom/separator#monitoring": {
-      "format": "│",
-      "tooltip": false
-    },
-    "custom/separator#network": {
-      "format": "│",
-      "tooltip": false
     },
     "network": {
       "format-wifi": "",

@@ -40,10 +40,10 @@
         sddm.enable = lib.mkForce false;
         autoLogin.enable = lib.mkForce false;
       };
+      desktopManager.gnome.enable = lib.mkForce false;
       xserver = {
         enable = lib.mkForce false;
         desktopManager.cinnamon.enable = lib.mkForce false;
-        desktopManager.gnome.enable = lib.mkForce false;
         windowManager.i3.enable = lib.mkForce false;
         displayManager.startx.enable = lib.mkForce false;
       };

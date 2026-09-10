@@ -37,11 +37,11 @@ PICOM_EFFECTS_STATE = Path(
     os.environ.get("I3_PICOM_EFFECTS_STATE", Path.home() / ".local" / "state" / "i3" / "picom-effects-disabled")
 )
 DESKTOP_PROFILES = {
-    "normal": ("NORMAL", NETWORK),
-    "windows": ("WINDOWS", "#00a4ef"),
-    "gaming": ("GAMING", CAFFEINE_ON),
-    "battery": ("BATTERY", RAM_WARNING),
-    "server": ("SERVER", "#bb9af7"),
+    "normal": ("N", NETWORK),
+    "windows": ("W", "#00a4ef"),
+    "gaming": ("G", CAFFEINE_ON),
+    "battery": ("B", RAM_WARNING),
+    "server": ("S", "#bb9af7"),
 }
 
 TRANSLATIONS = (
@@ -235,10 +235,10 @@ class InfrastructureStatus:
             "name": "orgm-status",
             "instance": "summary",
             "full_text": (
-                '<span foreground="#f87171">N </span> '
-                '<span foreground="#f87171">F </span> '
-                '<span foreground="#f87171">V </span> '
-                '<span foreground="#f87171">O </span> '
+                '<span foreground="#f87171"> N</span> '
+                '<span foreground="#f87171"> F</span> '
+                '<span foreground="#f87171"> V</span> '
+                '<span foreground="#f87171"> O</span> '
                 '<span foreground="#565f89">│</span> '
             ),
             "markup": "pango",
