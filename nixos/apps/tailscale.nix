@@ -12,6 +12,8 @@ let
   tailscaleMagicDns = pkgs.writeShellApplication {
     name = magicDnsServiceName;
     runtimeInputs = with pkgs; [
+      coreutils
+      iproute2
       jq
       systemd
       tailscale
@@ -19,13 +21,23 @@ let
     text = ''
       set -euo pipefail
 
-      suffix="$(
-        tailscale status --json --peers=false \
-          | jq -er '.MagicDNSSuffix | strings | select(length > 0)'
-      )"
+      for _ in $(seq 1 60); do
+        if status="$(tailscale status --json --peers=false)" && suffix="$(jq -er '
+          select(.BackendState == "Running")
+          | .MagicDNSSuffix
+          | strings
+          | select(length > 0)
+        ' <<<"$status")" && ip link show dev tailscale0 >/dev/null 2>&1; then
+          resolvectl dns tailscale0 100.100.100.100
+          resolvectl domain tailscale0 "~$suffix" "$suffix"
+          exit 0
+        fi
 
-      resolvectl dns tailscale0 100.100.100.100
-      resolvectl domain tailscale0 "~$suffix" "$suffix"
+        sleep 1
+      done
+
+      printf '%s\n' 'Timed out waiting for Tailscale MagicDNS readiness' >&2
+      exit 1
     '';
   };
 
@@ -259,6 +271,7 @@ in
       ExecStart = "${tailscaleMagicDns}/bin/${magicDnsServiceName}";
       Restart = "on-failure";
       RestartSec = "5s";
+      TimeoutStartSec = "90s";
     };
   };
 

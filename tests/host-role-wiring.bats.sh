@@ -38,6 +38,7 @@ assert_json '.#nixosConfigurations.lenovo-terminal.config.services.resolved.enab
 assert_json '.#nixosConfigurations.ero-server.config.services.resolved.enable' true
 assert_json '.#nixosConfigurations.lenovo-terminal.config.services.tailscale.extraSetFlags' '["--accept-dns=false"]'
 assert_json '.#nixosConfigurations.lenovo-terminal.config.systemd.services.tailscale-magicdns.wantedBy' '["multi-user.target"]'
+assert_json '.#nixosConfigurations.lenovo-terminal.config.systemd.services.tailscale-magicdns.serviceConfig.TimeoutStartSec' '"90s"'
 assert_json '.#nixosConfigurations.server.config.users.users.osmarg.shell.pname' '"bash-interactive"'
 [[ "$(nix eval --json "path:$ROOT#nixosConfigurations.jarq-server.config" \
   --apply 'config: config ? home-manager')" == false ]] ||
