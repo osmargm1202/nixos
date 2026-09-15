@@ -28,6 +28,7 @@ fi
 # Hyprland's stock blur must stay disabled; HyprGlass owns the visual effect.
 grep -Fq 'manage_window_blur = visual_effects' "$LOOK" || fail 'HyprGlass blur ownership must follow game mode'
 grep -Fq 'enabled = false,' "$LOOK" || fail 'Hyprland decoration blur must stay disabled'
+grep -Fq 'range = 10,' "$LOOK" || fail 'window shadows must use the compact range'
 for layer in waybar rofi nwg-dock nwg-dock-hyprland; do
   grep -Fq "hg.layer(\"$layer\"" "$LOOK" || fail "HyprGlass layer missing: $layer"
 done
@@ -62,6 +63,12 @@ grep -Fq '{ match = { class = "^(firefox|Firefox)$" }, shader = "pixelate", dura
   fail 'Firefox must use the pixelate opening shader'
 grep -Fq '+hyprglass_enabled' "$RULES" || fail 'daily applications must explicitly enable HyprGlass'
 grep -Fq '+hyprglass_preset_glass' "$RULES" || fail 'daily applications must use the glass preset'
+for rule in \
+  'opacity = opaque' \
+  'tag = "-hyprglass_enabled"' \
+  'tag = "-hyprglass_preset_glass"'; do
+  grep -Fq "$rule" "$RULES" || fail "modal dialogs must opt out of glass: $rule"
+done
 grep -Fq '+shader_transition_open:/etc/hyprwindowshade-shaders/open/' "$RULES" || fail 'daily applications must receive opening shaders'
 
 # The top-level menu directly opens the program/window config and shader picker.

@@ -148,6 +148,12 @@ hl.window_rule({
   tile = true,
 })
 
+-- File choosers and other modal dialogs must remain opaque and neutral: their
+-- parent application's glass tags otherwise make native save dialogs opaque
+-- enough to reveal an oversized compositing shadow.
+hl.window_rule({ match = { modal = true }, opacity = opaque })
+hl.window_rule({ match = { modal = true }, tag = "-hyprglass_enabled" })
+hl.window_rule({ match = { modal = true }, tag = "-hyprglass_preset_glass" })
 hl.window_rule({ match = { modal = true }, float = true })
 
 -- Discord starts normally; no forced scratchpad.

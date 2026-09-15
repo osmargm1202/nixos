@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   userName ? "osmarg",
@@ -7,6 +8,7 @@
 let
   catalog = import ./webapps.catalog.nix;
   chromium = pkgs.chromium.override { enableWideVine = true; };
+  ozonePlatform = if config.programs.hyprland.enable then "wayland" else "x11";
   categoryFor = category:
     {
       multimedia = [ "AudioVideo" ];
@@ -48,9 +50,9 @@ let
           "--class=${identity}"
           "--disable-sync"
           "--no-default-browser-check"
-          # XWayland keeps WM_CLASS stable across desktops; native Wayland
-          # does not expose an arbitrary app_id for Chromium --app URLs.
-          "--ozone-platform=x11"
+          # Native Wayland preserves Nautilus file drag-and-drop in Hyprland.
+          # X11 profiles retain their compatible XWayland launch path.
+          "--ozone-platform=${ozonePlatform}"
         ]}
       '';
     in {
