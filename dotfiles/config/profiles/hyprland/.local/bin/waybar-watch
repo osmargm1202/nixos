@@ -64,8 +64,11 @@ trap 'cleanup; exit 0' INT TERM
 signature() {
   resolved_config_dir="$(readlink -f "$config_dir" 2>/dev/null || printf '%s' "$config_dir")"
   printf '%s\n' "$resolved_config_dir"
+  # Home Manager links these entries into the store, which links them on to the
+  # mutable checkout, so `stat` without -L reports the link itself and its
+  # timestamp never moves when an edit lands. Follow the link to the real file.
   find -L "$config_dir" -maxdepth 1 -type f \( -name 'config' -o -name '*.css' \) \
-    -exec stat -c '%n:%Y:%s' {} \; 2>/dev/null | sort | cksum | awk '{print $1 ":" $2}'
+    -exec stat -L -c '%n:%Y:%s' {} \; 2>/dev/null | sort | cksum | awk '{print $1 ":" $2}'
 }
 
 stop_waybar() {
