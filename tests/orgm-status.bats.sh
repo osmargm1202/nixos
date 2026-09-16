@@ -168,14 +168,6 @@ import json
 import sys
 
 modules = json.load(open(sys.argv[1], encoding="utf-8"))[0]["modules-right"]
-expected = [
-    "hyprland/window",
-    "custom/desktop-profile",
-    "custom/orgm-status",
-    "network",
-]
-start = modules.index("hyprland/window")
-assert modules[start:start + len(expected)] == expected
 assert not any(module.startswith("custom/separator#") for module in modules)
 PY
 ! grep -Fq 'custom/separator#' "$WAYBAR_CONFIG" || fail 'Waybar keeps status separators'

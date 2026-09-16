@@ -107,11 +107,11 @@ window.bottom_bar .modules-right { margin-right: 0; }
 }
 #group-usage, #usage, #group-system, #system,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap,
-#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-clipboard, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
+#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-clipboard, #bluetooth, #privacy, #custom-keybindings_help, #tray { color: @text; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #custom-clipboard, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-clipboard, #bluetooth, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
@@ -141,7 +141,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
   padding: 0 3px;
 }
 #custom-pi_status.ready, #custom-pi_status.outdated { color: transparent; }
-#bluetooth, #network {
+#bluetooth {
   padding: 0 6px;
 }
 #custom-desktop-profile {
@@ -202,8 +202,8 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #custom-metric_ram.metric-critical,
 #custom-metric_ssd.metric-critical,
 #custom-metric_swap.metric-critical { color: @red; }
-#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #custom-game_mode.deactivated, #mpris.paused { color: @overlay0; }
-#network.disconnected, #battery.critical, #temperature.critical { color: @red; }
+#bluetooth.disabled, #idle_inhibitor.deactivated, #custom-game_mode.deactivated, #mpris.paused { color: @overlay0; }
+#battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
 #custom-user { color: @text; font-weight: bold; }
 #window { color: @text; }

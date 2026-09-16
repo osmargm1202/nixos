@@ -40,7 +40,6 @@
       "hyprland/window",
       "custom/desktop-profile",
       "custom/orgm-status",
-      "network",
       "mpris",
       "custom/power",
       "tray"
@@ -69,13 +68,6 @@
       "return-type": "json",
       "interval": 5,
       "escape": false
-    },
-    "network": {
-      "format-wifi": "",
-      "format-ethernet": "󰈀",
-      "format-disconnected": "󰖪",
-      "tooltip-format-wifi": "{essid}\n{ipaddr}",
-      "tooltip-format-ethernet": "{ifname}\n{ipaddr}"
     },
     "custom/ws_1": {
       "exec": "hypr-workspace-button status 1",
@@ -257,10 +249,9 @@
     },
     "mpris": {
       "format": " 󰐊",
-      "format-paused": " 󰐉",
+      "format-paused": " 󰏤",
       "format-stopped": "",
       "tooltip-format": "{dynamic}",
-      "max-length": 0,
       "on-click": "playerctl play-pause",
       "on-click-right": "playerctl next",
       "on-click-middle": "playerctl previous"
