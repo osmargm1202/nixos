@@ -28,7 +28,19 @@ fi
 # Keep user-local tool locations ahead of the NixOS system profile.  The
 # system profile contains an unprivileged sudo binary; retain its wrapper
 # directory first so interactive privilege escalation resolves correctly.
-export PATH="/run/wrappers/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$PATH"
+# Nested interactive shells re-run this file over an inherited PATH, so
+# prepend what is missing instead of repeating entries already present.
+_orgm_path_with() {
+  local dir new="" IFS=:
+  local -A seen=()
+  for dir in "$@" $PATH; do
+    [[ -z $dir || -n ${seen[$dir]:-} ]] && continue
+    seen[$dir]=1
+    new+="${new:+:}$dir"
+  done
+  printf '%s' "$new"
+}
+export PATH="$(_orgm_path_with /run/wrappers/bin "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/.npm-global/bin" "$HOME/.bun/bin" "$HOME/.local/share/pnpm")"
 if command -v sops-shared-env >/dev/null; then
   alias claude='sops-shared-env claude'
   alias opencode='sops-shared-env opencode'
@@ -37,8 +49,9 @@ if command -v sops-shared-env >/dev/null; then
 fi
 # Keep fnm's managed Node versions available when fnm is installed locally.
 if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then
-  export PATH="$HOME/.local/share/fnm:$PATH"
+  export PATH="$(_orgm_path_with "$HOME/.local/share/fnm")"
 fi
+unset -f _orgm_path_with
 if command -v fnm >/dev/null; then
   eval "$(fnm env --shell bash)"
 fi

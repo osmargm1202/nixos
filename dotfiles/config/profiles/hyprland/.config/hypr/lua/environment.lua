@@ -1,7 +1,24 @@
 local home = os.getenv("HOME") or ""
 local path = os.getenv("PATH") or "/run/current-system/sw/bin"
 if home ~= "" then
-  path = "/run/wrappers/bin:" .. home .. "/.local/bin:" .. path
+  -- Hyprland re-applies `env` on every config reload and reads back the PATH
+  -- it already exported, so a blind prepend grows without bound and every
+  -- process launched from the session inherits the copies.  Prepend the
+  -- wanted directories and drop repeats instead.
+  local entries = {}
+  local seen = {}
+  local function add(dir)
+    if dir ~= "" and not seen[dir] then
+      seen[dir] = true
+      entries[#entries + 1] = dir
+    end
+  end
+  add("/run/wrappers/bin")
+  add(home .. "/.local/bin")
+  for dir in string.gmatch(path, "[^:]+") do
+    add(dir)
+  end
+  path = table.concat(entries, ":")
 end
 
 local env = {

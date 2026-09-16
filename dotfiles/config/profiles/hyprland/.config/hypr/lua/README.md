@@ -34,3 +34,7 @@ reloads the configuration; `lua.look-and-feel` then configures it only when
 - High-cost startup helpers should call focused shell scripts directly (for
   example, `orgm-dot`).
 - Do not add new `orgm-hypr` calls; that umbrella command is retired.
+- Modules must be idempotent across reloads. Hyprland re-evaluates them on
+  every reload and reads back values it already exported, so accumulating
+  variables such as `PATH` must be rebuilt without repeats; every process
+  launched from the session inherits the result.
