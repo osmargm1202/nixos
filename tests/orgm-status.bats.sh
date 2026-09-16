@@ -54,6 +54,31 @@ assert i3block["markup"] == "pango"
 assert i3block["full_text"] == module.i3bar_text(snapshot)
 assert i3block["separator"] is False
 
+# Losing the query says nothing about the targets, so they must not claim an
+# outage: this machine being offline used to paint every indicator red.
+offline = module.Snapshot({}, "sin datos de Prometheus: boom")
+offline_pango = module.pango_text(offline)
+assert offline_pango.count(module.NO_DATA_COLOR) == 4
+assert module.DOWN_COLOR not in offline_pango
+assert module.UP_COLOR not in offline_pango
+module.fetch_snapshot = lambda: offline
+stdout = io.StringIO()
+with contextlib.redirect_stdout(stdout):
+    module.waybar()
+offline_waybar = json.loads(stdout.getvalue())
+assert offline_waybar["class"] == ["orgm-status", "no-data"]
+assert "N Nextcloud: SIN DATOS" in offline_waybar["tooltip"]
+
+unknown_watch = module.Snapshot({"nextcloud": "unknown"})
+module.fetch_snapshot = lambda: unknown_watch
+stdout = io.StringIO()
+with contextlib.redirect_stdout(stdout):
+    module.watch()
+terminal_unknown = stdout.getvalue()
+assert "\u2022 nextcloud: SIN DATOS" in terminal_unknown
+assert "\033[38;2;107;114;128m" in terminal_unknown
+assert "\033[38;2;248;113;113m" not in terminal_unknown
+
 watch_snapshot = module.Snapshot({**snapshot.values, "mariana": "up"})
 module.fetch_snapshot = lambda: watch_snapshot
 stdout = io.StringIO()

@@ -16,8 +16,13 @@ from urllib.request import Request, urlopen
 
 PROMETHEUS_URL = "http://100.89.45.64:9090"
 QUERY = 'probe_success{job="blackbox-icmp"}'
-UP_COLOR = "#38bdf8"
+UP_COLOR = "#1e40af"
 DOWN_COLOR = "#f87171"
+# Reaching no verdict is not the same as a target being down: when Prometheus
+# cannot be queried at all -- this machine is offline, or the server is
+# unreachable -- every target would otherwise turn red and claim an outage
+# that was never measured.
+NO_DATA_COLOR = "#4b5563"
 DESKTOP_PROFILE_PATH = "/etc/orgm/desktop-profile"
 DESKTOP_PROFILES = {
     "normal": ("N", "#7aa2f7"),
@@ -80,7 +85,9 @@ def target_states(snapshot: Snapshot) -> list[tuple[str, str, str, str, str]]:
 
 
 def color(state: str) -> str:
-    return UP_COLOR if state == "up" else DOWN_COLOR
+    if state == "up":
+        return UP_COLOR
+    return DOWN_COLOR if state == "down" else NO_DATA_COLOR
 
 def state_label(state: str) -> str:
     return "CONECTADO" if state == "up" else "DESCONECTADO" if state == "down" else "SIN DATOS"
@@ -136,7 +143,10 @@ def tooltip(snapshot: Snapshot) -> str:
 def waybar() -> None:
     snapshot = fetch_snapshot()
     states = [state for _, _, _, _, state in target_states(snapshot)]
-    summary = "up" if all(state == "up" for state in states) else "down"
+    if all(state == "unknown" for state in states):
+        summary = "no-data"
+    else:
+        summary = "up" if all(state == "up" for state in states) else "down"
     print(
         json.dumps(
             {
@@ -171,12 +181,13 @@ def watch() -> None:
     snapshot = fetch_snapshot()
     blue = "\033[38;2;56;189;248m"
     red = "\033[38;2;248;113;113m"
+    grey = "\033[38;2;107;114;128m"
     reset = "\033[0m"
     print("ORGM · estado ICMP de todos los destinos de Grafana")
     print()
     for instance, state in sorted(snapshot.values.items()):
-        connected = state == "up"
-        print(f"{blue if connected else red}• {instance}: {state_label(state)}{reset}")
+        tint = blue if state == "up" else red if state == "down" else grey
+        print(f"{tint}• {instance}: {state_label(state)}{reset}")
     if snapshot.error:
         print(f"\n{red}{snapshot.error}{reset}")
     print("\nActualización: 5 s · Ctrl+C para cerrar")
