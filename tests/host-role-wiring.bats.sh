@@ -39,6 +39,8 @@ assert_json '.#nixosConfigurations.ero-server.config.services.resolved.enable' t
 assert_json '.#nixosConfigurations.lenovo-terminal.config.services.tailscale.extraSetFlags' '["--accept-dns=false"]'
 assert_json '.#nixosConfigurations.lenovo-terminal.config.systemd.services.tailscale-magicdns.wantedBy' '["multi-user.target"]'
 assert_json '.#nixosConfigurations.lenovo-terminal.config.systemd.services.tailscale-magicdns.serviceConfig.TimeoutStartSec' '"90s"'
+assert_json '.#nixosConfigurations.orgm-hyprland.config.services.earlyoom.freeMemThreshold' 4
+assert_json '.#nixosConfigurations.orgm-hyprland.config.systemd.services.earlyoom.environment.EARLYOOM_ARGS' '"-m4,2 -n -r3600 -s100,100 --sort-by-rss"'
 assert_json '.#nixosConfigurations.server.config.users.users.osmarg.shell.pname' '"bash-interactive"'
 [[ "$(nix eval --json "path:$ROOT#nixosConfigurations.jarq-server.config" \
   --apply 'config: config ? home-manager')" == false ]] ||

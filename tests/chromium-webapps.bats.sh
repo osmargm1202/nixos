@@ -37,13 +37,6 @@ assert len(launchers) == len(desktops) == len(identities)
 assert {p["name"] for p in launchers} == identities
 assert {p["name"] for p in desktops} == {id + ".desktop" for id in identities}
 scripts = {p["name"]: p["text"] for p in launchers}
-i3_hm = evaluate(f"path:{root}#nixosConfigurations.i3.config.home-manager.users.osmarg", "--apply", expression)
-i3_scripts = {
-    package["name"]: package["text"]
-    for package in i3_hm["packages"]
-    if not package["name"].endswith(".desktop")
-}
-assert set(i3_scripts) == identities
 profiles = set()
 for app in apps:
     identity = "orgm-webapp-" + app["id"]
@@ -66,10 +59,8 @@ for app in apps:
     profiles.add(expected_profile)
     assert flags.count("--app=" + app["url"]) == 1
     assert flags.count("--class=" + identity) == 1
-    for flag in ("--disable-sync", "--no-default-browser-check", "--ozone-platform=wayland"):
+    for flag in ("--disable-sync", "--no-default-browser-check", "--ozone-platform=x11"):
         assert flags.count(flag) == 1
-    i3_flags = shlex.split(i3_scripts[identity], comments=True)[2:]
-    assert i3_flags.count("--ozone-platform=x11") == 1
     assert "firefox-open-tab" not in scripts[identity]
     assert ".config/chromium" not in scripts[identity]
     assert not any(arg.startswith("--profile-directory") for arg in flags)

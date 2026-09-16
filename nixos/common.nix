@@ -187,11 +187,11 @@ in
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
   };
 
-  # Protect interactive desktops before memory pressure makes the session unusable.
-  # `-s 100` makes RAM availability decisive; RSS selects the largest memory user.
+  # Keep earlyoom idle through five percent available RAM. At four percent it
+  # sends SIGTERM to the largest RSS process; SIGKILL remains reserved for two.
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 8;
+    freeMemThreshold = 4;
     freeMemKillThreshold = 2;
     freeSwapThreshold = 100;
     freeSwapKillThreshold = 100;
