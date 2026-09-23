@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  userName ? "osmarg",
   ...
 }:
 
@@ -140,10 +141,22 @@ in
     HandleLidSwitchDocked = "ignore";
     IdleAction = "ignore";
   };
-  services.autorandr = {
-    enable = true;
-    defaultTarget = "horizontal";
-    matchEdid = true;
+  services.autorandr.enable = true;
+
+  # Autorandr's batch mode discards child failures. Dispatch hotplug handling to
+  # the graphical user's systemd manager so the helper can apply its XRandR
+  # fallback when a detected profile is stale or no profile matches.
+  systemd.services.autorandr.serviceConfig.ExecStart = lib.mkForce [
+    ""
+    "${pkgs.systemd}/bin/systemctl --user --machine=${userName}@.host start i3-monitor-hotplug.service"
+  ];
+
+  systemd.user.services.i3-monitor-hotplug = {
+    description = "Restore an Autorandr profile or select an external primary display";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "%h/.local/bin/i3-monitor-profile --apply --quiet";
+    };
   };
 
   systemd.user.services.i3-clipcat = {

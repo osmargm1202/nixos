@@ -11,12 +11,53 @@ restore_wallpaper() {
   i3-wallpaper --restore >/dev/null 2>&1 || notify 'Monitor restored, but wallpaper restore failed'
 }
 
+connected_outputs() {
+  local output state rest
+  while read -r output state rest; do
+    [[ "$state" == connected ]] && printf '%s\n' "$output"
+  done < <(xrandr --query)
+}
+
+is_internal_output() {
+  [[ "$1" =~ ^(eDP|LVDS|DSI)(-|[0-9]) ]]
+}
+
+apply_external_fallback() {
+  local -a outputs args
+  local output primary='' previous
+
+  mapfile -t outputs < <(connected_outputs)
+  ((${#outputs[@]} > 0)) || return 1
+
+  for output in "${outputs[@]}"; do
+    if ! is_internal_output "$output"; then
+      primary="$output"
+      break
+    fi
+  done
+  [[ -n "$primary" ]] || primary="${outputs[0]}"
+
+  args=(--output "$primary" --auto --primary --pos 0x0)
+  previous="$primary"
+  for output in "${outputs[@]}"; do
+    [[ "$output" == "$primary" ]] && continue
+    args+=(--output "$output" --auto --right-of "$previous")
+    previous="$output"
+  done
+
+  xrandr "${args[@]}"
+}
+
 apply_profile() {
-  local status=0
-  if autorandr --change --force --default horizontal --match-edid; then
+  local detected='' status=0
+  detected="$(autorandr --detected --match-edid 2>/dev/null || true)"
+
+  if [[ -n "$detected" ]] && autorandr --change --force --match-edid; then
     notify 'Monitor profile restored'
+  elif apply_external_fallback; then
+    notify 'No usable monitor profile; external display selected as primary'
   else
-    notify 'No monitor profile matched; keeping current XRandR layout'
+    notify 'Could not restore or generate a monitor layout'
     status=1
   fi
   restore_wallpaper
