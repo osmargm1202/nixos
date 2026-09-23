@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   userName ? "osmarg",
@@ -7,6 +8,17 @@
 let
   catalog = import ./webapps.catalog.nix;
   chromium = pkgs.chromium.override { enableWideVine = true; };
+  nativeWayland = config.programs.hyprland.enable;
+  chromiumUrlAppId =
+    url:
+    let
+      parts = builtins.match "https?://([^/?#]+)(/[^?#]*)?([?#].*)?" url;
+      host = builtins.elemAt parts 0;
+      path = builtins.elemAt parts 1;
+      appName = "${host}_${if path == null then "" else path}";
+    in
+    assert parts != null;
+    "chrome-${lib.replaceStrings [ "/" ] [ "_" ] appName}-Default";
   categoryFor = category:
     {
       multimedia = [ "AudioVideo" ];
@@ -41,27 +53,34 @@ let
     app:
     let
       identity = "orgm-webapp-${app.id}";
+      desktopId = if nativeWayland then chromiumUrlAppId app.url else identity;
+      launcherFlags = [
+        "--app=${app.url}"
+        "--user-data-dir=/home/${userName}/.local/share/chromium-webapps/${app.id}"
+      ]
+      ++ lib.optionals (!nativeWayland) [ "--class=${identity}" ]
+      ++ [
+        "--disable-sync"
+        "--no-default-browser-check"
+        # Native Wayland keeps Nautilus file transfer inside one protocol.
+        # X11 desktops retain the explicit WM_CLASS used by their launchers.
+        "--ozone-platform=${if nativeWayland then "wayland" else "x11"}"
+      ];
       launcher = pkgs.writeShellScriptBin identity ''
-        exec ${lib.getExe chromium} ${lib.escapeShellArgs [
-          "--app=${app.url}"
-          "--user-data-dir=/home/${userName}/.local/share/chromium-webapps/${app.id}"
-          "--class=${identity}"
-          "--disable-sync"
-          "--no-default-browser-check"
-          # XWayland keeps WM_CLASS stable across desktops; native Wayland
-          # does not expose an arbitrary app_id for Chromium --app URLs.
-          "--ozone-platform=x11"
-        ]}
+        exec ${lib.getExe chromium} ${lib.escapeShellArgs launcherFlags}
       '';
-    in {
+    in
+    {
       inherit launcher;
-      entry = lib.nameValuePair identity {
+      entry = lib.nameValuePair desktopId {
         inherit (app) name icon categories;
         exec = "${launcher}/bin/${identity}";
         comment = "${app.name} in Chromium";
         terminal = false;
         settings = {
           StartupNotify = "true";
+        }
+        // lib.optionalAttrs (!nativeWayland) {
           StartupWMClass = identity;
         };
       };

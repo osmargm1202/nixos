@@ -140,11 +140,12 @@ end
 
 hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
 
--- Chromium app windows can request floating through XWayland size/type hints.
--- Keep webapps tiled without changing the behavior of their modal dialogs.
+-- Chromium derives a deterministic chrome-<url>-Default app_id for native
+-- Wayland --app windows. Keep them tiled without routing file transfer through
+-- XWayland.
 hl.window_rule({
   name = "webapps-tiled",
-  match = { class = "^orgm-webapp-[a-z0-9]+(-[a-z0-9]+)*$", modal = false },
+  match = { class = "^chrome-.+-Default$", modal = false, xwayland = false },
   tile = true,
 })
 
