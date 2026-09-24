@@ -1,7 +1,7 @@
 # Shared interactive Bash configuration. Loaded from ~/.bashrc only.
 case $- in
-  *i*) ;;
-  *) return ;;
+*i*) ;;
+*) return ;;
 esac
 
 bash_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/bash"
@@ -55,7 +55,6 @@ unset -f _orgm_path_with
 if command -v fnm >/dev/null; then
   eval "$(fnm env --shell bash)"
 fi
-
 
 _orgm_sudo() {
   if [[ -x /run/wrappers/bin/sudo ]]; then
@@ -123,7 +122,6 @@ export EDITOR=nvim
 export VISUAL=nvim
 alias fastfetch-hardware='fastfetch --config "$HOME/.config/fastfetch/hardware.jsonc"'
 
-
 if command -v zutty-fast >/dev/null; then
   alias zutty='zutty-fast'
 fi
@@ -144,7 +142,14 @@ alias dolphin-emu='flatpak run org.DolphinEmu.dolphin-emu --'
 alias pcsx2='flatpak run net.pcsx2.PCSX2 --'
 alias rpcs3='flatpak run net.rpcs3.RPCS3 --'
 alias za='zellij attach'
+
+# tmux shortcuts: ta attaches to an existing session; tn creates a named one.
 alias ta='tmux attach'
+
+tn() {
+  tmux new-session -s "$1"
+}
+alias tn='tmux new -s'
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then
   cheat() {
@@ -154,17 +159,21 @@ fi
 
 g() {
   local query
-  query=$(IFS=+; printf '%s' "$*")
+  query=$(
+    IFS=+
+    printf '%s' "$*"
+  )
   xdg-open "https://www.google.com/search?q=$query"
 }
 
 yt() {
   local query
-  query=$(IFS=+; printf '%s' "$*")
+  query=$(
+    IFS=+
+    printf '%s' "$*"
+  )
   xdg-open "https://www.youtube.com/results?search_query=$query"
 }
-
-
 
 if [[ $TERM != dumb ]] && command -v starship >/dev/null; then
   eval "$(starship init bash)"
