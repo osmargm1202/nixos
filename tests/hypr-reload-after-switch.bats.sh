@@ -33,13 +33,13 @@ if [[ "$*" == '-j monitors' ]]; then
 fi
 printf '%s:%s\n' "$HYPRLAND_INSTANCE_SIGNATURE" "$*" >>"$HYPRCTL_CALLS"
 EOF
-cat >"$home/.local/bin/waybar-watch" <<'EOF'
+cat >"$home/.local/bin/hypr-session-refresh" <<'EOF'
 #!/usr/bin/env bash
 exit 0
 EOF
-chmod +x "$bin/hyprctl" "$home/.local/bin/waybar-watch"
+chmod +x "$bin/hyprctl" "$home/.local/bin/hypr-session-refresh"
 
 HOME="$home" XDG_RUNTIME_DIR="$runtime" PATH="$bin:$PATH" HYPRCTL_CALLS="$tmp/calls" "$script"
 grep -Fxq 'live:reload' "$tmp/calls"
-grep -Fxq "live:dispatch exec $home/.local/bin/waybar-watch $home/.config/waybar-hypr" "$tmp/calls"
+grep -Fxq "live:dispatch exec $home/.local/bin/hypr-session-refresh" "$tmp/calls"
 printf '%s\n' 'hypr-reload-after-switch: ok'

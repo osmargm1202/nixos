@@ -32,16 +32,13 @@ BATTERY_ICONS = ("", "", "", "", "", "", "", "", "", 
 BATTERY_CHARGING = ""
 GIB = 1024**3
 POWER_SUPPLY_PATH = Path(os.environ.get("I3_POWER_SUPPLY_PATH", "/sys/class/power_supply"))
-DESKTOP_PROFILE_PATH = Path(os.environ.get("ORGM_DESKTOP_PROFILE_FILE", "/etc/orgm/desktop-profile"))
 PICOM_EFFECTS_STATE = Path(
     os.environ.get("I3_PICOM_EFFECTS_STATE", Path.home() / ".local" / "state" / "i3" / "picom-effects-disabled")
 )
-DESKTOP_PROFILES = {
-    "normal": ("N", NETWORK),
-    "windows": ("W", "#00a4ef"),
-    "gaming": ("G", CAFFEINE_ON),
-    "battery": ("B", RAM_WARNING),
-    "server": ("S", "#bb9af7"),
+VISUAL_PROFILES = {
+    "slc": ("SLC", "#71b7ff"),
+    "orgm": ("ORGM", "#8ab4f8"),
+    "osmar": ("OSMAR", "#9ecbff"),
 }
 
 TRANSLATIONS = (
@@ -87,7 +84,19 @@ def system_battery():
 
 
 def click_action(click):
-    if click.get("button") != 1:
+    name = click.get("name")
+    button = click.get("button")
+    if name == "visual-profile" and button in {1, 3}:
+        helper = Path.home() / ".local" / "bin" / "orgm-visual-profile"
+        action = "menu" if button == 1 else "toggle-mode"
+        subprocess.Popen(
+            [str(helper), action],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return
+    if button != 1:
         return
     if click.get("name") == "caffeine":
         toggle = Path.home() / ".local" / "bin" / "i3-caffeine-toggle"
@@ -272,14 +281,22 @@ class InfrastructureStatus:
                 pass
         return self.block.copy()
 
-def desktop_profile_block():
+def visual_profile_block():
+    helper = Path.home() / ".local" / "bin" / "orgm-visual-profile"
     try:
-        profile = DESKTOP_PROFILE_PATH.read_text(encoding="utf-8").strip().lower()
-    except OSError:
-        profile = "normal"
-    label, color = DESKTOP_PROFILES.get(profile, DESKTOP_PROFILES["normal"])
+        result = subprocess.run(
+            [str(helper), "current"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=1,
+        )
+        profile = result.stdout.strip().lower()
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        profile = "orgm"
+    label, color = VISUAL_PROFILES.get(profile, VISUAL_PROFILES["orgm"])
     return {
-        "name": "desktop-profile",
+        "name": "visual-profile",
         "instance": profile,
         "full_text": (
             f'<span foreground="{color}">[{label}]</span> '
@@ -325,7 +342,7 @@ def decorate(blocks, cpu_usage, infrastructure_status):
     if keyboard is not None:
         regular.append(keyboard)
     total_kib, available_kib = memory_sample()
-    return [desktop_profile_block(), infrastructure_status.current()] + regular + [picom_effects_block()] + resource_blocks(
+    return [visual_profile_block(), infrastructure_status.current()] + regular + [picom_effects_block()] + resource_blocks(
         cpu_usage.percent(),
         total_kib,
         available_kib,

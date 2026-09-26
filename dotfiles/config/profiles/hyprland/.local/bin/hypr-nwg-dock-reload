@@ -1,5 +1,74 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-pkill -f nwg-dock-hyprland || true
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/nwg-dock-hyprland"
+pid_file="$state_dir/dock.pid"
+dock_bin="${NWG_DOCK_BIN:-nwg-dock-hyprland}"
+resolved_dock_bin="$(command -v "$dock_bin" 2>/dev/null || true)"
+[[ -z "$resolved_dock_bin" ]] || resolved_dock_bin="$(readlink -f "$resolved_dock_bin")"
+
+mkdir -p "$state_dir"
+exec {dock_lock_fd}<"$state_dir"
+flock -x "$dock_lock_fd"
+
+
+process_starttime() {
+  [[ "$1" =~ ^[0-9]+$ && -r "/proc/$1/stat" ]] || return 1
+  awk '{ print $22 }' "/proc/$1/stat" 2>/dev/null
+}
+
+is_owned_dock() {
+  local pid="$1" expected_start="$2" actual_start executable executable_name session_signature
+  local -a argv=()
+  actual_start="$(process_starttime "$pid" || true)"
+  [[ -n "$actual_start" && "$actual_start" == "$expected_start" ]] || return 1
+  executable="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
+  executable_name="${executable##*/}"
+  readarray -d '' -t argv <"/proc/$pid/cmdline" 2>/dev/null || true
+  if [[ "$executable" != "$resolved_dock_bin" && "$executable_name" != "nwg-dock-hyprland" && "$executable_name" != ".nwg-dock-hyprland-wrapped" ]]; then
+    [[ "$executable_name" =~ ^(bash|sh|dash)$ && "${argv[1]:-}" == "$resolved_dock_bin" ]] || return 1
+  fi
+  [[ "$(sed -n 's/^Uid:[[:space:]]*\([0-9]*\).*/\1/p' "/proc/$pid/status" 2>/dev/null)" == "$(id -u)" ]] || return 1
+  session_signature="${HYPRLAND_INSTANCE_SIGNATURE:-}"
+  if [[ -n "$session_signature" ]]; then
+    grep -zFxq "HYPRLAND_INSTANCE_SIGNATURE=$session_signature" \
+      "/proc/$pid/environ" 2>/dev/null || return 1
+  fi
+}
+
+declare -A seen=()
+declare -a owned=()
+remember_owned() {
+  local pid="$1" starttime="$2"
+  is_owned_dock "$pid" "$starttime" || return 0
+  [[ -n "${seen[$pid]:-}" ]] && return 0
+  seen[$pid]=1
+  owned+=("$pid $starttime")
+}
+
+if [[ -r "$pid_file" ]]; then
+  read -r pid starttime <"$pid_file" || true
+  remember_owned "${pid:-}" "${starttime:-}"
+fi
+while IFS= read -r pid; do
+  [[ -n "$pid" ]] || continue
+  starttime="$(process_starttime "$pid" || true)"
+  remember_owned "$pid" "$starttime"
+done < <(pgrep -u "$(id -u)" -f nwg-dock-hyprland 2>/dev/null || true)
+for process in "${owned[@]}"; do
+  read -r pid starttime <<<"$process"
+  kill -TERM "$pid" 2>/dev/null || true
+  for _ in {1..20}; do
+    is_owned_dock "$pid" "$starttime" || break
+    sleep 0.05
+  done
+  if is_owned_dock "$pid" "$starttime"; then
+    kill -KILL "$pid" 2>/dev/null || true
+  fi
+done
+rm -f -- "$pid_file"
+flock -u "$dock_lock_fd"
+exec {dock_lock_fd}>&-
+
+
 exec hypr-nwg-dock

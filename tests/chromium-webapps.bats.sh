@@ -20,8 +20,10 @@ def evaluate(*args):
 def wayland_app_id(url):
     from urllib.parse import urlsplit
     parsed = urlsplit(url)
-    app_name = parsed.hostname + "_" + parsed.path
+    app_name = parsed.hostname + "_" + (parsed.path or "/")
     return "chrome-" + app_name.replace("/", "_") + "-Default"
+assert wayland_app_id("https://chatgpt.com") == "chrome-chatgpt.com__-Default"
+assert wayland_app_id("https://claude.ai") == "chrome-claude.ai__-Default"
 
 catalog = evaluate("--file", str(root / "nixos/apps/webapps.catalog.nix"))
 apps = [app for group in catalog.values() for app in group]

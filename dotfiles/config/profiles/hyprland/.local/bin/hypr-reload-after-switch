@@ -2,8 +2,7 @@
 set -u
 
 runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-helper="$HOME/.local/bin/waybar-watch"
-config_dir="$HOME/.config/waybar-hypr"
+helper="$HOME/.local/bin/hypr-session-refresh"
 
 for instance_dir in "$runtime_dir"/hypr/*; do
   [ -S "$instance_dir/.socket.sock" ] || continue
@@ -15,11 +14,11 @@ for instance_dir in "$runtime_dir"/hypr/*; do
 
   XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" hyprctl reload >/dev/null 2>&1 || exit 1
 
-  # Hyprland dispatches this in its own session environment, which supplies
-  # Wayland variables that Home Manager activation does not inherit.
-  if [ -x "$helper" ] && [ -d "$config_dir" ]; then
+  # Dispatch inside Hyprland's session environment so profile outputs, GTK,
+  # game-mode wallpaper state, dock and Waybar refresh in deterministic order.
+  if [ -x "$helper" ]; then
     XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" \
-      hyprctl dispatch exec "$helper $config_dir" >/dev/null 2>&1 || exit 1
+      hyprctl dispatch exec "$helper" >/dev/null 2>&1 || exit 1
   fi
   exit 0
 done

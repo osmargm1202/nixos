@@ -84,6 +84,24 @@ if [[ -n "${SHUF_VALUE:-}" ]]; then
 fi
 printf '%s\n' "${candidates[0]}"
 STUB
+cat >"$TMP/bin/orgm-visual-profile" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+  current)
+    printf '%s\n' orgm
+    ;;
+  record-wallpaper)
+    exec 8<"${XDG_STATE_HOME:?}/i3"
+    if flock -n 8; then
+      printf 'lock-free %s\n' "${2:-}" >>"${LOCK_ORDER_LOG:-/dev/null}"
+    else
+      printf 'blocked %s\n' "${2:-}" >>"${LOCK_ORDER_LOG:-/dev/null}"
+      exit 1
+    fi
+    ;;
+  *) exit 2 ;;
+esac
+STUB
 chmod +x "$TMP/bin/"*
 
 laptop="$TMP/wallpapers/laptop image.jpg"
@@ -96,11 +114,12 @@ printf 'image\n' >"$shared"
 printf 'image\n' >"$focus"
 
 run_wallpaper() {
-  CALLS="$TMP/calls" HOME="$TMP/home" XDG_STATE_HOME="$TMP/state" \
-    I3_WALLPAPER_DIR="$TMP/wallpapers" PATH="$TMP/bin:$PATH" "$HELPER" "$@"
+  CALLS="$TMP/calls" LOCK_ORDER_LOG="$TMP/lock-order" HOME="$TMP/home" \
+    XDG_STATE_HOME="$TMP/state" I3_WALLPAPER_DIR="$TMP/wallpapers" \
+    PATH="$TMP/bin:$PATH" "$HELPER" "$@"
 }
 
-default_wallpaper="$TMP/home/Pictures/Wallpapers/default image.jpg"
+default_wallpaper="$TMP/home/Pictures/orgm/default image.jpg"
 override_wallpaper="$TMP/override-wallpapers/override image.jpg"
 mkdir -p "${default_wallpaper%/*}" "${override_wallpaper%/*}"
 printf 'image\n' >"$default_wallpaper"
@@ -145,6 +164,8 @@ run_wallpaper --set "$shared"
 grep -Fxq "feh <--bg-fill> <$shared> <$shared>" "$TMP/calls" ||
   fail '--set must apply the same wallpaper to every active output'
 [[ "$(cat "$TMP/state/i3/wallpaper")" == "$shared" ]] || fail 'shared fallback state missing'
+grep -Fxq "lock-free $shared" "$TMP/lock-order" ||
+  fail 'profile wallpaper recording ran while the i3 wallpaper lock was held'
 [[ -L "$TMP/state/i3/wallpapers" ]] || fail 'shared state is not an atomic generation pointer'
 [[ "$(cat "$TMP/state/i3/wallpapers/.default")" == "$shared" ]] || fail 'generation default missing'
 [[ ! -e "$TMP/state/i3/wallpapers/eDP-1" ]] || fail 'shared mode did not clear output override'

@@ -21,7 +21,7 @@ exec --no-startup-id firefox
 # Keep chat and games ready without opening either client window.
 exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'
 exec --no-startup-id sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'
-exec --no-startup-id sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'
+exec --no-startup-id sh -lc '"$HOME/.local/bin/orgm-visual-profile" apply; dunstctl reload >/dev/null 2>&1 || exec dunst'
 exec --no-startup-id systemctl --user start i3-clipcat.service
 exec --no-startup-id systemctl --user --quiet start sunshine.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
@@ -54,7 +54,7 @@ bindsym $mod+d exec --no-startup-id $run i3-ssh-host
 bindsym $mod+slash exec --no-startup-id $run i3-hotkeys
 bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu
 bindsym $mod+F12 exec --no-startup-id $run i3-main-menu
-bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random
+bindsym $mod+Mod1+w exec --no-startup-id $run orgm-visual-profile random-wallpaper
 bindsym $mod+p exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+Ctrl+comma exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+w exec --no-startup-id $browser

@@ -5,12 +5,10 @@ local exec_once = {
   "hyprctl plugin load /etc/HyprWindowShade.so",
   -- Import the graphical session before starting StatusNotifier clients.
   "hypr-tray-applets",
-  -- Keep the lightweight Waybar process and its helper modules alive.
-  "sh -lc 'hypr-display-targets ensure || true; exec waybar-watch \"$HOME/.config/waybar-hypr\"'",
-  -- Synchronize wallpaper visibility with the persisted game-mode state.
-  "hypr-game-mode sync",
+  -- Apply the visual profile before consumers start, then reassert persisted
+  -- game-mode wallpaper visibility so an active game session stays hidden.
+  "hypr-session-refresh",
   "hyprpolkitagent",
-  "sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'",
   "kdeconnect-indicator",
   -- Firefox's declarative startup policy restores the previous session.
   "firefox",

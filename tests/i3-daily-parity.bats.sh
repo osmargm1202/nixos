@@ -20,7 +20,7 @@ required_bindings=(
   'bindsym $mod+F10 exec --no-startup-id pavucontrol'
   'bindsym $mod+Mod1+e exec --no-startup-id xlogout'
   'bindsym $mod+Mod1+l exec --no-startup-id $run i3-lock'
-  'bindsym $mod+Mod1+w exec --no-startup-id $run i3-wallpaper --random'
+  'bindsym $mod+Mod1+w exec --no-startup-id $run orgm-visual-profile random-wallpaper'
   'bindsym $mod+Ctrl+Shift+m exec --no-startup-id dunstctl close-all'
   'bindsym Ctrl+XF86AudioRaiseVolume exec --no-startup-id $run mic-volume-osd up'
   'bindsym Ctrl+XF86AudioLowerVolume exec --no-startup-id $run mic-volume-osd down'

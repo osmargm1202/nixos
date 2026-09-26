@@ -9,7 +9,7 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background: rgba(0, 0, 0, 0.80);
+  background: @panel_bg;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -26,9 +26,9 @@ window.bottom_bar#waybar {
   border-radius: 12px;
 }
 #custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
-#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: #8087a2; }
+#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay1; }
 #custom-ws_1.active, #custom-ws_2.active, #custom-ws_3.active, #custom-ws_4.active, #custom-ws_5.active,
-#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: #8aadf4; }
+#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
 #mode, #submap {
   background: transparent;
   border-radius: 12px;
@@ -144,9 +144,14 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #bluetooth {
   padding: 0 6px;
 }
-#custom-desktop-profile {
+#custom-visual-profile {
+  background: @surface0;
+  border: 1px solid @panel_border;
+  border-radius: 8px;
+  color: @text;
   font-weight: bold;
-  padding: 0 6px;
+  margin: 3px 4px;
+  padding: 0 10px;
 }
 
 

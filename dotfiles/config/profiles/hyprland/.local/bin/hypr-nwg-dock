@@ -4,13 +4,80 @@ set -euo pipefail
 user="${USER:-$(id -un)}"
 PATH="$HOME/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$user/bin:${PATH:-}"
 export PATH
+home_manager_share="$HOME/.local/state/nix/profiles/home-manager/home-path/share"
+if [[ -d "$home_manager_share" ]]; then
+  XDG_DATA_DIRS="$home_manager_share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+  export XDG_DATA_DIRS
+fi
+
 
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/nwg-dock-hyprland"
 cache_home="${XDG_CACHE_HOME:-$HOME/.cache}"
 pinned="$cache_home/nwg-dock-pinned"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/nwg-dock-hyprland"
 dock_bin="${NWG_DOCK_BIN:-nwg-dock-hyprland}"
+pid_file="$state_dir/dock.pid"
+resolved_dock_bin="$(command -v "$dock_bin" 2>/dev/null || true)"
+[[ -z "$resolved_dock_bin" ]] || resolved_dock_bin="$(readlink -f "$resolved_dock_bin")"
+
 mkdir -p "$state_dir"
+
+# This launcher may be called from a profile transaction. Do not let its
+# long-lived dock child retain that transaction's flock descriptor.
+for inherited_fd in /proc/$$/fd/*; do
+  inherited_fd="${inherited_fd##*/}"
+  [[ "$inherited_fd" =~ ^[0-9]+$ ]] && (( inherited_fd >= 3 )) || continue
+  eval "exec ${inherited_fd}>&-" 2>/dev/null || true
+done
+process_starttime() {
+  [[ "$1" =~ ^[0-9]+$ && -r "/proc/$1/stat" ]] || return 1
+  awk '{ print $22 }' "/proc/$1/stat" 2>/dev/null
+}
+
+is_owned_dock() {
+  local candidate_pid="$1" expected_start="$2" actual_start executable executable_name session_signature
+  local -a argv=()
+  actual_start="$(process_starttime "$candidate_pid" || true)"
+  [[ -n "$actual_start" && "$actual_start" == "$expected_start" ]] || return 1
+  executable="$(readlink -f "/proc/$candidate_pid/exe" 2>/dev/null || true)"
+  executable_name="${executable##*/}"
+  readarray -d '' -t argv <"/proc/$candidate_pid/cmdline" 2>/dev/null || true
+  if [[ "$executable" != "$resolved_dock_bin" && "$executable_name" != "nwg-dock-hyprland" && "$executable_name" != ".nwg-dock-hyprland-wrapped" ]]; then
+    [[ "$executable_name" =~ ^(bash|sh|dash)$ && "${argv[1]:-}" == "$resolved_dock_bin" ]] || return 1
+  fi
+  [[ "$(sed -n 's/^Uid:[[:space:]]*\([0-9]*\).*/\1/p' "/proc/$candidate_pid/status" 2>/dev/null)" == "$(id -u)" ]] || return 1
+  session_signature="${HYPRLAND_INSTANCE_SIGNATURE:-}"
+  if [[ -n "$session_signature" ]]; then
+    grep -zFxq "HYPRLAND_INSTANCE_SIGNATURE=$session_signature" \
+      "/proc/$candidate_pid/environ" 2>/dev/null || return 1
+  fi
+}
+
+exec {dock_lock_fd}<"$state_dir"
+flock -x "$dock_lock_fd"
+if [[ -r "$pid_file" ]]; then
+  read -r existing_pid existing_start <"$pid_file" || true
+  if is_owned_dock "${existing_pid:-}" "${existing_start:-}"; then
+    flock -u "$dock_lock_fd"
+    exec {dock_lock_fd}>&-
+    exit 0
+  fi
+  rm -f -- "$pid_file"
+fi
+# Adopt an exact same-session dock started before PID ownership was introduced.
+while IFS= read -r candidate_pid; do
+  [[ -n "$candidate_pid" ]] || continue
+  candidate_start="$(process_starttime "$candidate_pid" || true)"
+  if is_owned_dock "$candidate_pid" "$candidate_start"; then
+    temporary="$(mktemp "$pid_file.tmp.XXXXXX")"
+    printf '%s %s\n' "$candidate_pid" "$candidate_start" >"$temporary"
+    mv -f -- "$temporary" "$pid_file"
+    flock -u "$dock_lock_fd"
+    exec {dock_lock_fd}>&-
+    exit 0
+  fi
+done < <(pgrep -u "$(id -u)" -f nwg-dock-hyprland 2>/dev/null || true)
+
 
 # nwg-dock turns a pin into a task button when its class has a live client:
 # left-click focuses that window; otherwise the pin launches its desktop entry.
@@ -19,10 +86,35 @@ if [[ ! -e "$pinned" ]]; then
   mkdir -p "$cache_home"
   install -m 600 "$config_dir/pinned" "$pinned"
 fi
-exec "$dock_bin" \
-  -x \
-  -p bottom \
-  -a center \
-  -mb 14 \
-  -c hypr-app-launcher \
-  -s style.css >>"$state_dir/nwg-dock.log" 2>&1
+
+(
+  exec {dock_lock_fd}>&-
+  exec "$dock_bin" \
+    -x \
+    -p bottom \
+    -a center \
+    -mb 14 \
+    -c hypr-app-launcher \
+    -s style.css
+) >>"$state_dir/nwg-dock.log" 2>&1 &
+pid=$!
+starttime="$(process_starttime "$pid" || true)"
+if [[ ! "$starttime" =~ ^[0-9]+$ ]]; then
+  kill -TERM "$pid" 2>/dev/null || true
+  flock -u "$dock_lock_fd"
+  exec {dock_lock_fd}>&-
+  wait "$pid" 2>/dev/null || true
+  exit 1
+fi
+temporary="$(mktemp "$pid_file.tmp.XXXXXX")"
+printf '%s %s\n' "$pid" "$starttime" >"$temporary"
+mv -f -- "$temporary" "$pid_file"
+flock -u "$dock_lock_fd"
+exec {dock_lock_fd}>&-
+
+wait "$pid" || true
+exec {dock_lock_fd}<"$state_dir"
+flock -x "$dock_lock_fd"
+if [[ "$(cat "$pid_file" 2>/dev/null || true)" == "$pid $starttime" ]]; then
+  rm -f -- "$pid_file"
+fi

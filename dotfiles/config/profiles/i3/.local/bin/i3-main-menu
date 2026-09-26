@@ -2,8 +2,8 @@
 set -euo pipefail
 
 choice="$(printf '%s\n' \
-  Apps Windows Terminal Firefox Files Obsidian Calculator Clipboard Symbols SSH Devices Wallpaper Performance Help 'Edit config' Power \
-  | i3-rofi 'i3' 17 || true)"
+  Apps Windows Terminal Firefox Files Obsidian Calculator Clipboard Symbols SSH Devices Profile Wallpaper Performance Help 'Edit config' Power \
+  | i3-rofi 'i3' 18 || true)"
 
 case "$choice" in
   Apps) exec i3-rofi --drun ;;
@@ -17,7 +17,8 @@ case "$choice" in
   Symbols) exec rofi-symbols ;;
   SSH) exec i3-ssh-host ;;
   Devices) exec i3-devices-menu ;;
-  Wallpaper) exec i3-wallpaper --random ;;
+  Profile) exec orgm-visual-profile menu ;;
+  Wallpaper) exec orgm-visual-profile random-wallpaper ;;
   Performance) exec i3-performance-menu ;;
   Help) exec i3-hotkeys ;;
   'Edit config') exec i3-config-editor ;;

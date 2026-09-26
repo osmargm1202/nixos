@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_root="${ORGM_VISUAL_PROFILE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/orgm-visual-profile}"
+pictures_root="${ORGM_VISUAL_PROFILE_PICTURES_ROOT:-$HOME/Pictures}"
+current_file="$state_root/current"
+profiles_dir="$state_root/profiles"
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+# Serialize state and runtime-output updates without using a mutable lock file.
+mkdir -p "$state_root"
+exec {profile_lock_fd}<"$state_root"
+flock -x "$profile_lock_fd"
+
+usage() {
+  printf '%s\n' 'usage: orgm-visual-profile {current|waybar|menu|set ID|apply|toggle-mode|random-wallpaper|record-wallpaper PATH}' >&2
+  exit 2
+}
+
+valid_id() {
+  case "${1:-}" in slc|orgm|osmar) return 0 ;; *) return 1 ;; esac
+}
+
+profile_file() { printf '%s/%s/%s' "$profiles_dir" "$1" "$2"; }
+
+atomic_write() {
+  local destination="$1" content="$2" temporary
+  mkdir -p "$(dirname "$destination")"
+  temporary="$(mktemp "${destination}.tmp.XXXXXX")"
+  printf '%s\n' "$content" >"$temporary"
+  mv -f -- "$temporary" "$destination"
+}
+
+current_id() {
+  local id=orgm
+  if [[ -r "$current_file" ]]; then
+    IFS= read -r id <"$current_file" || true
+  fi
+  valid_id "$id" || id=orgm
+  printf '%s\n' "$id"
+}
+
+profile_value() {
+  local id="$1" key="$2"
+  valid_id "$id" && [[ "$key" == mode || "$key" == wallpaper ]] || return 1
+  [[ -r "$(profile_file "$id" "$key")" ]] || return 1
+  cat "$(profile_file "$id" "$key")"
+}
+
+valid_wallpaper() {
+  [[ -f "${1:-}" ]] || return 1
+  case "${1,,}" in
+    *.avif|*.bmp|*.gif|*.jpeg|*.jpg|*.png|*.webp|*.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+write_profile() {
+  local id="$1" mode="$2" wallpaper="${3:-}"
+  valid_id "$id" || return 1
+  [[ "$mode" == dark || "$mode" == light ]] || mode=dark
+  mkdir -p "$profiles_dir/$id"
+  atomic_write "$(profile_file "$id" mode)" "$mode"
+  atomic_write "$(profile_file "$id" wallpaper)" "$wallpaper"
+}
+
+ensure_state() {
+  local id
+  mkdir -p "$profiles_dir" "$pictures_root/slc" "$pictures_root/orgm" "$pictures_root/osmar"
+  id="$(current_id)"
+  [[ -r "$current_file" ]] || atomic_write "$current_file" "$id"
+  for id in slc orgm osmar; do
+    [[ -r "$(profile_file "$id" mode)" && -r "$(profile_file "$id" wallpaper)" ]] || write_profile "$id" dark
+  done
+}
+
+backend() {
+  case "${ORGM_VISUAL_PROFILE_BACKEND:-}" in
+    hypr|hyprland) printf '%s\n' hypr ;;
+    i3) printf '%s\n' i3 ;;
+    '')
+      if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" || "${XDG_CURRENT_DESKTOP:-}" == *Hyprland* ]]; then printf '%s\n' hypr; else printf '%s\n' i3; fi ;;
+    *) printf '%s\n' 'orgm-visual-profile: backend no válido' >&2; return 2 ;;
+  esac
+}
+
+current_wallpaper() {
+  local selected=''
+  case "$(backend)" in
+    hypr) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ;;
+    i3) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ;;
+    *) return 2 ;;
+  esac
+  valid_wallpaper "$selected" && printf '%s\n' "$(readlink -f -- "$selected")"
+}
+
+set_wallpaper() {
+  local wallpaper="$1"
+  case "$(backend)" in
+    hypr) hypr-wallpaper set "$wallpaper" ;;
+    i3) i3-wallpaper --set "$wallpaper" ;;
+    *) return 2 ;;
+  esac
+}
+
+write_runtime_palette() {
+  local id="$1" css kitty dock dunst
+  case "$id" in
+    slc)
+      css='@define-color base #071422;\n@define-color mantle #0b1d31;\n@define-color crust #06101c;\n@define-color surface0 #163453;\n@define-color surface1 #234969;\n@define-color surface2 #315d80;\n@define-color overlay0 #a9c5df;\n@define-color overlay1 #c1d8eb;\n@define-color overlay2 #d6e7f5;\n@define-color text #f4f8ff;\n@define-color subtext0 #c1d8eb;\n@define-color subtext1 #d6e7f5;\n@define-color blue #71b7ff;\n@define-color lavender #b8ccff;\n@define-color sapphire #4d9deb;\n@define-color sky #67d5f4;\n@define-color teal #5eead4;\n@define-color green #86efac;\n@define-color yellow #fde68a;\n@define-color peach #fdba74;\n@define-color maroon #fca5a5;\n@define-color red #fda4af;\n@define-color mauve #c4b5fd;\n@define-color pink #f9a8d4;\n@define-color flamingo #fbcfe8;\n@define-color rosewater #ffe4e6;\n@define-color panel_bg rgba(7, 20, 34, 0.94);\n@define-color panel_border #71b7ff;\nwindow#waybar { background: @panel_bg; }'
+      kitty='background #071422\nforeground #f4f8ff\nselection_background #163453\nselection_foreground #f4f8ff\ncursor #71b7ff\ncolor0 #071422\ncolor1 #fda4af\ncolor2 #86efac\ncolor3 #fde68a\ncolor4 #71b7ff\ncolor5 #c4b5fd\ncolor6 #67e8f9\ncolor7 #f4f8ff\ncolor8 #163453\ncolor9 #fecdd3\ncolor10 #bbf7d0\ncolor11 #fef3c7\ncolor12 #a8d4ff\ncolor13 #ddd6fe\ncolor14 #a5f3fc\ncolor15 #ffffff'
+      dunst='[global]\n    frame_width = 0\n[urgency_low]\n    background = "#0b1d31"\n    foreground = "#c1d8eb"\n[urgency_normal]\n    background = "#071422"\n    foreground = "#f4f8ff"\n[urgency_critical]\n    background = "#163453"\n    foreground = "#fda4af"'
+      dock='#box { background: #071422; border: none; border-radius: 12px; box-shadow: none; } button:hover { background: #163453; }'
+      ;;
+    orgm)
+      css='@define-color base #080808;\n@define-color mantle #101010;\n@define-color crust #000000;\n@define-color surface0 #202020;\n@define-color surface1 #303030;\n@define-color surface2 #424242;\n@define-color overlay0 #b8b8b8;\n@define-color overlay1 #d0d0d0;\n@define-color overlay2 #e3e3e3;\n@define-color text #f5f5f5;\n@define-color subtext0 #d0d0d0;\n@define-color subtext1 #e3e3e3;\n@define-color blue #8ab4f8;\n@define-color lavender #c4b5fd;\n@define-color sapphire #5d9cec;\n@define-color sky #67e8f9;\n@define-color teal #5eead4;\n@define-color green #8fd694;\n@define-color yellow #f8d477;\n@define-color peach #fdba74;\n@define-color maroon #fca5a5;\n@define-color red #ff8a8a;\n@define-color mauve #c4b5fd;\n@define-color pink #f9a8d4;\n@define-color flamingo #fbcfe8;\n@define-color rosewater #ffe4e6;\n@define-color panel_bg rgba(8, 8, 8, 0.94);\n@define-color panel_border #8ab4f8;\nwindow#waybar { background: @panel_bg; }'
+      kitty='background #080808\nforeground #f5f5f5\nselection_background #202020\nselection_foreground #f5f5f5\ncursor #8ab4f8\ncolor0 #080808\ncolor1 #ff8a8a\ncolor2 #8fd694\ncolor3 #f8d477\ncolor4 #8ab4f8\ncolor5 #c4b5fd\ncolor6 #67e8f9\ncolor7 #f5f5f5\ncolor8 #202020\ncolor9 #ffb4b4\ncolor10 #b7f0b9\ncolor11 #fde9a7\ncolor12 #b8d4ff\ncolor13 #ddd6fe\ncolor14 #a5f3fc\ncolor15 #ffffff'
+      dunst='[global]\n    frame_width = 0\n[urgency_low]\n    background = "#101010"\n    foreground = "#d0d0d0"\n[urgency_normal]\n    background = "#080808"\n    foreground = "#f5f5f5"\n[urgency_critical]\n    background = "#202020"\n    foreground = "#ff8a8a"'
+      dock='#box { background: #080808; border: none; border-radius: 12px; box-shadow: none; } button:hover { background: #202020; }'
+      ;;
+    osmar)
+      css='@define-color base #202124;\n@define-color mantle #292a2d;\n@define-color crust #18191b;\n@define-color surface0 #3a3b40;\n@define-color surface1 #4a4b50;\n@define-color surface2 #5a5c61;\n@define-color overlay0 #c4c7c9;\n@define-color overlay1 #d9dcde;\n@define-color overlay2 #ebedef;\n@define-color text #f8f9fa;\n@define-color subtext0 #d9dcde;\n@define-color subtext1 #ebedef;\n@define-color blue #9ecbff;\n@define-color lavender #c4b5fd;\n@define-color sapphire #71aef7;\n@define-color sky #8be9fd;\n@define-color teal #7ee7d2;\n@define-color green #9ce5b0;\n@define-color yellow #ffe08a;\n@define-color peach #ffc38a;\n@define-color maroon #ffb4bd;\n@define-color red #ffadb5;\n@define-color mauve #d3c3ff;\n@define-color pink #ffb6dc;\n@define-color flamingo #ffd0df;\n@define-color rosewater #ffe4eb;\n@define-color panel_bg rgba(32, 33, 36, 0.94);\n@define-color panel_border #9ecbff;\nwindow#waybar { background: @panel_bg; }'
+      kitty='background #202124\nforeground #f8f9fa\nselection_background #3a3b40\nselection_foreground #f8f9fa\ncursor #9ecbff\ncolor0 #202124\ncolor1 #ffadb5\ncolor2 #9ce5b0\ncolor3 #ffe08a\ncolor4 #9ecbff\ncolor5 #c4b5fd\ncolor6 #8be9fd\ncolor7 #f8f9fa\ncolor8 #3a3b40\ncolor9 #ffd1d6\ncolor10 #c5f5d2\ncolor11 #fff0b8\ncolor12 #c7e0ff\ncolor13 #ddd6fe\ncolor14 #b6f3ff\ncolor15 #ffffff'
+      dunst='[global]\n    frame_width = 0\n[urgency_low]\n    background = "#292a2d"\n    foreground = "#d9dcde"\n[urgency_normal]\n    background = "#202124"\n    foreground = "#f8f9fa"\n[urgency_critical]\n    background = "#3a3b40"\n    foreground = "#ffadb5"'
+      dock='#box { background: #202124; border: none; border-radius: 12px; box-shadow: none; } button:hover { background: #3a3b40; }'
+      ;;
+  esac
+  atomic_write "$config_home/waybar-hypr/orgm-current.css" "$(printf '%b' "$css")"
+  atomic_write "$config_home/kitty/current-theme.conf" "$(printf '%b' "$kitty")"
+  atomic_write "$config_home/nwg-dock-hyprland/current-theme.css" "$(printf '%b' "$dock")"
+  atomic_write "$config_home/dunst/dunstrc.d/90-visual-profile.conf" "$(printf '%b' "$dunst")"
+}
+
+apply_gtk() {
+  local mode="$1" theme scheme
+  if [[ "$mode" == light ]]; then theme=Adwaita; scheme=prefer-light; else theme=Adwaita-dark; scheme=prefer-dark; fi
+  atomic_write "$config_home/gtk-3.0/settings.ini" "[Settings]
+gtk-theme-name=$theme
+gtk-icon-theme-name=Adwaita
+gtk-font-name=Sans 11
+gtk-application-prefer-dark-theme=$([[ "$mode" == dark ]] && printf 1 || printf 0)"
+  atomic_write "$config_home/gtk-4.0/settings.ini" "[Settings]
+gtk-theme-name=$theme
+gtk-icon-theme-name=Adwaita
+gtk-font-name=Sans 11
+gtk-application-prefer-dark-theme=$([[ "$mode" == dark ]] && printf 1 || printf 0)"
+  command -v gsettings >/dev/null 2>&1 && {
+    gsettings set org.gnome.desktop.interface color-scheme "$scheme" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "$theme" 2>/dev/null || true
+  }
+}
+
+refresh_surfaces() {
+  local pid process_pattern
+  for process_pattern in kitty '[.]kitty-wrapped'; do
+    while IFS= read -r pid; do
+      kill -USR1 "$pid" 2>/dev/null || true
+    done < <(pgrep -u "$(id -u)" -x "$process_pattern" 2>/dev/null || true)
+  done
+  command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
+  if [[ "$(backend)" == hypr ]] && command -v hypr-nwg-dock-reload >/dev/null 2>&1; then
+    (
+      exec {profile_lock_fd}>&-
+      exec hypr-nwg-dock-reload
+    ) >/dev/null 2>&1 &
+  elif [[ "$(backend)" == i3 ]] && command -v i3-msg >/dev/null 2>&1; then
+    i3-msg reload >/dev/null 2>&1 || true
+  fi
+}
+
+apply_profile() {
+  local id mode wallpaper current
+  ensure_state
+  backend >/dev/null
+  id="$(current_id)"
+  mode="$(profile_value "$id" mode || printf dark)"
+  [[ "$mode" == dark || "$mode" == light ]] || mode=dark
+  write_runtime_palette "$id"
+  apply_gtk "$mode"
+  wallpaper="$(profile_value "$id" wallpaper || true)"
+  if valid_wallpaper "$wallpaper"; then
+    ORGM_VISUAL_PROFILE_SKIP_RECORD=1 set_wallpaper "$wallpaper"
+  else
+    current="$(current_wallpaper || true)"
+    [[ -n "$current" ]] && write_profile "$id" "$mode" "$current"
+  fi
+  refresh_surfaces
+}
+
+record_wallpaper() {
+  local wallpaper="$1" id mode
+  ensure_state
+  wallpaper="$(readlink -f -- "$wallpaper")"
+  valid_wallpaper "$wallpaper" || { printf '%s\n' 'orgm-visual-profile: wallpaper no válido' >&2; return 1; }
+  id="$(current_id)"; mode="$(profile_value "$id" mode || printf dark)"
+  write_profile "$id" "$mode" "$wallpaper"
+}
+
+random_wallpaper() {
+  local id directory
+  ensure_state; id="$(current_id)"; directory="$pictures_root/$id"
+  backend >/dev/null
+  [[ -d "$directory" ]] || { printf 'orgm-visual-profile: directorio no existe: %s\n' "$directory" >&2; return 1; }
+  case "$(backend)" in
+    hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
+    i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+    *) return 2 ;;
+  esac
+  local wallpaper
+  wallpaper="$(current_wallpaper || true)"; [[ -n "$wallpaper" ]] && record_wallpaper "$wallpaper"
+}
+
+set_profile() {
+  local target="$1" previous current previous_mode target_mode target_wallpaper directory selected=''
+  valid_id "$target" || { printf 'orgm-visual-profile: ID no válido: %s\n' "$target" >&2; return 2; }
+  ensure_state
+  backend >/dev/null
+  previous="$(current_id)"
+  [[ "$target" == "$previous" ]] && { apply_profile; return; }
+  current="$(current_wallpaper || true)"
+  previous_mode="$(profile_value "$previous" mode || printf dark)"
+  target_mode="$(profile_value "$target" mode || printf dark)"
+  target_wallpaper="$(profile_value "$target" wallpaper || true)"
+  if valid_wallpaper "$target_wallpaper"; then
+    ORGM_VISUAL_PROFILE_SKIP_RECORD=1 set_wallpaper "$target_wallpaper"
+  else
+    directory="$pictures_root/$target"
+    if [[ -d "$directory" ]] && find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print -quit | grep -q .; then
+      case "$(backend)" in
+        hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
+        i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+        *) return 2 ;;
+      esac
+      selected="$(current_wallpaper || true)"
+      valid_wallpaper "$selected" || return 1
+    fi
+  fi
+  [[ -n "$current" ]] && write_profile "$previous" "$previous_mode" "$current"
+  if [[ -n "$selected" ]]; then
+    write_profile "$target" "$target_mode" "$selected"
+  elif [[ -n "$current" ]]; then
+    write_profile "$target" "$target_mode" "$current"
+  fi
+  atomic_write "$current_file" "$target"
+  write_runtime_palette "$target"
+  apply_gtk "$target_mode"
+  refresh_surfaces
+}
+
+menu() {
+  local selected id
+  ensure_state; id="$(current_id)"
+  selected="$(printf '%s\n' "slc$([[ "$id" == slc ]] && printf ' (actual)')" "orgm$([[ "$id" == orgm ]] && printf ' (actual)')" "osmar$([[ "$id" == osmar ]] && printf ' (actual)')" | rofi -dmenu -i -p 'Visual profile' || true)"
+  selected="${selected%% *}"
+  valid_id "$selected" && set_profile "$selected"
+}
+
+waybar() {
+  ensure_state
+  local id; id="$(current_id)"
+  printf '{"text":"PERFIL: %s ▾","class":"%s","tooltip":"Cambiar perfil visual %s — clic derecho: alternar GTK claro/oscuro"}\n' "${id^^}" "$id" "${id^^}"
+}
+
+toggle_mode() {
+  local id mode wallpaper
+  ensure_state
+  backend >/dev/null
+  id="$(current_id)"
+  mode="$(profile_value "$id" mode || printf dark)"
+  wallpaper="$(profile_value "$id" wallpaper || true)"
+  [[ "$mode" == dark ]] && mode=light || mode=dark
+  write_profile "$id" "$mode" "$wallpaper"
+  write_runtime_palette "$id"
+  apply_gtk "$mode"
+  refresh_surfaces
+}
+
+case "${1:-}" in
+  current) [[ $# -eq 1 ]] || usage; ensure_state; current_id ;;
+  waybar) [[ $# -eq 1 ]] || usage; waybar ;;
+  menu) [[ $# -eq 1 ]] || usage; menu ;;
+  set) [[ $# -eq 2 ]] || usage; set_profile "$2" ;;
+  apply) [[ $# -eq 1 ]] || usage; apply_profile ;;
+  toggle-mode) [[ $# -eq 1 ]] || usage; toggle_mode ;;
+  random-wallpaper) [[ $# -eq 1 ]] || usage; random_wallpaper ;;
+  record-wallpaper) [[ $# -eq 2 ]] || usage; record_wallpaper "$2" ;;
+  *) usage ;;
+esac

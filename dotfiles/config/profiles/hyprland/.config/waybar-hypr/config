@@ -10,6 +10,7 @@
     "margin-right": 0,
     "modules-left": [
       "custom/menu",
+      "custom/visual-profile",
       "custom/ws_1",
       "custom/ws_2",
       "custom/ws_3",
@@ -38,7 +39,6 @@
     ],
     "modules-right": [
       "hyprland/window",
-      "custom/desktop-profile",
       "custom/orgm-status",
       "mpris",
       "custom/power",
@@ -56,18 +56,19 @@
       "tooltip-format": "Menú de energía",
       "on-click": "hypr-power-menu"
     },
+    "custom/visual-profile": {
+      "exec": "$HOME/.local/bin/orgm-visual-profile waybar",
+      "return-type": "json",
+      "interval": 5,
+      "on-click": "$HOME/.local/bin/orgm-visual-profile menu",
+      "on-click-right": "$HOME/.local/bin/orgm-visual-profile toggle-mode"
+    },
     "custom/orgm-status": {
       "exec": "orgm-status waybar",
       "return-type": "json",
       "interval": 5,
       "escape": false,
       "on-click": "orgm-status open"
-    },
-    "custom/desktop-profile": {
-      "exec": "orgm-status profile-waybar",
-      "return-type": "json",
-      "interval": 5,
-      "escape": false
     },
     "custom/ws_1": {
       "exec": "hypr-workspace-button status 1",
@@ -218,8 +219,8 @@
     "custom/wallpaper": {
       "format": "",
       "tooltip": true,
-      "tooltip-format": "Fondo aleatorio",
-      "on-click": "hypr-wallpaper random-menu"
+      "tooltip-format": "Fondo aleatorio del perfil visual",
+      "on-click": "orgm-visual-profile random-wallpaper"
     },
     "custom/keybindings_help": {
       "format": "?",

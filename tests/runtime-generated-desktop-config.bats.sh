@@ -16,6 +16,7 @@ for path in \
   '.config/gtk-4.0/settings.ini' \
   '.icons/default/index.theme' \
   '.config/kitty/current-theme.conf' \
+  '.config/dunst/dunstrc.d/90-visual-profile.conf' \
   '.local/state/hypr/game-mode'; do
   [[ -f "$HOME/$path" && ! -L "$HOME/$path" ]]
   printf 'custom runtime value\n' >"$HOME/$path"
@@ -25,6 +26,7 @@ for path in \
   '.config/gtk-4.0/settings.ini' \
   '.icons/default/index.theme' \
   '.config/kitty/current-theme.conf' \
+  '.config/dunst/dunstrc.d/90-visual-profile.conf' \
   '.local/state/hypr/game-mode'; do
   [[ "$(cat "$HOME/$path")" == 'custom runtime value' ]]
 done

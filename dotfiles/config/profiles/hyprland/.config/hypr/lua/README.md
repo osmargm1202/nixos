@@ -38,3 +38,19 @@ reloads the configuration; `lua.look-and-feel` then configures it only when
   every reload and reads back values it already exported, so accumulating
   variables such as `PATH` must be rebuilt without repeats; every process
   launched from the session inherits the result.
+
+## Visual profiles
+
+`orgm-visual-profile` owns the runtime-only `slc`, `orgm`, and `osmar`
+appearance state under `~/.local/state/orgm-visual-profile`. It generates the
+Waybar, Kitty, borderless nwg-dock, borderless Dunst, and GTK outputs before
+their session consumers start. Wallpapers for each profile live in
+`~/Pictures/slc`, `~/Pictures/orgm`, and `~/Pictures/osmar`; selecting a
+profile restores its saved wallpaper or keeps the current one when none is
+saved.
+The i3 profile consumes the same state and folders through i3bar, its main
+menu, and `i3-wallpaper`; random selection is intentionally image-only.
+
+Waybar's profile label opens the chooser with a left click and toggles GTK
+light/dark mode with a right click. The wallpaper icon chooses a random image
+from the active profile folder.

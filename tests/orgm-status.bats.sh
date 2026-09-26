@@ -92,52 +92,14 @@ assert "• orgm: DESCONECTADO" in terminal
 assert "• mariana: CONECTADO" in terminal
 PY
 
-python3 - "$HELPER" <<'PY'
-import contextlib
-import io
-import json
-from importlib.machinery import SourceFileLoader
-import importlib.util
-from pathlib import Path
-import sys
-import tempfile
-
-path = sys.argv[1]
-loader = SourceFileLoader("orgm_status_profile", path)
-spec = importlib.util.spec_from_loader(loader.name, loader)
-module = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = module
-loader.exec_module(module)
-
-with tempfile.TemporaryDirectory() as directory:
-    profile_file = Path(directory) / "desktop-profile"
-    module.DESKTOP_PROFILE_PATH = str(profile_file)
-    for profile, expected in (
-        ("normal", "[N]"),
-        ("windows", "[W]"),
-        ("gaming", "[G]"),
-        ("battery", "[B]"),
-        ("server", "[S]"),
-    ):
-        profile_file.write_text(profile + "\n", encoding="utf-8")
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            module.profile_waybar()
-        profile_status = json.loads(stdout.getvalue())
-        assert expected in profile_status["text"]
-        assert profile_status["class"][-1] == profile
-PY
-python3 "$HELPER" profile-waybar | jq --exit-status '(.text | test("\\[(N|W|G|B|S)\\]")) and (.class[0] == "desktop-profile")' >/dev/null \
-  || fail 'shared ORGM helper cannot execute profile-waybar mode'
 
 
 
 python3 - "$I3_WRAPPER" <<'PY'
 from importlib.machinery import SourceFileLoader
 import importlib.util
-from pathlib import Path
+from types import SimpleNamespace
 import sys
-import tempfile
 
 path = sys.argv[1]
 loader = SourceFileLoader("i3status_profile", path)
@@ -146,21 +108,16 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 loader.exec_module(module)
 
-with tempfile.TemporaryDirectory() as directory:
-    profile_file = Path(directory) / "desktop-profile"
-    module.DESKTOP_PROFILE_PATH = profile_file
-    for profile, expected in (
-        ("normal", "[N]"),
-        ("windows", "[W]"),
-        ("gaming", "[G]"),
-        ("battery", "[B]"),
-        ("server", "[S]"),
-    ):
-        profile_file.write_text(profile + "\n", encoding="utf-8")
-        block = module.desktop_profile_block()
-        assert block["instance"] == profile
-        assert expected in block["full_text"]
-        assert block["separator"] is False
+for profile, expected in (
+    ("slc", "[SLC]"),
+    ("orgm", "[ORGM]"),
+    ("osmar", "[OSMAR]"),
+):
+    module.subprocess.run = lambda *args, profile=profile, **kwargs: SimpleNamespace(stdout=profile + "\n")
+    block = module.visual_profile_block()
+    assert block["instance"] == profile
+    assert expected in block["full_text"]
+    assert block["separator"] is False
 PY
 
 python3 - "$I3_WRAPPER" <<'PY'
@@ -183,9 +140,6 @@ assert calls[0][0][0].endswith("/.local/bin/orgm-status")
 PY
 
 jq --exit-status . "$WAYBAR_CONFIG" >/dev/null || fail 'Waybar config is not valid JSON'
-grep -Fq '"custom/desktop-profile"' "$WAYBAR_CONFIG" || fail 'Waybar does not display the desktop profile'
-grep -Fq '"exec": "orgm-status profile-waybar"' "$WAYBAR_CONFIG" || fail 'Waybar profile does not use the shared profile source'
-grep -Fq '#custom-desktop-profile' "$WAYBAR_STYLE" || fail 'Waybar desktop profile lacks spacing style'
 grep -Fq '"custom/orgm-status"' "$WAYBAR_CONFIG" || fail 'Waybar does not display ORGM status'
 grep -Fq '"on-click": "orgm-status open"' "$WAYBAR_CONFIG" || fail 'Waybar status click does not open terminal watch'
 python3 - "$WAYBAR_CONFIG" <<'PY'
@@ -201,4 +155,4 @@ grep -Fq '#custom-orgm-status' "$WAYBAR_STYLE" || fail 'Waybar ORGM status lacks
 grep -Fq 'InfrastructureStatus' "$I3_WRAPPER" || fail 'i3 wrapper does not include ORGM status block'
 grep -Fq 'click.get("name") == "orgm-status"' "$I3_WRAPPER" || fail 'i3 ORGM status is not clickable'
 
-printf 'PASS: ORGM status and desktop profiles render in i3, Waybar, and terminal\n'
+printf 'PASS: ORGM status and visual profiles render in i3, Waybar, and terminal\n'

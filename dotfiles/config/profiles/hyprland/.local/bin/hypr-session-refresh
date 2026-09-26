@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+"$HOME/.local/bin/orgm-visual-profile" apply
+if ! dunstctl reload >/dev/null 2>&1; then
+  dunst_state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dunst"
+  mkdir -p "$dunst_state_dir"
+  dunst >>"$dunst_state_dir/dunst.log" 2>&1 &
+fi
+"$HOME/.local/bin/hypr-game-mode" sync || true
+"$HOME/.local/bin/hypr-display-targets" ensure || true
+exec "$HOME/.local/bin/waybar-watch" "${XDG_CONFIG_HOME:-$HOME/.config}/waybar-hypr"

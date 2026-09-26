@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
+profile_id="${ORGM_VISUAL_PROFILE_ID:-}"
+if [[ -z "$profile_id" && "${ORGM_VISUAL_PROFILE_SKIP_RECORD:-}" != 1 ]] &&
+   command -v orgm-visual-profile >/dev/null 2>&1; then
+  profile_id="$(orgm-visual-profile current 2>/dev/null || printf orgm)"
+fi
+case "$profile_id" in slc|orgm|osmar) ;; *) profile_id=orgm ;; esac
+wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/Pictures/$profile_id}"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
 state_file="$state_dir/wallpaper"
 output_state_dir="$state_dir/wallpapers"
@@ -12,6 +18,7 @@ video_placeholder="$state_dir/video-placeholder.ppm"
 mode="${1:---random}"
 active_outputs=()
 layout_wallpapers=()
+committed_global_wallpaper=''
 
 notify_error() {
   command -v notify-send >/dev/null 2>&1 && notify-send 'i3 wallpaper' "$1" || true
@@ -271,8 +278,8 @@ start_video_wallpaper() {
   [[ -x "$xwinwrap_bin" && -x "$mpv_bin" ]] || return 1
   mkdir -p "$video_pid_dir"
   (
-    # Long-lived wallpaper children must not inherit the transaction lock.
-    exec {wallpaper_lock_fd}>&-
+    # Long-lived wallpaper children must not retain any caller transaction lock.
+    close_inherited_fds
     exec setsid "$xwinwrap_bin" -g "$geometry" -ni -b -nf -ov -- \
       "$mpv_bin" -wid WID --loop-file=inf --no-audio --no-osc --no-osd-bar \
       --no-input-default-bindings --panscan=1.0 --really-quiet "$video"
@@ -317,6 +324,15 @@ atomic_write() {
   temporary="$(mktemp "$target.tmp.XXXXXX")"
   printf '%s\n' "$value" >"$temporary"
   mv -f "$temporary" "$target"
+}
+
+close_inherited_fds() {
+  local fd
+  for fd in /proc/$$/fd/*; do
+    fd="${fd##*/}"
+    [[ "$fd" =~ ^[0-9]+$ ]] && (( fd >= 3 )) || continue
+    eval "exec ${fd}>&-" 2>/dev/null || true
+  done
 }
 
 copy_current_layout() {
@@ -388,6 +404,7 @@ set_all() {
   compose_layout all "$wallpaper"
   apply_layout
   commit_shared_layout "$wallpaper"
+  committed_global_wallpaper="$wallpaper"
 }
 
 set_output() {
@@ -466,3 +483,9 @@ case "$mode" in
     exit 2
     ;;
 esac
+flock -u "$wallpaper_lock_fd"
+exec {wallpaper_lock_fd}>&-
+if [[ -n "$committed_global_wallpaper" && "${ORGM_VISUAL_PROFILE_SKIP_RECORD:-}" != 1 ]] &&
+   command -v orgm-visual-profile >/dev/null 2>&1; then
+  orgm-visual-profile record-wallpaper "$committed_global_wallpaper" || true
+fi

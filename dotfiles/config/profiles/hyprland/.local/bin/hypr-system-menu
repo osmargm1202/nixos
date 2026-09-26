@@ -21,7 +21,7 @@ case "$choice" in
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Reload nwg-dock') exec hypr-nwg-dock-reload ;;
   *'Restore wallpaper') exec hypr-wallpaper restore ;;
-  *'Random wallpaper') exec hypr-wallpaper random-menu ;;
+  *'Random wallpaper') exec orgm-visual-profile random-wallpaper ;;
   *'Restart Waybar') exec waybar-watch --restart "$HOME/.config/waybar-hypr" ;;
   *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
   *'Hardware details') exec kitty --title hardware-fastfetch -e bash -ic 'fastfetch-hardware; printf "\n"; exec bash -i' ;;

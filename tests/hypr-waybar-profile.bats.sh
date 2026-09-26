@@ -8,7 +8,7 @@ attr="path:$repo_dir#nixosConfigurations.lenovo-hyprland.config.home-manager.use
 paths=(
   '.config/waybar-hypr/config'
   '.config/waybar-hypr/style.css'
-  '.config/waybar-hypr/orgm-current.css'
+  '.local/bin/orgm-visual-profile'
   '.local/bin/waybar-date-es'
   '.local/bin/waybar-day-month-es'
   '.local/bin/waybar-time-ampm'
@@ -16,12 +16,18 @@ paths=(
   '.local/bin/waybar-caffeine-state'
   '.local/bin/hypr-game-mode'
   '.local/bin/hypr-reload-after-switch'
+  '.local/bin/hypr-session-refresh'
 )
 
 for path in "${paths[@]}"; do
-  [[ -e "dotfiles/config/profiles/hyprland/$path" ]]
+  source_layer='profiles/hyprland'
+  [[ "$path" == '.local/bin/orgm-visual-profile' ]] && source_layer='shared'
+  [[ -e "dotfiles/config/$source_layer/$path" ]]
   nix eval --raw "$attr.\"$path\".source" >/dev/null
 done
+
+home_files="$(nix eval --json "$attr")"
+jq -e 'has(".config/waybar-hypr/orgm-current.css") | not' <<<"$home_files" >/dev/null
 grep -Fxq '@import "orgm-current.css";' \
   'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 

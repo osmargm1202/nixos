@@ -16,8 +16,10 @@ fail() {
 }
 
 ! grep -Fq 'i3-gh0stzk' "$DUNST" || fail 'Dunst keeps a removed Polybar rice dependency'
-grep -Fq "exec --no-startup-id sh -lc 'dunstctl reload >/dev/null 2>&1 || exec dunst'" "$CONFIG" ||
-  fail 'i3 must reload its profile-specific Dunst configuration or start Dunst'
+grep -Fq 'frame_width = 0' "$DUNST" && ! grep -Fq 'frame_color' "$DUNST" ||
+  fail 'i3 Dunst must render without notification borders'
+grep -Fq 'orgm-visual-profile" apply; dunstctl reload' "$CONFIG" ||
+  fail 'i3 must apply the visual profile before reloading or starting Dunst'
 grep -Fq 'clipcat' "$PROFILE" || fail 'Clipcat package/service missing'
 grep -Fq 'systemd.user.services.i3-clipcat' "$PROFILE" || fail 'Clipcat user service missing'
 grep -Fq -- '--no-daemon' "$PROFILE" || fail 'Clipcat must remain supervised by systemd'

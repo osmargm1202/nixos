@@ -20,8 +20,15 @@ hyprpaper_config="$runtime_dir/hypr-wallpaper-hyprpaper.conf"
 video_pid_file="$runtime_dir/hypr-wallpaper-mpvpaper.pid"
 monitor_video_pid_dir="$runtime_dir/hypr-wallpaper-mpvpaper-monitors"
 video_log="$state_dir/video-wallpaper.log"
-default_dir="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
+profile_id="${ORGM_VISUAL_PROFILE_ID:-}"
+if [[ -z "$profile_id" && "${ORGM_VISUAL_PROFILE_SKIP_RECORD:-}" != 1 ]] &&
+   command -v orgm-visual-profile >/dev/null 2>&1; then
+  profile_id="$(orgm-visual-profile current 2>/dev/null || printf orgm)"
+fi
+case "$profile_id" in slc|orgm|osmar) ;; *) profile_id=orgm ;; esac
+default_dir="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/$profile_id}"
 default_video_dir="${HYPR_VIDEO_WALLPAPER_DIR:-$HOME/Videos/wallpapers}"
+committed_global_wallpaper=''
 session_key="$(printf '%s' "${HYPRLAND_INSTANCE_SIGNATURE:-no-session}" | sha256sum | cut -d ' ' -f1)"
 session_runtime_dir="$runtime_dir/hypr-wallpaper-sessions/$session_key"
 session_hyprpaper_pid_file="$session_runtime_dir/hyprpaper.pid"
@@ -60,11 +67,21 @@ is_supported_media() {
 
 atomic_write() {
   local target="$1" value="$2" temporary
+
   mkdir -p "$(dirname "$target")"
   temporary="$(mktemp "$target.tmp.XXXXXX")"
   printf '%s\n' "$value" >"$temporary"
   mv -f -- "$temporary" "$target"
 }
+close_inherited_fds() {
+  local fd
+  for fd in /proc/$$/fd/*; do
+    fd="${fd##*/}"
+    [[ "$fd" =~ ^[0-9]+$ ]] && (( fd >= 3 )) || continue
+    eval "exec ${fd}>&-" 2>/dev/null || true
+  done
+}
+
 
 is_safe_monitor() {
   [[ "$1" =~ ^[[:alnum:]][[:alnum:]._-]*$ ]]
@@ -326,8 +343,8 @@ start_hyprpaper() {
     return 1
   }
   (
-    # Long-lived wallpaper children must not inherit the transaction lock.
-    exec {wallpaper_lock_fd}>&-
+    # Long-lived wallpaper children must not retain any caller transaction lock.
+    close_inherited_fds
     exec "$hyprpaper_bin" --config "$hyprpaper_config"
   ) >/dev/null 2>&1 &
   pid=$!
@@ -366,8 +383,8 @@ start_video() {
   }
   mkdir -p "$state_dir"
   (
-    # Long-lived wallpaper children must not inherit the transaction lock.
-    exec {wallpaper_lock_fd}>&-
+    # Long-lived wallpaper children must not retain any caller transaction lock.
+    close_inherited_fds
     exec setsid "$mpvpaper_bin" -o "no-audio loop hwdec=auto panscan=1.0" "$output" "$video"
   ) >>"$video_log" 2>&1 &
   pid=$!
@@ -590,6 +607,7 @@ set_global() {
   clear_monitor_metadata
   rm -f -- "$hidden_file"
   publish_runtime_wallpaper "$wallpaper"
+  committed_global_wallpaper="$wallpaper"
   rm -rf -- "$layout"
 }
 
@@ -758,3 +776,9 @@ case "${1:-}" in
     ;;
   *) usage ;;
 esac
+flock -u "$wallpaper_lock_fd"
+exec {wallpaper_lock_fd}>&-
+if [[ -n "$committed_global_wallpaper" && "${ORGM_VISUAL_PROFILE_SKIP_RECORD:-}" != 1 ]] &&
+   command -v orgm-visual-profile >/dev/null 2>&1; then
+  orgm-visual-profile record-wallpaper "$committed_global_wallpaper" || true
+fi

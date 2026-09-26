@@ -15,7 +15,10 @@ let
       parts = builtins.match "https?://([^/?#]+)(/[^?#]*)?([?#].*)?" url;
       host = builtins.elemAt parts 0;
       path = builtins.elemAt parts 1;
-      appName = "${host}_${if path == null then "" else path}";
+      # Chromium canonicalizes an origin-only URL to "/" before deriving the
+      # native-Wayland app ID. Preserve that root slash so desktop IDs match
+      # the compositor class used by nwg-dock.
+      appName = "${host}_${if path == null then "/" else path}";
     in
     assert parts != null;
     "chrome-${lib.replaceStrings [ "/" ] [ "_" ] appName}-Default";
