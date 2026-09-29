@@ -237,6 +237,7 @@ in
       ripgrep
       rsync
       smartmontools
+      syncthing
       tcpdump
       tree
       unzip

@@ -1,6 +1,7 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in configuration.nix(5) man page
 # and in NixOS manual (accessible by running ‘nixos-help’).
+# Syncthing is available in desktop, terminal and server profiles; its service is opt-in.
 
 {
   config,
@@ -36,6 +37,7 @@ let
       wget
       curl
       rsync
+      syncthing
       vim
       fzf
       bash-completion

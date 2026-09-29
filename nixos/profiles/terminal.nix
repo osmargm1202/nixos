@@ -162,6 +162,7 @@ in
     wget
     curl
     rsync
+    syncthing
     vim
     stow
     gh
