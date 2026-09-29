@@ -1,45 +1,14 @@
 # Mesh VPN for remote access to machines behind NAT we don't control
 # (e.g. jarq's). Authentication remains manual per host:
 #   sudo tailscale up --auth-key=tskey-auth-...
-# `tailscale set --accept-dns=false` keeps Tailscale from replacing the
-# resolver globally. tailscale-magicdns instead configures systemd-resolved at
-# runtime to route only the discovered tailnet suffix to 100.100.100.100.
+# `--accept-dns=true` delegates tailnet names to Tailscale's native
+# systemd-resolved integration. Tailscale reapplies split DNS after daemon,
+# link, suspend and network changes; static /etc/hosts entries remain only for
+# service aliases that MagicDNS does not provide.
 { config, inputs, pkgs, ... }:
 let
   peerMonitorServiceName = "tailscale-peer-monitor";
   peerNotifierServiceName = "tailscale-peer-notifier";
-  magicDnsServiceName = "tailscale-magicdns";
-  tailscaleMagicDns = pkgs.writeShellApplication {
-    name = magicDnsServiceName;
-    runtimeInputs = with pkgs; [
-      coreutils
-      iproute2
-      jq
-      systemd
-      tailscale
-    ];
-    text = ''
-      set -euo pipefail
-
-      for _ in $(seq 1 60); do
-        if status="$(tailscale status --json --peers=false)" && suffix="$(jq -er '
-          select(.BackendState == "Running")
-          | .MagicDNSSuffix
-          | strings
-          | select(length > 0)
-        ' <<<"$status")" && ip link show dev tailscale0 >/dev/null 2>&1; then
-          resolvectl dns tailscale0 100.100.100.100
-          resolvectl domain tailscale0 "~$suffix" "$suffix"
-          exit 0
-        fi
-
-        sleep 1
-      done
-
-      printf '%s\n' 'Timed out waiting for Tailscale MagicDNS readiness' >&2
-      exit 1
-    '';
-  };
 
   tailscalePeerMonitor = pkgs.writeShellApplication {
     name = peerMonitorServiceName;
@@ -246,34 +215,13 @@ in
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
-    extraSetFlags = [ "--accept-dns=false" ];
+    # Set this explicitly because the preference persists in Tailscale state.
+    extraSetFlags = [ "--accept-dns=true" ];
   };
 
-  # Normal DNS stays with NetworkManager. The runtime service obtains the
-  # current tailnet suffix and routes only it through Tailscale's DNS server.
+  # Tailscale integrates with resolved dynamically while NetworkManager keeps
+  # managing the normal per-link resolvers.
   services.resolved.enable = true;
-
-  systemd.services.${magicDnsServiceName} = {
-    description = "Configure split MagicDNS for the local tailnet";
-    after = [
-      "tailscaled.service"
-      "tailscaled-set.service"
-      "systemd-resolved.service"
-    ];
-    wants = [
-      "tailscaled.service"
-      "tailscaled-set.service"
-      "systemd-resolved.service"
-    ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${tailscaleMagicDns}/bin/${magicDnsServiceName}";
-      Restart = "on-failure";
-      RestartSec = "5s";
-      TimeoutStartSec = "90s";
-    };
-  };
 
 
   systemd.services.${peerMonitorServiceName} = {
