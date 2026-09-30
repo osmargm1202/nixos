@@ -223,6 +223,7 @@ set_profile() {
   target_wallpaper="$(profile_value "$target" wallpaper || true)"
   if valid_wallpaper "$target_wallpaper"; then
     ORGM_VISUAL_PROFILE_SKIP_RECORD=1 set_wallpaper "$target_wallpaper"
+    selected="$target_wallpaper"
   else
     directory="$pictures_root/$target"
     if [[ -d "$directory" ]] && find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print -quit | grep -q .; then

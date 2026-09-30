@@ -249,6 +249,21 @@ in
         OnlyShowIn=GNOME;X-Cinnamon;
       '';
 
+      # i3, Hyprland and Labwc launch the same tray command explicitly.
+      # The setup wizard can create this file before Home Manager owns it.
+      # Replace only the autostart entry, not the user's syncthingtray.ini.
+      xdg.configFile."autostart/syncthingtray.desktop".force = true;
+      xdg.configFile."autostart/syncthingtray.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Syncthing Tray
+        Comment=Manage Syncthing from the system tray
+        Exec=syncthingtray --single-instance --wait
+        Terminal=false
+        X-GNOME-Autostart-enabled=true
+        OnlyShowIn=GNOME;X-Cinnamon;
+      '';
+
       # Keep user-level MIME preferences in sync with declarative defaults,
       # which take precedence over /etc/xdg/mimeapps.list.
       home.activation.setPreferredFileHandlers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

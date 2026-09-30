@@ -299,7 +299,7 @@ def visual_profile_block():
         "name": "visual-profile",
         "instance": profile,
         "full_text": (
-            f'<span foreground="{color}">[{label}]</span> '
+            f'<span foreground="{color}">PERFIL: {label} ▾</span> '
             '<span foreground="#565f89">│</span> '
         ),
         "markup": "pango",

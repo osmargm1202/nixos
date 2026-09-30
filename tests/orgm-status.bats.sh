@@ -95,30 +95,6 @@ PY
 
 
 
-python3 - "$I3_WRAPPER" <<'PY'
-from importlib.machinery import SourceFileLoader
-import importlib.util
-from types import SimpleNamespace
-import sys
-
-path = sys.argv[1]
-loader = SourceFileLoader("i3status_profile", path)
-spec = importlib.util.spec_from_loader(loader.name, loader)
-module = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = module
-loader.exec_module(module)
-
-for profile, expected in (
-    ("slc", "[SLC]"),
-    ("orgm", "[ORGM]"),
-    ("osmar", "[OSMAR]"),
-):
-    module.subprocess.run = lambda *args, profile=profile, **kwargs: SimpleNamespace(stdout=profile + "\n")
-    block = module.visual_profile_block()
-    assert block["instance"] == profile
-    assert expected in block["full_text"]
-    assert block["separator"] is False
-PY
 
 python3 - "$I3_WRAPPER" <<'PY'
 from importlib.machinery import SourceFileLoader

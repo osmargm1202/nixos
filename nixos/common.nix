@@ -1,7 +1,8 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in configuration.nix(5) man page
 # and in NixOS manual (accessible by running ‘nixos-help’).
-# Syncthing is available in desktop, terminal and server profiles; its service is opt-in.
+# Syncthing is available in all roles; desktops include Syncthing Tray.
+# Its backend remains opt-in: systemctl --user enable --now syncthing.service.
 
 {
   config,
@@ -78,6 +79,7 @@ let
     ++ x11TerminalPackages;
   desktopOnlyPackages = with pkgs; [
     nextcloud-client
+    syncthingtray
     uv
     python3
     android-tools

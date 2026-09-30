@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Skip this wrapper and execute the next Codex binary on PATH.
-while IFS= read -r candidate; do
+# Keep stdin attached to the caller; enumerate executables on a separate FD.
+while IFS= read -r -u 3 candidate; do
   [[ $candidate -ef $0 ]] && continue
-  exec "$candidate" --yolo "$@"
-done < <(type -aP codex)
+  exec "$candidate" --yolo "$@" 3<&-
+done 3< <(type -aP codex)
 
 printf '%s\n' 'codex: executable not found outside ~/.local/bin' >&2
 exit 127

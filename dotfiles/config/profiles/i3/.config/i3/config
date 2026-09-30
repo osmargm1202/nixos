@@ -14,6 +14,7 @@ exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-
 exec --no-startup-id nm-applet
 # Start the SNI bridge and wait up to five seconds for its watcher.
 exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
+exec --no-startup-id syncthingtray --single-instance --wait
 exec --no-startup-id blueman-applet
 exec --no-startup-id kdeconnect-indicator
 # Firefox's declarative startup policy restores the previous session.
@@ -229,6 +230,6 @@ client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 bar {
   tray_output HDMI-1
   tray_output primary
-  status_command ~/.local/bin/i3status-localized
+  status_command exec ~/.local/bin/i3status-localized
   separator_symbol "│"
 }

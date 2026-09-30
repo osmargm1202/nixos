@@ -1,6 +1,8 @@
 # OpenAI Codex CLI — instalacion nativa via bun (`bun add -g @openai/codex`, fallback a npm).
 # (prefix ~/.bun/bin o ~/.npm-global, ya en PATH via fish). Corre via nix-ld.
 # Este módulo NO instala codex; solo provee sus necesidades de runtime.
+# ~/.local/bin/codex selecciona el binario instalado en PATH y conserva stdin:
+# tanto `codex` como `bun run codex` pueden abrir su interfaz en la terminal.
 { pkgs, ... }:
 let
   codexInstall = pkgs.writeShellScriptBin "codex-install" ''

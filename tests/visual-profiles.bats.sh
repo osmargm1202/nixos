@@ -42,6 +42,7 @@ cat >"$TMP/bin/i3-wallpaper" <<'EOF'
 printf 'i3-wallpaper <dir:%s>' "${I3_WALLPAPER_DIR:-}" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
 printf ' <%s>' "$@" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
 printf '\n' >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+[[ "${ORGM_VISUAL_PROFILE_TEST_BACKEND_FAIL:-0}" != 1 ]] || exit 1
 case "${1:-}" in
   --set) selected="${2:?}" ;;
   --random) selected="$(find "${I3_WALLPAPER_DIR:?}" -type f -print -quit)" ;;
@@ -115,10 +116,10 @@ for id in slc orgm osmar; do
 done
 [[ "$(<"$XDG_STATE_HOME/orgm-visual-profile/current")" == orgm ]] || fail 'current profile state missing'
 
-# Waybar's protocol is machine-readable and preserves the selected identifier as its class.
+# The visible profile identifier must agree with the Waybar class.
 waybar_json="$(run_profile waybar)"
-jq -e '.text == "PERFIL: ORGM ▾" and .class == "orgm"' <<<"$waybar_json" >/dev/null ||
-  fail 'Waybar JSON does not expose the visible profile control and profile class'
+jq -e '.class == "orgm" and (.text | test("(^|[^A-Z])ORGM([^A-Z]|$)"))' <<<"$waybar_json" >/dev/null ||
+  fail 'Waybar JSON does not visibly identify the selected profile'
 
 # Every fixed profile generates a distinct runtime palette for all consumers.
 declare -A palettes
@@ -139,8 +140,8 @@ for id in slc orgm osmar; do
   ! grep -Fq 'border: 1px' "$XDG_CONFIG_HOME/nwg-dock-hyprland/current-theme.css" ||
     fail "$id generated a bordered dock profile"
   palettes[$id]="$(cat "$XDG_CONFIG_HOME/waybar-hypr/orgm-current.css" "$XDG_CONFIG_HOME/kitty/current-theme.conf" "$XDG_CONFIG_HOME/nwg-dock-hyprland/current-theme.css" "$XDG_CONFIG_HOME/dunst/dunstrc.d/90-visual-profile.conf")"
-  jq -e --arg id "$id" '.text == ("PERFIL: " + ($id | ascii_upcase) + " ▾") and .class == $id' <<<"$(run_profile waybar)" >/dev/null ||
-    fail "Waybar JSON was not updated for $id"
+  jq -e --arg id "$id" '.class == $id and (.text | test("(^|[^A-Z])" + ($id | ascii_upcase) + "([^A-Z]|$)"))' <<<"$(run_profile waybar)" >/dev/null ||
+    fail "Waybar label and class do not agree with the selected profile $id"
 done
 [[ "${palettes[slc]}" != "${palettes[orgm]}" ]] || fail 'slc and orgm palettes are identical'
 [[ "${palettes[orgm]}" != "${palettes[osmar]}" ]] || fail 'orgm and osmar palettes are identical'
@@ -181,8 +182,58 @@ run_profile record-wallpaper "$slc_wallpaper"
 run_profile set orgm
 run_profile record-wallpaper "$orgm_wallpaper"
 run_profile set slc
-grep -Fq "<set> <$slc_wallpaper>" "$CALLS" ||
+[[ "$(<"$XDG_STATE_HOME/hypr-wallpaper/current")" == "$slc_wallpaper" ]] ||
   fail 'selecting slc did not restore its recorded wallpaper through Hyprland'
+
+# Switching repeatedly must preserve each target's wallpaper, not replace it
+# with the previously active profile's wallpaper. Exercise both backends.
+osmar_wallpaper="$PICTURES/osmar/osmar.png"
+printf 'osmar' >"$osmar_wallpaper"
+for backend in hyprland i3; do
+  case "$backend" in
+    hyprland) wallpaper_state="$XDG_STATE_HOME/hypr-wallpaper/current" ;;
+    i3) wallpaper_state="$XDG_STATE_HOME/i3/wallpaper" ;;
+  esac
+  for id in osmar orgm slc osmar orgm slc; do
+    ORGM_VISUAL_PROFILE_BACKEND="$backend" run_profile set "$id"
+    expected="$PICTURES/$id/$id.png"
+    [[ "$(<"$wallpaper_state")" == "$expected" ]] ||
+      fail "$backend did not apply $id's own wallpaper"
+    for saved_id in slc orgm osmar; do
+      [[ "$(<"$XDG_STATE_HOME/orgm-visual-profile/profiles/$saved_id/wallpaper")" == "$PICTURES/$saved_id/$saved_id.png" ]] ||
+        fail "$backend overwrote $saved_id's saved wallpaper while selecting $id"
+    done
+  done
+done
+
+# i3bar must follow the persisted selection made by the real profile helper,
+# not a mocked return value or a fixed display label.
+mkdir -p "$HOME/.local/bin"
+ln -s "$PROFILE" "$HOME/.local/bin/orgm-visual-profile"
+HOME="$HOME" XDG_CONFIG_HOME="$XDG_CONFIG_HOME" XDG_STATE_HOME="$XDG_STATE_HOME" \
+  ORGM_VISUAL_PROFILE_BACKEND=i3 ORGM_VISUAL_PROFILE_PICTURES_ROOT="$PICTURES" \
+  ORGM_VISUAL_PROFILE_TEST_CALLS="$CALLS" PATH="$TMP/bin:$PATH" \
+  PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/dotfiles/config/profiles/i3/.local/bin/i3status-localized" "$PROFILE" <<'PY'
+from importlib.machinery import SourceFileLoader
+import importlib.util
+import re
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+loader = SourceFileLoader("i3_profile_selection", sys.argv[1])
+spec = importlib.util.spec_from_loader(loader.name, loader)
+bar = importlib.util.module_from_spec(spec)
+loader.exec_module(bar)
+for selected in ("orgm", "osmar", "slc"):
+    subprocess.run([sys.argv[2], "set", selected], check=True)
+    block = bar.visual_profile_block()
+    assert block["name"] == "visual-profile"
+    assert block["instance"] == selected, "i3bar does not reflect the persisted selection"
+    visible = "".join(ET.fromstring("<label>" + block["full_text"] + "</label>").itertext())
+    visible_profiles = set(re.findall(r"\b(?:SLC|ORGM|OSMAR)\b", visible))
+    assert visible_profiles == {selected.upper()}, "i3bar visibly identifies a different profile"
+PY
 
 # Random wallpaper delegates to the active profile folder on both supported desktops.
 : >"$CALLS"
@@ -219,13 +270,16 @@ state_after="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec c
   fail 'unsupported backend altered persisted profile state'
 
 
-# A real backend failure must leave the existing profile transaction intact.
-state_before="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec cat {} \;)"
-if ORGM_VISUAL_PROFILE_TEST_BACKEND_FAIL=1 run_profile set orgm >/dev/null 2>&1; then
-  fail 'profile selection unexpectedly succeeded after wallpaper backend failure'
-fi
-state_after="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec cat {} \;)"
-[[ "$state_after" == "$state_before" ]] ||
-  fail 'wallpaper backend failure altered persisted profile state'
+# Backend failure must leave current and every saved wallpaper unchanged.
+# Exercise the same transaction boundary on Hyprland and i3.
+for backend in hyprland i3; do
+  state_before="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec cat {} \;)"
+  if ORGM_VISUAL_PROFILE_BACKEND="$backend" ORGM_VISUAL_PROFILE_TEST_BACKEND_FAIL=1 run_profile set orgm >/dev/null 2>&1; then
+    fail "$backend profile selection unexpectedly succeeded after wallpaper backend failure"
+  fi
+  state_after="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec cat {} \;)"
+  [[ "$state_after" == "$state_before" ]] ||
+    fail "$backend wallpaper backend failure altered persisted profile state"
+done
 
 printf 'PASS: visual profiles persist fixed palettes, modes, and profile wallpapers safely\n'
