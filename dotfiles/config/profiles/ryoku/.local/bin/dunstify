@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Existing recording helpers notify Ryoku through the standard notification API.
+exec notify-send "$@"

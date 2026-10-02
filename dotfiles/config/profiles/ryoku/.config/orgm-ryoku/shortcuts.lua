@@ -1,6 +1,12 @@
 -- Preserve Osmarg's current bindings, adapting desktop actions to Ryoku.
 local M = { personal = {}, relocated = {}, reserved = {}, used = {} }
 local real = hl
+-- XKB gives these spelling pairs the same keysym. Compare the physical
+-- binding too, so Next cannot bypass a personal Page_Down reservation.
+local aliases = {
+  PRIOR = "PAGE_UP", NEXT = "PAGE_DOWN", QUOTELEFT = "GRAVE",
+  KP_PRIOR = "KP_PAGE_UP", KP_NEXT = "KP_PAGE_DOWN",
+}
 
 function M.normalize(chord)
   local modifiers, key = {}, nil
@@ -9,7 +15,7 @@ function M.normalize(chord)
     if token == "SUPER" or token == "CTRL" or token == "ALT" or token == "SHIFT" then
       modifiers[token] = true
     else
-      key = token
+      key = aliases[token] or token
     end
   end
   local parts = {}

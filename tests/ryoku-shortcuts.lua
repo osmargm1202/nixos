@@ -27,6 +27,9 @@ require("modules.record")
 local upstream_count = #bindings
 assert(loadfile(config .. "/orgm-ryoku/user.lua"))()
 local shortcuts = assert(package.loaded["orgm-ryoku.shortcuts"])
+assert(shortcuts.normalize("SUPER + Next") == shortcuts.normalize("SUPER + Page_Down"))
+assert(shortcuts.normalize("SUPER + Prior") == shortcuts.normalize("SUPER + Page_Up"))
+assert(shortcuts.normalize("SUPER + quoteleft") == shortcuts.normalize("SUPER + grave"))
 local keys, actions = {}, {}
 for _, binding in ipairs(bindings) do
   if binding.scope == "default" then
