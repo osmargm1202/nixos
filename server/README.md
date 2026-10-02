@@ -53,6 +53,14 @@ respalda y sustituye su loader, sin borrar sus directorios de datos.
 El modo `--dry-run` puede descargar/stagear archivos temporales, pero no modifica
 el HOME ni instala paquetes.
 
+El instalador muestra el destino y cinco etapas desde que comienza: preparación,
+obtención de archivos/plugins, comprobación de destinos, dependencias y aplicación
+de la configuración. Anuncia cada descarga antes de iniciarla y al completarla;
+en una terminal muestra además una barra de progreso. Informa de los respaldos y
+de las etapas omitidas por las opciones elegidas. Si una operación falla, indica
+la etapa y termina sin anunciar éxito. Las descargas tienen límite de conexión
+de 15 segundos, de duración total de 5 minutos y de inactividad de 30 segundos.
+
 `--packages` instala tmux, git, curl, bash-completion, neovim, ripgrep,
 fd-find/fd, fzf, zoxide, btop, jq, rsync, bat, file, tree, unzip y xz.
 Los helpers para Bun, ble.sh y los agentes se ejecutan por separado; no instala

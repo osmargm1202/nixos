@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install the portable ORGM Bash and tmux configuration for one user.
-set -euo pipefail
+set -Eeuo pipefail
 
 BASE_URL=${ORGM_DOTFILES_BASE_URL:-https://raw.githubusercontent.com/osmargm1202/nixos/master}
 SOURCE_DIR=
@@ -11,6 +11,7 @@ INSTALL_TMUX_ONLY=0
 INSTALL_PLUGINS=1
 TEMP_DIR=
 BACKUP_DIR=
+CURRENT_STAGE='Preparación'
 
 declare -a BACKED_UP=()
 declare -a TERMINAL_SOURCES=() TERMINAL_DESTINATIONS=() TERMINAL_MODES=()
@@ -20,10 +21,23 @@ action() {
     printf '%s\n' "$*"
 }
 
+stage() {
+    CURRENT_STAGE=$2
+    printf '\n[%s/5] %s\n' "$1" "$CURRENT_STAGE"
+}
+
 die() {
-    printf 'Error: %s\n' "$*" >&2
+    printf 'Error [%s]: %s\n' "$CURRENT_STAGE" "$*" >&2
     exit 1
 }
+
+report_error() {
+    local status=$?
+    printf '\nError [%s]: la operación falló (código %s). Instalación interrumpida.\n' \
+        "$CURRENT_STAGE" "$status" >&2
+    exit "$status"
+}
+trap report_error ERR
 
 usage() {
     cat <<'EOF'
@@ -70,6 +84,17 @@ while (($#)); do
     esac
 done
 
+action 'ORGM — Configuración de terminal para servidores'
+action "Destino: $TARGET_HOME"
+if ((DRY_RUN)); then
+    action 'Modo: simulación; no se modificarán archivos ni se instalarán paquetes.'
+elif ((INSTALL_TMUX_ONLY)); then
+    action 'Modo: solo tmux.'
+else
+    action 'Modo: Bash y tmux, con helpers de herramientas y agentes.'
+fi
+stage 1 'Preparar instalación'
+
 cleanup() {
     [[ -z ${TEMP_DIR:-} ]] || rm -rf -- "$TEMP_DIR"
 }
@@ -82,24 +107,38 @@ require_command() {
 if [[ -n $SOURCE_DIR ]]; then
     [[ -d $SOURCE_DIR ]] || die "--source is not a directory: $SOURCE_DIR"
     SOURCE_DIR=$(cd -- "$SOURCE_DIR" && pwd -P)
+    action "Origen local: $SOURCE_DIR"
 else
     require_command curl
+    action "Origen HTTPS: $BASE_URL"
 fi
 
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/orgm-dotfiles.XXXXXXXX")
 mkdir -p -- "$TEMP_DIR/files"
 
+download() {
+    local url=$1 output=$2 label=$3
+    local -a display=(--silent --show-error)
+    [[ ! -t 2 ]] || display=(--progress-bar --show-error)
+    action "Descargando: $label"
+    curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 \
+        --connect-timeout 15 --max-time 300 --speed-limit 1 --speed-time 30 \
+        "${display[@]}" "$url" --output "$output"
+    action "Descarga completa: $label"
+}
+
 fetch_file() {
     local relative=$1 output=$2
     if [[ -n $SOURCE_DIR ]]; then
+        action "Preparando archivo local: $relative"
         [[ -f "$SOURCE_DIR/$relative" ]] || die "source file missing: $SOURCE_DIR/$relative"
         cp -- "$SOURCE_DIR/$relative" "$output"
     else
-        curl --fail --location --proto '=https' --tlsv1.2 --silent --show-error \
-            "$BASE_URL/$relative" --output "$output"
+        download "$BASE_URL/$relative" "$output" "$relative"
     fi
 }
 
+stage 2 'Obtener configuraciones y plugins'
 if ((!INSTALL_TMUX_ONLY)); then
     fetch_file 'server/dotfiles/.bashrc' "$TEMP_DIR/files/bashrc"
     TERMINAL_SOURCES=(
@@ -142,16 +181,20 @@ if ((INSTALL_PLUGINS)); then
     fetch_plugin() {
         local name=$1 commit=$2
         local archive="$TEMP_DIR/plugins/$name.tar.gz" extracted="$TEMP_DIR/plugins/$name-extracted"
-        curl --fail --location --proto '=https' --tlsv1.2 --silent --show-error \
-            "https://codeload.github.com/tmux-plugins/$name/tar.gz/$commit" --output "$archive"
+        download "https://codeload.github.com/tmux-plugins/$name/tar.gz/$commit" "$archive" "$name"
+        action "Extrayendo plugin: $name"
         mkdir -p -- "$extracted"
         tar -xzf "$archive" --strip-components=1 -C "$extracted"
+        action "Plugin preparado: $name"
     }
     require_command curl
     fetch_plugin tmux-resurrect cff343cf9e81983d3da0c8562b01616f12e8d548
     fetch_plugin tmux-continuum 0698e8f4b17d6454c71bf5212895ec055c578da0
+else
+    action 'Plugins de tmux omitidos (--no-plugins).'
 fi
 
+stage 3 'Verificar destinos y preparar perfiles'
 if [[ -d $TARGET_HOME ]]; then
     TARGET_HOME=$(cd -- "$TARGET_HOME" && pwd -P)
 elif ((DRY_RUN)); then
@@ -249,41 +292,42 @@ backup_once() {
     mkdir -p -- "$(dirname -- "$backup")"
     cp -a -- "$destination" "$backup"
     BACKED_UP+=("$backup")
+    action "Respaldo creado: $backup"
 }
 
 deploy_file() {
     local source=$1 destination=$2 relative=$3 mode=$4
     if [[ -f $destination ]] && cmp -s -- "$source" "$destination" &&
         [[ $mode != 0755 || -x $destination ]]; then
-        action "Unchanged: $destination"
+        action "Sin cambios: $destination"
         return 0
     fi
     if ((DRY_RUN)); then
-        action "Would install: $destination"
+        action "Se instalaría: $destination"
         return 0
     fi
     backup_once "$destination" "$relative"
     mkdir -p -- "$(dirname -- "$destination")"
     rm -f -- "$destination"
     install -m "$mode" -- "$source" "$destination"
-    action "Installed: $destination"
+    action "Instalado: $destination"
 }
 
 deploy_tree() {
     local source=$1 destination=$2 relative=$3
     if [[ -d $destination ]] && diff -qr --no-dereference -- "$source" "$destination" >/dev/null; then
-        action "Unchanged: $destination"
+        action "Sin cambios: $destination"
         return 0
     fi
     if ((DRY_RUN)); then
-        action "Would install plugin: $destination"
+        action "Se instalaría el plugin: $destination"
         return 0
     fi
     backup_once "$destination" "$relative"
     mkdir -p -- "$(dirname -- "$destination")"
     rm -rf -- "$destination"
     cp -a -- "$source" "$destination"
-    action "Installed plugin: $destination"
+    action "Plugin instalado: $destination"
 }
 
 install_packages() {
@@ -301,14 +345,18 @@ install_packages() {
                 action "Would run: apt-get update && apt-get install ${packages[*]}"
                 return
             fi
+            action 'Actualizando índice de paquetes con apt-get; puede solicitar sudo.'
             if ((EUID == 0)); then
                 apt-get update
+                action "Instalando paquetes: ${packages[*]}"
                 apt-get install -y "${packages[@]}"
             else
                 require_command sudo
                 sudo apt-get update
+                action "Instalando paquetes: ${packages[*]}"
                 sudo apt-get install -y "${packages[@]}"
             fi
+            action "Instalando paquetes con pacman: ${packages[*]} (puede solicitar sudo)."
             ;;
         arch|manjaro)
             packages=(tmux git curl bash-completion neovim ripgrep fd fzf zoxide btop jq rsync bat file tree unzip xz)
@@ -327,10 +375,19 @@ install_packages() {
     esac
 }
 
+stage 4 'Instalar dependencias'
 if ((INSTALL_PACKAGES)); then
     install_packages
+    if ((DRY_RUN)); then
+        action 'Plan de dependencias preparado.'
+    else
+        action 'Dependencias instaladas.'
+    fi
+else
+    action 'Paquetes del sistema omitidos; usa --packages para instalarlos.'
 fi
 
+stage 5 'Aplicar configuración y respaldar archivos anteriores'
 if ((!INSTALL_TMUX_ONLY)); then
     deploy_file "$TEMP_DIR/files/bashrc" "$TARGET_HOME/.bashrc" '.bashrc' 0644
     for index in "${!TERMINAL_DESTINATIONS[@]}"; do
@@ -366,15 +423,16 @@ deploy_file "$TEMP_DIR/files/plugins.conf" "$PLUGINS_CONF" '.config/tmux/plugins
 
 
 if ((${#BACKED_UP[@]})); then
-    action 'Backups:'
+    action 'Respaldos:'
     printf '  %s\n' "${BACKED_UP[@]}"
 fi
 if ((DRY_RUN)); then
-    action 'Dry run complete: no files were changed.'
+    action 'Simulación completada: no se modificaron archivos.'
 else
+    action 'Instalación completada correctamente.'
     if ((!INSTALL_TMUX_ONLY)); then
-        action 'Open a new Bash session (exec bash) to use the terminal configuration.'
-        action 'Optional tools: bun-install; blesh-install; codex-install; claude-install; omp-install'
+        action 'Abre una nueva sesión Bash (exec bash) para cargar la configuración.'
+        action 'Herramientas opcionales: bun-install; blesh-install; codex-install; claude-install; omp-install'
     fi
-    action 'For an existing tmux server, run: tmux source-file ~/.tmux.conf'
+    action 'Para recargar una sesión tmux existente: tmux source-file ~/.tmux.conf'
 fi
