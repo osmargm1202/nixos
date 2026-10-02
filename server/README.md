@@ -1,4 +1,4 @@
-# Dotfiles básicos para servidores
+# Terminal ORGM para servidores
 
 `server/install.sh` replica Bash y tmux por usuario en Ubuntu/Debian y Arch.
 Es independiente del `install.sh` de la raíz, que instala/configura NixOS.
@@ -6,9 +6,19 @@ El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
 
 ## Qué se comparte
 
-- `server/dotfiles/.bashrc`: base de `server.slci.stream`, con historial,
-  prompt, aliases, autocompletado y soporte opcional para Starship, Zoxide,
-  Atuin, blesh y neofetch si ya están instalados.
+- `server/dotfiles/.bashrc` y `~/.config/bash/terminal.bash`: historial,
+  prompt, aliases, navegación, rutas de herramientas e integración opcional
+  con Starship, Zoxide, Atuin, fnm, Eza y neofetch.
+- Funciones `codex` y `claude` con los permisos de los lanzadores de NixOS,
+  y `omp` con resolución de sus assets cuando se instala con Bun.
+- Comandos `codex-install`, `claude-install`, `omp-install` y sus variantes
+  `*-update`, junto con `bun-install`, `blesh-install` y `blesh-update`.
+  Se instalan los helpers; los binarios se descargan cuando se invocan.
+- La misma `.blerc` de NixOS: edición Emacs, sugerencias de comandos/historial
+  y separador entre comandos. Detecta ble.sh local o de `/usr/share/blesh`
+  (incluidos paquetes de Arch); FZF añade atajos y previews de texto para SSH.
+- El mismo `starship.toml` de NixOS, que se utiliza si Starship está instalado.
+  Sus iconos requieren una Nerd Font en el terminal del dispositivo cliente.
 - Neofetch automático solo en terminales interactivas, fuera de tmux,
   sin redirección y una vez por shell. El comando manual sigue disponible.
 - `dotfiles/config/users/osmarg/programs/tmux/.tmux.conf`: la misma configuración del escritorio:
@@ -18,7 +28,7 @@ El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
   sin TPM ni rutas `/nix/store` en los servidores.
 - `~/.bashrc.local`: archivo opcional para ajustes privados de cada host;
   el instalador no lo modifica. No se replican rutas de Villarpando, zona horaria,
-  credenciales, ni el alias de Claude que omite permisos.
+  credenciales, claves SOPS ni configuraciones gráficas.
 
 No cambia Fish, el shell de login, servicios, firewall, DNS ni NixOS.
 Rechaza destinos gestionados por Nix/Home Manager: en el escritorio se debe
@@ -44,8 +54,9 @@ El modo `--dry-run` puede descargar/stagear archivos temporales, pero no modific
 el HOME ni instala paquetes.
 
 `--packages` instala tmux, git, curl, bash-completion, neovim, ripgrep,
-fd-find/fd, fzf, zoxide, btop, jq y rsync. No instala Starship, Atuin, blesh
-ni neofetch mediante scripts de terceros. Las versiones dependen de la distro;
+fd-find/fd, fzf, zoxide, btop, jq, rsync, bat, file, tree, unzip y xz.
+Los helpers para Bun, ble.sh y los agentes se ejecutan por separado; no instala
+Starship, Atuin ni neofetch. Las versiones dependen de la distro;
 replicar estos dotfiles no garantiza versiones de paquetes idénticas.
 Arch utiliza `pacman -S --needed`, nunca `pacman -Sy`; si sus repositorios locales
 están desactualizados, primero debe resolverse la actualización normal del sistema.
@@ -72,6 +83,68 @@ tmux source-file ~/.tmux.conf
 
 En `server.or-gm.com`, cuyo login es Fish, esto configura Bash pero no lo convierte
 en el shell de login. Entrar con `bash` para usar la configuración de Bash.
+
+## Instalar las herramientas de terminal y desarrollo
+
+Después de instalar los dotfiles y las dependencias con `--packages`:
+
+```bash
+exec bash
+bun-install
+blesh-install
+codex-install
+claude-install
+omp-install
+exec bash
+```
+
+Ejecutar los helpers con el usuario que utilizará los agentes. Bun y los paquetes
+se instalan en HOME; no requieren `sudo`. `bun-install` usa el instalador oficial
+sin añadir bloques a Fish ni a los perfiles de Bash. `blesh-install` descarga el
+nightly oficial precompilado, instala en `~/.local/share/blesh` y no requiere make
+ni gawk. El segundo `exec bash` carga el editor de línea recién instalado.
+
+Los instaladores de agentes prefieren Bun. Codex también admite npm/pnpm con
+prefijo de usuario; Claude usa su instalador nativo si no encuentra Bun, para
+funcionar también en Ubuntu sin Node reciente. OMP requiere Bun (actualmente
+1.3.14 o superior según upstream). `*-update` repite la instalación de la última
+versión; `blesh-update` vuelve a descargar el nightly. Sus descargas no están
+fijadas a una revisión y requieren conexión a Internet.
+
+`codex` añade `--dangerously-bypass-approvals-and-sandbox` y `claude` añade
+`--dangerously-skip-permissions` al iniciar conversaciones. Estos permisos son
+los del usuario que ejecuta el agente; no conceden root. Comandos administrativos
+como `codex login`, `codex remote-control pair`, `claude auth` y
+`claude remote-control` conservan sus argumentos originales. Para ejecutar
+directamente el CLI con sus permisos habituales, usar `command codex ...` o
+`command claude ...`. Las cuentas se autentican en cada servidor; este instalador
+no copia sesiones ni credenciales desde NixOS.
+
+Las rutas `~/.local/bin`, Bun, npm, pnpm, Cargo, Go y OpenCode se incorporan sin
+duplicarse al recargar Bash. Los módulos del instalador se leen desde
+`~/.config/bash`, incluso si el host utiliza un `XDG_CONFIG_HOME` diferente.
+
+Con ble.sh + FZF están disponibles los atajos de Emacs de NixOS:
+
+| Atajo | Acción | Dependencia adicional |
+| --- | --- | --- |
+| Alt+R | Historial con FZF | — |
+| Alt+F | Insertar un archivo con preview | fd/fdfind |
+| Alt+C | Cambiar de directorio con preview | fd/fdfind |
+| Alt+P | Buscar procesos | pgrep |
+| Alt+A | Traducir la línea a un comando | aichat, si está instalado |
+
+`switch-preview` y `dir-preview` funcionan sin escritorio, con Bat/Tree/Eza si
+están disponibles y alternativas con herramientas básicas. Se conservan `gst`,
+`gdiff`, `gp`, `ta`, `tn`, `back-op`, `backtrack-op`, `za` si existe Zellij y
+`cheat` si hay Curl/FZF/Bat. Las funciones de NixOS, Flatpak, emuladores y apertura
+de páginas en un escritorio no se trasladan al servidor.
+
+Fuentes de los instaladores:
+[Codex](https://learn.chatgpt.com/docs/developer-commands),
+[Claude Code](https://code.claude.com/docs/en/setup),
+[OMP](https://github.com/can1357/oh-my-pi),
+[ble.sh](https://github.com/akinomyoga/ble.sh#quick-instructions).
 
 ## Win+D: SSH directamente en tmux
 
@@ -166,7 +239,15 @@ Referencias oficiales:
 - `bash tests/server-bash-banner.bats.sh`: terminal con banner, tmux sin banner,
   invocación manual, recarga, redirección y ejecución no interactiva.
 - `bash tests/server-installer.bats.sh`: dry-run, fallo de staging sin modificar
-  dotfiles, respaldo de symlink, perfil de login preservado, idempotencia y tmux-only.
+  dotfiles, respaldo de symlink, perfil de login preservado, idempotencia,
+  helpers ejecutables, rechazo de destinos Nix y tmux-only.
+- `bash tests/server-terminal.bats.sh`: flags de permisos, subcomandos de login
+  y acceso remoto, stdin preservado, instaladores con gestores simulados,
+  prefijos de usuario, fallback nativo de Claude, descargas fallidas, assets de
+  OMP, rutas sin duplicados, navegación y previews.
+- Instalación real de Bun 1.4.2 y ble.sh nightly en HOME temporal; perfiles
+  conservados, carga en PTY interactiva, Emacs, sugerencias y widgets de FZF
+  verificados también con un `XDG_CONFIG_HOME` diferente.
 - Descarga e instalación standalone mediante un servidor HTTPS local de prueba;
   primer perfil Bash e instalación repetida verificados.
 - Instalación tmux-only real en `slci`, recarga sin perder `slc-manage`, atajos S/R

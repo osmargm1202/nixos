@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Installed under each public command name by server/install.sh.
+set -euo pipefail
+tool=${0##*/}
+if [[ ${1:-} == --help || ${1:-} == -h ]]; then
+  printf '%s\n' "Usage: $tool [installer arguments]" \
+    'Installs/updates one tool in HOME without sudo. AI packages prefer Bun.' \
+    'Commands: bun-install, blesh-install, blesh-update, codex-install,' \
+    'codex-update, claude-install, claude-update, omp-install, omp-update.'
+  exit 0
+fi
+
+require_command() {
+  command -v "$1" >/dev/null || { printf '%s: required command not found: %s\n' "$tool" "$1" >&2; exit 1; }
+}
+install_official_script() (
+  require_command curl
+  local installer_dir
+  installer_dir=$(mktemp -d "${TMPDIR:-/tmp}/orgm-cli.XXXXXXXX")
+  trap 'rm -rf -- "$installer_dir"' EXIT
+  curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 --silent --show-error \
+    "$1" --output "$installer_dir/install.sh"
+  shift
+  bash "$installer_dir/install.sh" "$@"
+)
+
+case $tool in
+  bun-install)
+    require_command unzip
+    export BUN_INSTALL=${BUN_INSTALL:-$HOME/.bun}
+    # ORGM owns the shell configuration; prevent the upstream installer editing it.
+    export PATH="$BUN_INSTALL/bin:$PATH"
+    SHELL=/bin/sh install_official_script https://bun.sh/install "$@"
+    exit ;;
+  blesh-install|blesh-update)
+    (($# == 0)) || { printf '%s: no arguments expected\n' "$tool" >&2; exit 2; }
+    for dependency in curl tar xz; do require_command "$dependency"; done
+    installer_dir=$(mktemp -d "${TMPDIR:-/tmp}/orgm-blesh.XXXXXXXX")
+    trap 'rm -rf -- "$installer_dir"' EXIT
+    curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 --silent --show-error \
+      https://github.com/akinomyoga/ble.sh/releases/download/nightly/ble-nightly.tar.xz \
+      --output "$installer_dir/blesh.tar.xz"
+    tar -xJf "$installer_dir/blesh.tar.xz" -C "$installer_dir"
+    bash "$installer_dir/ble-nightly/ble.sh" --install "$HOME/.local/share"
+    exit ;;
+  codex-install|codex-update) package=@openai/codex ;;
+  claude-install|claude-update) package=@anthropic-ai/claude-code ;;
+  omp-install|omp-update) package=@oh-my-pi/pi-coding-agent ;;
+  *) printf 'Unknown installer command: %s\n' "$tool" >&2; exit 2 ;;
+esac
+
+# Updating repeats a global install so it can select the latest package version.
+export BUN_INSTALL=${BUN_INSTALL:-$HOME/.bun}
+export NPM_CONFIG_PREFIX=${NPM_CONFIG_PREFIX:-$HOME/.npm-global}
+export PNPM_HOME=${PNPM_HOME:-$HOME/.local/share/pnpm}
+export PATH="$BUN_INSTALL/bin:$NPM_CONFIG_PREFIX/bin:$PNPM_HOME:$PATH"
+if command -v bun >/dev/null; then
+  exec bun add -g "$package@latest" "$@"
+fi
+if [[ $tool == claude-* ]]; then
+  # The official native installer also works on Ubuntu without a recent Node.
+  install_official_script https://claude.ai/install.sh "$@"
+  exit
+fi
+if [[ $tool == omp-* ]]; then
+  printf '%s: Bun is required; run bun-install first\n' "$tool" >&2
+  exit 1
+fi
+if command -v npm >/dev/null; then
+  exec npm install -g "$package@latest" "$@"
+fi
+if command -v pnpm >/dev/null; then
+  exec pnpm add -g "$package@latest" "$@"
+fi
+printf '%s: install Bun (bun-install) or Node.js/npm first\n' "$tool" >&2
+exit 1

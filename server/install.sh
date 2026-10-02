@@ -13,6 +13,8 @@ TEMP_DIR=
 BACKUP_DIR=
 
 declare -a BACKED_UP=()
+declare -a TERMINAL_SOURCES=() TERMINAL_DESTINATIONS=() TERMINAL_MODES=()
+declare -A TERMINAL_STAGED=()
 
 action() {
     printf '%s\n' "$*"
@@ -27,7 +29,8 @@ usage() {
     cat <<'EOF'
 Usage: install.sh [options]
 
-Install the portable ORGM Bash and tmux configuration for the current user.
+Install ORGM Bash/tmux, AI install/update commands, blesh settings and FZF widgets.
+Agent binaries and blesh are installed only when their helper is invoked.
 It does not change shells, Fish, NixOS configuration, DNS, or services.
 
 Options:
@@ -99,6 +102,36 @@ fetch_file() {
 
 if ((!INSTALL_TMUX_ONLY)); then
     fetch_file 'server/dotfiles/.bashrc' "$TEMP_DIR/files/bashrc"
+    TERMINAL_SOURCES=(
+        'server/dotfiles/.config/bash/terminal.bash'
+        'server/dotfiles/.config/bash/fzf-widgets.bash'
+        'dotfiles/config/users/osmarg/programs/shell/.config/bash/completions.bash'
+        'dotfiles/config/users/osmarg/programs/shell/.blerc'
+        'dotfiles/config/users/osmarg/common/.config/starship.toml'
+        'server/dotfiles/.local/bin/terminal-preview'
+        'server/dotfiles/.local/bin/terminal-preview'
+    )
+    TERMINAL_DESTINATIONS=(
+        '.config/bash/terminal.bash' '.config/bash/fzf-widgets.bash'
+        '.config/bash/completions.bash' '.blerc'
+        '.config/starship.toml'
+        '.local/bin/switch-preview' '.local/bin/dir-preview'
+    )
+    TERMINAL_MODES=(0644 0644 0644 0644 0644 0755 0755)
+    for cli in bun-install blesh-install blesh-update codex-install codex-update claude-install claude-update omp-install omp-update; do
+        TERMINAL_SOURCES+=('server/dotfiles/.local/bin/cli-install')
+        TERMINAL_DESTINATIONS+=(".local/bin/$cli")
+        TERMINAL_MODES+=(0755)
+    done
+    for index in "${!TERMINAL_SOURCES[@]}"; do
+        relative=${TERMINAL_SOURCES[$index]}
+        if [[ -n ${TERMINAL_STAGED[$relative]:-} ]]; then
+            cp -- "${TERMINAL_STAGED[$relative]}" "$TEMP_DIR/files/terminal-$index"
+        else
+            fetch_file "$relative" "$TEMP_DIR/files/terminal-$index"
+            TERMINAL_STAGED[$relative]=$TEMP_DIR/files/terminal-$index
+        fi
+    done
 fi
 fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.tmux.conf' "$TEMP_DIR/files/tmux.conf"
 fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.local/bin/tmux-spanish-date' "$TEMP_DIR/files/tmux-spanish-date"
@@ -162,6 +195,9 @@ PLUGINS_CONF=$TMUX_CONF_DIR/plugins.conf
 check_not_nix_managed "$TARGET_HOME/.tmux.conf" "$HELPER_DEST" "$PLUGINS_CONF"
 if ((!INSTALL_TMUX_ONLY)); then
     check_not_nix_managed "$TARGET_HOME/.bashrc"
+    for relative in "${TERMINAL_DESTINATIONS[@]}"; do
+        check_not_nix_managed "$TARGET_HOME/$relative"
+    done
 fi
 if ((INSTALL_PLUGINS)); then
     check_not_nix_managed "$PLUGIN_ROOT/tmux-resurrect" "$PLUGIN_ROOT/tmux-continuum"
@@ -260,7 +296,7 @@ install_packages() {
     fi
     case ${ID:-} in
         ubuntu|debian)
-            packages=(tmux git curl bash-completion neovim ripgrep fd-find fzf zoxide btop jq rsync)
+            packages=(tmux git curl bash-completion neovim ripgrep fd-find fzf zoxide btop jq rsync bat file tree unzip xz-utils)
             if ((DRY_RUN)); then
                 action "Would run: apt-get update && apt-get install ${packages[*]}"
                 return
@@ -275,7 +311,7 @@ install_packages() {
             fi
             ;;
         arch|manjaro)
-            packages=(tmux git curl bash-completion neovim ripgrep fd fzf zoxide btop jq rsync)
+            packages=(tmux git curl bash-completion neovim ripgrep fd fzf zoxide btop jq rsync bat file tree unzip xz)
             if ((DRY_RUN)); then
                 action "Would run: pacman -S --needed ${packages[*]}"
                 return
@@ -297,6 +333,10 @@ fi
 
 if ((!INSTALL_TMUX_ONLY)); then
     deploy_file "$TEMP_DIR/files/bashrc" "$TARGET_HOME/.bashrc" '.bashrc' 0644
+    for index in "${!TERMINAL_DESTINATIONS[@]}"; do
+        relative=${TERMINAL_DESTINATIONS[$index]}
+        deploy_file "$TEMP_DIR/files/terminal-$index" "$TARGET_HOME/$relative" "$relative" "${TERMINAL_MODES[$index]}"
+    done
 fi
 deploy_file "$TEMP_DIR/files/tmux.conf" "$TARGET_HOME/.tmux.conf" '.tmux.conf' 0644
 deploy_file "$TEMP_DIR/files/tmux-spanish-date" "$HELPER_DEST" '.local/bin/tmux-spanish-date' 0755
@@ -332,6 +372,9 @@ fi
 if ((DRY_RUN)); then
     action 'Dry run complete: no files were changed.'
 else
-    action 'Open a new Bash session to use the Bash configuration.'
+    if ((!INSTALL_TMUX_ONLY)); then
+        action 'Open a new Bash session (exec bash) to use the terminal configuration.'
+        action 'Optional tools: bun-install; blesh-install; codex-install; claude-install; omp-install'
+    fi
     action 'For an existing tmux server, run: tmux source-file ~/.tmux.conf'
 fi

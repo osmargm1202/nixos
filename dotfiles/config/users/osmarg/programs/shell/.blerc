@@ -25,7 +25,7 @@ blehook PRECMD+=_orgm_command_separator
 
 if command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
   ble-import contrib/integration/fzf-key-bindings
-  blesh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/bash"
+  blesh_config_dir="${ORGM_BASH_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/bash}"
   if [[ -r "$blesh_config_dir/fzf-widgets.bash" ]]; then
     . "$blesh_config_dir/fzf-widgets.bash"
   fi

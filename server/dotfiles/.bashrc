@@ -19,6 +19,13 @@ case ":$PATH:" in
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
+# These modules belong to this installer, even when a host has a custom XDG root.
+ORGM_BASH_CONFIG_DIR=$HOME/.config/bash
+_orgm_bash_config_dir=$ORGM_BASH_CONFIG_DIR
+if [[ -r "$_orgm_bash_config_dir/terminal.bash" ]]; then
+  source "$_orgm_bash_config_dir/terminal.bash"
+fi
+
 if command -v nvim >/dev/null 2>&1; then
   export EDITOR=nvim
 elif command -v nano >/dev/null 2>&1; then
@@ -33,9 +40,15 @@ case ${TERM:-dumb} in
   *) PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ ' ;;
 esac
 
-alias ls='ls -l --color=auto'
-alias ll='ls -la --color=auto'
-alias lt='ls -lah --color=auto'
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --group-directories-first --icons'
+  alias ll='eza -la --group-directories-first --icons'
+  alias lt='eza --tree --group-directories-first --icons'
+else
+  alias ls='ls -l --color=auto'
+  alias ll='ls -la --color=auto'
+  alias lt='ls -lah --color=auto'
+fi
 alias grep='grep --color=auto'
 
 if command -v git >/dev/null 2>&1; then
@@ -73,11 +86,33 @@ if ! shopt -oq posix; then
   fi
 fi
 
-if [[ -r "$HOME/.local/share/blesh/ble.sh" ]]; then
-  source "$HOME/.local/share/blesh/ble.sh" --attach=none
+if [[ ${TERM:-dumb} != dumb && -t 0 && -t 1 ]]; then
+  for _orgm_blesh in "$HOME/.local/share/blesh/ble.sh" /usr/share/blesh/ble.sh /usr/local/share/blesh/ble.sh; do
+    if [[ -r $_orgm_blesh ]]; then
+      source "$_orgm_blesh" --attach=none
+      break
+    fi
+  done
+  unset _orgm_blesh
+fi
+
+if [[ -r "$_orgm_bash_config_dir/completions.bash" ]]; then
+  source "$_orgm_bash_config_dir/completions.bash"
+fi
+
+# Older Ubuntu/Arch fzf packages ship shell files instead of `fzf --bash`.
+if [[ ! ${BLE_VERSION-} ]] && command -v fzf >/dev/null 2>&1; then
+  for _orgm_fzf_bindings in /usr/share/fzf/key-bindings.bash /usr/share/doc/fzf/examples/key-bindings.bash; do
+    if [[ -r $_orgm_fzf_bindings ]]; then
+      source "$_orgm_fzf_bindings"
+      break
+    fi
+  done
+  unset _orgm_fzf_bindings
 fi
 
 if [[ ${TERM:-dumb} != dumb ]] && command -v starship >/dev/null 2>&1; then
+  export STARSHIP_CONFIG=${STARSHIP_CONFIG:-$HOME/.config/starship.toml}
   eval "$(starship init bash)"
 fi
 
@@ -106,9 +141,10 @@ if command -v zoxide >/dev/null 2>&1; then
   alias cd='z'
 fi
 
-[[ ! ${BLE_VERSION-} ]] || ble-attach
-
 # Mantener las particularidades de cada servidor fuera de los archivos compartidos.
 if [[ -r "$HOME/.bashrc.local" ]]; then
   source "$HOME/.bashrc.local"
 fi
+
+unset _orgm_bash_config_dir
+[[ ! ${BLE_VERSION-} ]] || ble-attach
