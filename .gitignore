@@ -2,10 +2,6 @@
 __pycache__/
 nixos/packages/windows-manager-linux-orgm-unsigned.xpi
 
-# caelestia rewrites this on every colour-scheme change (apply_btop() in
-# caelestia-cli); ~/.config/btop is out-of-store symlinked straight into
-# this repo's working tree, so without this it shows dirty constantly.
-dotfiles/config/shared/.config/btop/themes/caelestia.theme
 
 # Per-machine Windows VM credentials and persistent-path settings.
 containers/windows/.env

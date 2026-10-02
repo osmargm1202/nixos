@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BLERC="$ROOT/dotfiles/config/shared/.blerc"
-WIDGETS="$ROOT/dotfiles/config/shared/.config/bash/fzf-widgets.bash"
+BLERC="$ROOT/dotfiles/config/users/osmarg/programs/shell/.blerc"
+WIDGETS="$ROOT/dotfiles/config/users/osmarg/programs/shell/.config/bash/fzf-widgets.bash"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

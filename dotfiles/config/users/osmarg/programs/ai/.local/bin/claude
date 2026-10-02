@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Skip this wrapper and execute the next Claude binary on PATH.
+while IFS= read -r candidate; do
+  [[ $candidate -ef $0 ]] && continue
+  exec "$candidate" --dangerously-skip-permissions "$@"
+done < <(type -aP claude)
+
+printf '%s\n' 'claude: executable not found outside ~/.local/bin' >&2
+exit 127

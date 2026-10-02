@@ -5,15 +5,15 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-repo="${HYPR_CONFIG_EDITOR_REPO:-$HOME/Hobby/nixos/dotfiles}"
-hypr_root="${HYPR_CONFIG_EDITOR_ROOT:-$repo/config/profiles/hyprland/.config/hypr}"
+# Active files are store-backed. Edit the checkout, then rebuild explicitly.
+hypr_root="${HYPR_CONFIG_EDITOR_ROOT:-$HOME/Hobby/nixos/dotfiles/config/profiles/hyprland/.config/hypr}"
 
 notify() {
   notify-send "Hypr config" "$1" 2>/dev/null || true
 }
 
 if [ ! -d "$hypr_root" ]; then
-  notify "No existe $hypr_root"
+  notify "No existe la fuente editable $hypr_root; prepara un checkout o define HYPR_CONFIG_EDITOR_ROOT"
   exit 1
 fi
 

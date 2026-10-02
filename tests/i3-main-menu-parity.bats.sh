@@ -1,39 +1,47 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BIN="$ROOT/dotfiles/config/profiles/i3/.local/bin"
-MAIN="$BIN/i3-main-menu"
-DEVICES="$BIN/i3-devices-menu"
-POWER="$BIN/i3-powermenu"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/bin" "$tmp/home/.config/i3"
+cat > "$tmp/bin/i3-rofi" <<'EOF'
+#!/usr/bin/env bash
+cat > "$MENU_CAPTURE"
+[[ -n "${MENU_CHOICE:-}" ]] || exit 1
+printf '%s\n' "$MENU_CHOICE"
+EOF
+chmod +x "$tmp/bin/i3-rofi"
+helper="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
+HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" PATH="$tmp/bin:$PATH" \
+  MENU_CAPTURE="$tmp/jarq-menu" "$helper"
+cp "$ROOT/dotfiles/config/users/osmarg/profiles/i3/.config/i3/main-menu.conf" "$tmp/home/.config/i3/main-menu.conf"
+HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" PATH="$tmp/bin:$PATH" \
+  MENU_CAPTURE="$tmp/osmarg-menu" "$helper"
+python3 - "$tmp/jarq-menu" "$tmp/osmarg-menu" <<'PY'
+from pathlib import Path
+import sys
+jarq = set(Path(sys.argv[1]).read_text().splitlines())
+osmarg = set(Path(sys.argv[2]).read_text().splitlines())
+daily = {"Apps", "Windows", "Terminal", "Files", "Calculator", "Clipboard", "Devices", "Help", "Power"}
+assert daily <= jarq, ("missing daily Jarq controls", daily - jarq)
+assert daily <= osmarg, ("missing daily Osmarg controls", daily - osmarg)
+assert {"SSH", "AI", "Pi", "Obsidian", "Profile"}.isdisjoint(jarq), ("personal items leaked into Jarq", jarq)
+assert {"SSH", "Obsidian", "Profile"} <= osmarg, ("Osmarg lost personal menu entries", osmarg)
+print("PASS: rendered i3 menus retain daily controls and separate personal entries")
+PY
 
-fail() {
-  printf 'FAIL: %s\n' "$*" >&2
-  exit 1
-}
-
-[ -x "$DEVICES" ] || fail 'i3-devices-menu missing or not executable'
-for helper in i3-main-menu i3-devices-menu i3-powermenu; do
-  bash -n "$BIN/$helper"
+for command in orgm-visual-profile i3-wallpaper; do
+  cat > "$tmp/bin/$command" <<'EOF'
+#!/usr/bin/env bash
+printf '%s %s\n' "${0##*/}" "$*" > "$ACTION_CAPTURE"
+EOF
+  chmod +x "$tmp/bin/$command"
 done
-
-for entry in Apps Windows Terminal Firefox Files Obsidian Calculator Clipboard SSH Devices Wallpaper Profile Performance Help Power; do
-  grep -Fq "$entry" "$MAIN" || fail "main menu entry missing: $entry"
-done
-
-grep -Fq 'Devices) exec i3-devices-menu' "$MAIN" || fail 'Devices submenu dispatch missing'
-grep -Fq 'Calculator) exec i3-calc' "$MAIN" || fail 'Calculator dispatch missing'
-grep -Fq 'Firefox) exec firefox-open-tab --focus' "$MAIN" || fail 'Firefox focus dispatch missing'
-grep -Fq 'Wallpaper) exec orgm-visual-profile random-wallpaper' "$MAIN" || fail 'Wallpaper dispatch bypasses visual profiles'
-grep -Fq 'Profile) exec orgm-visual-profile menu' "$MAIN" || fail 'Profile selector dispatch missing'
-grep -Fq 'Help) exec i3-hotkeys' "$MAIN" || fail 'Help dispatch missing'
-grep -Fq 'Power) exec xlogout' "$MAIN" || fail 'Power dispatch missing'
-
-for entry in Displays Wi-Fi Bluetooth Audio Keyboard Storage Back; do
-  grep -Fq "$entry" "$DEVICES" || fail "devices menu entry missing: $entry"
-done
-grep -Fq 'Back) exec i3-main-menu' "$DEVICES" || fail 'Devices Back must return to main menu'
-grep -Fq 'Storage) exec thunar computer:///' "$DEVICES" || fail 'Devices Storage must open Thunar'
-grep -Fq 'Cancel) exec i3-main-menu' "$POWER" || fail 'Power Cancel must return to main menu'
-
-printf 'PASS: i3 main menu exposes daily apps, devices, help and power\n'
+HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" PATH="$tmp/bin:$PATH" \
+  MENU_CAPTURE="$tmp/menu" MENU_CHOICE=Wallpaper ACTION_CAPTURE="$tmp/action" "$helper"
+grep -Fxq 'orgm-visual-profile random-wallpaper' "$tmp/action"
+rm "$tmp/home/.config/i3/main-menu.conf"
+HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" PATH="$tmp/bin:$PATH" \
+  MENU_CAPTURE="$tmp/menu" MENU_CHOICE=Wallpaper ACTION_CAPTURE="$tmp/action" "$helper"
+grep -Fxq 'i3-wallpaper --random' "$tmp/action"
+printf '%s\n' 'PASS: personal wallpaper action overrides the shared menu action'

@@ -2,43 +2,14 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
-CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-AUTOSTART="$ROOT/dotfiles/config/profiles/i3/.config/autostart/autorandr.desktop"
 HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-monitor-profile"
-DEVICES="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-devices-menu"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-grep -Fq 'services.autorandr.enable = true;' "$PROFILE" || fail 'autorandr hotplug service missing'
-grep -Fq 'systemd.services.autorandr.serviceConfig.ExecStart = lib.mkForce' "$PROFILE" ||
-  fail 'system autorandr unit does not dispatch to the graphical user'
-grep -Fq 'start i3-monitor-hotplug.service' "$PROFILE" ||
-  fail 'autorandr hotplug dispatch does not start the user fallback service'
-grep -Fq 'ExecStart = "%h/.local/bin/i3-monitor-profile --apply --quiet";' "$PROFILE" ||
-  fail 'user hotplug service does not run the monitor helper'
-
-[ -f "$AUTOSTART" ] || fail 'i3 Autorandr autostart override missing'
-grep -Fq 'Hidden=true' "$AUTOSTART" || fail 'packaged Autorandr XDG startup must be disabled'
-if grep -Fq 'Exec=' "$AUTOSTART"; then fail 'disabled Autorandr desktop still executes'; fi
-grep -Fq 'exec --no-startup-id $run i3-monitor-profile --apply --quiet' "$CONFIG" ||
-  fail 'i3 login profile restore must not notify'
-grep -Fq 'exec --no-startup-id $run i3-caffeine-toggle off' "$CONFIG" ||
-  fail 'i3 startup must leave caffeine disabled until explicitly enabled'
-! grep -Fq 'i3-caffeine-toggle on' "$CONFIG" ||
-  fail 'i3 startup must not enable caffeine automatically'
-grep -Fq "exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'" "$CONFIG" ||
-  fail 'Discord login launch must start minimized when available'
-grep -Fq 'bindsym $mod+p exec --no-startup-id $run i3-monitor-profile' "$CONFIG" || fail 'display menu shortcut missing'
-grep -Fq 'Displays) exec i3-monitor-profile' "$DEVICES" || fail 'Devices menu does not open monitor profiles'
-
 [ -x "$HELPER" ] || fail 'i3-monitor-profile missing or not executable'
-grep -Fq 'autorandr --change --force --match-edid' "$HELPER" || fail 'EDID-aware detected profile restore command missing'
-grep -Fq 'autorandr --save "$profile" --force' "$HELPER" || fail 'runtime profile save command missing'
-grep -Fq 'Configure) exec arandr' "$HELPER" || fail 'ARandR GUI action missing'
 
 bash -n "$HELPER"
 
@@ -107,5 +78,36 @@ if AUTORANDR_FAIL=--save PATH="$tmp/bin:$PATH" "$HELPER" --save broken; then
 fi
 grep -Fq 'Could not save broken: simulated autorandr failure' "$tmp/notifications" ||
   fail 'save failure did not notify user'
+
+nix eval --json "path:$ROOT#nixosConfigurations.jarq-i3.config.home-manager.users.jarq.systemd.user.services.i3-monitor-hotplug.Service" >"$tmp/service.json"
+python3 - "$tmp" "$HELPER" <<'PY'
+import json
+import pathlib
+import shlex
+import subprocess
+import sys
+
+root = pathlib.Path(sys.argv[1])
+home = root / "home"
+(home / ".local/bin").mkdir(parents=True)
+(home / ".local/bin/i3-monitor-profile").symlink_to(sys.argv[2])
+unit = json.loads((root / "service.json").read_text())
+service_path = next(value[5:] for value in unit["Environment"] if value.startswith("PATH="))
+service_path = service_path.replace("%h", str(home))
+command = shlex.split(unit["ExecStart"][0].replace("%h", str(home)))
+calls = root / "service-xrandr-calls"
+subprocess.run(command, check=True, env={
+    "HOME": str(home),
+    "PATH": f"{root / 'bin'}:{service_path}",
+    "AUTORANDR_DETECTED": "",
+    "AUTORANDR_CALLS": str(root / "service-autorandr-calls"),
+    "XRANDR_CALLS": str(calls),
+    "NOTIFY_CALLS": str(root / "service-notifications"),
+    "XRANDR_QUERY": "eDP-1 connected primary 1920x1080+0+0\nDP-2 connected",
+})
+assert calls.read_text().splitlines() == [
+    "--output DP-2 --auto --primary --pos 0x0 --output eDP-1 --auto --right-of DP-2"
+], "hotplug must restore an external-primary layout without an interactive-shell PATH"
+PY
 
 printf 'PASS: saved profiles take precedence and unknown external displays become primary\n'

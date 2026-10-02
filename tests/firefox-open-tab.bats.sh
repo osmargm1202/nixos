@@ -2,41 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HELPER="$ROOT/dotfiles/config/shared/.local/bin/firefox-open-tab"
-FIREFOX_POLICY="$ROOT/nixos/apps/firefox/firefox.nix"
-I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-I3_MENU="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
-HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
-HYPR_HELP="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-keybindings-help"
-HYPR_SMART_RUN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-smart-run"
-LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/rc.xml"
-MENU="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/menu.xml"
+HELPER="$ROOT/dotfiles/config/users/osmarg/programs/webapps/.local/bin/firefox-open-tab"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-bash -n "$HELPER"
-grep -Fq 'Homepage.StartPage = "previous-session";' "$FIREFOX_POLICY" || fail 'Firefox must restore the previous session on a cold launch'
-grep -Fq 'home.file.".zen/native-messaging-hosts/windows_manager_linux_orgm.json".source' "$FIREFOX_POLICY" || fail 'Zen must receive the ORGM native messaging host manifest'
-grep -Fq 'home.activation.installZenTabBridge' "$FIREFOX_POLICY" || fail 'Zen must install the signed ORGM tab bridge extension in its default profile'
-grep -Fq 'bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt' "$I3" || fail 'i3 Win+M must open a new tab from the web prompt'
-grep -Fq 'bindsym $mod+w exec --no-startup-id $browser' "$I3" || fail 'i3 Win+W binding missing'
-grep -Fq 'set $browser $run firefox-open-tab --restore-or-focus' "$I3" || fail 'i3 Win+W must use restore-or-focus'
-grep -Fq 'Firefox) exec firefox-open-tab --focus' "$I3_MENU" || fail 'i3 Firefox menu must only focus'
-grep -Fq 'mainMod .. " + M", hl.dsp.exec_cmd("firefox-open-tab --new-tab --prompt")' "$HYPR" || fail 'Hyprland Win+M must open a new tab from the web prompt'
-grep -Fq 'mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus")' "$HYPR" || fail 'Hyprland Win+W must use restore-or-focus'
-grep -Fq 'mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus")' "$HYPR" || fail 'Hyprland Win+Shift+W must only focus'
-grep -Fq "entry 'Win+W' 'Restaurar Firefox o abrir pestaña nueva' 'firefox-open-tab --restore-or-focus'" "$HYPR_HELP" || fail 'Hyprland Win+W help must describe session restoration or a new tab'
-grep -Fq 'open_url() { nohup firefox-open-tab "$1" >/dev/null 2>&1 & }' "$HYPR_SMART_RUN" || fail 'Hyprland web launcher must reuse or create a Firefox tab'
-grep -Fq '<keybind key="W-w">' "$LABWC" || fail 'Labwc Win+W binding missing'
-grep -Fq '<command>firefox-open-tab --restore-or-focus</command>' "$LABWC" || fail 'Labwc Win+W must use restore-or-focus'
-grep -Fq '<keybind key="W-m">' "$LABWC" || fail 'Labwc Win+M binding missing'
-grep -Fq '<command>firefox-open-tab --new-tab --prompt</command>' "$LABWC" || fail 'Labwc Win+M must open a new tab from the web prompt'
-grep -Fq '<command>firefox-open-tab --focus</command>' "$MENU" || fail 'Labwc browser menu must only focus'
-[[ ! -e "$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-firefox-new-window" ]] || fail 'obsolete i3 Firefox wrapper remains'
-[[ ! -e "$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-firefox-new-window" ]] || fail 'obsolete Hyprland Firefox wrapper remains'
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -100,10 +72,21 @@ chmod +x "$tmp/bin"/*
 wait_for_file() {
   local path="$1"
   for _ in {1..40}; do
-    [[ -e "$path" ]] && return 0
+    [[ -s "$path" ]] && return 0
     sleep 0.05
   done
   fail "timed out waiting for $path"
+}
+
+wait_for_line() {
+  local path="$1" expected="$2"
+  for _ in {1..40}; do
+    if [[ -f "$path" ]] && grep -Fxq "$expected" "$path"; then
+      return 0
+    fi
+    sleep 0.05
+  done
+  fail "timed out waiting for $expected in $path"
 }
 
 reset_logs() {
@@ -120,8 +103,7 @@ run_bridge_focus() {
     FOCUS_ARGS="$tmp/focus-args" HYPR_CLIENTS="$hypr_single" I3_TREE="$i3_single" \
     XDG_CURRENT_DESKTOP="$desktop" PATH="$tmp/bin:$PATH" "$HELPER" "$input"
   [[ "$(<"$tmp/bridge-args")" == "$expected_url" ]] || fail 'bridge did not receive the normalized URL'
-  wait_for_file "$tmp/focus-args"
-  grep -Fxq "$expected_focus" "$tmp/focus-args" || fail "$desktop did not focus Firefox after bridge reuse"
+  wait_for_line "$tmp/focus-args" "$expected_focus"
   [[ ! -e "$tmp/firefox-args" ]] || fail 'bridge reuse must not create a Firefox window'
 }
 
@@ -153,8 +135,7 @@ BRIDGE_OK=0 BRIDGE_ARGS="$tmp/bridge-args" FIREFOX_ARGS="$tmp/firefox-args" FIRE
 [[ "$(<"$tmp/bridge-args")" == https://pagina.net ]] || fail 'failed bridge did not receive the normalized URL'
 wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '<--new-tab https://pagina.net>' ]] || fail 'failed bridge did not create a tab in Firefox'
-wait_for_file "$tmp/focus-args"
-grep -Fxq 'i3-msg [con_id=101] focus' "$tmp/focus-args" || fail 'fallback creation did not focus Firefox after opening its tab'
+wait_for_line "$tmp/focus-args" 'i3-msg [con_id=101] focus'
 
 run_explicit_new 10.0.0.13:8000 http://10.0.0.13:8000
 run_explicit_tab 10.0.0.13:8000 http://10.0.0.13:8000

@@ -58,6 +58,9 @@
         fi
       '';
     };
+  } // lib.optionalAttrs (profileName == "ryoku") {
+    programs.ryoku.enable = lib.mkForce false;
+    programs.niri.enable = lib.mkForce false;
   };
 }
 // lib.optionalAttrs (builtins.elem profileName [ "gnome" "hyprland" "i3" "labwc" ]) {

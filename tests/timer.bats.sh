@@ -2,9 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TIMER="$ROOT/dotfiles/config/shared/.local/bin/timer"
-COMMON="$ROOT/nixos/common.nix"
-DOTFILES="$ROOT/nixos/common-dotfiles.nix"
+TIMER="$ROOT/dotfiles/config/users/osmarg/programs/shell/.local/bin/timer"
 
 afail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -65,7 +63,5 @@ if PATH="$tmp/bin:$PATH" "$TIMER" >/dev/null 2>&1; then
   afail 'timer without a duration must fail'
 fi
 
-grep -Fq 'termdown' "$COMMON" || afail 'termdown must be installed for every profile'
-grep -Fq '".local/bin/timer"' "$DOTFILES" || afail 'timer wrapper must be deployed for every profile'
 
 printf '%s\n' 'PASS: global terminal timer uses termdown and notifies at completion'

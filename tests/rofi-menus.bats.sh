@@ -2,12 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/dotfiles/config/shared/.local/bin/rofi-menu-lib"
-SYMBOLS="$ROOT/dotfiles/config/shared/.local/bin/rofi-symbols"
+LIB="$ROOT/dotfiles/config/profiles/i3/.local/bin/rofi-menu-lib"
+HYPR_LIB="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/rofi-menu-lib"
+SYMBOLS="$ROOT/dotfiles/config/profiles/i3/.local/bin/rofi-symbols"
 I3_THEME="$ROOT/dotfiles/config/profiles/i3/.config/rofi/i3-menu.rasi"
 HYPR_THEME="$ROOT/dotfiles/config/profiles/hyprland/.config/rofi/hypr-menu.rasi"
 I3_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-HYPR_BINDINGS="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
+HYPR_BINDINGS="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/keybindings.lua"
 I3_PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 HYPR_PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
 
@@ -17,10 +18,10 @@ trap 'rm -rf "$tmp"' EXIT
 [[ -x "$LIB" ]] || { echo 'missing shared Rofi menu library' >&2; exit 1; }
 [[ -x "$SYMBOLS" ]] || { echo 'missing symbol picker' >&2; exit 1; }
 
-diff -u <(sed '3d' "$HYPR_THEME") <(sed '3d' "$I3_THEME")
+diff -u <(sed '3d' "$HYPR_THEME") <(sed '3d; s/i3-current.rasi/orgm-current.rasi/' "$I3_THEME")
 
 i3_theme="$(XDG_CURRENT_DESKTOP=i3 HOME="$tmp/home" bash -c '. "$1"; rofi_menu_theme' -- "$LIB")"
-hypr_theme="$(XDG_CURRENT_DESKTOP=Hyprland HOME="$tmp/home" bash -c '. "$1"; rofi_menu_theme' -- "$LIB")"
+hypr_theme="$(XDG_CURRENT_DESKTOP=Hyprland HOME="$tmp/home" bash -c '. "$1"; rofi_menu_theme' -- "$HYPR_LIB")"
 [[ "$i3_theme" == "$tmp/home/.config/rofi/i3-menu.rasi" ]]
 [[ "$hypr_theme" == "$tmp/home/.config/orgm-hypr/rofi/hypr-menu.rasi" ]]
 

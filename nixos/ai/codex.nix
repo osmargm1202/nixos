@@ -3,7 +3,12 @@
 # Este módulo NO instala codex; solo provee sus necesidades de runtime.
 # ~/.local/bin/codex selecciona el binario instalado en PATH y conserva stdin:
 # tanto `codex` como `bun run codex` pueden abrir su interfaz en la terminal.
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   codexInstall = pkgs.writeShellScriptBin "codex-install" ''
     #! /bin/sh
@@ -29,6 +34,7 @@ let
   '';
 in
 {
+  config = lib.mkIf (builtins.elem "ai" config.orgm.user.programs) {
   programs.nix-ld.enable = true;
 
   environment.systemPackages = with pkgs; [
@@ -37,4 +43,5 @@ in
     bun
     codexInstall
   ];
+  };
 }

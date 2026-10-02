@@ -1,9 +1,12 @@
 set $mod Mod4
 set $run $HOME/.local/bin/i3-run
 set $term kitty
-set $browser $run firefox-open-tab --restore-or-focus
 set $files thunar "$HOME"
 set $launcher $run i3-rofi --drun
+set $status_command exec ~/.local/bin/i3status-localized
+
+# Selected program integrations and user-specific behavior live here.
+include ~/.config/i3/config.d/*.conf
 
 font pango:JetBrainsMono Nerd Font 11
 floating_modifier $mod
@@ -12,19 +15,8 @@ tiling_drag modifier titlebar
 exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1
 exec --no-startup-id nm-applet
-# Start the SNI bridge and wait up to five seconds for its watcher.
-exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
-exec --no-startup-id syncthingtray --single-instance --wait
 exec --no-startup-id blueman-applet
-exec --no-startup-id kdeconnect-indicator
-# Firefox's declarative startup policy restores the previous session.
-exec --no-startup-id firefox
-# Keep chat and games ready without opening either client window.
-exec --no-startup-id sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'
-exec --no-startup-id sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'
-exec --no-startup-id sh -lc '"$HOME/.local/bin/orgm-visual-profile" apply; dunstctl reload >/dev/null 2>&1 || exec dunst'
 exec --no-startup-id systemctl --user start i3-clipcat.service
-exec --no-startup-id systemctl --user --quiet start sunshine.service
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-idle-inhibit
@@ -40,31 +32,19 @@ bindsym $mod+Shift+Return exec --no-startup-id zutty-fast
 bindsym $mod+Ctrl+Return exec --no-startup-id kitty -e tmux new-session -A -s main
 bindsym $mod+space exec --no-startup-id $run i3-rofi --drun
 bindsym $mod+Tab workspace back_and_forth
-bindsym $mod+Shift+Tab exec --no-startup-id hypr-video-timer --backend i3
 bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window
 bindsym Mod1+Escape exec --no-startup-id i3-focus-last
-bindsym $mod+Escape exec --no-startup-id i3-firefox-tabs
 bindsym $mod+c exec --no-startup-id $run i3-calc
 bindsym $mod+Shift+c exec --no-startup-id $run i3-caffeine-toggle
 bindsym $mod+v exec --no-startup-id $run i3-clipboard
 bindsym $mod+Ctrl+period exec --no-startup-id $run rofi-symbols
-bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt
 bindsym $mod+Ctrl+m exec --no-startup-id $run i3-open-file dir
 bindsym $mod+Shift+m exec --no-startup-id $run i3-open-file terminal
-bindsym $mod+d exec --no-startup-id $run i3-ssh-host
 bindsym $mod+slash exec --no-startup-id $run i3-hotkeys
 bindsym $mod+Mod1+space exec --no-startup-id $run i3-main-menu
 bindsym $mod+F12 exec --no-startup-id $run i3-main-menu
-bindsym $mod+Mod1+w exec --no-startup-id $run orgm-visual-profile random-wallpaper
 bindsym $mod+p exec --no-startup-id $run i3-monitor-profile
 bindsym $mod+Ctrl+comma exec --no-startup-id $run i3-monitor-profile
-bindsym $mod+w exec --no-startup-id $browser
-bindsym $mod+Ctrl+w exec --no-startup-id windows-rdp toggle
-bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus
-bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
-bindsym $mod+a exec --no-startup-id kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new
-bindsym $mod+Shift+a exec --no-startup-id kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai prev
-bindsym $mod+Ctrl+Shift+a exec --no-startup-id kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config
 bindsym $mod+e exec --no-startup-id $files
 bindsym $mod+F10 exec --no-startup-id pavucontrol
 bindsym $mod+Mod1+e exec --no-startup-id xlogout
@@ -215,8 +195,6 @@ for_window [class="Pavucontrol"] floating enable
 for_window [class="Nm-connection-editor"] floating enable
 for_window [class="Blueman-manager"] floating enable
 for_window [class="flameshot"] floating enable
-for_window [class="^orgmai-chat$"] floating enable, resize set width 85 ppt height 85 ppt, move position center
-for_window [class="^orgmai-config$"] floating enable, resize set width 80 ppt height 80 ppt, move position center
 for_window [all] border pixel 1
 
 gaps inner 8
@@ -230,6 +208,6 @@ client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 bar {
   tray_output HDMI-1
   tray_output primary
-  status_command exec ~/.local/bin/i3status-localized
+  status_command $status_command
   separator_symbol "│"
 }

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# shellcheck disable=SC1091
+. "$HOME/.local/bin/ssh-host-lib"
+
+ssh_config_hosts() {
+  [[ -f "$HOME/.ssh/config" ]] || return 0
+  awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?]/) print $i }' "$HOME/.ssh/config"
+}
+
+known_hosts() {
+  [[ -f "$HOME/.ssh/known_hosts" ]] || return 0
+  awk -F'[ ,]' '$1 !~ /^\|/ && $1 != "" { print $1 }' "$HOME/.ssh/known_hosts"
+}
+
+selection="$({ ssh_config_hosts; known_hosts; } | sort -u | ssh_order_hosts | i3-rofi 'SSH host' 14 || true)"
+[[ -n "$selection" ]] || exit 0
+ssh_remember_host "$selection"
+target=$selection
+user_prefix=
+if [[ $target == *@* ]]; then
+  user_prefix="${target%@*}@"
+  target="${target##*@}"
+fi
+if [[ "$target" =~ ^\[([^]]+)\]:([0-9]+)$ ]]; then
+  exec kitty -e env TERM=xterm-256color ssh -t -p "${BASH_REMATCH[2]}" "$user_prefix${BASH_REMATCH[1]}" 'tmux attach'
+fi
+exec kitty -e env TERM=xterm-256color ssh -t "$selection" 'tmux attach'

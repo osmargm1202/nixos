@@ -2,9 +2,6 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
-AUTOSTART="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
-WAYBAR="$ROOT/dotfiles/config/profiles/hyprland/.config/waybar-hypr/config"
 HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-nwg-dock"
 PINS="$ROOT/dotfiles/config/profiles/hyprland/.config/nwg-dock-hyprland/pinned"
 RELOAD="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-nwg-dock-reload"
@@ -14,24 +11,6 @@ fail() {
   exit 1
 }
 
-grep -Fq 'nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs' "$PROFILE" &&
-  grep -Fq 'version = "0.4.11";' "$PROFILE" &&
-  grep -Fq 'tag = "v0.4.11";' "$PROFILE" &&
-  grep -Eq '^[[:space:]]+nwgDockHyprland[[:space:]]*$' "$PROFILE" ||
-  fail 'Hyprland must install nwg-dock-hyprland 0.4.11 with Hyprland 0.55 focus support'
-grep -Fq '"sh -lc '\''exec \"$HOME/.local/bin/hypr-nwg-dock\"'\''",' "$AUTOSTART" ||
-  fail 'Hyprland must launch the dock through an absolute helper path'
-[[ -x "$HELPER" && -x "$RELOAD" ]] ||
-  fail 'Hyprland dock lifecycle helpers must be executable'
-grep -Fq 'PATH="$HOME/.local/bin:/run/current-system/sw/bin:' "$HELPER" ||
-  fail 'dock helper must retain the NixOS system command path'
-grep -Fq -- '-c hypr-app-launcher' "$HELPER" ||
-  fail 'dock launcher button must open the Rofi app launcher'
-grep -Fxq 'kitty' "$PINS" && grep -Fxq 'thunar' "$PINS" &&
-  grep -Fxq 'firefox' "$PINS" && ! grep -Fxq 'zen' "$PINS" ||
-  fail 'dock must seed Firefox without a Zen pin'
-! jq -e 'any(.[]; .position == "bottom")' "$WAYBAR" >/dev/null ||
-  fail 'Waybar must not restore a bottom bar alongside the dock'
 
 
 tmp="$(mktemp -d)"

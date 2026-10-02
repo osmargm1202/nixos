@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: timer DURATION
+
+Starts a large terminal countdown and sends a desktop notification when it ends.
+A bare number is minutes: `timer 5` means five minutes.
+Other durations use termdown syntax, for example: `timer 45s`, `timer 25m`,
+or `timer '1h 10m'`.
+EOF
+}
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  '')
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+input="$1"
+if [[ "$input" =~ ^[0-9]+$ ]]; then
+  duration="${input}m"
+  display="${input} min"
+else
+  duration="$input"
+  display="$input"
+fi
+
+status_file="$(mktemp "${TMPDIR:-/tmp}/timer.XXXXXX")"
+rm -f "$status_file"
+cleanup() {
+  rm -f "$status_file"
+}
+trap cleanup EXIT
+
+if ! termdown "$duration" \
+  --blink \
+  --quit-after 1 \
+  --outfile "$status_file" \
+  --title "Temporizador: $display"; then
+  exit 1
+fi
+
+if [ "$(sed -n '2p' "$status_file")" = 0 ]; then
+  notify-send -u critical -a timer "Temporizador terminado" "$display" || true
+fi

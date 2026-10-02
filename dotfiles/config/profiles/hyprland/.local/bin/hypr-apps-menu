@@ -9,13 +9,11 @@ choice="$(printf '%s\n' \
   '󰀻 App launcher' \
   '󰆍 Kitty' \
   '󰖟 Firefox' \
-  '󰠮 Obsidian' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Apps' || true)"
 
 case "$choice" in
   *'App launcher') hypr_rofi_drun ;;
   *'Kitty') exec kitty ;;
   *'Firefox') exec firefox-open-tab --restore-or-focus ;;
-  *'Obsidian') exec hypr-obsidian-open-or-focus ;;
   *) exec hypr-main-menu ;;
 esac

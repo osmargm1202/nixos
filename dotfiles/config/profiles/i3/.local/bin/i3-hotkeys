@@ -2,14 +2,37 @@
 set -euo pipefail
 
 config="${I3_CONFIG_FILE:-$HOME/.config/i3/config}"
+declare -A visited=()
+list_bindings_from_file() {
+  local file="$1" resolved kind value included pattern
+  [[ -f "$file" ]] || return 0
+  resolved="$(readlink -f -- "$file")"
+  [[ -z "${visited[$resolved]:-}" ]] || return 0
+  visited[$resolved]=1
+  while IFS=$'\t' read -r kind value; do
+    if [[ "$kind" == binding ]]; then
+      printf '%s\n' "$value"
+      continue
+    fi
+    pattern="${value#\"}"; pattern="${pattern%\"}"
+    pattern="${pattern/#\~/$HOME}"
+    pattern="${pattern//\$HOME/$HOME}"
+    [[ "$pattern" == /* ]] || pattern="$(dirname -- "$file")/$pattern"
+    while IFS= read -r included; do
+      list_bindings_from_file "$included"
+    done < <(compgen -G "$pattern" | sort || true)
+  done < <(awk '
+    /^[[:space:]]*include / {
+      $1=""; sub(/^[[:space:]]+/, ""); print "include\t" $0; next
+    }
+    /^[[:space:]]*bindsym / {
+      key=$2; $1=""; $2=""; sub(/^[[:space:]]+/, "")
+      printf "binding\t%-24s %s\n", key, $0
+    }
+  ' "$file")
+}
 list_bindings() {
-  [[ -f "$config" ]] || return 0
-  awk '/^[[:space:]]*bindsym / {
-    key=$2
-    $1=""; $2=""
-    sub(/^[[:space:]]+/, "")
-    printf "%-24s %s\n", key, $0
-  }' "$config"
+  list_bindings_from_file "$config"
 }
 
 if [[ "${1:-}" == --list ]]; then

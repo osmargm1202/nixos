@@ -24,9 +24,7 @@ sys.modules["openrgb"] = fake_openrgb
 sys.modules["openrgb.utils"] = fake_utils
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE_PATH = (
-    ROOT / "dotfiles/config/shared/.config/openrgb/lg213/main.py"
-)
+MODULE_PATH = ROOT / "dotfiles/config/users/osmarg/programs/openrgb/.config/openrgb/lg213/main.py"
 SPEC = importlib.util.spec_from_file_location("lg213_main", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 lg213 = importlib.util.module_from_spec(SPEC)
@@ -112,7 +110,7 @@ class ConfiguredRuntimeTests(unittest.TestCase):
 
     def test_repository_configuration_has_expected_names_and_colors(self):
         rules = lg213.load_application_rules(
-            ROOT / "dotfiles/config/shared/.config/openrgb/lg213/apps.json"
+            ROOT / "dotfiles/config/users/osmarg/programs/openrgb/.config/openrgb/lg213/apps.json"
         )
         self.assertEqual(
             {rule.name: rule.color for rule in rules},

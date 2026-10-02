@@ -7,7 +7,6 @@ local programs = {
   smart_run = "hypr-smart-run",
   lock = "hypr-lock",
   power_menu = "hypr-power-menu",
-  piPrompt = "hypr-pi-prompt --launcher rofi",
 }
 
 return programs

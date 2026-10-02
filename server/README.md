@@ -1,0 +1,176 @@
+# Dotfiles básicos para servidores
+
+`server/install.sh` replica Bash y tmux por usuario en Ubuntu/Debian y Arch.
+Es independiente del `install.sh` de la raíz, que instala/configura NixOS.
+El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
+
+## Qué se comparte
+
+- `server/dotfiles/.bashrc`: base de `server.slci.stream`, con historial,
+  prompt, aliases, autocompletado y soporte opcional para Starship, Zoxide,
+  Atuin, blesh y neofetch si ya están instalados.
+- Neofetch automático solo en terminales interactivas, fuera de tmux,
+  sin redirección y una vez por shell. El comando manual sigue disponible.
+- `dotfiles/config/users/osmarg/programs/tmux/.tmux.conf`: la misma configuración del escritorio:
+  Ctrl-a, mouse, copia vi, tema, atajos y fecha española. La opción
+  `extended-keys-format` se configura únicamente si el tmux instalado la admite.
+- `tmux-resurrect` y `tmux-continuum`: descargas HTTPS fijadas a commits,
+  sin TPM ni rutas `/nix/store` en los servidores.
+- `~/.bashrc.local`: archivo opcional para ajustes privados de cada host;
+  el instalador no lo modifica. No se replican rutas de Villarpando, zona horaria,
+  credenciales, ni el alias de Claude que omite permisos.
+
+No cambia Fish, el shell de login, servicios, firewall, DNS ni NixOS.
+Rechaza destinos gestionados por Nix/Home Manager: en el escritorio se debe
+seguir usando Home Manager, no este instalador.
+
+## Uso en el servidor destino
+
+Desde un checkout que incluya estos archivos:
+
+```bash
+bash server/install.sh --source "$PWD" --dry-run --no-plugins
+bash server/install.sh --source "$PWD"
+# Herramientas nativas adicionales, con sudo cuando sea necesario:
+bash server/install.sh --source "$PWD" --packages
+# Copiar solo tmux sin reemplazar Bash:
+bash server/install.sh --source "$PWD" --tmux-only
+```
+
+`--no-plugins` instala tmux básico y un loader vacío; si antes había plugins,
+respalda y sustituye su loader, sin borrar sus directorios de datos.
+`--home DIR` permite instalar en un HOME aislado. `--help` lista las opciones.
+El modo `--dry-run` puede descargar/stagear archivos temporales, pero no modifica
+el HOME ni instala paquetes.
+
+`--packages` instala tmux, git, curl, bash-completion, neovim, ripgrep,
+fd-find/fd, fzf, zoxide, btop, jq y rsync. No instala Starship, Atuin, blesh
+ni neofetch mediante scripts de terceros. Las versiones dependen de la distro;
+replicar estos dotfiles no garantiza versiones de paquetes idénticas.
+Arch utiliza `pacman -S --needed`, nunca `pacman -Sy`; si sus repositorios locales
+están desactualizados, primero debe resolverse la actualización normal del sistema.
+No se hace un upgrade completo de servidores automáticamente.
+
+Todos los recursos se descargan antes de reemplazar configuraciones.
+Los archivos cambiados, incluidos symlinks, se respaldan en:
+
+```text
+~/.local/share/orgm-dotfiles/backups/<fecha-hora-pid>/
+```
+
+Una reinstalación idéntica no crea nuevos respaldos. Los perfiles de login de
+Bash conservan su contenido; si no cargan `.bashrc`, se añade un bloque con respaldo.
+La `.bashrc` anterior **se sustituye**: trasladar sus particularidades deseadas
+al archivo `.bashrc.local` desde el respaldo. Los comandos ya presentes en
+`.profile`/`.bash_profile`, por ejemplo banners, no se eliminan automáticamente.
+
+Abrir una nueva sesión Bash para aplicar los cambios. Para sesiones tmux existentes:
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
+En `server.or-gm.com`, cuyo login es Fish, esto configura Bash pero no lo convierte
+en el shell de login. Entrar con `bash` para usar la configuración de Bash.
+
+## Win+D: SSH directamente en tmux
+
+Los selectores de i3 y Hyprland abren Kitty con `ssh -t <destino> 'tmux attach'`.
+No dependen del alias remoto `ta` ni de que el shell remoto sea Bash.
+Se conectan a una sesión existente; no crean una nueva si no hay sesiones.
+
+La lista muestra primero los últimos destinos seleccionados, de más reciente a
+menos reciente; los servidores sin historial quedan después en orden alfabético.
+El historial es compartido entre ambos perfiles y persiste en
+`${XDG_STATE_HOME:-~/.local/state}/orgm-ssh-host/recent-hosts`.
+Cada selección promueve el servidor, incluso si la conexión luego falla.
+Se conserva una sola entrada por host/puerto, con el último usuario elegido.
+
+También se puede escribir `usuario@servidor`; ese destino queda recordado.
+Los destinos `[host]:puerto` y `usuario@[host]:puerto` conservan su puerto.
+En Hyprland, un destino que ya incluye usuario evita el paso de elegirlo otra vez.
+Eliminar un known host desde ese selector también limpia su historial reciente.
+
+## Publicación en custom.or-gm.com/install
+
+Primero publicar estos cambios en `osmargm1202/nixos`, rama `master`.
+Después crear DNS proxied y una regla de redirect HTTPS exacta:
+
+```text
+Host: custom.or-gm.com
+Path: /install
+Status: 302 o 307
+Location: https://raw.githubusercontent.com/osmargm1202/nixos/master/server/install.sh
+```
+
+La regla no debe reenviar los otros paths a servicios privados. DNS solo no hace
+una redirección HTTP. Cloudflare permite servir este redirect sin añadir un
+servidor de aplicación ni abrir puertos.
+Una vez publicado y verificado:
+
+```bash
+curl -fL https://custom.or-gm.com/install -o /tmp/orgm-dotfiles-install.sh
+# Revisar el archivo antes de ejecutarlo. No ejecutar todo el script con sudo.
+bash /tmp/orgm-dotfiles-install.sh --dry-run --no-plugins
+bash /tmp/orgm-dotfiles-install.sh --packages
+```
+
+Por defecto los dotfiles se obtienen de `master`. Para una revisión inmutable,
+usar el mismo commit tanto para el script como para sus recursos:
+
+```bash
+export ORGM_DOTFILES_BASE_URL="https://raw.githubusercontent.com/osmargm1202/nixos/$REV"
+curl -fL "$ORGM_DOTFILES_BASE_URL/server/install.sh" -o /tmp/orgm-dotfiles-install.sh
+bash /tmp/orgm-dotfiles-install.sh
+```
+
+`REV` debe ser el commit publicado elegido. Validar DNS, certificado HTTPS,
+respuesta redirect y descarga final antes de anunciar el endpoint como operativo.
+
+## Decisión: paquetes nativos ahora, Nix opcional
+
+Revisión del 30 de septiembre de 2026:
+
+| Servidor | Sistema / shell de login | Disco raíz | Nix |
+| --- | --- | --- | --- |
+| `osmarg@server.slci.stream` | Ubuntu 24.04 / Bash | 14 % usado, 251 GB libres | No instalado |
+| `osmar@nextcloud.or-gm.com` | Ubuntu 24.04 / Bash | 95 % usado, 46 GB libres | No instalado |
+| `osmarg@server.or-gm.com` | Arch / Fish | 66 % usado, 77 GB libres | No instalado |
+
+En `slci` no había archivo de configuración tmux: se copió la configuración local
+al servidor. Se corrigió únicamente el arranque automático de neofetch en su
+`.bashrc`, conservando sus ajustes de host; respaldo:
+`~/.bashrc.before-orgm-tmux-20260930`. No se desplegaron dotfiles ni paquetes en los
+otros dos servidores. Nextcloud tiene además neofetch incondicional en `.profile`;
+el instalador conserva ese perfil y no elimina ese banner ajeno a `.bashrc`.
+
+Para este alcance, Bash + paquetes nativos evita un segundo gestor y un daemon.
+Nix es viable en Ubuntu/Arch **sin migrar a NixOS**. Con Home Manager standalone
+aporta dotfiles declarativos, versiones de herramientas fijadas mediante lock y
+generaciones para rollback. A cambio requiere instalación/integración de Nix,
+`/nix/store`, gestión de generaciones/GC y cuidado adicional con Fish y PATH.
+El rollback de Home Manager no revierte servicios, datos, apt ni pacman.
+No añadir Nix a Nextcloud con el disco ya al 95 %.
+
+Si se necesitan versiones exactamente iguales y rollback de herramientas,
+probar Nix + Home Manager standalone primero en `slci`, manteniendo los servicios
+nativos. El instalador actual no lo instala automáticamente.
+
+Referencias oficiales:
+- [Instalación Nix; multi-user recomendado en Linux](https://nix.dev/install-nix.html).
+- [Home Manager standalone e integración de shell](https://nix-community.github.io/home-manager/installation/standalone.html).
+- [Generaciones y rollback de Home Manager](https://nix-community.github.io/home-manager/usage/rollbacks.html).
+
+## Verificación realizada
+
+- `bash tests/server-bash-banner.bats.sh`: terminal con banner, tmux sin banner,
+  invocación manual, recarga, redirección y ejecución no interactiva.
+- `bash tests/server-installer.bats.sh`: dry-run, fallo de staging sin modificar
+  dotfiles, respaldo de symlink, perfil de login preservado, idempotencia y tmux-only.
+- Descarga e instalación standalone mediante un servidor HTTPS local de prueba;
+  primer perfil Bash e instalación repetida verificados.
+- Instalación tmux-only real en `slci`, recarga sin perder `slc-manage`, atajos S/R
+  de plugins y guardado real de una sesión de prueba con resurrect, en socket aislado.
+- Opción de extended keys verificada en tmux 3.4 remoto y en tmux local reciente.
+- Planes `--dry-run --packages` ejecutados en Ubuntu y Arch, sin modificar sus HOME.
+  No se ejecutó una instalación de paquetes ni se publicó el dominio.

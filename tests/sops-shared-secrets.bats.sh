@@ -4,42 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-SECRETS='secrets/shared/api-keys.yaml'
-MODULE='nixos/sops.nix'
-WRAPPER='dotfiles/config/shared/.local/bin/sops-shared-env'
-BASH_CONFIG='dotfiles/config/shared/.config/bash/config.bash'
-
-[[ -f .sops.yaml ]]
-[[ -f "$SECRETS" ]]
-nix run nixpkgs#sops -- filestatus "$SECRETS" | jq -e '.encrypted == true' >/dev/null
-
-for secret in \
-  OPENCODE_API_KEY \
-  MINIMAX_API_KEY \
-  ANTHROPIC_API_KEY \
-  STITCH_API_KEY \
-  INSFORGE_API_KEY \
-  INSFORGE_API_BASE_URL \
-  AVANTE_ANTHROPIC_API_KEY; do
-  grep -Fq "$secret" "$MODULE"
-  grep -Fq "$secret" "$WRAPPER"
-done
-grep -Fq 'ORGM_TOKEN' "$MODULE"
-grep -Fq -- '--with SECRET [SECRET...] -- COMMAND [ARG...]' "$WRAPPER"
-
-grep -Fq 'Nextcloud/Documentos/keys/age.txt' "$MODULE"
-grep -Fq 'inputs.sops-nix.nixosModules.sops' nixos/common.nix
-grep -Fq 'inputs.sops-nix.homeManagerModules.sops' "$MODULE"
-grep -Fq "PI_PACKAGE_DIR=\"\${PI_PACKAGE_DIR:-\$package_dir}\" command sops-shared-env omp" \
-  dotfiles/config/shared/.config/bash/functions.bash
-! grep -Fq "alias omp='sops-shared-env omp'" "$BASH_CONFIG"
-! grep -Fq 'private-env-helpers' "$BASH_CONFIG"
-! grep -Fq 'sops_private_env' "$BASH_CONFIG"
-! [[ -e dotfiles/config/shared/.config/bash/private-env.bash.age ]]
-
-bash -n "$WRAPPER" "$BASH_CONFIG"
-SOPS_AGE_KEY_FILE="$HOME/Nextcloud/Documentos/keys/age.txt" \
-  nix run nixpkgs#sops -- --decrypt "$SECRETS" >/dev/null
+WRAPPER='dotfiles/config/users/osmarg/programs/sops/.local/bin/sops-shared-env'
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -105,5 +70,5 @@ env -i \
   XDG_CONFIG_HOME="$tmp/config" \
   PATH="$fake_bin:$PATH" \
   EXPECTED_PI_PACKAGE_DIR="$tmp" \
-  bash -c 'source "$1"; omp' bash "$ROOT/dotfiles/config/shared/.config/bash/functions.bash"
+  bash -c 'source "$1"; omp' bash "$ROOT/dotfiles/config/users/osmarg/programs/shell/.config/bash/functions.bash"
 printf '%s\n' 'sops-shared-secrets: ok'

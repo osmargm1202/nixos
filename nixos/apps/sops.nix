@@ -1,10 +1,13 @@
 {
+  config,
   inputs,
-  userName,
+  lib,
   pkgs,
+  userName,
   ...
 }:
 {
+  config = lib.mkIf (builtins.elem "sops" config.orgm.user.programs) {
   home-manager.users.${userName} = { config, lib, ... }: {
     imports = [ inputs.sops-nix.homeManagerModules.sops ];
 
@@ -95,5 +98,6 @@
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/ln -s "$default_key_file" "$key_file"
       fi
     '';
+  };
   };
 }

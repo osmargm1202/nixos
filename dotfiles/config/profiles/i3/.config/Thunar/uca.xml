@@ -3,7 +3,7 @@
   <action>
     <icon>preferences-desktop-wallpaper</icon>
     <name>Set as Wallpaper</name>
-    <unique-id>orgm-i3-set-wallpaper</unique-id>
+    <unique-id>i3-set-wallpaper</unique-id>
     <command>i3-set-wallpaper %f</command>
     <description>Set the selected media on the active monitor</description>
     <patterns>*.jpg;*.jpeg;*.png;*.webp;*.mp4;*.mkv;*.webm;*.mov;*.m4v;*.avi</patterns>
@@ -13,7 +13,7 @@
   <action>
     <icon>utilities-terminal</icon>
     <name>Open Terminal Here</name>
-    <unique-id>orgm-i3-open-terminal-here</unique-id>
+    <unique-id>i3-open-terminal-here</unique-id>
     <command>kitty --directory %f</command>
     <description>Open Kitty in the selected folder</description>
     <patterns>*</patterns>

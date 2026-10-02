@@ -1,27 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-choice="$(printf '%s\n' \
-  Apps Windows Terminal Firefox Files Obsidian Calculator Clipboard Symbols SSH Devices Profile Wallpaper Performance Help 'Edit config' Power \
-  | i3-rofi 'i3' 18 || true)"
+extension="${XDG_CONFIG_HOME:-$HOME/.config}/i3/main-menu.conf"
+if [[ -r "$extension" ]]; then
+  # User profile extensions define menu entries and only their own actions.
+  # shellcheck disable=SC1090
+  . "$extension"
+fi
+
+menu_items=(
+  Apps Windows Terminal Browser Files Calculator Clipboard Symbols Devices
+  Wallpaper Performance Help Power
+)
+if declare -F i3_main_menu_items >/dev/null; then
+  mapfile -t menu_items < <(i3_main_menu_items)
+fi
+
+choice="$(printf '%s\n' "${menu_items[@]}" | i3-rofi 'i3' "${#menu_items[@]}" || true)"
+
+# User actions also override shared entries, such as the personal wallpaper policy.
+if declare -F i3_main_menu_exec >/dev/null && i3_main_menu_exec "$choice"; then
+  exit 0
+fi
 
 case "$choice" in
   Apps) exec i3-rofi --drun ;;
   Windows) exec i3-rofi --window ;;
   Terminal) exec kitty ;;
-  Firefox) exec firefox-open-tab --focus ;;
+  Browser) exec xdg-open 'https://www.google.com' ;;
   Files) exec i3-open-file open ;;
-  Obsidian) exec i3-obsidian-open-or-focus ;;
   Calculator) exec i3-calc ;;
   Clipboard) exec i3-clipboard ;;
   Symbols) exec rofi-symbols ;;
-  SSH) exec i3-ssh-host ;;
   Devices) exec i3-devices-menu ;;
-  Profile) exec orgm-visual-profile menu ;;
-  Wallpaper) exec orgm-visual-profile random-wallpaper ;;
+  Wallpaper) exec i3-wallpaper --random ;;
   Performance) exec i3-performance-menu ;;
   Help) exec i3-hotkeys ;;
-  'Edit config') exec i3-config-editor ;;
   Power) exec xlogout ;;
   *) exit 0 ;;
 esac

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-game-mode"
+HELPER="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.local/bin/hypr-game-mode"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

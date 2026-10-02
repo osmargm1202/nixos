@@ -3,20 +3,7 @@
 # curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh | bash
 set -euo pipefail
 
-SCRIPT_URL="https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh"
-
-# Re-exec as root — download to tmpfile so sudo has a real script path
-if [ "$(id -u)" -ne 0 ]; then
-  tmpf=$(mktemp /tmp/orgmos-install.XXXXXX.sh)
-  trap 'rm -f "$tmpf"' EXIT
-  printf 'Downloading installer to %s...\n' "$tmpf"
-  curl -fsSL "$SCRIPT_URL" -o "$tmpf"
-  chmod +x "$tmpf"
-  printf 'Entering root shell (one password prompt)...\n'
-  exec sudo bash "$tmpf" "$@"
-fi
-
-REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos}"
+REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos/master}"
 NIXOS_DIR="${ORGMOS_NIXOS_DIR:-/etc/nixos}"
 NIXOS_DIR_EXPLICIT=false
 if [ -n "${ORGMOS_NIXOS_DIR+x}" ]; then
@@ -24,25 +11,20 @@ if [ -n "${ORGMOS_NIXOS_DIR+x}" ]; then
 fi
 NIXOS_DIR_CANDIDATES="${ORGMOS_NIXOS_DIR_CANDIDATES:-/etc/nixos:/mnt/etc/nixos}"
 INSTALL_ACTION="rebuild"
+REQUESTED_ACTION="auto"
+INSTALL_ROOT="/mnt"
+BOOT_DISK=""
+INSTALL_BOOT_MODULE=""
 DRY_RUN=false
 PROMPT_INPUT=""
 FLAKE_PATH="$NIXOS_DIR/flake.nix"
 HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
 
-profiles=(hyprland labwc sway i3 cinnamon gnome xfce mate server terminal)
+profiles=(hyprland labwc i3 cinnamon gnome ryoku server terminal)
+users=(osmarg jarq)
+SELECTED_USER="osmarg"
 gpus=(intel radeon nvidia)
 kernels=(zen lts)
-# qylock SDDM login themes (github:Darkkal44/qylock, themes/ directory names).
-# clockwork first: repo-wide default when a host has no per-host override.
-sddm_themes=(
-  clockwork winter star-rail nier-automata terraria Genshin minecraft osu
-  osumania sword windows_7 wuwa forest field enfield nothing R1999_1 R1999_2
-  dog-samurai girl-coffee girl-pillow last-of-us man-bicycle material-you
-  ninja_gaiden pixel-coffee pixel-cyberpunk pixel-dusk-city pixel-emerald
-  pixel-hollowknight pixel-munchlax pixel-night-city pixel-rainyroom
-  pixel-sakura pixel-skyscrapers pixel-waterfall women-umbrella
-)
-SELECTED_SDDM_MODULE=""
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
@@ -53,13 +35,17 @@ Usage: install.sh [options]
 
 Options:
   --dry-run             Print generated flake only; do not write or rebuild.
+  --install             Install from a NixOS ISO into the target root.
+  --rebuild             Configure an existing NixOS; never offer partitioning.
+  --root PATH           Installation mountpoint (default /mnt); implies --install.
   --repo-url URL        Override ORGMOS flake input URL.
   --nixos-dir PATH      Override NixOS config directory.
   -h, --help            Show this help.
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh | bash -s -- --dry-run
+  curl -fL https://nixos.or-gm.com/install -o /tmp/orgm-install.sh
+  bash /tmp/orgm-install.sh --install
+  bash /tmp/orgm-install.sh --rebuild --dry-run
 EOF
 }
 
@@ -67,12 +53,22 @@ parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --dry-run) DRY_RUN=true; shift ;;
+      --install) REQUESTED_ACTION="install"; shift ;;
+      --rebuild) REQUESTED_ACTION="rebuild"; shift ;;
+      --root) [ "$#" -ge 2 ] || fail "--root requires a value"; INSTALL_ROOT="${2%/}"; REQUESTED_ACTION="install"; shift 2 ;;
       --repo-url) [ "$#" -ge 2 ] || fail "--repo-url requires a value"; REPO_URL="$2"; shift 2 ;;
       --nixos-dir) [ "$#" -ge 2 ] || fail "--nixos-dir requires a value"; NIXOS_DIR="$2"; NIXOS_DIR_EXPLICIT=true; shift 2 ;;
       -h|--help) usage; exit 0 ;;
       *) fail "unknown option: $1" ;;
     esac
   done
+  [[ "$INSTALL_ROOT" = /* ]] || fail "--root must be an absolute path other than /"
+  INSTALL_ROOT="$(readlink -m "$INSTALL_ROOT")"
+  [ "$INSTALL_ROOT" != / ] || fail "--root must be an absolute path other than /"
+  if [ "$REQUESTED_ACTION" = install ] && [ "$NIXOS_DIR_EXPLICIT" = false ]; then
+    NIXOS_DIR="$INSTALL_ROOT/etc/nixos"
+    NIXOS_DIR_EXPLICIT=true
+  fi
   refresh_nixos_paths
 }
 
@@ -102,28 +98,69 @@ is_base_profile() {
   [ "${SELECTED_PROFILE:-}" = "server" ] || [ "${SELECTED_PROFILE:-}" = "terminal" ]
 }
 
-has_sddm_login() {
-  case "${SELECTED_PROFILE:-}" in
-    i3|server|terminal) return 1 ;;
-    *) return 0 ;;
-  esac
-}
-
 refresh_nixos_paths() {
   FLAKE_PATH="$NIXOS_DIR/flake.nix"
   HARDWARE_PATH="$NIXOS_DIR/hardware-configuration.nix"
   INSTALL_ACTION="rebuild"
   case "$NIXOS_DIR" in /mnt|/mnt/*|*/mnt/etc/nixos) INSTALL_ACTION="install" ;; esac
+  [ "$REQUESTED_ACTION" = auto ] || INSTALL_ACTION="$REQUESTED_ACTION"
 }
 
 final_command() {
   case "$INSTALL_ACTION" in
-    install) printf 'sudo nixos-install --flake %s#default' "$NIXOS_DIR" ;;
-    *)       printf 'sudo nixos-rebuild switch --flake %s#default' "$NIXOS_DIR" ;;
+    install) printf 'sudo nixos-install --root %q --flake %q' "$INSTALL_ROOT" "path:$NIXOS_DIR#default" ;;
+    *)       printf 'sudo nixos-rebuild switch --flake %q' "path:$NIXOS_DIR#default" ;;
   esac
 }
 
 can_prompt() { [ -t 0 ] || [ -n "$PROMPT_INPUT" ]; }
+
+as_root() {
+  if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi
+}
+
+interactive_as_root() {
+  if [ -n "$PROMPT_INPUT" ]; then
+    as_root "$@" < "$PROMPT_INPUT"
+  else
+    as_root "$@"
+  fi
+}
+
+choose_operation() {
+  if [ "$REQUESTED_ACTION" = auto ]; then
+    local choice="" default=2
+    # The installed machine can also have /mnt mounted. Require a live-medium
+    # marker before making disk installation the default.
+    if [ -d /iso ] || grep -qE '^VARIANT_ID="?installer"?$' /etc/os-release; then
+      default=1
+    fi
+    say "1) Install into $INSTALL_ROOT from a NixOS ISO"
+    say "2) Configure the running NixOS (no partitioning)"
+    read_prompt "Operation [1/2] default $default: " choice
+    case "${choice:-$default}" in
+      1) REQUESTED_ACTION=install ;;
+      2) REQUESTED_ACTION=rebuild ;;
+      *) fail "Invalid operation" ;;
+    esac
+  fi
+  if [ "$REQUESTED_ACTION" = install ] && [ "$NIXOS_DIR_EXPLICIT" = false ]; then
+    NIXOS_DIR="$INSTALL_ROOT/etc/nixos"
+    NIXOS_DIR_EXPLICIT=true
+  fi
+  refresh_nixos_paths
+  if [ "$INSTALL_ACTION" = install ]; then
+    [ "$NIXOS_DIR" = "$INSTALL_ROOT/etc/nixos" ] || fail "installation config must be in $INSTALL_ROOT/etc/nixos (use --root)"
+  fi
+}
+
+validate_disk() {
+  local disk="$1" mounts=""
+  [ -b "$disk" ] || fail "Not a block device: $disk"
+  [ "$(lsblk -dnro TYPE "$disk")" = disk ] || fail "Select a whole disk, not a partition: $disk"
+  mounts="$(lsblk -nro MOUNTPOINTS "$disk")"
+  [[ ! "$mounts" =~ [^[:space:]] ]] || fail "Disk has mounted filesystems or active swap: $disk"
+}
 
 # ── disk auto-partition ───────────────────────────────────────────────────────
 
@@ -137,22 +174,33 @@ detect_firmware() {
 }
 
 auto_partition() {
+  [ "$INSTALL_ACTION" = install ] || fail "partitioning is only available in install mode"
+  [ "$DRY_RUN" = false ] || fail "partitioning is unavailable during a dry run"
+  mountpoint -q "$INSTALL_ROOT" && fail "Unmount $INSTALL_ROOT before automatic partitioning"
   detect_firmware
 
   say ""
   say "Available disks:"
   lsblk -d -o NAME,SIZE,MODEL | grep -v loop
   say ""
+  local raw_disk="" disk="" answer="" tool
   read_prompt "Disk to partition (e.g. sda, vda, nvme0n1): " raw_disk
-  local disk="/dev/${raw_disk}"
-  [ -b "$disk" ] || fail "Not a block device: $disk"
+  disk="$(readlink -f "/dev/${raw_disk#/dev/}")"
+  validate_disk "$disk"
+  for tool in parted mkfs.ext4 mount nixos-generate-config udevadm; do
+    command -v "$tool" >/dev/null || fail "Required command missing: $tool"
+  done
+  if [ "$FIRMWARE" = uefi ]; then
+    command -v mkfs.fat >/dev/null || fail "Required command missing: mkfs.fat"
+  fi
   say ""
-  say "Layout: 512MB boot + rest root, no swap (${FIRMWARE} mode)"
+  say "Layout: 1GiB boot + rest ext4 root, no encryption or swap (${FIRMWARE} mode)"
   say "WARNING: ALL DATA ON $disk WILL BE ERASED."
-  confirm "Continue?" || fail "Aborted."
+  read_prompt "Type $disk to confirm erasing this disk: " answer
+  [ "$answer" = "$disk" ] || fail "Aborted: disk confirmation did not match"
 
   local part_boot part_root
-  if echo "$disk" | grep -q "nvme"; then
+  if [[ "$disk" =~ [0-9]$ ]]; then
     part_boot="${disk}p1"; part_root="${disk}p2"
   else
     part_boot="${disk}1";  part_root="${disk}2"
@@ -160,47 +208,50 @@ auto_partition() {
 
   if [ "$FIRMWARE" = "uefi" ]; then
     say "Partitioning ${disk} (GPT, UEFI)..."
-    parted -s "$disk" -- mklabel gpt
-    parted -s "$disk" -- mkpart ESP fat32 1MB 512MB
-    parted -s "$disk" -- set 1 esp on
-    parted -s "$disk" -- mkpart primary ext4 512MB 100%
-
-    say "Formatting..."
-    mkfs.fat -F 32 -n BOOT "$part_boot"
-    mkfs.ext4 -L nixos -F "$part_root"
+    as_root parted -s "$disk" -- mklabel gpt
+    as_root parted -s "$disk" -- mkpart ESP fat32 1MiB 1GiB
+    as_root parted -s "$disk" -- set 1 esp on
+    as_root parted -s "$disk" -- mkpart primary ext4 1GiB 100%
   else
     say "Partitioning ${disk} (MBR, BIOS)..."
-    parted -s "$disk" -- mklabel msdos
-    parted -s "$disk" -- mkpart primary ext4 1MB 512MB
-    parted -s "$disk" -- set 1 boot on
-    parted -s "$disk" -- mkpart primary ext4 512MB 100%
-
-    say "Formatting..."
-    mkfs.ext4 -L boot -F "$part_boot"
-    mkfs.ext4 -L nixos -F "$part_root"
+    as_root parted -s "$disk" -- mklabel msdos
+    as_root parted -s "$disk" -- mkpart primary ext4 1MiB 1GiB
+    as_root parted -s "$disk" -- set 1 boot on
+    as_root parted -s "$disk" -- mkpart primary ext4 1GiB 100%
   fi
 
-  say "Mounting to /mnt..."
-  mount "$part_root" /mnt
-  mkdir -p /mnt/boot
-  mount "$part_boot" /mnt/boot
+  as_root udevadm settle
+  [ -b "$part_boot" ] && [ -b "$part_root" ] || fail "Partition devices are not available"
+  say "Formatting..."
+  if [ "$FIRMWARE" = uefi ]; then
+    as_root mkfs.fat -F 32 -n BOOT "$part_boot"
+  else
+    as_root mkfs.ext4 -L boot "$part_boot"
+  fi
+  as_root mkfs.ext4 -L nixos "$part_root"
+  BOOT_DISK="$disk"
 
-  NIXOS_DIR="/mnt/etc/nixos"
-  mkdir -p "$NIXOS_DIR"
+  say "Mounting to $INSTALL_ROOT..."
+  as_root mkdir -p "$INSTALL_ROOT"
+  as_root mount "$part_root" "$INSTALL_ROOT"
+  as_root mkdir -p "$INSTALL_ROOT/boot"
+  as_root mount "$part_boot" "$INSTALL_ROOT/boot"
+
+  NIXOS_DIR="$INSTALL_ROOT/etc/nixos"
+  as_root mkdir -p "$NIXOS_DIR"
   refresh_nixos_paths
 
   say "Generating hardware config..."
-  nixos-generate-config --root /mnt
+  as_root nixos-generate-config --root "$INSTALL_ROOT"
   say "Disk ready."
 }
 
 maybe_auto_partition() {
-  # Only offer during fresh install (not rebuild) and when /mnt is not yet mounted
-  if [ "$INSTALL_ACTION" = "install" ] || ! mountpoint -q /mnt 2>/dev/null; then
+  if [ "$INSTALL_ACTION" = install ] && ! mountpoint -q "$INSTALL_ROOT"; then
     say ""
     say "Disk setup:"
-    say "  1) Auto-partition a disk (512MB boot + rest root, no swap)"
-    say "  2) Skip — I already mounted /mnt"
+    say "  1) Erase and partition a disk (1GiB boot + ext4 root, no encryption or swap)"
+    say "  2) Use partitions mounted manually at $INSTALL_ROOT"
     say ""
     local choice=""
     read_prompt "Choice [1/2] default 2: " choice
@@ -210,6 +261,44 @@ maybe_auto_partition() {
       2) say "Skipping partition." ;;
       *) fail "Invalid choice" ;;
     esac
+  fi
+}
+
+prepare_installation() {
+  [ "$INSTALL_ACTION" = install ] || return 0
+  mountpoint -q "$INSTALL_ROOT" || fail "Mount the target root at $INSTALL_ROOT first"
+  mountpoint -q "$INSTALL_ROOT/boot" || fail "Mount the target boot partition at $INSTALL_ROOT/boot first"
+  [ "$(findmnt -nro MAJ:MIN --mountpoint "$INSTALL_ROOT")" != "$(findmnt -nro MAJ:MIN --mountpoint /)" ] ||
+    fail "Target root must be a different filesystem from the running NixOS"
+  if [ -d /sys/firmware/efi ]; then
+    [ "$(findmnt -nro FSTYPE --mountpoint "$INSTALL_ROOT/boot")" = vfat ] || fail "UEFI boot requires a FAT EFI system partition at $INSTALL_ROOT/boot"
+  fi
+  if [ ! -f "$HARDWARE_PATH" ]; then
+    as_root nixos-generate-config --root "$INSTALL_ROOT"
+  fi
+}
+
+configure_bootloader() {
+  INSTALL_BOOT_MODULE=""
+  [ "$INSTALL_ACTION" = install ] || return 0
+  detect_firmware
+  if [ "$FIRMWARE" = uefi ]; then
+    INSTALL_BOOT_MODULE='boot.loader.systemd-boot.enable = lib.mkForce true;
+        boot.loader.grub.enable = lib.mkForce false;
+        boot.loader.efi.canTouchEfiVariables = lib.mkForce true;'
+  else
+    if [ -z "$BOOT_DISK" ]; then
+      read_prompt "Whole disk for GRUB (e.g. /dev/sda): " BOOT_DISK
+    fi
+    [[ "$BOOT_DISK" =~ ^/dev/[a-zA-Z0-9/_-]+$ ]] || fail "Invalid GRUB disk path"
+    if [ "$DRY_RUN" = false ]; then
+      [ -b "$BOOT_DISK" ] && [ "$(lsblk -dnro TYPE "$BOOT_DISK")" = disk ] || fail "GRUB requires a whole disk"
+    fi
+    INSTALL_BOOT_MODULE="boot.loader.systemd-boot.enable = lib.mkForce false;
+        boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
+        boot.loader.grub.enable = lib.mkForce true;
+        boot.loader.grub.efiSupport = lib.mkForce false;
+        boot.loader.grub.devices = lib.mkForce [ \"$BOOT_DISK\" ];"
   fi
 }
 
@@ -252,8 +341,14 @@ resolve_nixos_dir() {
 
 require_nixos() {
   [ -e /etc/NIXOS ] || fail "this installer must run on NixOS"
+  [ "$(uname -m)" = x86_64 ] || fail "this repository currently supports x86_64 only"
+  command -v nix >/dev/null || fail "nix not found"
   case "$INSTALL_ACTION" in
-    install) command -v nixos-install >/dev/null 2>&1 || fail "nixos-install not found" ;;
+    install)
+      command -v nixos-install >/dev/null 2>&1 || fail "nixos-install not found"
+      command -v nixos-enter >/dev/null 2>&1 || fail "nixos-enter not found"
+      command -v nixos-generate-config >/dev/null 2>&1 || fail "nixos-generate-config not found"
+      ;;
     *)       command -v nixos-rebuild  >/dev/null 2>&1 || fail "nixos-rebuild not found" ;;
   esac
 }
@@ -263,10 +358,10 @@ require_nixos() {
 choose_profile() {
   say ""
   say "Choose ORGMOS profile:"
-  say "  Wayland WM:          1) hyprland   2) labwc   3) sway"
-  say "  X11 WM:              4) i3"
-  say "  Desktop environment: 5) cinnamon   6) gnome   7) xfce   8) mate"
-  say "  Base:                9) server     10) terminal"
+  local i
+  for i in "${!profiles[@]}"; do
+    say "  $((i + 1))) ${profiles[$i]}"
+  done
   say ""
   local choice=""
   while true; do
@@ -291,9 +386,9 @@ choose_gpu() {
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#gpus[@]}" ]; then
       SELECTED_GPU="${gpus[$((choice - 1))]}"
       case "$SELECTED_GPU" in
-        intel)  SELECTED_GPU_MODULE='orgmos.nixosModules.gpu.intel' ;;
-        radeon) SELECTED_GPU_MODULE='orgmos.nixosModules.gpu.radeon' ;;
-        nvidia) SELECTED_GPU_MODULE='orgmos.nixosModules.gpu.nvidia' ;;
+        intel)  SELECTED_GPU_MODULE='(orgmos.outPath + "/nixos/hardware/gpu/intel.nix")' ;;
+        radeon) SELECTED_GPU_MODULE='(orgmos.outPath + "/nixos/hardware/gpu/radeon.nix")' ;;
+        nvidia) SELECTED_GPU_MODULE='(orgmos.outPath + "/nixos/hardware/gpu/nvidia.nix")' ;;
       esac
       return 0
     fi
@@ -313,8 +408,8 @@ choose_kernel() {
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#kernels[@]}" ]; then
       SELECTED_KERNEL="${kernels[$((choice - 1))]}"
       case "$SELECTED_KERNEL" in
-        zen) SELECTED_KERNEL_MODULE='orgmos.nixosModules.kernel.zen' ;;
-        lts) SELECTED_KERNEL_MODULE='orgmos.nixosModules.kernel.lts' ;;
+        zen) SELECTED_KERNEL_MODULE='(orgmos.outPath + "/nixos/hardware/kernel/zen.nix")' ;;
+        lts) SELECTED_KERNEL_MODULE='(orgmos.outPath + "/nixos/hardware/kernel/lts.nix")' ;;
       esac
       return 0
     fi
@@ -322,21 +417,24 @@ choose_kernel() {
   done
 }
 
-choose_sddm_theme() {
+choose_user() {
   say ""
-  say "Choose SDDM login theme (qylock):"
-  local i
-  for i in "${!sddm_themes[@]}"; do
-    say "  $((i + 1))) ${sddm_themes[$i]}"
+  say "Choose a user configuration (applications and dotfiles):"
+  local i available_users=("${users[@]}")
+  if [ "$SELECTED_PROFILE" = ryoku ]; then
+    available_users=(osmarg)
+    say "Ryoku currently supports osmarg's personal configuration only."
+  fi
+  for i in "${!available_users[@]}"; do
+    say "  $((i + 1))) ${available_users[$i]}"
   done
   say ""
   local choice=""
   while true; do
-    read_prompt "Theme [1-${#sddm_themes[@]}] default 1 (${sddm_themes[0]}): " choice
+    read_prompt "User [1-${#available_users[@]}] default 1 (${available_users[0]}): " choice
     choice="${choice:-1}"
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sddm_themes[@]}" ]; then
-      SELECTED_SDDM_THEME="${sddm_themes[$((choice - 1))]}"
-      SELECTED_SDDM_MODULE="({ ... }: { programs.qylock.theme = \"$SELECTED_SDDM_THEME\"; })"
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#available_users[@]}" ]; then
+      SELECTED_USER="${available_users[$((choice - 1))]}"
       return 0
     fi
     say "Invalid selection."
@@ -349,77 +447,73 @@ choose_hostname() {
   current="$(hostname 2>/dev/null || printf orgmos)"
   read_prompt "Hostname [${current}]: " SELECTED_HOSTNAME
   SELECTED_HOSTNAME="${SELECTED_HOSTNAME:-$current}"
-  [[ "$SELECTED_HOSTNAME" =~ ^[a-zA-Z0-9-]+$ ]] || fail "hostname may only contain letters, numbers, and hyphens"
+  [[ "$SELECTED_HOSTNAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]] &&
+    [ "${#SELECTED_HOSTNAME}" -le 63 ] || fail "hostname must be 1-63 letters, numbers or internal hyphens"
 }
 
 # ── flake generation ──────────────────────────────────────────────────────────
 
 nixos_dir_command() {
-  [ -w "$NIXOS_DIR" ] && "$@" || sudo "$@"
+  if [ -w "$NIXOS_DIR" ]; then "$@"; else as_root "$@"; fi
 }
 
 backup_existing_flake() {
-  if [ -e "$FLAKE_PATH" ]; then
-    local backup="$FLAKE_PATH.backup.$(date +%Y%m%d-%H%M%S)"
-    say "Backing up existing flake: $backup"
-    nixos_dir_command cp "$FLAKE_PATH" "$backup"
-  fi
+  local file backup timestamp
+  timestamp="$(date +%Y%m%d-%H%M%S-%N)"
+  for file in "$FLAKE_PATH" "$NIXOS_DIR/flake.lock"; do
+    if [ -e "$file" ]; then
+      backup="$file.backup.$timestamp"
+      say "Backing up existing configuration: $backup"
+      nixos_dir_command cp "$file" "$backup"
+    fi
+  done
 }
 
 write_flake() {
-  local tmp
+  local tmp helper profile_argument="" selected_modules="" profile_settings="" nh_path="$NIXOS_DIR"
   tmp="$(mktemp)"
-
   case "$SELECTED_PROFILE" in
-    server)
-      cat > "$tmp" <<EOF
-{
-  inputs.orgmos.url = "$REPO_URL";
-
-  outputs = { self, orgmos, ... }: {
-    nixosConfigurations.default = orgmos.lib.mkServerHost {
-      hardware = ./hardware-configuration.nix;
-      hostName = "$SELECTED_HOSTNAME";
-    };
-  };
-}
-EOF
-      ;;
-    terminal)
-      cat > "$tmp" <<EOF
-{
-  inputs.orgmos.url = "$REPO_URL";
-
-  outputs = { self, orgmos, ... }: {
-    nixosConfigurations.default = orgmos.lib.mkTerminalHost {
-      hardware = ./hardware-configuration.nix;
-      hostName = "$SELECTED_HOSTNAME";
-    };
-  };
-}
-EOF
-      ;;
+    server) helper=mkServerHost ;;
+    terminal) helper=mkTerminalHost ;;
     *)
-      cat > "$tmp" <<EOF
+      helper=mkGeneralHost
+      profile_argument="profile = \"$SELECTED_PROFILE\";"
+      selected_modules="$SELECTED_GPU_MODULE
+        $SELECTED_KERNEL_MODULE"
+      ;;
+  esac
+  [ "$INSTALL_ACTION" != install ] || nh_path=/etc/nixos
+  # Escape strings without allowing Nix interpolation in user-supplied paths.
+  local repo_nix nh_nix update_flake_nix
+  repo_nix="$(nix_string "$REPO_URL")"
+  nh_nix="$(nix_string "path:$nh_path#default")"
+  if [ "$SELECTED_PROFILE" = ryoku ]; then
+    update_flake_nix="$(nix_string "path:$nh_path")"
+    profile_settings="programs.ryoku.updateFlake = lib.mkForce $update_flake_nix;
+          programs.ryoku.updateInput = lib.mkForce \"orgmos\";"
+  fi
+  cat > "$tmp" <<EOF
 {
-  inputs.orgmos.url = "$REPO_URL";
+  inputs.orgmos.url = $repo_nix;
 
   outputs = { self, orgmos, ... }: {
-    nixosConfigurations.default = orgmos.lib.mkGeneralHost {
+    nixosConfigurations.default = orgmos.lib.$helper {
       hardware = ./hardware-configuration.nix;
-      profile = "$SELECTED_PROFILE";
+      $profile_argument
       hostName = "$SELECTED_HOSTNAME";
+      userName = "$SELECTED_USER";
       extraModules = [
-        $SELECTED_GPU_MODULE
-        $SELECTED_KERNEL_MODULE
-        $SELECTED_SDDM_MODULE
+        $selected_modules
+        ({ lib, ... }: {
+          programs.nh.flake = lib.mkForce $nh_nix;
+          $profile_settings
+          $INSTALL_BOOT_MODULE
+        })
       ];
     };
   };
 }
 EOF
-      ;;
-  esac
 
   say ""; say "Generated flake:"; say "---"; cat "$tmp"; say "---"; say ""
 
@@ -434,31 +528,68 @@ EOF
   rm -f "$tmp"
 }
 
+nix_string() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//\$\{/\\\$\{}"
+  printf '"%s"' "$value"
+}
+
+run_selected_action() {
+  # Reusing a previous lock could leave this installer on obsolete modules.
+  as_root nix --extra-experimental-features 'nix-command flakes' flake update orgmos \
+    --flake "path:$NIXOS_DIR" || fail "could not update the ORGMOS input; installation/rebuild was not started"
+  # Fail on incompatible/unpublished repository modules before installing or
+  # switching the system.
+  as_root nix --extra-experimental-features 'nix-command flakes' eval --raw \
+    "path:$NIXOS_DIR#nixosConfigurations.default.config.system.build.toplevel.drvPath" >/dev/null ||
+    fail "configuration evaluation failed; installation/rebuild was not started"
+  case "$INSTALL_ACTION" in
+    install)
+      interactive_as_root nixos-install --root "$INSTALL_ROOT" --flake "path:$NIXOS_DIR#default" || fail "nixos-install failed"
+      say "Set the login password for $SELECTED_USER (separate from any disk encryption password)."
+      interactive_as_root nixos-enter --root "$INSTALL_ROOT" --command "passwd $SELECTED_USER" ||
+        fail "Could not set the user password; run nixos-enter --root $INSTALL_ROOT --command 'passwd $SELECTED_USER' before rebooting"
+      say "Installation complete. Unmount the target and reboot when ready."
+      ;;
+    *) as_root nixos-rebuild switch --flake "path:$NIXOS_DIR#default" ;;
+  esac
+}
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 main() {
   parse_args "$@"
   setup_prompt_input
+  can_prompt || fail "interactive terminal required; download the script and run bash install.sh"
 
   say "ORGMOS installer"
   say "================"
 
-  # offer disk partitioning only in fresh-install context
+  choose_operation
+  # Validate the platform and required installer before touching any disk.
+  [ "$DRY_RUN" = true ] || require_nixos
   if [ "$DRY_RUN" = false ]; then
     maybe_auto_partition
+    prepare_installation
   fi
 
   resolve_nixos_dir
+  if [ "$INSTALL_ACTION" = install ]; then
+    [ "$NIXOS_DIR" = "$INSTALL_ROOT/etc/nixos" ] || fail "installation config must be in $INSTALL_ROOT/etc/nixos"
+  fi
 
-  [ "$DRY_RUN" = true ] && say "Dry run: no files will be written and no install command will run." || require_nixos
+  if [ "$DRY_RUN" = true ]; then
+    say "Dry run: no target files will be written and no install command will run."
+  fi
 
+  configure_bootloader
   choose_profile
+  choose_user
   if ! is_base_profile; then
     choose_gpu
     choose_kernel
-  fi
-  if has_sddm_login; then
-    choose_sddm_theme
   fi
   choose_hostname
 
@@ -468,12 +599,14 @@ main() {
   say "  NixOS dir  : $NIXOS_DIR"
   say "  Mode       : $INSTALL_ACTION"
   say "  Profile    : $SELECTED_PROFILE"
+  say "  User       : $SELECTED_USER"
+  if [ "$INSTALL_ACTION" = install ]; then
+    say "  Boot       : $FIRMWARE"
+    say "  Encryption : retained if partitions were prepared with LUKS; automatic partitioning is unencrypted"
+  fi
   if ! is_base_profile; then
     say "  GPU        : $SELECTED_GPU"
     say "  Kernel     : $SELECTED_KERNEL"
-  fi
-  if has_sddm_login; then
-    say "  SDDM theme : $SELECTED_SDDM_THEME"
   fi
   say "  Hostname   : $SELECTED_HOSTNAME"
   say ""
@@ -486,10 +619,7 @@ main() {
 
   say "Next command: $(final_command)"
   if confirm "Run now?"; then
-    case "$INSTALL_ACTION" in
-      install) sudo nixos-install --flake "$NIXOS_DIR#default" ;;
-      *)       sudo nixos-rebuild switch --flake "$NIXOS_DIR#default" ;;
-    esac
+    run_selected_action
   else
     say "Run manually when ready:"; say "  $(final_command)"
   fi

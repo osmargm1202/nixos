@@ -5,7 +5,7 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
 profile='nixos/profiles/hyprland/hyprland.nix'
-tray_helper='dotfiles/config/profiles/hyprland/.local/bin/hypr-tray-applets'
+tray_helper='dotfiles/config/users/osmarg/profiles/hyprland/.local/bin/hypr-tray-applets'
 host_dir='dotfiles/config/hosts/orgm/shared'
 attr="path:$repo_dir#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file"
 

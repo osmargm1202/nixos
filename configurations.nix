@@ -5,6 +5,7 @@ let
     cinnamon = ./nixos/profiles/cinnamon.nix;
     gnome = ./nixos/profiles/gnome.nix;
     hyprland = ./nixos/profiles/hyprland/hyprland.nix;
+    ryoku = ./nixos/profiles/ryoku/ryoku.nix;
     i3 = ./nixos/profiles/i3/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
   };
@@ -80,7 +81,7 @@ in
   aliases = {
     orgm = "orgm-hyprland";
     lenovo = "lenovo-hyprland";
-    jarq = "jarq-hyprland";
+    jarq = "jarq-i3";
   };
 
   configurations = {
@@ -106,6 +107,7 @@ in
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       userName = "jarq";
     };
+    # Hardware stays host-specific; the selected user owns applications and preferences.
     jarq-i3 = desktop {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
@@ -145,6 +147,12 @@ in
       hostName = "orgm";
       hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
       profileName = "hyprland";
+      extraModules = orgmDesktopModules;
+    };
+    orgm-ryoku = desktop {
+      hostName = "orgm";
+      hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+      profileName = "ryoku";
       extraModules = orgmDesktopModules;
     };
     orgm-labwc = desktop {
@@ -198,6 +206,12 @@ in
       hostName = "lenovo";
       hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
       profileName = "hyprland";
+      extraModules = lenovoDesktopModules;
+    };
+    lenovo-ryoku = desktop {
+      hostName = "lenovo";
+      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+      profileName = "ryoku";
       extraModules = lenovoDesktopModules;
     };
     lenovo-i3 = desktop {

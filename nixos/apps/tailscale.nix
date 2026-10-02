@@ -5,7 +5,13 @@
 # systemd-resolved integration. Tailscale reapplies split DNS after daemon,
 # link, suspend and network changes; static /etc/hosts entries remain only for
 # service aliases that MagicDNS does not provide.
-{ config, inputs, pkgs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   peerMonitorServiceName = "tailscale-peer-monitor";
   peerNotifierServiceName = "tailscale-peer-notifier";
@@ -205,6 +211,7 @@ let
   };
 in
 {
+  config = lib.mkIf (builtins.elem "tailscale" config.orgm.user.programs) {
   # Keep tailscaled, the CLI/systray and peer-monitor tooling on one version.
   nixpkgs.overlays = [
     (_final: prev: {
@@ -224,48 +231,51 @@ in
   services.resolved.enable = true;
 
 
-  systemd.services.${peerMonitorServiceName} = {
-    description = "Detect Tailscale peer connection changes";
-    after = [ "tailscaled.service" ];
-    wants = [ "tailscaled.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      StateDirectory = "tailscale-peer-monitor";
-      StateDirectoryMode = "0755";
-      ExecStart = "${tailscalePeerMonitor}/bin/${peerMonitorServiceName}";
-      StandardOutput = "journal";
-      StandardError = "journal";
+  systemd = lib.mkIf (builtins.elem "orgm" config.orgm.user.programs) {
+    services.${peerMonitorServiceName} = {
+      description = "Detect Tailscale peer connection changes";
+      after = [ "tailscaled.service" ];
+      wants = [ "tailscaled.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        StateDirectory = "tailscale-peer-monitor";
+        StateDirectoryMode = "0755";
+        ExecStart = "${tailscalePeerMonitor}/bin/${peerMonitorServiceName}";
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+    };
+
+    timers.${peerMonitorServiceName} = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        Unit = "${peerMonitorServiceName}.service";
+        OnBootSec = "30s";
+        OnUnitActiveSec = "30s";
+        AccuracySec = "5s";
+        RandomizedDelaySec = "5s";
+        Persistent = true;
+      };
+    };
+
+    user.services.${peerNotifierServiceName} = {
+      description = "Show desktop notifications for Tailscale peer changes";
+      after = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${tailscalePeerNotifier}/bin/${peerNotifierServiceName}";
+      };
+    };
+
+    user.timers.${peerNotifierServiceName} = {
+      wantedBy = [ "graphical-session.target" ];
+      timerConfig = {
+        Unit = "${peerNotifierServiceName}.service";
+        OnBootSec = "5s";
+        OnUnitActiveSec = "5s";
+        AccuracySec = "1s";
+      };
     };
   };
-
-  systemd.timers.${peerMonitorServiceName} = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      Unit = "${peerMonitorServiceName}.service";
-      OnBootSec = "30s";
-      OnUnitActiveSec = "30s";
-      AccuracySec = "5s";
-      RandomizedDelaySec = "5s";
-      Persistent = true;
-    };
-  };
-
-  systemd.user.services.${peerNotifierServiceName} = {
-    description = "Show desktop notifications for Tailscale peer changes";
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${tailscalePeerNotifier}/bin/${peerNotifierServiceName}";
-    };
-  };
-
-  systemd.user.timers.${peerNotifierServiceName} = {
-    wantedBy = [ "graphical-session.target" ];
-    timerConfig = {
-      Unit = "${peerNotifierServiceName}.service";
-      OnBootSec = "5s";
-      OnUnitActiveSec = "5s";
-      AccuracySec = "1s";
-    };
   };
 }

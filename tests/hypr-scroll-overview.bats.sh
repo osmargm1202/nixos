@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
 PACKAGE="$ROOT/nixos/profiles/hyprland/hyprland-scroll-overview.nix"
-AUTOSTART="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
-BINDINGS="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua"
+AUTOSTART="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/autostart.lua"
+BINDINGS="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/keybindings.lua"
 LOOK_AND_FEEL="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/look-and-feel.lua"
 
 fail() {

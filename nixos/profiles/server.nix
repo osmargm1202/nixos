@@ -237,7 +237,6 @@ in
       ripgrep
       rsync
       smartmontools
-      syncthing
       tcpdump
       tree
       unzip
@@ -248,6 +247,7 @@ in
       zoxide
       starship
     ]
+    ++ lib.optionals (builtins.elem "syncthing" config.orgm.user.programs) [ pkgs.syncthing ]
     ++ lib.optionals (pkgs ? dtop) [ pkgs.dtop ];
 
   # Apps efimeras (btop, ncdu, herdr): `nix run nixpkgs#app` / `nix run

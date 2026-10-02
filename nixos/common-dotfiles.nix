@@ -8,12 +8,13 @@
 }:
 
 let
-  dotfilesRepo = "https://github.com/osmargm1202/nixos.git";
-  dotfilesBranch = "master";
-  dotfilesRepoPath = "/home/${userName}/Hobby/nixos";
-  dotfilesPath = "/home/${userName}/Hobby/nixos/dotfiles";
-  dotfilesParent = "/home/${userName}/Hobby";
+  sourceRoot = builtins.path {
+    path = ../dotfiles/config;
+    name = "user-dotfiles";
+  };
   hostName = config.networking.hostName;
+  programs = config.orgm.user.programs or [ ];
+  programEnabled = name: builtins.elem name programs;
   directoryMimeHandlers = lib.toList (config.xdg.mime.defaultApplications."inode/directory" or [ ]);
 
   # Mirrors *.desktop files Steam (and similar launchers) drop into
@@ -36,28 +37,14 @@ let
   # Python env for ~/.config/openrgb/lg213/main.py (notification RGB effects)
   lg213PythonEnv = pkgs.python3.withPackages (ps: [ ps.openrgb-python ]);
 
-  orgmDotfilesUpdateScript = pkgs.writeShellApplication {
-    name = "orgm-dotfiles-update";
-    runtimeInputs = with pkgs; [
-      git
-      openssh
-    ];
-    text = ''
-      cd "${dotfilesRepoPath}"
-      git fetch origin "${dotfilesBranch}"
-      git checkout "${dotfilesBranch}"
-      git pull --ff-only origin "${dotfilesBranch}" || true
-    '';
-  };
-
-  # Inventory uses the evaluated source tree; links retain the mutable checkout.
+  # Every source path starts as a Nix path. Home Manager therefore links its
+  # immutable store copy, never a file from a mutable checkout.
   collectLayerFiles =
     {
-      inventoryRoot,
-      runtimeRoot,
+      root,
       prefix ? "",
     }:
-    if !builtins.pathExists inventoryRoot then
+    if !builtins.pathExists root then
       { }
     else
       lib.foldlAttrs (
@@ -71,6 +58,7 @@ let
               ".DS_Store"
               "icon-theme.cache"
               "mimeinfo.cache"
+              "__pycache__"
             ]
             || builtins.match "Icon." name != null
             || lib.hasSuffix "~" name
@@ -81,61 +69,70 @@ let
         else if type == "directory" then
           files
           // collectLayerFiles {
-            inventoryRoot = "${inventoryRoot}/${name}";
-            runtimeRoot = "${runtimeRoot}/${name}";
+            root = "${root}/${name}";
             prefix = "${target}/";
           }
         else if type == "regular" || type == "symlink" then
-          files // { ${target} = "${runtimeRoot}/${name}"; }
+          files // { ${target} = "${root}/${name}"; }
         else
           files
-      ) { } (builtins.readDir inventoryRoot);
+      ) { } (builtins.readDir root);
 
-  layerFiles =
+  layerFiles = layer: collectLayerFiles { root = "${sourceRoot}/${layer}"; };
+  layerNames =
     layer:
-    collectLayerFiles {
-      inventoryRoot = "${toString ../dotfiles/config}/${layer}";
-      runtimeRoot = "${dotfilesPath}/config/${layer}";
-    };
-  sharedFiles = layerFiles "shared";
-  hyprlandFiles = layerFiles "profiles/hyprland";
-  persistentHyprlandFiles =
-    lib.filterAttrs (
-      path: _:
-      lib.hasPrefix ".config/hypr/" path
-      || lib.hasPrefix ".config/orgm-hypr/" path
-      || lib.hasPrefix ".config/waybar-hypr/" path
-      || lib.hasPrefix ".local/bin/hypr-" path
-      || lib.hasPrefix ".local/bin/waybar-" path
-    ) hyprlandFiles
-    // builtins.listToAttrs (
-      map (file: {
-        name = file.target;
-        value = "${dotfilesPath}/config/profiles/hyprland/${file.source}";
-      }) persistentHyprlandRofiFiles
-    );
-  # Keep the Rofi theme required by Hyprland helpers separate from the active
-  # profile's general Rofi configuration, which i3 owns at ~/.config/rofi.
-  persistentHyprlandRofiFiles = [
-    {
-      target = ".config/orgm-hypr/rofi/hypr-menu.rasi";
-      source = ".config/rofi/hypr-menu.rasi";
-    }
-    {
-      target = ".config/orgm-hypr/rofi/hypr-menu.env";
-      source = ".config/rofi/hypr-menu.env";
-    }
-    {
-      target = ".config/orgm-hypr/rofi/orgm-current.rasi";
-      source = ".config/rofi/orgm-current.rasi";
-    }
-  ];
+    let
+      root = "${sourceRoot}/${layer}";
+    in
+    if builtins.pathExists root then builtins.attrNames (builtins.readDir root) else [ ];
+  allProgramNames = lib.unique (
+    layerNames "programs" ++ layerNames "users/${userName}/programs"
+  );
+  programFiles = lib.foldl' (
+    files: program: files // layerFiles "programs/${program}"
+  ) { } programs;
   profileFiles = layerFiles "profiles/${profileName}";
+  userFiles = layerFiles "users/${userName}/common";
+  userProgramFiles = lib.foldl' (
+    files: program: files // layerFiles "users/${userName}/programs/${program}"
+  ) { } programs;
+  userProfileFiles = layerFiles "users/${userName}/profiles/${profileName}";
   hostFiles = layerFiles "hosts/${hostName}/shared";
   hostProfileFiles = layerFiles "hosts/${hostName}/profiles/${profileName}";
-  mergedFiles =
-    sharedFiles // persistentHyprlandFiles // profileFiles // hostFiles // hostProfileFiles;
-  # Nautilus requires a real executable, installed by its activation below.
+  selectedFiles =
+    programFiles // profileFiles // userFiles // userProgramFiles // userProfileFiles // hostFiles // hostProfileFiles;
+  # Ryoku materializes writable application configurations from its generation.
+  # Keep personal tools available while giving each config path a single owner.
+  ryokuConfigRoots = [
+    ".config/hypr" ".config/niri" ".config/quickshell" ".config/matugen"
+    ".config/qt6ct" ".config/gtk-3.0" ".config/gtk-4.0" ".config/btop"
+    ".config/starship.toml" ".config/fastfetch" ".config/kitty" ".config/fish"
+    ".config/wireplumber" ".config/yazi" ".config/nvim" ".config/pip"
+    ".config/chromium-flags.conf" ".config/hyprland-preview-share-picker"
+  ];
+  ryokuOwns = path: builtins.any (
+    root: path == root || lib.hasPrefix (root + "/") path
+  ) ryokuConfigRoots;
+  mergedFiles = lib.filterAttrs (
+    path: _: profileName != "ryoku" || (
+      !ryokuOwns path && !builtins.elem path [
+        ".local/bin/orgm-visual-profile" ".local/bin/openrgb-autostart"
+      ]
+    )
+  ) selectedFiles;
+  allProgramFiles = lib.foldl' (
+    files: program:
+    files
+    // layerFiles "programs/${program}"
+    // layerFiles "users/${userName}/programs/${program}"
+  ) { } allProgramNames;
+  disabledProgramFiles = lib.filterAttrs (path: _: !builtins.hasAttr path mergedFiles) allProgramFiles;
+  nautilusWallpaperScript =
+    mergedFiles.".local/share/nautilus/scripts/Set as Hyprland Wallpaper" or null;
+  hyprReloadHelper = mergedFiles.".local/bin/hypr-reload-after-switch" or null;
+  hasHyprVisualProfile = builtins.hasAttr ".local/bin/orgm-visual-profile" mergedFiles;
+  # These are runtime outputs. Their immutable defaults are installed as real
+  # files below so theme helpers can atomically replace them.
   linkedFiles = builtins.removeAttrs mergedFiles [
     ".config/waybar-hypr/orgm-current.css"
     ".config/nwg-dock-hyprland/current-theme.css"
@@ -146,9 +143,6 @@ let
   ];
 in
 {
-  systemd.tmpfiles.rules = [
-    "d ${dotfilesParent} 0755 ${userName} users - -"
-  ];
 
   # Ensure the graphical login starts only after home-manager has finished
   # linking the dotfiles. Without this ordering the compositor can read its
@@ -160,73 +154,6 @@ in
     wants = [ "home-manager-${userName}.service" ];
   };
 
-  # Boot only needs the repo to *exist* — home-manager reads from disk, it
-  # doesn't need today's remote commits. This used to also `git fetch` on
-  # every boot gated on network-online.target, serializing ~5-6s of
-  # NetworkManager-wait-online + the fetch itself in front of home-manager
-  # and login. Now it's a no-op (no network touched) once cloned once.
-  systemd.services.orgm-dotfiles-repo = {
-    description = "Ensure ORGM dotfiles repository is cloned";
-    before = [ "home-manager-${userName}.service" ];
-    wantedBy = [ "multi-user.target" ];
-    path = with pkgs; [
-      bash
-      coreutils
-      git
-      gnugrep
-      openssh
-      util-linux
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      set -euo pipefail
-
-      install -d -m 0755 -o ${userName} -g users "${dotfilesParent}"
-
-      as_user() {
-        runuser -u ${userName} -- "$@"
-      }
-
-      if [ ! -e "${dotfilesRepoPath}/.git" ]; then
-        if [ -e "${dotfilesRepoPath}" ]; then
-          echo "${dotfilesRepoPath} exists but is not a git repository" >&2
-          exit 1
-        fi
-        as_user git clone --branch "${dotfilesBranch}" "${dotfilesRepo}" "${dotfilesRepoPath}"
-        chown -R ${userName}:users "${dotfilesRepoPath}"
-      fi
-    '';
-  };
-
-  # Pulling latest dotfiles is now decoupled from boot entirely: a manual CLI
-  # helper (orgm-dotfiles-update) plus a background timer that starts well
-  # after login and re-runs daily. Neither blocks boot or home-manager.
-  systemd.services.orgm-dotfiles-update = {
-    description = "Fetch latest ORGM dotfiles (non-blocking)";
-    after = [
-      "network-online.target"
-      "orgm-dotfiles-repo.service"
-    ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = userName;
-      ExecStart = "${orgmDotfilesUpdateScript}/bin/orgm-dotfiles-update";
-    };
-  };
-
-  systemd.timers.orgm-dotfiles-update = {
-    description = "Periodic ORGM dotfiles update";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "5min";
-      OnUnitActiveSec = "1d";
-      Persistent = true;
-    };
-  };
 
   home-manager.users.${userName} =
     {
@@ -236,33 +163,39 @@ in
       ...
     }:
     {
-      # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
-      # and Labwc start the same command explicitly.
-      xdg.configFile."autostart/tailscale-systray.desktop".text = ''
-        [Desktop Entry]
-        Type=Application
-        Name=Tailscale
-        Comment=Manage Tailscale from the system tray
-        Exec=tailscale systray --theme light
-        Terminal=false
-        X-GNOME-Autostart-enabled=true
-        OnlyShowIn=GNOME;X-Cinnamon;
-      '';
-
-      # i3, Hyprland and Labwc launch the same tray command explicitly.
-      # The setup wizard can create this file before Home Manager owns it.
-      # Replace only the autostart entry, not the user's syncthingtray.ini.
-      xdg.configFile."autostart/syncthingtray.desktop".force = true;
-      xdg.configFile."autostart/syncthingtray.desktop".text = ''
-        [Desktop Entry]
-        Type=Application
-        Name=Syncthing Tray
-        Comment=Manage Syncthing from the system tray
-        Exec=syncthingtray --single-instance --wait
-        Terminal=false
-        X-GNOME-Autostart-enabled=true
-        OnlyShowIn=GNOME;X-Cinnamon;
-      '';
+      xdg.configFile = lib.mkMerge [
+        (lib.optionalAttrs (programEnabled "tailscale") {
+          # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
+          # and Labwc start the same command explicitly.
+          "autostart/tailscale-systray.desktop".text = ''
+            [Desktop Entry]
+            Type=Application
+            Name=Tailscale
+            Comment=Manage Tailscale from the system tray
+            Exec=tailscale systray --theme light
+            Terminal=false
+            X-GNOME-Autostart-enabled=true
+            OnlyShowIn=GNOME;X-Cinnamon;
+          '';
+        })
+        (lib.optionalAttrs (programEnabled "syncthing") {
+          # The setup wizard can create this file before Home Manager owns it.
+          # Replace only the autostart entry, not the user's syncthingtray.ini.
+          "autostart/syncthingtray.desktop" = {
+            force = true;
+            text = ''
+              [Desktop Entry]
+              Type=Application
+              Name=Syncthing Tray
+              Comment=Manage Syncthing from the system tray
+              Exec=syncthingtray --single-instance --wait
+              Terminal=false
+              X-GNOME-Autostart-enabled=true
+              OnlyShowIn=GNOME;X-Cinnamon;
+            '';
+          };
+        })
+      ];
 
       # Keep user-level MIME preferences in sync with declarative defaults,
       # which take precedence over /etc/xdg/mimeapps.list.
@@ -289,6 +222,23 @@ in
       '';
 
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+        ${lib.optionalString (profileName != "ryoku") ''
+          # Returning from Ryoku: save writable materialized files that the
+          # selected profile will replace with generation-owned links.
+          ryoku_state="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
+          if [ -f "$ryoku_state/active" ]; then
+            backup="$ryoku_state/return-$(date +%Y%m%d-%H%M%S)-$$"
+            for p in ${lib.concatMapStringsSep " " lib.escapeShellArg (builtins.filter ryokuOwns (builtins.attrNames linkedFiles))}; do
+              target="$HOME/$p"
+              case "$p" in .config/*) ;; *) continue ;; esac
+              if [ -f "$target" ] && [ ! -L "$target" ]; then
+                $DRY_RUN_CMD mkdir -p "$backup/$(dirname "$p")"
+                $DRY_RUN_CMD mv "$target" "$backup/$p"
+              fi
+            done
+            $DRY_RUN_CMD rm "$ryoku_state/active"
+          fi
+        ''}
         if [ -L "$HOME/.local/share/applications" ]; then
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"
         fi
@@ -311,14 +261,32 @@ in
             $DRY_RUN_CMD rm "$target"
           fi
         done
+        # Removing a selector is a clean cutover for Home Manager links only.
+        # Never discard a regular file or directory a user may have created.
+        declare -a disabled_program_paths=(
+          ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (builtins.attrNames disabledProgramFiles)}
+        )
+        for p in "''${disabled_program_paths[@]}"; do
+          target="$HOME/$p"
+          if [ -L "$target" ]; then
+            $DRY_RUN_CMD rm "$target"
+          fi
+        done
+        ${lib.optionalString (!programEnabled "tmux") ''
+          plugin_loader="$HOME/.config/tmux/plugins.conf"
+          if [ -L "$plugin_loader" ]; then
+            $DRY_RUN_CMD rm "$plugin_loader"
+          fi
+          $DRY_RUN_CMD rmdir "$HOME/.config/tmux" 2>/dev/null || true
+        ''}
 
         declare -a managed_paths=(
           ${lib.concatMapStringsSep "\n          " (p: ''"${p}"'') (builtins.attrNames linkedFiles)}
         )
         for p in "''${managed_paths[@]}"; do
           target="$HOME/$p"
-          if [ -e "$target" ] || [ -L "$target" ]; then
-            $DRY_RUN_CMD rm -rf "$target"
+          if [ -L "$target" ]; then
+            $DRY_RUN_CMD rm "$target"
           fi
         done
       '';
@@ -336,12 +304,16 @@ in
             [ -L "$dst" ] && $DRY_RUN_CMD rm "$dst"
             init_file "$@"
           }
+        ''
+        + lib.optionalString (programEnabled "kitty" && profileName != "ryoku") ''
           init_runtime_file ".config/kitty/current-theme.conf" "background #080808
           foreground #f5f5f5
           selection_background #202020
           selection_foreground #f5f5f5
           cursor #8ab4f8
           "
+        ''
+        + lib.optionalString (profileName == "hyprland" && hasHyprVisualProfile) ''
           init_runtime_file ".config/waybar-hypr/orgm-current.css" "@define-color base #080808;
           @define-color mantle #101010;
           @define-color crust #000000;
@@ -373,6 +345,14 @@ in
           "
           init_runtime_file ".config/nwg-dock-hyprland/current-theme.css" "#box { background: #080808; border: none; box-shadow: none; }
           "
+          init_file ".icons/default/index.theme" "[Icon Theme]
+          Name=Default
+          Comment=Default Cursor Theme
+          Inherits=Catppuccin-Macchiato-Teal-Cursors
+          "
+          init_file ".local/state/hypr/game-mode" "deactivated"
+        ''
+        + lib.optionalString hasHyprVisualProfile ''
           init_runtime_file ".config/dunst/dunstrc.d/90-visual-profile.conf" "[global]
               frame_width = 0
           [urgency_low]
@@ -398,24 +378,15 @@ in
           gtk-application-prefer-dark-theme=1
           "
         ''
-        + lib.optionalString (profileName == "hyprland") ''
-                    init_file ".icons/default/index.theme" "[Icon Theme]
-          Name=Default
-          Comment=Default Cursor Theme
-          Inherits=Catppuccin-Macchiato-Teal-Cursors
-          "
-                    init_file ".local/state/hypr/game-mode" "deactivated"
-        ''
       );
 
-      # Nautilus 50 does not discover symlinked scripts. Keep the Hyprland
-      # action as a real executable file; i3 deliberately gets no Nautilus
-      # script.
-      home.activation.installHyprlandNautilusScript = lib.hm.dag.entryAfter [ "linkGeneration" ] (
-        lib.optionalString (profileName == "hyprland") ''
+      # Nautilus does not discover symlinked scripts. Install an executable
+      # only when the selected layers deliberately provide the action.
+      home.activation.installHyprlandNautilusScript = lib.mkIf (nautilusWallpaperScript != null) (
+        lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           $DRY_RUN_CMD rm -f "$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
           $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -Dm755 \
-            "${dotfilesPath}/config/profiles/hyprland/.local/share/nautilus/scripts/Set as Hyprland Wallpaper" \
+            "${nautilusWallpaperScript}" \
             "$HOME/.local/share/nautilus/scripts/Set as Hyprland Wallpaper"
         ''
       );
@@ -428,24 +399,24 @@ in
         ''
       );
 
-      # A NixOS/Home Manager switch replaces the Hyprland config symlink.
-      # Reload the live compositor and restart Waybar through its session IPC.
-      home.activation.reloadHyprlandAfterLink = lib.hm.dag.entryAfter [ "linkGeneration" ] (
-        lib.optionalString (profileName == "hyprland") ''
+      # Reload only when the selected layers deliberately provide the helper.
+      home.activation.reloadHyprlandAfterLink = lib.mkIf (hyprReloadHelper != null) (
+        lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           $DRY_RUN_CMD "$HOME/.local/bin/hypr-reload-after-switch" || true
         ''
       );
 
-      # Steam (and similar launchers) write "Create desktop shortcut" .desktop
-      # files into ~/Desktop instead of ~/.local/share/applications, so dock
-      # and app-launcher icons never pick them up. Mirror them automatically.
-      home.activation.syncDesktopShortcuts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        $DRY_RUN_CMD ${syncDesktopShortcutsScript}
-      '';
+      # Steam writes desktop launchers to ~/Desktop; no non-Steam user needs
+      # the copy-on-change service.
+      home.activation.syncDesktopShortcuts = lib.mkIf (programEnabled "steam") (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          $DRY_RUN_CMD ${syncDesktopShortcutsScript}
+        ''
+      );
 
       # Keep lid-close inhibition alive when a graphical compositor exits while
       # an external display remains physically connected.
-      systemd.user.services.external-lid-inhibit = {
+      systemd.user.services.external-lid-inhibit = lib.mkIf (programEnabled "shell" && profileName != "ryoku") {
         Unit.Description = "Block laptop lid suspend with an external display";
         Service = {
           ExecStart = "%h/.local/bin/external-lid-inhibit";
@@ -455,7 +426,7 @@ in
         Install.WantedBy = [ "default.target" ];
       };
 
-      systemd.user.services.desktop-shortcut-sync = {
+      systemd.user.services.desktop-shortcut-sync = lib.mkIf (programEnabled "steam") {
         Unit.Description = "Copy *.desktop shortcuts from ~/Desktop into ~/.local/share/applications";
         Service = {
           Type = "oneshot";
@@ -464,7 +435,7 @@ in
       };
 
       # Lenovo has no G213; avoid starting a detector that can only exit.
-      systemd.user.services.openrgb-notify = lib.mkIf (hostName != "lenovo") {
+      systemd.user.services.openrgb-notify = lib.mkIf (programEnabled "openrgb" && hostName != "lenovo" && profileName != "ryoku") {
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";
@@ -475,20 +446,18 @@ in
         Install.WantedBy = [ "default.target" ];
       };
 
-      systemd.user.paths.desktop-shortcut-sync = {
+      systemd.user.paths.desktop-shortcut-sync = lib.mkIf (programEnabled "steam") {
         Unit.Description = "Watch ~/Desktop for new .desktop shortcuts (e.g. from Steam)";
         Path.PathChanged = "%h/Desktop";
         Path.Unit = "desktop-shortcut-sync.service";
         Install.WantedBy = [ "default.target" ];
       };
 
-      home.file = lib.mkMerge [
-        (lib.mapAttrs (_: source: {
-          source = config.lib.file.mkOutOfStoreSymlink source;
-        }) linkedFiles)
-        # tmux plugins are store-backed, so a fresh Home Manager activation
-        # recreates them without TPM or mutable clones under ~/.tmux/plugins.
-        {
+      home.file =
+        (lib.mapAttrs (_: source: { inherit source; }) linkedFiles)
+        // lib.optionalAttrs (programEnabled "tmux") {
+          # Plugins are supplied directly from the immutable Nix store; TPM
+          # never needs a mutable clone under ~/.tmux/plugins.
           ".config/tmux/plugins.conf" = {
             force = true;
             text = ''
@@ -496,10 +465,8 @@ in
               run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
             '';
           };
-        }
-      ];
+        };
     };
 
-  environment.systemPackages = [ orgmDotfilesUpdateScript ];
 
 }

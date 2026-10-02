@@ -1,8 +1,5 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in configuration.nix(5) man page
-# and in NixOS manual (accessible by running ‘nixos-help’).
-# Syncthing is available in all roles; desktops include Syncthing Tray.
-# Its backend remains opt-in: systemctl --user enable --now syncthing.service.
+# Shared desktop base. Personal integrations are selected through
+# config.orgm.user.programs; consumers must not infer them from userName.
 
 {
   config,
@@ -21,10 +18,10 @@ let
   spf = pkgs.writeShellScriptBin "spf" ''
     exec ${pkgs.superfile}/bin/superfile "$@"
   '';
-
+  hasProgram = program: builtins.elem program config.orgm.user.programs;
   x11TerminalPackages =
     lib.optionals
-      (builtins.elem profileName [
+      (hasProgram "zutty" && builtins.elem profileName [
         "cinnamon"
         "i3"
       ])
@@ -32,63 +29,65 @@ let
         pkgs.zutty
         zuttyFast
       ];
-  minimalPackages =
-    with pkgs;
-    [
-      wget
-      curl
-      rsync
-      syncthing
-      vim
-      fzf
-      bash-completion
-      blesh
-      starship
-      zoxide
-      python3
-      gtk3
-      libnotify
-      git
-      git-lfs
-      tmux
-      zellij
-      age
-      fd
-      jq
-      trash-cli
-      eza
-      ntfs3g
-      kitty
-      bat
-      ripgrep
-      wl-clipboard
-      xclip
-      zip
-      unzip
-      unrar
-      btop
-      spf
-      ncdu
-      fastfetch
-      sops
-      just
-      figlet
-      termdown
-      nix-search-tv
-    ]
+  userPackages =
+    lib.optionals (hasProgram "shell") (
+      with pkgs;
+      [
+        wget
+        curl
+        rsync
+        vim
+        fzf
+        bash-completion
+        blesh
+        starship
+        zoxide
+        gtk3
+        libnotify
+        git-lfs
+        zellij
+        age
+        fd
+        jq
+        trash-cli
+        eza
+        ntfs3g
+        bat
+        ripgrep
+        wl-clipboard
+        xclip
+        zip
+        unzip
+        unrar
+        btop
+        spf
+        ncdu
+        fastfetch
+        just
+        figlet
+        termdown
+        nix-search-tv
+      ]
+    )
+    ++ lib.optionals (hasProgram "git") [ pkgs.git ]
+    ++ lib.optionals (hasProgram "tmux") [ pkgs.tmux ]
+    ++ lib.optionals (hasProgram "kitty") [ pkgs.kitty ]
+    ++ lib.optionals (hasProgram "sops") [ pkgs.sops ]
     ++ x11TerminalPackages;
-  desktopOnlyPackages = with pkgs; [
-    nextcloud-client
-    syncthingtray
-    uv
+  developmentPackages = with pkgs; [
     python3
+    uv
+    gcc
+    gnumake
+    nodejs_22
+    bun
+    vscode
+  ];
+  personalDevelopmentPackages = with pkgs; [
     android-tools
     freerdp
-    podman-compose
     jujutsu
     gum
-    steam-run
-    vscode
     gnome-calculator
     gnome-software
     localsend
@@ -103,6 +102,14 @@ let
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
   ];
+  desktopUserPackages =
+    lib.optionals (hasProgram "nextcloud") [ pkgs.nextcloud-client ]
+    ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing pkgs.syncthingtray ]
+    ++ lib.optionals (hasProgram "development") developmentPackages
+    ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
+    ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]
+    ++ lib.optionals (hasProgram "containers") [ pkgs.podman-compose ]
+    ++ lib.optionals (!builtins.elem profileName [ "hyprland" "i3" "ryoku" ]) [ pkgs.thunar ];
 in
 {
   # Boot menu shows "Generation N <label>, built on <date>" -- date is
@@ -113,12 +120,12 @@ in
   # Every host exposes a stable status-bar profile; specialisations override it.
   environment.etc."orgm/desktop-profile".text = lib.mkDefault "normal\n";
 
-  # Firefox remains the URL/default browser. Chromium is available in every
-  # desktop profile for local HTML documents and DRM-dependent sites.
-  orgm.chromium.enable = true;
+  # Chromium is the browser backend for selected web applications.
+  orgm.chromium.enable = hasProgram "webapps";
 
-  # Logitech G213 RGB (USB HID, no motherboard i2c needed).
-  services.hardware.openrgb.enable = true;
+  # The Logitech RGB daemon is personal hardware integration, not a desktop
+  # baseline. It stays off for users that did not select it.
+  services.hardware.openrgb.enable = hasProgram "openrgb";
 
   # No generar man pages, info, ni html docs (ahorra ~1+ GiB).
   documentation.enable = false;
@@ -162,6 +169,9 @@ in
   home-manager.users.${userName} = {
     # Compatibility baseline for existing home data, not the Home Manager release.
     home.stateVersion = "25.11";
+    # Moving packages into the user profile must preserve the system's no-docs policy.
+    programs.man.enable = false;
+    home.packages = userPackages ++ desktopUserPackages;
   };
 
   # Polkit
@@ -235,10 +245,8 @@ in
   # at the menu to browse generations; normal boot no longer waits for it.
   boot.loader.timeout = 1;
 
-  # NetworkManager-wait-online blocks network-online.target on full WiFi/DHCP
-  # association (~5-6s measured), which in turn blocked orgm-dotfiles-repo and
-  # home-manager at boot. Nothing here actually needs a guaranteed-online state
-  # before login, so stop pulling it into network-online.target.
+  # Nothing needed before login depends on network-online.target. Keep its
+  # wait service out of boot; dotfile activation uses immutable local sources.
   systemd.services.NetworkManager-wait-online.wantedBy = lib.mkForce [ ];
 
   hardware.uinput.enable = true;
@@ -248,7 +256,7 @@ in
   };
   services.blueman.enable = true;
 
-  virtualisation.podman = {
+  virtualisation.podman = lib.mkIf (hasProgram "containers") {
     enable = true;
     dockerCompat = true; # alias docker -> podman
     dockerSocket.enable = true;
@@ -260,7 +268,7 @@ in
 
   #virtualisation.docker.enable = true;
 
-  programs.bash = {
+  programs.bash = lib.mkIf (hasProgram "shell") {
     enable = true;
     completion.enable = true;
     blesh.enable = true;
@@ -273,16 +281,12 @@ in
 
   # The NixOS module installs Atuin and initializes it after Blesh, allowing
   # Atuin to use Blesh's history integration without a duplicate package entry.
-  programs.atuin = {
+  programs.atuin = lib.mkIf (hasProgram "shell") {
     enable = true;
     enableBashIntegration = true;
   };
   environment.etc."atuin/config.toml".text = "";
-  programs.git = {
-    enable = true;
-    config.user.name = "osmar";
-    config.user.email = "osmargm1202@gmail.com";
-  };
+  programs.git.enable = hasProgram "git";
 
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -290,10 +294,9 @@ in
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
-  # Enable networking
   networking.networkmanager.enable = true;
   # KDE Connect needs TCP and UDP 1714-1764 for LAN discovery and pairing.
-  programs.kdeconnect.enable = true;
+  programs.kdeconnect.enable = hasProgram "kdeconnect";
 
   # Set your time zone.
   time.timeZone = "America/Santo_Domingo";
@@ -361,24 +364,15 @@ in
       "video"
       "render"
     ]
-    ++ [
+    ++ lib.optionals (hasProgram "containers") [
       "docker"
       "podman"
     ];
-    packages = with pkgs; [
-      # thunderbird
-    ];
   };
-
-  # programs.firefox.enable = true;
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages =
-    minimalPackages
-    ++ desktopOnlyPackages
-    # i3 already supplies its Thunar variant without the wallpaper plugin.
-    ++ lib.optional (profileName != "hyprland" && profileName != "i3") pkgs.thunar;
+  environment.systemPackages = [ ];
   environment.variables = {
     EDITOR = "nvim";
     VISUAL = "nvim";
@@ -388,7 +382,7 @@ in
     enable = true;
     defaultApplications = {
       "inode/directory" = lib.mkForce [
-        (if profileName == "hyprland" then "org.gnome.Nautilus.desktop" else "thunar.desktop")
+        (if builtins.elem profileName [ "hyprland" "ryoku" ] then "org.gnome.Nautilus.desktop" else "thunar.desktop")
       ];
       "text/plain" = lib.mkForce [ "nvim.desktop" ];
       "text/markdown" = lib.mkForce [ "nvim.desktop" ];
@@ -402,16 +396,9 @@ in
 
   programs.dconf.enable = true;
 
-  # Loader shim for dynamic binaries not packaged for NixOS
-  # (claude, pi, codex and other custom tools). steam-run (above)
-  # covers one-off FHS testing.
-  programs.nix-ld.enable = true;
-
-  # FHS shebang shim: third-party scripts (Claude Code plugin hooks, npm
-  # postinstalls) hardcode #!/bin/bash, which NixOS doesn't provide by
-  # default (only /bin/sh). nix-ld covers ELF binaries; this covers scripts.
-  # Also: pi/bash tool hardcodes /usr/sbin/bash.
-  systemd.tmpfiles.rules = [
+  # Third-party AI CLIs use dynamic loaders and hard-coded Bash shebangs.
+  programs.nix-ld.enable = hasProgram "ai";
+  systemd.tmpfiles.rules = lib.optionals (hasProgram "ai") [
     "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
     "L+ /usr/sbin/bash - - - - ${pkgs.bash}/bin/bash"
   ];
@@ -451,16 +438,16 @@ in
     };
   };
 
-  # SSH and Sunshine open their own ports. LocalSend needs TCP/UDP 53317;
-  # Deskflow accepts LAN clients over TCP 24800; HTTP/HTTPS are explicit.
+  # LocalSend and Deskflow are user-selected LAN integrations.
   networking.firewall = {
-    allowedTCPPorts = [
-      80
-      443
-      53317
-      24800
-    ];
-    allowedUDPPorts = [ 53317 ];
+    allowedTCPPorts =
+      [
+        80
+        443
+      ]
+      ++ lib.optionals (hasProgram "development") [ 53317 ]
+      ++ lib.optionals (hasProgram "deskflow") [ 24800 ];
+    allowedUDPPorts = lib.optionals (hasProgram "development") [ 53317 ];
   };
 
   # Compatibility baseline for existing system data; the release follows flake.nix.

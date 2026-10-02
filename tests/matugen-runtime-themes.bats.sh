@@ -2,17 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KITTY_CONF="$ROOT/dotfiles/config/shared/.config/kitty/kitty.conf"
-KITTY_THEME="$ROOT/dotfiles/config/shared/.config/kitty/skwd-theme.conf"
-YAZI_CONFIG="$ROOT/dotfiles/config/shared/.config/yazi"
+KITTY_CONF="$ROOT/dotfiles/config/programs/kitty/.config/kitty/kitty.conf"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
 }
 
-[ ! -e "$KITTY_THEME" ] || fail 'Obsolete Kitty runtime theme must not exist inside dotfiles'
-[ ! -e "$YAZI_CONFIG" ] || fail 'Obsolete Yazi configuration must not exist inside dotfiles'
 grep -Fq 'include current-theme.conf' "$KITTY_CONF" ||
   fail 'Kitty must include the runtime visual-profile theme'
 

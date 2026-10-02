@@ -37,6 +37,8 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Keep Ryoku's compositor, plugins and Quickshell on its own locked package set.
+    ryoku.url = "github:aethctl/Ryoku-on-NixOS/28c5207586babb136aecf8568ce3ed873fa8f8fd";
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -68,6 +68,7 @@ let
       };
       modules = [
         { nixpkgs.hostPlatform = system; }
+        ../nixos/users/default.nix
         ../nixos/functions/binary-cache.nix
         ../nixos/orgm/default.nix
       ]

@@ -15,6 +15,10 @@ grep -Fq 'environment.localBinInPath = true;' "$PROFILE" ||
   fail 'login session does not add ~/.local/bin to PATH'
 
 [[ -x "$RUNNER" ]] || fail 'i3 PATH runner missing or not executable'
+for helper in i3-config-editor i3-firefox-tabs i3status-personal i3-pi-prompt i3-obsidian-open-or-focus; do
+  [[ -x "$ROOT/dotfiles/config/users/osmarg/profiles/i3/.local/bin/$helper" ]] ||
+    fail "relocated Osmarg helper is not executable: $helper"
+done
 grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$RUNNER" ||
   fail 'i3 runner does not prepend user helper directory'
 grep -Fq 'set $run $HOME/.local/bin/i3-run' "$CONFIG" || fail 'i3 runner variable missing'
@@ -22,9 +26,7 @@ grep -Fq 'set $run $HOME/.local/bin/i3-run' "$CONFIG" || fail 'i3 runner variabl
 for command in \
   'bindsym $mod+space exec --no-startup-id $run i3-rofi --drun' \
   'bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window' \
-  'bindsym $mod+c exec --no-startup-id $run i3-calc' \
-  'bindsym $mod+o exec --no-startup-id $run i3-obsidian-open-or-focus' \
-  'bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt'; do
+  'bindsym $mod+c exec --no-startup-id $run i3-calc'; do
   grep -Fq "$command" "$CONFIG" || fail "custom helper bypasses i3 PATH runner: $command"
 done
 

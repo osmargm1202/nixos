@@ -3,9 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
-AUTOSTART="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
-WAYBAR="$ROOT/dotfiles/config/profiles/hyprland/.config/waybar-hypr/config"
-HELPER="$ROOT/dotfiles/config/profiles/hyprland/.local/bin/hypr-tray-applets"
+AUTOSTART="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/autostart.lua"
+WAYBAR="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/waybar-hypr/config"
+HELPER="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.local/bin/hypr-tray-applets"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

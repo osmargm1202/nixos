@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Compatibility for Osmarg's file, SSH and Pi menus; no legacy desktop theme.
+HYPR_ROFI_LINES="${HYPR_ROFI_LINES:-13}"
+HYPR_ROFI_WIDTH="${HYPR_ROFI_WIDTH:-600px}"
+hypr_rofi_dmenu() { rofi -dmenu -i -show-icons -p "$1" -lines "${2:-$HYPR_ROFI_LINES}"; }
+hypr_rofi_markup_dmenu() { rofi -dmenu -i -markup-rows -p "$1" -lines "${2:-$HYPR_ROFI_LINES}"; }
+hypr_rofi_drun() { rofi -show drun; }
+hypr_rofi_need() { command -v rofi >/dev/null; }

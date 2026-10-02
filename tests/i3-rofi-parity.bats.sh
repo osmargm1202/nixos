@@ -14,7 +14,7 @@ fail() {
 }
 
 [ -f "$THEME" ] || fail 'neutral i3 Rofi theme missing'
-grep -Fq '@import "orgm-current.rasi"' "$THEME" || fail 'i3 Rofi theme does not use current palette'
+grep -Fq '@import "i3-current.rasi"' "$THEME" || fail 'i3 Rofi theme does not use its current palette'
 grep -Fq 'theme="$HOME/.config/rofi/i3-menu.rasi"' "$BIN/i3-rofi" || fail 'i3-rofi does not force parity theme'
 grep -Fq 'font: "JetBrainsMono Nerd Font 12"' "$BIN/i3-rofi" || fail 'i3-rofi font override differs from Hyprland'
 grep -Fq 'element-icon { size: 32px; }' "$BIN/i3-rofi" || fail 'i3-rofi icon sizing differs from Hyprland'

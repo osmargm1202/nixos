@@ -1,0 +1,484 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper_dir="${I3_WALLPAPER_DIR:-$HOME/Pictures}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/i3"
+state_file="$state_dir/wallpaper"
+output_state_dir="$state_dir/wallpapers"
+layout_root="$state_dir/wallpaper-layouts"
+video_pid_dir="$state_dir/video-pids"
+video_log="$state_dir/video-wallpaper.log"
+video_placeholder="$state_dir/video-placeholder.ppm"
+mode="${1:---random}"
+active_outputs=()
+layout_wallpapers=()
+committed_global_wallpaper=''
+
+notify_error() {
+  command -v notify-send >/dev/null 2>&1 && notify-send 'i3 wallpaper' "$1" || true
+}
+
+canonical_media() {
+  local path="${1:-}"
+  [[ -f "$path" ]] || return 1
+  case "${path,,}" in
+    *.jpg|*.jpeg|*.png|*.webp|*.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi)
+      readlink -f -- "$path"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+canonical_image() {
+  local path="${1:-}"
+  case "${path,,}" in
+    *.jpg|*.jpeg|*.png|*.webp) canonical_media "$path" ;;
+    *) return 1 ;;
+  esac
+}
+
+is_video() {
+  case "${1,,}" in
+    *.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+random_image() {
+  local -a images=()
+  mapfile -d '' images < <(
+    find "$wallpaper_dir" -type d -name '.thumb' -prune -o \
+      -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+      -print0 2>/dev/null
+  )
+  ((${#images[@]} > 0)) || return 1
+  printf '%s\n' "${images[@]}" | shuf -n1
+}
+
+valid_output_name() {
+  [[ "${1:-}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+}
+
+load_active_outputs() {
+  active_outputs=()
+  if command -v xrandr >/dev/null 2>&1; then
+    mapfile -t active_outputs < <(
+      xrandr --listactivemonitors 2>/dev/null |
+        awk 'NR > 1 && NF { output = $NF; if (output ~ /^[A-Za-z0-9][A-Za-z0-9._-]*$/) print output }'
+    )
+  fi
+  ((${#active_outputs[@]} > 0)) || active_outputs=(default)
+}
+
+is_active_output() {
+  local wanted="$1" output
+  for output in "${active_outputs[@]}"; do
+    [[ "$output" == "$wanted" ]] && return 0
+  done
+  return 1
+}
+
+output_for_point() {
+  local point_x="$1" point_y="$2" line output word geometry
+  local width height offset_x offset_y
+  command -v xrandr >/dev/null 2>&1 || return 1
+  while IFS= read -r line; do
+    [[ "$line" =~ ^([^[:space:]]+)[[:space:]]+connected([[:space:]]|$) ]] || continue
+    output="${BASH_REMATCH[1]}"
+    is_active_output "$output" || continue
+    geometry=''
+    for word in $line; do
+      if [[ "$word" =~ ^[0-9]+x[0-9]+[+-][0-9]+[+-][0-9]+$ ]]; then
+        geometry="$word"
+        break
+      fi
+    done
+    [[ "$geometry" =~ ^([0-9]+)x([0-9]+)([+-][0-9]+)([+-][0-9]+)$ ]] || continue
+    width="${BASH_REMATCH[1]}"
+    height="${BASH_REMATCH[2]}"
+    offset_x="${BASH_REMATCH[3]}"
+    offset_y="${BASH_REMATCH[4]}"
+    if ((point_x >= offset_x && point_x < offset_x + width &&
+         point_y >= offset_y && point_y < offset_y + height)); then
+      printf '%s\n' "$output"
+      return 0
+    fi
+  done < <(xrandr --query 2>/dev/null)
+  return 1
+}
+
+coordinates_from_xdotool() {
+  local raw="$1" key value x='' y='' width='' height=''
+  while IFS='=' read -r key value; do
+    case "$key" in
+      X) x="$value" ;;
+      Y) y="$value" ;;
+      WIDTH) width="$value" ;;
+      HEIGHT) height="$value" ;;
+    esac
+  done <<<"$raw"
+  [[ "$x" =~ ^-?[0-9]+$ && "$y" =~ ^-?[0-9]+$ ]] || return 1
+  if [[ "$width" =~ ^[0-9]+$ && "$height" =~ ^[0-9]+$ ]]; then
+    x=$((x + width / 2))
+    y=$((y + height / 2))
+  fi
+  printf '%s %s\n' "$x" "$y"
+}
+
+active_output() {
+  local output raw coordinates x y
+  if [[ -n "${I3_WALLPAPER_OUTPUT:-}" ]]; then
+    valid_output_name "$I3_WALLPAPER_OUTPUT" && is_active_output "$I3_WALLPAPER_OUTPUT" || return 1
+    printf '%s\n' "$I3_WALLPAPER_OUTPUT"
+    return 0
+  fi
+  if ((${#active_outputs[@]} == 1)) && [[ "${active_outputs[0]}" == default ]]; then
+    printf 'default\n'
+    return 0
+  fi
+  if command -v xdotool >/dev/null 2>&1; then
+    if raw="$(xdotool getmouselocation --shell 2>/dev/null)" &&
+       coordinates="$(coordinates_from_xdotool "$raw")"; then
+      read -r x y <<<"$coordinates"
+      if output="$(output_for_point "$x" "$y")"; then
+        printf '%s\n' "$output"
+        return 0
+      fi
+    fi
+    if raw="$(xdotool getactivewindow getwindowgeometry --shell 2>/dev/null)" &&
+       coordinates="$(coordinates_from_xdotool "$raw")"; then
+      read -r x y <<<"$coordinates"
+      if output="$(output_for_point "$x" "$y")"; then
+        printf '%s\n' "$output"
+        return 0
+      fi
+    fi
+  fi
+  output="$(xrandr --query 2>/dev/null | awk '$2 == "connected" && $3 == "primary" { print $1; exit }')"
+  if [[ -n "$output" ]] && is_active_output "$output"; then
+    printf '%s\n' "$output"
+  else
+    printf '%s\n' "${active_outputs[0]}"
+  fi
+}
+
+current_default_wallpaper() {
+  local wallpaper=''
+  if [[ -f "$output_state_dir/.default" ]]; then
+    wallpaper="$(canonical_media "$(head -n1 "$output_state_dir/.default")" || true)"
+  fi
+  if [[ -z "$wallpaper" && -f "$state_file" ]]; then
+    wallpaper="$(canonical_media "$(head -n1 "$state_file")" || true)"
+  fi
+  [[ -n "$wallpaper" ]] || return 1
+  printf '%s\n' "$wallpaper"
+}
+
+wallpaper_for_output() {
+  local output="$1" wallpaper=''
+  if [[ "$output" != default && -f "$output_state_dir/$output" ]]; then
+    wallpaper="$(canonical_media "$(head -n1 "$output_state_dir/$output")" || true)"
+  fi
+  if [[ -z "$wallpaper" ]]; then
+    wallpaper="$(current_default_wallpaper || true)"
+  fi
+  if [[ -z "$wallpaper" ]]; then
+    wallpaper="$(random_image || true)"
+  fi
+  [[ -n "$wallpaper" ]] || return 1
+  printf '%s\n' "$wallpaper"
+}
+
+compose_layout() {
+  local override_output="${1:-}" override_wallpaper="${2:-}" output wallpaper
+  layout_wallpapers=()
+  for output in "${active_outputs[@]}"; do
+    if [[ -n "$override_output" && ( "$override_output" == all || "$override_output" == "$output" ) ]]; then
+      wallpaper="$override_wallpaper"
+    else
+      wallpaper="$(wallpaper_for_output "$output" || true)"
+      [[ -n "$wallpaper" ]] || wallpaper="$override_wallpaper"
+      [[ -n "$wallpaper" ]] || return 1
+    fi
+    layout_wallpapers+=("$wallpaper")
+  done
+}
+
+geometry_for_output() {
+  local wanted="$1" line output word
+  command -v xrandr >/dev/null 2>&1 || return 1
+  while IFS= read -r line; do
+    [[ "$line" =~ ^([^[:space:]]+)[[:space:]]+connected([[:space:]]|$) ]] || continue
+    output="${BASH_REMATCH[1]}"
+    [[ "$wanted" == default || "$output" == "$wanted" ]] || continue
+    for word in $line; do
+      if [[ "$word" =~ ^[0-9]+x[0-9]+[+-][0-9]+[+-][0-9]+$ ]]; then
+        printf '%s\n' "$word"
+        return 0
+      fi
+    done
+  done < <(xrandr --query 2>/dev/null)
+  return 1
+}
+
+process_starttime() {
+  local pid="$1"
+  [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/stat" ]] || return 1
+  awk '{ print $22 }' "/proc/$pid/stat" 2>/dev/null
+}
+
+tracked_process_alive() {
+  local pid="$1" expected_start="$2" actual_start
+  actual_start="$(process_starttime "$pid" || true)"
+  [[ -n "$actual_start" && "$actual_start" == "$expected_start" ]]
+}
+
+process_group_alive() {
+  local group_leader="$1"
+  kill -0 -- "-$group_leader" 2>/dev/null
+}
+
+stop_video_wallpapers() {
+  local pid_file pid expected_start attempt
+  [[ -d "$video_pid_dir" ]] || return 0
+  shopt -s nullglob
+  for pid_file in "$video_pid_dir"/*; do
+    read -r pid expected_start <"$pid_file" 2>/dev/null || continue
+    tracked_process_alive "$pid" "$expected_start" || continue
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    for attempt in {1..10}; do
+      process_group_alive "$pid" || break
+      sleep 0.05
+    done
+    process_group_alive "$pid" && kill -KILL -- "-$pid" 2>/dev/null || true
+  done
+  shopt -u nullglob
+  rm -rf -- "$video_pid_dir"
+}
+
+ensure_video_placeholder() {
+  [[ -f "$video_placeholder" ]] && return 0
+  local temporary
+  temporary="$(mktemp "$video_placeholder.tmp.XXXXXX")"
+  printf 'P3\n1 1\n255\n26 27 38\n' >"$temporary"
+  mv -f -- "$temporary" "$video_placeholder"
+}
+
+start_video_wallpaper() {
+  local output="$1" video="$2" geometry xwinwrap_bin mpv_bin pid starttime
+  geometry="$(geometry_for_output "$output")" || return 1
+  xwinwrap_bin="${I3_XWINWRAP_BIN:-$(command -v xwinwrap || true)}"
+  mpv_bin="${I3_MPV_BIN:-$(command -v mpv || true)}"
+  [[ -x "$xwinwrap_bin" && -x "$mpv_bin" ]] || return 1
+  mkdir -p "$video_pid_dir"
+  (
+    # Long-lived wallpaper children must not retain any caller transaction lock.
+    close_inherited_fds
+    exec setsid "$xwinwrap_bin" -g "$geometry" -ni -b -nf -ov -- \
+      "$mpv_bin" -wid WID --loop-file=inf --no-audio --no-osc --no-osd-bar \
+      --no-input-default-bindings --panscan=1.0 --really-quiet "$video"
+  ) >>"$video_log" 2>&1 &
+  pid=$!
+  sleep 0.1
+  kill -0 "$pid" 2>/dev/null || return 1
+  starttime="$(process_starttime "$pid")" || return 1
+  atomic_write "$video_pid_dir/$output" "$pid $starttime"
+}
+
+
+apply_layout() {
+  local -a static_wallpapers=() video_indices=()
+  local index output wallpaper
+  ((${#layout_wallpapers[@]} > 0)) || return 1
+  for index in "${!layout_wallpapers[@]}"; do
+    wallpaper="${layout_wallpapers[$index]}"
+    if is_video "$wallpaper"; then
+      ensure_video_placeholder
+      static_wallpapers+=("$video_placeholder")
+      video_indices+=("$index")
+    else
+      static_wallpapers+=("$wallpaper")
+    fi
+  done
+  feh --bg-fill "${static_wallpapers[@]}"
+  stop_video_wallpapers
+  for index in "${video_indices[@]}"; do
+    output="${active_outputs[$index]}"
+    if ! start_video_wallpaper "$output" "${layout_wallpapers[$index]}"; then
+      stop_video_wallpapers
+      notify_error "No se pudo iniciar el fondo de video en $output"
+      return 1
+    fi
+  done
+}
+
+atomic_write() {
+  local target="$1" value="$2" temporary
+  mkdir -p "$(dirname "$target")"
+  temporary="$(mktemp "$target.tmp.XXXXXX")"
+  printf '%s\n' "$value" >"$temporary"
+  mv -f "$temporary" "$target"
+}
+
+close_inherited_fds() {
+  local fd
+  for fd in /proc/$$/fd/*; do
+    fd="${fd##*/}"
+    [[ "$fd" =~ ^[0-9]+$ ]] && (( fd >= 3 )) || continue
+    eval "exec ${fd}>&-" 2>/dev/null || true
+  done
+}
+
+copy_current_layout() {
+  local destination="$1" source name wallpaper
+  [[ -d "$output_state_dir" ]] || return 0
+  shopt -s nullglob dotglob
+  for source in "$output_state_dir"/*; do
+    [[ -f "$source" ]] || continue
+    name="${source##*/}"
+    [[ "$name" == .default ]] || valid_output_name "$name" || continue
+    wallpaper="$(canonical_media "$(head -n1 "$source")" || true)"
+    [[ -n "$wallpaper" ]] && atomic_write "$destination/$name" "$wallpaper"
+  done
+  shopt -u nullglob dotglob
+}
+
+publish_generation() {
+  local generation="$1" temporary_link migrated=''
+  mkdir -p "$layout_root"
+  if [[ -d "$output_state_dir" && ! -L "$output_state_dir" ]]; then
+    migrated="$layout_root/.migrated.$$.${RANDOM}"
+    mv -- "$output_state_dir" "$migrated"
+  fi
+  temporary_link="$state_dir/.wallpapers.next.$$.${RANDOM}"
+  if ! ln -s "wallpaper-layouts/${generation##*/}" "$temporary_link" ||
+     ! mv -Tf -- "$temporary_link" "$output_state_dir"; then
+    rm -f -- "$temporary_link"
+    if [[ -n "$migrated" && ! -e "$output_state_dir" && ! -L "$output_state_dir" ]]; then
+      mv -- "$migrated" "$output_state_dir"
+    fi
+    return 1
+  fi
+  find "$layout_root" -mindepth 1 -maxdepth 1 -type d ! -samefile "$generation" \
+    -exec rm -rf -- {} + 2>/dev/null || true
+}
+
+commit_shared_layout() {
+  local wallpaper="$1" generation
+  mkdir -p "$layout_root"
+  generation="$(mktemp -d "$layout_root/.generation.XXXXXX")"
+  atomic_write "$generation/.default" "$wallpaper"
+  publish_generation "$generation"
+  # Compatibility mirror for older generations; the atomic layout pointer is authoritative.
+  atomic_write "$state_file" "$wallpaper"
+}
+
+commit_output_layout() {
+  local generation default_wallpaper index output
+  mkdir -p "$layout_root"
+  generation="$(mktemp -d "$layout_root/.generation.XXXXXX")"
+  copy_current_layout "$generation"
+  default_wallpaper="$(current_default_wallpaper || true)"
+  [[ -z "$default_wallpaper" || -f "$generation/.default" ]] ||
+    atomic_write "$generation/.default" "$default_wallpaper"
+  for index in "${!active_outputs[@]}"; do
+    output="${active_outputs[$index]}"
+    if [[ "$output" == default ]]; then
+      atomic_write "$generation/.default" "${layout_wallpapers[$index]}"
+    else
+      valid_output_name "$output" || return 1
+      atomic_write "$generation/$output" "${layout_wallpapers[$index]}"
+    fi
+  done
+  publish_generation "$generation"
+}
+
+set_all() {
+  local wallpaper="$1"
+  compose_layout all "$wallpaper"
+  apply_layout
+  commit_shared_layout "$wallpaper"
+  committed_global_wallpaper="$wallpaper"
+}
+
+set_output() {
+  local output="$1" wallpaper="$2"
+  valid_output_name "$output" && is_active_output "$output" || {
+    notify_error "La pantalla $output no está activa."
+    return 1
+  }
+  compose_layout "$output" "$wallpaper"
+  apply_layout
+  commit_output_layout
+}
+
+require_media() {
+  canonical_media "${1:-}" || {
+    notify_error 'Selecciona una imagen o video JPG, PNG, WEBP, MP4, MKV, WEBM, MOV, M4V o AVI válido.'
+    return 1
+  }
+}
+
+mkdir -p "$state_dir"
+# Lock the state directory itself: unlike `> wallpaper.lock`, this cannot follow
+# and truncate a stale or malicious lock-file symlink.
+exec {wallpaper_lock_fd}<"$state_dir"
+flock -x "$wallpaper_lock_fd"
+
+load_active_outputs
+case "$mode" in
+  --set)
+    wallpaper="$(require_media "${2:-}")" || exit 1
+    set_all "$wallpaper"
+    ;;
+  --set-active)
+    wallpaper="$(require_media "${2:-}")" || exit 1
+    output="$(active_output)" || {
+      notify_error 'No se pudo detectar la pantalla activa.'
+      exit 1
+    }
+    set_output "$output" "$wallpaper"
+    ;;
+  --set-output)
+    output="${2:-}"
+    wallpaper="$(require_media "${3:-}")" || exit 1
+    set_output "$output" "$wallpaper"
+    ;;
+  --restore)
+    if ! compose_layout; then
+      notify_error "No hay fondos válidos guardados ni imágenes en $wallpaper_dir"
+      exit 1
+    fi
+    apply_layout
+    commit_output_layout
+    ;;
+  --random)
+    wallpaper="$(random_image || true)"
+    [[ -n "$wallpaper" ]] || {
+      notify_error "No hay imágenes en $wallpaper_dir"
+      exit 1
+    }
+    set_all "$wallpaper"
+    ;;
+  --random-active)
+    wallpaper="$(random_image || true)"
+    [[ -n "$wallpaper" ]] || {
+      notify_error "No hay imágenes en $wallpaper_dir"
+      exit 1
+    }
+    output="$(active_output)" || {
+      notify_error 'No se pudo detectar la pantalla activa.'
+      exit 1
+    }
+    set_output "$output" "$wallpaper"
+    ;;
+  *)
+    printf 'usage: %s --set FILE|--set-active FILE|--set-output OUTPUT FILE|--restore|--random|--random-active\n' "${0##*/}" >&2
+    exit 2
+    ;;
+esac
+flock -u "$wallpaper_lock_fd"
+exec {wallpaper_lock_fd}>&-
+if [[ -n "$committed_global_wallpaper" && -n "${I3_WALLPAPER_RECORD_COMMAND:-}" ]]; then
+  "$I3_WALLPAPER_RECORD_COMMAND" record-wallpaper "$committed_global_wallpaper" || true
+fi

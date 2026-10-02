@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+report="${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku/shortcuts.tsv"
+[[ -r "$report" ]] || { printf 'Inicia la sesión Ryoku para generar los atajos.\n' >&2; exit 1; }
+if [[ "${1:-}" == --list ]]; then cat "$report"; exit 0; fi
+rofi -dmenu -i -p 'Atajos Osmarg / Ryoku' -lines 20 < "$report" >/dev/null || true

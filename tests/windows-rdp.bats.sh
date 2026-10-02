@@ -3,8 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+export ROFI_TEST_LIB="$REPO_DIR/dotfiles/config/profiles/hyprland/.local/bin/rofi-menu-lib"
 SCRIPTS=(
-  "$REPO_DIR/dotfiles/config/shared/.local/bin/windows-rdp"
+  "$REPO_DIR/dotfiles/config/users/osmarg/programs/containers/.local/bin/windows-rdp"
 )
 
 fail() {
@@ -273,7 +274,7 @@ test_graphical_selector_and_moonlight() {
 	local script="$1"
 	with_tmp bash -c '
     script="$1"; tmp="$2"
-    export ROFI_MENU_LIB="${script%/windows-rdp}/rofi-menu-lib"
+    export ROFI_MENU_LIB="$ROFI_TEST_LIB"
     make_stub "$tmp" tailscale "printf \"%s\\n\" \"\$TAILSCALE_STATUS\""
     make_stub "$tmp" jq "printf \"%s\\n\" \"\$JQ_OUTPUT\""
     make_stub "$tmp" rofi "echo rofi \"\$@\" >>\"\$CALLS\"; printf \"%s\\n\" \"\$ROFI_INDEX\""

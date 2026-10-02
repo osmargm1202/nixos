@@ -1,6 +1,11 @@
 # pi coding agent — instalacion nativa via `bun add -g --ignore-scripts @earendil-works/pi-coding-agent`.
 # Este módulo NO instala pi; solo provee sus necesidades de runtime.
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   piInstall = pkgs.writeShellScriptBin "pi-install" ''
     #! /bin/sh
@@ -18,10 +23,12 @@ let
   '';
 in
 {
+  config = lib.mkIf (builtins.any (program: builtins.elem program config.orgm.user.programs) [ "ai" "orgm" ]) {
   environment.systemPackages = with pkgs; [
     # Runtime del CLI y de `bun add -g --ignore-scripts`.
     nodejs_22
     bun
     piInstall
   ];
+  };
 }

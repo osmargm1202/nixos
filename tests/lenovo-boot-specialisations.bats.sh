@@ -41,6 +41,7 @@ nix eval --impure --raw --expr '
         config.boot.loader.systemd-boot.extraInstallCommands != null
       && config.specialisation.gaming.configuration.orgm.gaming.gamescopeTty1.enable
       && !config.specialisation.gaming.configuration.services.displayManager.sddm.enable
+      && !config.specialisation.gaming.configuration.services.xserver.displayManager.lightdm.enable
       && builtins.match ".*gamescope -e -- steam -gamepadui.*"
         config.specialisation.gaming.configuration.programs.bash.loginShellInit != null
       && config.specialisation.server.configuration.systemd.defaultUnit == "multi-user.target"

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+step="3"
+limit="150"
+
+case "${1:-}" in
+  up) pamixer --default-source --allow-boost --set-limit "$limit" -i "$step" ;;
+  down) pamixer --default-source --allow-boost --set-limit "$limit" -d "$step" ;;
+  mute) pamixer --default-source -t ;;
+  *) echo "usage: mic-volume-osd up|down|mute" >&2; exit 2 ;;
+esac
+
+vol=$(pamixer --default-source --get-volume 2>/dev/null || echo 0)
+muted=$(pamixer --default-source --get-mute 2>/dev/null || echo false)
+if [ "$muted" = "true" ]; then
+  icon="󰍭"
+  title="Mic muted"
+else
+  icon="󰍬"
+  title="Mic ${vol}%"
+fi
+
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send -a "osd-mic" \
+    -h string:x-canonical-private-synchronous:osd-mic \
+    -h int:value:"$vol" \
+    -t 900 \
+    "$icon $title" "" >/dev/null 2>&1 || true
+fi

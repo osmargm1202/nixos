@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Shared Rofi theme selection for graphical menus outside a profile helper.
+# Source this file; do not execute it.
+
+rofi_menu_theme() {
+  case "${XDG_CURRENT_DESKTOP:-${DESKTOP_SESSION:-}}" in
+    *i3*) printf '%s\n' "$HOME/.config/rofi/i3-menu.rasi" ;;
+    *) printf '%s\n' "$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi" ;;
+  esac
+}
+
+rofi_menu() {
+  rofi -theme "$(rofi_menu_theme)" "$@"
+}

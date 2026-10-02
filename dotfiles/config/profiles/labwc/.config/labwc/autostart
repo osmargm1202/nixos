@@ -14,7 +14,9 @@ dbus-update-activation-environment --systemd \
   XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
 
 systemctl --user start graphical-session.target 2>/dev/null || true
-systemctl --user --quiet start sunshine.service 2>/dev/null || true
+
+personal_autostart="${XDG_CONFIG_HOME:-$HOME/.config}/labwc/autostart-personal"
+[ ! -r "$personal_autostart" ] || . "$personal_autostart"
 
 # DMS maneja panel, dock y wallpapers.
 pgrep -u "$USER" -x dms >/dev/null 2>&1 || dms run -d >/dev/null 2>&1 &
@@ -25,12 +27,8 @@ pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &
 # Red / Bluetooth.
 pgrep -u "$USER" -x nm-applet >/dev/null 2>&1 || nm-applet --indicator >/dev/null 2>&1 &
 pgrep -u "$USER" -f '(^|/)tailscale systray($| )' >/dev/null 2>&1 || tailscale systray --theme light >/dev/null 2>&1 &
-pgrep -u "$USER" -f '(^|/)syncthingtray( |$)' >/dev/null 2>&1 || syncthingtray --single-instance --wait >/dev/null 2>&1 &
 pgrep -u "$USER" -x blueman-applet >/dev/null 2>&1 || blueman-applet >/dev/null 2>&1 &
 
-# KDE Connect mirrors the i3 and Hyprland session indicator.
-pgrep -u "$USER" -x kdeconnect-indicator >/dev/null 2>&1 || \
-  kdeconnect-indicator >/dev/null 2>&1 &
 
 # Polkit gráfico.
 pgrep -u "$USER" -f polkit-gnome-authentication-agent-1 >/dev/null 2>&1 || \
@@ -46,13 +44,6 @@ pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
 
 pgrep -u "$USER" -x nextcloud >/dev/null 2>&1 || nextcloud --background >/dev/null 2>&1 &
 
-# Keep chat and games ready without opening either client window. Discord waits
-# for DMS so its indicator can attach to the tray.
-pgrep -u "$USER" -f 'com.discordapp.Discord' >/dev/null 2>&1 || \
-  (until pgrep -u "$USER" -x dms >/dev/null 2>&1; do sleep 1; done; \
-   exec discord --start-minimized >/dev/null 2>&1) &
-pgrep -u "$USER" -x steam >/dev/null 2>&1 || \
-  (command -v steam >/dev/null 2>&1 && steam -silent >/dev/null 2>&1) &
 
 # Portapapeles.
 pgrep -u "$USER" -f 'wl-paste.*text.*cliphist store' >/dev/null 2>&1 || \

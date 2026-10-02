@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+# Personal session integrations retained in Osmarg's layer.
+systemctl --user --quiet start sunshine.service 2>/dev/null || true
+if command -v syncthingtray >/dev/null 2>&1; then
+  pgrep -u "$USER" -f '(^|/)syncthingtray( |$)' >/dev/null 2>&1 || \
+    syncthingtray --single-instance --wait >/dev/null 2>&1 &
+fi
+if command -v kdeconnect-indicator >/dev/null 2>&1; then
+  pgrep -u "$USER" -x kdeconnect-indicator >/dev/null 2>&1 || \
+    kdeconnect-indicator >/dev/null 2>&1 &
+fi
+if command -v discord >/dev/null 2>&1; then
+  pgrep -u "$USER" -f 'com.discordapp.Discord' >/dev/null 2>&1 || \
+    (until pgrep -u "$USER" -x dms >/dev/null 2>&1; do sleep 1; done; \
+     exec discord --start-minimized >/dev/null 2>&1) &
+fi
+if command -v steam >/dev/null 2>&1; then
+  pgrep -u "$USER" -x steam >/dev/null 2>&1 || steam -silent >/dev/null 2>&1 &
+fi

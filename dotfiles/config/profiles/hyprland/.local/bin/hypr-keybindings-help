@@ -64,11 +64,6 @@ entries() {
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus --new-window'
       entry 'Win+W' 'Restaurar Firefox o abrir pestaña nueva' 'firefox-open-tab --restore-or-focus'
-      entry 'Win+Ctrl+W' 'Iniciar/detener Windows VM' 'windows-rdp toggle'
-      entry 'Win+A' 'Chat ORGM AI' 'kitty --class orgmai-chat -o remember_window_size=no -o initial_window_width=160c -o initial_window_height=42c -e orgmai new'
-      entry 'Win+Shift+A' 'Historial ORGM AI' 'kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai prev'
-      entry 'Win+Ctrl+Shift+A' 'Configurar ORGM AI' 'kitty --class orgmai-config -o remember_window_size=no -o initial_window_width=132c -o initial_window_height=38c -e orgmai config'
-      entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)
       entry 'Win+M' 'Abrir pestaña web nueva' 'firefox-open-tab --new-tab --prompt'
@@ -76,13 +71,10 @@ entries() {
       entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
       entry 'Win+Esc' 'Pestañas Firefox' 'firefox-tabs'
       entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
-      entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
       entry 'Win+V' 'Clipboard' 'cliphist + rofi'
       entry 'Win+Ctrl+.' 'Símbolos, emoji e iconos Nerd Font' 'rofi-symbols'
       entry 'Print' 'Screenshot área' 'grim/slurp/swappy'
       entry 'Ctrl+Print' 'Screenshot pantalla' 'grim/swappy'
-      entry 'Win+Print' 'Grabar pantalla MP4' 'record_screen_mp4'
-      entry 'Win+Shift+Print' 'Grabar pantalla GIF' 'record_screen_gif'
       ;;
     windows)
       entry 'Win+Tab' 'Última ventana' 'focus last'
@@ -128,7 +120,6 @@ entries() {
     system)
       entry 'Win+Alt+E' 'Power menu' 'hypr-power-menu'
       entry 'Win+Alt+L' 'Lock' 'hyprlock'
-      entry 'Win+Alt+W' 'Fondo aleatorio' 'hypr-wallpaper random'
       entry 'Win+Shift+W' 'Enfocar Firefox' 'firefox-open-tab --focus'
       entry 'Ctrl+Space' 'Cambiar teclado' 'hyprctl switchxkblayout all next'
       entry 'Win+Shift+E' 'Salir Hyprland' 'exit'

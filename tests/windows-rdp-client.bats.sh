@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-helper="$repo_dir/dotfiles/config/shared/.local/bin/windows-rdp"
+helper="$repo_dir/dotfiles/config/users/osmarg/programs/containers/.local/bin/windows-rdp"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 bin="$tmp/bin"

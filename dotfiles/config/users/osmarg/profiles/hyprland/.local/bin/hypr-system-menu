@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' \
+  '󰑓 Reload Hyprland' \
+  '󰑓 Reload nwg-dock' \
+  '󰖟 Restore wallpaper' \
+  '󰖟 Random wallpaper' \
+  '󰕾 Restart Waybar' \
+  '󰃢 Nix cleanup' \
+  '󰌢 Hardware details' \
+  '󰆍 User logs' \
+  '󰐥 Power' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
+
+case "$choice" in
+  *'Reload Hyprland') exec hyprctl reload ;;
+  *'Reload nwg-dock') exec hypr-nwg-dock-reload ;;
+  *'Restore wallpaper') exec hypr-wallpaper restore ;;
+  *'Random wallpaper') exec orgm-visual-profile random-wallpaper ;;
+  *'Restart Waybar') exec waybar-watch --restart "$HOME/.config/waybar-hypr" ;;
+  *'Nix cleanup') exec kitty --class nixclean -e bash -c 'nixclean; printf "\n"; read -r -p "enter..."' ;;
+  *'Hardware details') exec kitty --title hardware-fastfetch -e bash -ic 'fastfetch-hardware; printf "\n"; exec bash -i' ;;
+  *'User logs') exec kitty --hold --class user-logs -e journalctl --user -n 200 --no-pager ;;
+  *'Power') exec hypr-power-menu ;;
+  *) exec hypr-main-menu ;;
+esac

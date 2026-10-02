@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Shared by the i3 and Hyprland SSH pickers; source this file.
+ssh_recent_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ssh-host"
+ssh_recent_file="$ssh_recent_dir/recent-hosts"
+
+ssh_order_hosts() {
+  {
+    if [[ -f $ssh_recent_file ]]; then
+      cat "$ssh_recent_file"
+    fi
+    cat
+  } | awk 'NF { host=$0; sub(/^.*@/, "", host); if (!seen[host]++) print }'
+}
+
+ssh_remember_host() {
+  local host=$1 tmp
+  mkdir -p "$ssh_recent_dir"
+  tmp=$(mktemp "$ssh_recent_dir/recent-hosts.XXXXXXXX")
+  {
+    printf '%s\n' "$host"
+    if [[ -f $ssh_recent_file ]]; then
+      cat "$ssh_recent_file"
+    fi
+  } | awk 'NF { host=$0; sub(/^.*@/, "", host); if (!seen[host]++) print }' >"$tmp"
+  mv "$tmp" "$ssh_recent_file"
+}
+
+ssh_forget_host() {
+  local host=$1 tmp
+  [[ -f $ssh_recent_file ]] || return 0
+  tmp=$(mktemp "$ssh_recent_dir/recent-hosts.XXXXXXXX")
+  awk -v host="${host##*@}" '{ target=$0; sub(/^.*@/, "", target); if (target != host) print }' "$ssh_recent_file" >"$tmp"
+  mv "$tmp" "$ssh_recent_file"
+}

@@ -29,7 +29,7 @@ fi
 for mapping in \
   'orgm orgm-hyprland' \
   'lenovo lenovo-hyprland' \
-  'jarq jarq-hyprland'
+  'jarq jarq-i3'
 do
   read -r alias target <<<"$mapping"
   alias_drv="$(nix eval --raw "path:$REPO_DIR#nixosConfigurations.$alias.config.system.build.toplevel.drvPath")"

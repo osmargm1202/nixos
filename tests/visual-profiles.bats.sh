@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/dotfiles/config/shared/.local/bin/orgm-visual-profile"
+PROFILE="$ROOT/dotfiles/config/users/osmarg/programs/orgm/.local/bin/orgm-visual-profile"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -213,7 +213,7 @@ ln -s "$PROFILE" "$HOME/.local/bin/orgm-visual-profile"
 HOME="$HOME" XDG_CONFIG_HOME="$XDG_CONFIG_HOME" XDG_STATE_HOME="$XDG_STATE_HOME" \
   ORGM_VISUAL_PROFILE_BACKEND=i3 ORGM_VISUAL_PROFILE_PICTURES_ROOT="$PICTURES" \
   ORGM_VISUAL_PROFILE_TEST_CALLS="$CALLS" PATH="$TMP/bin:$PATH" \
-  PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/dotfiles/config/profiles/i3/.local/bin/i3status-localized" "$PROFILE" <<'PY'
+  PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/dotfiles/config/users/osmarg/profiles/i3/.local/bin/i3status-personal" "$PROFILE" <<'PY'
 from importlib.machinery import SourceFileLoader
 import importlib.util
 import re

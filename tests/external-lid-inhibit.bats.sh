@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HELPER="$ROOT/dotfiles/config/shared/.local/bin/external-lid-inhibit"
+HELPER="$ROOT/dotfiles/config/users/osmarg/programs/shell/.local/bin/external-lid-inhibit"
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT; mkdir -p "$tmp/bin"
 cat >"$tmp/bin/systemd-inhibit" <<'EOF'

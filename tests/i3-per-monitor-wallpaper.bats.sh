@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
+HELPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper-base"
+export I3_WALLPAPER_RECORD_COMMAND=orgm-visual-profile
 PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT

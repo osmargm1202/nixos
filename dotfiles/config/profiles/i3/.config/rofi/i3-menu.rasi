@@ -1,4 +1,4 @@
-@import "orgm-current.rasi"
+@import "i3-current.rasi"
 
 // Rofi menu theme: translucent Waybar-like surface without an outline.
 

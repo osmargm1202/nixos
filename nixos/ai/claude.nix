@@ -1,6 +1,11 @@
 # Claude Code — instalador nativo (~/.local/bin/claude), preferido via `bun add`.
 # Este módulo NO instala claude; solo provee sus necesidades de runtime.
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   claudeInstall = pkgs.writeShellScriptBin "claude-install" ''
     #! /bin/sh
@@ -26,6 +31,7 @@ let
   '';
 in
 {
+  config = lib.mkIf (builtins.elem "ai" config.orgm.user.programs) {
   # Loader shim para el binario dinamico del instalador oficial.
   programs.nix-ld.enable = true;
 
@@ -39,4 +45,5 @@ in
     pnpm
     claudeInstall
   ];
+  };
 }

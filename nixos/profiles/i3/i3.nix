@@ -1,11 +1,14 @@
 {
   pkgs,
   lib,
+  config,
   userName ? "osmarg",
   ...
 }:
 
 let
+  hasProgram = name: builtins.elem name config.orgm.user.programs;
+
   ngcbgI3Tools = pkgs.callPackage ./ngcbg-i3-tools.nix { };
   thunarWithoutWallpaperPlugin = pkgs.thunar.overrideAttrs (old: {
     postFixup = (old.postFixup or "") + ''
@@ -13,6 +16,7 @@ let
         "$out/lib/thunarx-3/thunar-wallpaper-plugin.la"
     '';
   });
+
   # Picom's animation/rule lists need libconfig parentheses, so keep its
   # runtime configuration native instead of serializing through the module.
   picomEffectsConfig = pkgs.writeText "picom-i3-effects.conf" ''
@@ -142,6 +146,7 @@ in
     IdleAction = "ignore";
   };
   services.autorandr.enable = true;
+  programs.xfconf.enable = true;
 
   # Autorandr's batch mode discards child failures. Dispatch hotplug handling to
   # the graphical user's systemd manager so the helper can apply its XRandR
@@ -151,13 +156,6 @@ in
     "${pkgs.systemd}/bin/systemctl --user --machine=${userName}@.host start i3-monitor-hotplug.service"
   ];
 
-  systemd.user.services.i3-monitor-hotplug = {
-    description = "Restore an Autorandr profile or select an external primary display";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "%h/.local/bin/i3-monitor-profile --apply --quiet";
-    };
-  };
 
   systemd.user.services.i3-clipcat = {
     description = "Clipcat clipboard history for i3";
@@ -274,7 +272,6 @@ in
       mediainfo
       poppler-utils
       fontconfig
-      git
       gnused
       iproute2
       procps
@@ -289,6 +286,13 @@ in
       (rofi.override { plugins = [ rofi-calc ]; })
       rofimoji
       networkmanager_dmenu
+      thunarWithoutWallpaperPlugin
+      tumbler
+      gnome-text-editor
+      gnome-online-accounts-gtk
+      evince
+      loupe
+      file-roller
       # Clipboard history is supplied by the persistent Clipcat user service.
       dunst
       feh
@@ -338,16 +342,50 @@ in
       catppuccin-cursors.latteTeal
       gnome-themes-extra
 
-      # Daily applications used by MIME defaults and bindings.
-      kitty
-      thunarWithoutWallpaperPlugin
-      tumbler
-      gnome-text-editor
-      evince
-      loupe
-      file-roller
-      pkgs.gnome-keyring
-      pkgs."gnome-online-accounts-gtk"
     ]
   );
+
+  home-manager.users.${userName} = lib.mkMerge [
+    {
+      xfconf.settings.thunar = {
+        last-sort-column = "THUNAR_COLUMN_DATE_MODIFIED";
+        last-sort-order = "GTK_SORT_DESCENDING";
+        misc-directory-specific-settings = false;
+      };
+      systemd.user.services.i3-monitor-hotplug = {
+        Unit.Description = "Restore an Autorandr profile or select an external primary display";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.bash}/bin/bash %h/.local/bin/i3-monitor-profile --apply --quiet";
+          Environment = "PATH=%h/.local/bin:${config.home-manager.users.${userName}.home.path}/bin:${lib.makeBinPath [
+            pkgs.bash pkgs.autorandr pkgs.xrandr pkgs.libnotify pkgs.feh pkgs.coreutils
+          ]}:/run/current-system/sw/bin";
+        };
+      };
+    }
+    (lib.mkIf (hasProgram "tailscale") {
+      xdg.configFile."i3/config.d/10-tailscale.conf".text = ''
+        # i3bar hosts XEmbed only; bridge Tailscale's StatusNotifier item.
+        exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
+      '';
+    })
+    (lib.mkIf (hasProgram "nextcloud") {
+      xdg.configFile."i3/config.d/20-nextcloud.conf".text = ''
+        exec --no-startup-id nextcloud --background
+      '';
+    })
+    (lib.mkIf (hasProgram "kdeconnect") {
+      xdg.configFile."i3/config.d/30-kdeconnect.conf".text = ''
+        exec --no-startup-id kdeconnect-indicator
+      '';
+    })
+    (lib.mkIf (hasProgram "webapps") {
+      xdg.configFile."i3/config.d/40-webapps.conf".text = ''
+        set $browser $run firefox-open-tab --restore-or-focus
+        exec --no-startup-id firefox
+        bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt
+        bindsym $mod+w exec --no-startup-id $browser
+      '';
+    })
+  ];
 }

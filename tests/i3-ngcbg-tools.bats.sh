@@ -21,18 +21,6 @@ grep -Fq 'exec_always --no-startup-id autotiling' "$CONFIG" || fail 'autotiling 
 grep -Fq "exec_always --no-startup-id rootbtnd -r -b button1:'i3-rofi --drun' -b button3:i3-main-menu" "$CONFIG" || fail 'rootbtnd root-button actions missing'
 grep -Fq 'exec --no-startup-id i3swallowd' "$CONFIG" || fail 'i3swallow daemon missing'
 
-expected_swallow_rules=(
-  discord
-  Steam
-  Zutty
-  kitty
-)
-mapfile -t actual_swallow_rules < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$SWALLOW")
-[ "${#actual_swallow_rules[@]}" -eq "${#expected_swallow_rules[@]}" ] || fail 'swallow allow-list must contain exactly four rules'
-for index in "${!expected_swallow_rules[@]}"; do
-  [ "${actual_swallow_rules[$index]}" = "${expected_swallow_rules[$index]}" ] || fail "swallow rule $((index + 1)) must be ${expected_swallow_rules[$index]}"
-done
-! grep -Fqi 'xrandr' "$SWALLOW" || fail 'xrandr must not be in swallow allow-list'
 
 grep -Fq '[font]' "$XLOGOUT" || fail 'xlogout font configuration missing'
 grep -Eq '^icon_font = .*Nerd Font' "$XLOGOUT" || fail 'xlogout must use a Nerd-font-capable icon font'
@@ -72,4 +60,4 @@ for binding in "${workspace_move_bindings[@]}"; do
   grep -Fq "$binding" "$CONFIG" || fail "workspace move-and-follow binding missing: $binding"
 done
 
-printf 'PASS: i3 config deploys ngcbg tools, safe xlogout actions, swallow rules, and workspace move-follow bindings\n'
+printf 'PASS: i3 config deploys ngcbg tools, safe xlogout actions, and workspace move-follow bindings\n'

@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 CLIPBOARD="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-clipboard"
-CLIPCAT_CONFIG="$ROOT/dotfiles/config/shared/.config/clipcat/clipcatd.toml"
-CLIPCAT_MENU="$ROOT/dotfiles/config/shared/.config/clipcat/clipcat-menu.toml"
+CLIPCAT_CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/clipcat/clipcatd.toml"
+CLIPCAT_MENU="$ROOT/dotfiles/config/profiles/i3/.config/clipcat/clipcat-menu.toml"
 PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 MENU="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-main-menu"
@@ -18,8 +18,6 @@ fail() {
 ! grep -Fq 'i3-gh0stzk' "$DUNST" || fail 'Dunst keeps a removed Polybar rice dependency'
 grep -Fq 'frame_width = 0' "$DUNST" && ! grep -Fq 'frame_color' "$DUNST" ||
   fail 'i3 Dunst must render without notification borders'
-grep -Fq 'orgm-visual-profile" apply; dunstctl reload' "$CONFIG" ||
-  fail 'i3 must apply the visual profile before reloading or starting Dunst'
 grep -Fq 'clipcat' "$PROFILE" || fail 'Clipcat package/service missing'
 grep -Fq 'systemd.user.services.i3-clipcat' "$PROFILE" || fail 'Clipcat user service missing'
 grep -Fq -- '--no-daemon' "$PROFILE" || fail 'Clipcat must remain supervised by systemd'

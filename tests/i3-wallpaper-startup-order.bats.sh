@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 AUTOSTART="$ROOT/dotfiles/config/profiles/i3/.config/autostart/autorandr.desktop"
 MONITOR="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-monitor-profile"
-WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper"
+WALLPAPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-wallpaper-base"
 WRAPPER="$ROOT/dotfiles/config/profiles/i3/.local/bin/i3-set-wallpaper"
 
 fail() {

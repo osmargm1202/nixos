@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -31,5 +32,7 @@ let
   };
 in
 {
-  environment.systemPackages = [ rmatrix ];
+  config = lib.mkIf (builtins.elem "rmatrix" config.orgm.user.programs) {
+    environment.systemPackages = [ rmatrix ];
+  };
 }

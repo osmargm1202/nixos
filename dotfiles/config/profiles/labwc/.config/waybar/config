@@ -39,16 +39,6 @@
     "custom/time": { "exec": "waybar-time-ampm", "interval": 1, "tooltip": false },
     "custom/date": { "exec": "waybar-date-es", "interval": 60, "tooltip": false },
 
-    "custom/memclean": {
-      "exec": "memclean-dev status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e bash -c 'memclean-dev dry-run; printf \"\\n\"; read -r -p \"enter...\"'",
-      "on-click-middle": "kitty -e bash -ic btop"
-    },
 
     "custom/nixclean": {
       "format": "󰃢",
@@ -123,12 +113,10 @@
     "margin-bottom": 0,
     "margin-left": 0,
     "margin-right": 0,
-    "modules-left": ["custom/orgm_logo", "custom/user", "sway/window"],
+    "modules-left": ["sway/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
-    "modules-right": ["group/usage", "custom/memclean", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
+    "modules-right": ["group/usage", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
 
-    "custom/orgm_logo": { "format": " ", "tooltip": true, "tooltip-format": "Abrir fuzzel", "on-click": "fuzzel" },
-    "custom/user": { "format": "  osmarg", "tooltip": false },
     "sway/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
     "idle_inhibitor": { "format": "{icon}", "format-icons": { "activated": "󰅶", "deactivated": "󰾪" } },
     "mpris": {
@@ -147,16 +135,6 @@
     },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
-    "custom/memclean": {
-      "exec": "memclean-dev status",
-      "return-type": "json",
-      "interval": 10,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "memclean-dev clean",
-      "on-click-right": "kitty --class memclean-dev -e bash -c 'memclean-dev dry-run; printf \"\\n\"; read -r -p \"enter...\"'",
-      "on-click-middle": "kitty -e bash -ic btop"
-    },
 
     "custom/nixclean": {
       "format": "󰃢",
@@ -185,73 +163,6 @@
       "format-full": "󰁹 {capacity}%",
       "tooltip-format": "{capacity}% {timeTo} {power}W",
       "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
-    }
-  },
-  {
-    "name": "dock_bar",
-    "layer": "top",
-    "position": "right",
-    "width": 72,
-    "spacing": 4,
-    "margin-top": 72,
-    "margin-bottom": 72,
-    "margin-right": 10,
-    "modules-center": [
-      "custom/dock_windows",
-      "custom/dock_kitty",
-      "custom/dock_nautilus",
-      "custom/dock_firefox",
-      "custom/dock_obsidian",
-      "custom/dock_software"
-    ],
-
-    "custom/dock_windows": {
-      "exec": "~/.local/bin/sway-app-dock status windows",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click windows"
-    },
-    "custom/dock_kitty": {
-      "exec": "~/.local/bin/sway-app-dock status kitty",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click kitty"
-    },
-    "custom/dock_nautilus": {
-      "exec": "~/.local/bin/sway-app-dock status nautilus",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click nautilus"
-    },
-    "custom/dock_firefox": {
-      "exec": "~/.local/bin/sway-app-dock status firefox",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click firefox"
-    },
-    "custom/dock_obsidian": {
-      "exec": "~/.local/bin/sway-app-dock status obsidian",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click obsidian"
-    },
-    "custom/dock_software": {
-      "exec": "~/.local/bin/sway-app-dock status software",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/sway-app-dock click software"
     }
   }
 ]

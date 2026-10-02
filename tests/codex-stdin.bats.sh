@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-python3 - "$ROOT/dotfiles/config/shared/.local/bin/codex" <<'PY'
+python3 - "$ROOT/dotfiles/config/users/osmarg/programs/ai/.local/bin/codex" <<'PY'
 import os
 import pathlib
 import pty

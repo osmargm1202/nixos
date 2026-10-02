@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+profile_id="${ORGM_VISUAL_PROFILE_ID:-}"
+if [[ -z "$profile_id" ]]; then
+  profile_id="$(orgm-visual-profile current 2>/dev/null || printf orgm)"
+fi
+case "$profile_id" in slc|orgm|osmar) ;; *) profile_id=orgm ;; esac
+export I3_WALLPAPER_DIR="${I3_WALLPAPER_DIR:-$HOME/Pictures/$profile_id}"
+export I3_WALLPAPER_RECORD_COMMAND=orgm-visual-profile
+exec i3-wallpaper-base "$@"

@@ -2,11 +2,11 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-config="$repo_dir/dotfiles/config/shared/.config/fastfetch/hardware.jsonc"
-bash_config="$repo_dir/dotfiles/config/shared/.config/bash/config.bash"
+config="$repo_dir/dotfiles/config/users/osmarg/programs/personal-development/.config/fastfetch/hardware.jsonc"
+bash_config="$repo_dir/dotfiles/config/users/osmarg/programs/shell/.config/bash/config.bash"
 
 
-menu="$repo_dir/dotfiles/config/profiles/hyprland/.local/bin/hypr-system-menu"
+menu="$repo_dir/dotfiles/config/users/osmarg/profiles/hyprland/.local/bin/hypr-system-menu"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "$temp_dir"' EXIT
 cat >"$temp_dir/rofi-lib" <<'EOF'
@@ -39,9 +39,9 @@ mapfile -t fastfetch_args <"$temp_dir/fastfetch-args"
 
 nix eval --impure --raw --expr '
   let c = (builtins.getFlake "path:${toString ./.}").nixosConfigurations.lenovo-hyprland;
-  in if builtins.elem c.pkgs.fastfetch c.config.environment.systemPackages
+  in if builtins.elem c.pkgs.fastfetch c.config.home-manager.users.osmarg.home.packages
     then "fastfetch installed"
-    else throw "fastfetch missing from system packages"
+    else throw "fastfetch missing from user packages"
 ' >/dev/null
 
 nix run nixpkgs#fastfetch -- --config "$config" >/dev/null

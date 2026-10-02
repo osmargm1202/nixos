@@ -11,8 +11,9 @@
 }:
 
 let
+  hasProgram = program: builtins.elem program config.orgm.user.programs;
   sshAuthorizedKeys = [
-    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD3E7OGvfciRdntcDX3SpWlnu5pBw+RycYPIQO4a7h6Zz5WeUc8gB2YbUXZPdQFTVbvjZnAjMqQGhi89GG3K+xlbAZyXl69fL8+75dbicbzygPK3UJi/57zEIANp1u1EF3+w5WBXBXkIKBUbu5IsNAClYr3jX/yQEl1MOZ+o1q1MwAGFS9eJNnyNEroN9cnoFKXmXIS1INKSoPjDL4CE0dWaenQySkNGJY7gRe3w+/YMR4B6vx5G4JfuRBoegF/O0+x7aEPN2RL1MCNzZ6LAM9KwIC72BVyIW1lDsUv6+UzN/S0LGrAV11KcxaEDFtnenX7L5o2i04jd8BAxZLlDvuz4802qIfiHqC8Q/ez9LNIdXLFTPMe04u6HOSxgJVP3Mfh31ZjVmRKUn93oUQwQYmyAq4TvtyNmGQVDOMLboQsU48lMx4k8HObGm4SuUbLNkIOVqnnnax+XhOuylPou9lV77Wtonxj2lgbKufvbnULIdp5+TXPGGPl/+/mLvKCvKoETGFEkQx7hTJg3rwbt/wcpVLyp3lfzKZQt84cD42qQW1bK4/3C4DDZLZ8XVmSVucM8PEFKPE5uSubF6j1tN/J8CFnhvGGgjRihX8GVhL8UbiVeutTowf/eooQsx2/tymWMF6F3nHXOi4qODR6JI26eMLDBfK0wThHMsFYxJnYaQ== osmarg@orgm"
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD3E7OGvfciRdntcDX3SpWlnu5pBw+RycYPIQO4a7h6Zz5WeUc8gB2YbUXZPdQFTVbvjZnAjMqQGhi89GG3K+xlbAZyXl69fL8+75dbicbzygPK3UJi/57zEIANp1u1EF3+w5WBXBXkIKBUbu5IsNAClYr3jX/yQEl1MOZ+o1q1MwAGFS9eJNnyNEroN9cnoFKXmXIS1INKSoPjDL4CE0dWaenQySkNGJY7gRe3w+/YMR4B6vx5G4JfuRBoegF/O0+x7aEPN2RL1MCNzZ6LAM9KwIC72BVyIW1lDsUv6+UzN/S0LGrAV11KcxaEDFtnenX7L5o2i04jd8BAxZLlDvuz4802qIfiHqC8Q/ez9LNIdXLFTPMe04u6HOSxgJVP3Mfh31ZjVmRKUn93oUQwQYmyAq4TvtyNmGQVDOMLboQsU48lMx4k8HObGm4SuUbLNkIOVqnnnax+XhOuylPou9lV77Wtonxj2lgbKufvbnULIdp5+TXPGGPl/+/mLvKCvKoETGFEkQx7hTJg3rwbt/wcpVLyp3lfzKZQt84cD42qQW1bK4/3C4DDZ8XVmSVucM8PEFKPE5uSubF6j1tN/J8CFnhvGGgjRihX8GVhL8UbiVeutTowf/eooQsx2/tymWMF6F3nHXOi4qODR6JI26eMLDBfK0wThHMsFYxJnYaQ== osmarg@orgm"
   ];
   hasSSHKeys = sshAuthorizedKeys != [ ];
 in
@@ -25,7 +26,6 @@ in
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ../apps/lazyvim.nix
-      ../ai/default.nix
       ../dns/hosts.nix
       ../apps/tailscale.nix
       ../functions/clean.nix
@@ -79,7 +79,7 @@ in
   boot.loader.efi.canTouchEfiVariables = true;
   boot.tmp.cleanOnBoot = true;
 
-  virtualisation.podman = {
+  virtualisation.podman = lib.mkIf (hasProgram "containers") {
     enable = true;
     dockerCompat = true; # alias docker -> podman
     dockerSocket.enable = true;
@@ -89,7 +89,7 @@ in
     "kernel.unprivileged_userns_clone" = 1;
   };
 
-  programs.bash = {
+  programs.bash = lib.mkIf (hasProgram "shell") {
     enable = true;
     completion.enable = true;
     blesh.enable = true;
@@ -99,11 +99,7 @@ in
       fi
     '';
   };
-  programs.git = {
-    enable = true;
-    config.user.name = "osmar";
-    config.user.email = "osmargm1202@gmail.com";
-  };
+  programs.git.enable = hasProgram "git";
 
   hardware.enableRedistributableFirmware = true;
   networking.networkmanager.enable = true;
@@ -144,11 +140,13 @@ in
     extraGroups = [
       "networkmanager"
       "wheel"
-      "docker"
-      "podman"
       "input"
       "video"
       "render"
+    ]
+    ++ lib.optionals (hasProgram "containers") [
+      "docker"
+      "podman"
     ];
     openssh.authorizedKeys.keys = sshAuthorizedKeys;
   };
@@ -157,60 +155,69 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages = with pkgs; [
-    # core
-    wget
-    curl
-    rsync
-    syncthing
-    vim
-    stow
-    gh
-    git
-    age
-    gcc
-    gnumake
-    ntfs3g
-    # shell + tooling
-    bashInteractive
-    bash-completion
-    blesh
-    zellij
-    fzf
-    fd
-    ripgrep
-    jq
-    gum
-    bat
-    delta
-    eza
-    zoxide
-    starship
-    trash-cli
-    # monitors
-    fastfetch
-    htop
-    # editors
-    helix
-    # dev
-    lazygit
-    # containers (podman-compose: efimera)
-    distrobox
-    # disk / recovery
-    parted
-    gptfdisk
-    e2fsprogs
-    # search nix (nix-search-tv suelto: efimero; ns es self-contained)
-    (pkgs.writeShellApplication {
-      name = "ns";
-      runtimeInputs = with pkgs; [
+  environment.systemPackages =
+    lib.optionals (hasProgram "shell") (
+      with pkgs;
+      [
+        wget
+        curl
+        rsync
+        vim
+        stow
+        age
+        ntfs3g
+        bashInteractive
+        bash-completion
+        blesh
+        zellij
         fzf
-        nix-search-tv
-      ];
-      checkPhase = "";
-      text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
-    })
-  ];
+        fd
+        ripgrep
+        jq
+        bat
+        delta
+        eza
+        zoxide
+        starship
+        trash-cli
+        fastfetch
+        htop
+        parted
+        gptfdisk
+        e2fsprogs
+        (pkgs.writeShellApplication {
+          name = "ns";
+          runtimeInputs = with pkgs; [
+            fzf
+            nix-search-tv
+          ];
+          checkPhase = "";
+          text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
+        })
+      ]
+    )
+    ++ lib.optionals (hasProgram "git") [ pkgs.git ]
+    ++ lib.optionals (hasProgram "tmux") [ pkgs.tmux ]
+    ++ lib.optionals (hasProgram "development") [
+      pkgs.python3
+      pkgs.uv
+      pkgs.gcc
+      pkgs.gnumake
+      pkgs.cmake
+      pkgs.pkg-config
+      pkgs.nodejs_22
+      pkgs.typescript
+      pkgs.bun
+      pkgs.sqlite
+    ]
+    ++ lib.optionals (hasProgram "personal-development") [
+      pkgs.gum
+      pkgs.gh
+      pkgs.lazygit
+      pkgs.helix
+    ]
+    ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
+    ++ lib.optionals (hasProgram "containers") [ pkgs.distrobox ];
 
   # Nerd font glyphs for yazi/starship/fastfetch in the terminal.
   fonts.fontconfig.enable = true;

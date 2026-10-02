@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BASH_CONFIG="$ROOT/dotfiles/config/shared/.config/bash/config.bash"
+BASH_CONFIG="$ROOT/dotfiles/config/users/osmarg/programs/shell/.config/bash/config.bash"
 HYPR_ENV="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/environment.lua"
 
 fail() {

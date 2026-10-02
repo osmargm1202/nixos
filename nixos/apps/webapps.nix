@@ -6,6 +6,8 @@
   ...
 }:
 let
+  enabled = builtins.elem "webapps" config.orgm.user.programs;
+  selectedIds = config.orgm.user.webapps;
   catalog = import ./webapps.catalog.nix;
   chromium = pkgs.chromium.override { enableWideVine = true; };
   nativeWayland = config.programs.hyprland.enable;
@@ -34,7 +36,9 @@ let
     category: entries: map (app: app // { categories = categoryFor category; }) entries
   ) catalog);
   ids = map (app: app.id) apps;
-  duplicates = lib.filter (id: lib.count (other: other == id) ids > 1) (lib.unique ids);
+  unknownIds = lib.filter (id: !(builtins.elem id ids)) selectedIds;
+  selectedApps = lib.filter (app: builtins.elem app.id selectedIds) apps;
+  duplicates = lib.filter (id: lib.count (other: other == id) selectedIds > 1) (lib.unique selectedIds);
   valid = builtins.all (
     app:
     if builtins.match "[a-z0-9]+(-[a-z0-9]+)*" app.id == null then
@@ -44,14 +48,15 @@ let
     else
       true
   ) apps;
-  # Validate before constructing any attribute set: duplicate IDs must never
-  # silently overwrite a launcher or share its credentials directory.
+  # Validate selected IDs before constructing any attribute set: duplicate IDs
+  # must never silently overwrite a launcher or share its credentials directory.
   checkedApps =
+    assert unknownIds == [ ];
     assert valid;
     if duplicates != [ ] then
       throw "Duplicate Chromium webapp ids: ${lib.concatStringsSep ", " duplicates}"
     else
-      apps;
+      selectedApps;
   webapps = map (
     app:
     let
@@ -91,8 +96,10 @@ let
   ) checkedApps;
 in
 {
-  home-manager.users.${userName} = {
-    home.packages = map (app: app.launcher) webapps;
-    xdg.desktopEntries = lib.listToAttrs (map (app: app.entry) webapps);
+  config = lib.mkIf enabled {
+    home-manager.users.${userName} = {
+      home.packages = map (app: app.launcher) webapps;
+      xdg.desktopEntries = lib.listToAttrs (map (app: app.entry) webapps);
+    };
   };
 }

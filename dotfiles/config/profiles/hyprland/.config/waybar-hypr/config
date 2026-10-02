@@ -10,7 +10,6 @@
     "margin-right": 0,
     "modules-left": [
       "custom/menu",
-      "custom/visual-profile",
       "custom/ws_1",
       "custom/ws_2",
       "custom/ws_3",
@@ -27,9 +26,6 @@
       "pulseaudio",
       "pulseaudio#microphone",
       "idle_inhibitor",
-      "custom/game_mode",
-      "custom/kbd_layout",
-      "custom/wallpaper",
       "custom/keybindings_help"
     ],
     "modules-center": [
@@ -39,7 +35,6 @@
     ],
     "modules-right": [
       "hyprland/window",
-      "custom/orgm-status",
       "mpris",
       "custom/power",
       "tray"
@@ -55,20 +50,6 @@
       "tooltip": true,
       "tooltip-format": "Menú de energía",
       "on-click": "hypr-power-menu"
-    },
-    "custom/visual-profile": {
-      "exec": "$HOME/.local/bin/orgm-visual-profile waybar",
-      "return-type": "json",
-      "interval": 5,
-      "on-click": "$HOME/.local/bin/orgm-visual-profile menu",
-      "on-click-right": "$HOME/.local/bin/orgm-visual-profile toggle-mode"
-    },
-    "custom/orgm-status": {
-      "exec": "orgm-status waybar",
-      "return-type": "json",
-      "interval": 5,
-      "escape": false,
-      "on-click": "orgm-status open"
     },
     "custom/ws_1": {
       "exec": "hypr-workspace-button status 1",
@@ -192,35 +173,6 @@
       "on-click-middle": "kitty -e pulsemixer",
       "on-click-right": "kitty -e pulsemixer",
       "max-volume": 150
-    },
-    "idle_inhibitor": {
-      "format": "{icon}",
-      "tooltip": true,
-      "tooltip-format": "Caffeine: mantener pantalla activa",
-      "on-click": "~/.local/bin/waybar-caffeine-state toggle",
-      "signal": 8,
-      "format-icons": {
-        "activated": "󰅶",
-        "deactivated": "󰾪"
-      }
-    },
-    "custom/game_mode": {
-      "exec": "~/.local/bin/hypr-game-mode waybar",
-      "return-type": "json",
-      "signal": 9,
-      "on-click": "~/.local/bin/hypr-game-mode toggle"
-    },
-    "custom/kbd_layout": {
-      "exec": "~/.config/waybar-hypr/kbd-layout.sh",
-      "interval": 1,
-      "tooltip": false,
-      "on-click": "~/.local/bin/kbd-layout-next"
-    },
-    "custom/wallpaper": {
-      "format": "",
-      "tooltip": true,
-      "tooltip-format": "Fondo aleatorio del perfil visual",
-      "on-click": "orgm-visual-profile random-wallpaper"
     },
     "custom/keybindings_help": {
       "format": "?",

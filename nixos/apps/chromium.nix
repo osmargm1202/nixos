@@ -6,6 +6,7 @@
   ...
 }:
 let
+  enabled = builtins.elem "webapps" config.orgm.user.programs;
   cfg = config.orgm.chromium;
   psd = pkgs.profile-sync-daemon;
   psdPath = lib.makeBinPath [
@@ -23,7 +24,7 @@ in
 {
   options.orgm.chromium.enable = lib.mkEnableOption "Chromium with Widevine support";
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (enabled && cfg.enable) {
     environment.systemPackages = [
       (pkgs.chromium.override { enableWideVine = true; })
     ];

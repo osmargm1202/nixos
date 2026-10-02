@@ -3,6 +3,7 @@
   lib,
   pkgs,
   userName ? "osmarg",
+  profileName ? null,
   ...
 }:
 
@@ -67,9 +68,13 @@ in
         orgm.gaming.gamescopeTty1.enable = true;
         boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-02-gaming";
         services.displayManager.sddm.enable = lib.mkForce false;
+        # i3 otherwise enables LightDM by default when SDDM is disabled.
+        services.xserver.displayManager.lightdm.enable = lib.mkForce false;
         services.displayManager.autoLogin.enable = lib.mkForce false;
         powerManagement.cpuFreqGovernor = "performance";
         environment.etc."orgm/desktop-profile".text = lib.mkForce "gaming\n";
+      } // lib.optionalAttrs (profileName == "ryoku") {
+        programs.ryoku.enable = lib.mkForce false;
       };
       windows-vfio.configuration = {
         imports = [ ./windows-vfio.nix ];
@@ -111,6 +116,8 @@ in
             . "$HOME/.bashrc"
           fi
         '';
+      } // lib.optionalAttrs (profileName == "ryoku") {
+        programs.ryoku.enable = lib.mkForce false;
       };
     };
   };

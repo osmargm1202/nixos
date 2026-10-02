@@ -8,7 +8,10 @@ profile_has_zutty() {
   local configuration="$1"
   nix eval --impure --raw --expr "
     let c = (builtins.getFlake \"path:$repo_dir\").nixosConfigurations.${configuration};
-    in if builtins.elem c.pkgs.zutty c.config.environment.systemPackages then \"present\" else \"absent\"
+        packages = c.config.environment.systemPackages
+          ++ c.config.users.users.osmarg.packages
+          ++ c.config.home-manager.users.osmarg.home.packages;
+    in if builtins.elem c.pkgs.zutty packages then \"present\" else \"absent\"
   "
 }
 
@@ -20,9 +23,9 @@ for configuration in lenovo-i3 cinnamon; do
   [[ "$(profile_has_zutty "$configuration")" == present ]]
 done
 
-programs='dotfiles/config/profiles/hyprland/.config/hypr/lua/programs.lua'
-keybindings='dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua'
-apps_menu='dotfiles/config/profiles/hyprland/.local/bin/hypr-apps-menu'
+programs='dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/programs.lua'
+keybindings='dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/keybindings.lua'
+apps_menu='dotfiles/config/users/osmarg/profiles/hyprland/.local/bin/hypr-apps-menu'
 
 ! grep -Fq 'zutty-fast' "$programs"
 ! grep -Fq 'zutty-fast' "$keybindings"

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HYPR="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/autostart.lua"
-I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
-LABWC="$ROOT/dotfiles/config/profiles/labwc/.config/labwc/autostart"
+HYPR="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/autostart.lua"
+I3="$ROOT/dotfiles/config/users/osmarg/profiles/i3/.config/i3/config.d/90-osmarg.conf"
+LABWC="$ROOT/dotfiles/config/users/osmarg/profiles/labwc/.config/labwc/autostart-personal"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2

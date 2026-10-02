@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   userName,
@@ -14,6 +15,7 @@ let
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
 in
 {
+  config = lib.mkIf (builtins.elem "webapps" config.orgm.user.programs) {
   warnings = lib.optional (!hasSignedWindowsManagerLinuxOrgm) ''
     Browser tab focusing is inactive until the signed AMO XPI is added at nixos/apps/firefox/windows-manager-linux-orgm/windows-manager-linux-orgm-signed-1.0.6.xpi.
   '';
@@ -85,5 +87,6 @@ in
       "x-scheme-handler/http" = [ "firefox.desktop" ];
       "x-scheme-handler/https" = [ "firefox.desktop" ];
     };
+  };
   };
 }

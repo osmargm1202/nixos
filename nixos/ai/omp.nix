@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   ompPackage = "@oh-my-pi/pi-coding-agent";
   ompInstall = pkgs.writeShellScriptBin "omp-install" ''
@@ -38,6 +43,7 @@ let
   '';
 in
 {
+  config = lib.mkIf (builtins.elem "ai" config.orgm.user.programs) {
   # Node and JS installers used by the scripts above.
   programs.nix-ld.enable = true;
   environment.systemPackages = with pkgs; [
@@ -47,4 +53,5 @@ in
     ompInstall
     ompUpdate
   ];
+  };
 }

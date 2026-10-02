@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+exec rofimoji --selector rofi --action clipboard \
+  --files 'emojis_*' nerd_font math miscellaneous_symbols miscellaneous_symbols_and_arrows \
+  --prompt 'Símbolo'

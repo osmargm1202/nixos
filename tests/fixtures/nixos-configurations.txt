@@ -18,6 +18,7 @@ lenovo-gnome
 lenovo-hyprland
 lenovo-i3
 lenovo-labwc
+lenovo-ryoku
 lenovo-terminal
 orgm
 orgm-cinnamon
@@ -25,6 +26,7 @@ orgm-gnome
 orgm-hyprland
 orgm-i3
 orgm-labwc
+orgm-ryoku
 orgm-terminal
 server
 terminal

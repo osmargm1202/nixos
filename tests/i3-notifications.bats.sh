@@ -6,7 +6,7 @@ I3="$ROOT/dotfiles/config/profiles/i3/.config/i3/config"
 DUNST="$ROOT/dotfiles/config/profiles/i3/.config/dunst/dunstrc"
 HYPR_DUNST="$ROOT/dotfiles/config/profiles/hyprland/.config/dunst/dunstrc"
 LABWC_DUNST="$ROOT/dotfiles/config/profiles/labwc/.config/dunst/dunstrc"
-SHARED_BIN="$ROOT/dotfiles/config/shared/.local/bin"
+SHARED_BIN="$ROOT/dotfiles/config/profiles/i3/.local/bin"
 HYPR_BIN="$ROOT/dotfiles/config/profiles/hyprland/.local/bin"
 PROFILE="$ROOT/nixos/profiles/i3/i3.nix"
 
@@ -42,7 +42,7 @@ grep -Fq 'XF86AudioMicMute exec --no-startup-id $run mic-volume-osd mute' "$I3" 
 
 for helper in volume-osd mic-volume-osd; do
   [ -x "$SHARED_BIN/$helper" ] || fail "$helper must be shared and executable"
-  [ ! -e "$HYPR_BIN/$helper" ] || fail "$helper must not remain Hyprland-owned"
+  [ -x "$HYPR_BIN/$helper" ] || fail "$helper must also be available in the independent Hyprland profile"
   bash -n "$SHARED_BIN/$helper"
 done
 
