@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+backup_file="$HOME/.cache/airplane_backup"
+if rfkill list bluetooth | grep -qi 'Soft blocked: yes'; then
+  rfkill unblock bluetooth
+  rm -f "$backup_file"
+else
+  rfkill block bluetooth
+fi

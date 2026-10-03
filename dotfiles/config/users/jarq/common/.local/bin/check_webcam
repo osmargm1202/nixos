@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+mapfile -t pids < <(fuser /dev/video0 2>/dev/null | awk '{ for (i = 2; i <= NF; i++) print $i }' | sort -un)
+(( ${#pids[@]} > 0 )) || exit 0
+
+processes=
+for pid in "${pids[@]}"; do
+  process_name=$(ps -q "$pid" -o comm= 2>/dev/null) || continue
+  processes+="\\n<span color='#eed49f'>${process_name}(${pid})</span>"
+done
+[[ -n $processes ]] || exit 0
+printf '{"text":"󰖠", "tooltip":"webcam is used by: %s", "alt":"Webcam"}\n' "$processes"

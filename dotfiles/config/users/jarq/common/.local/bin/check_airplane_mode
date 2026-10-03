@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+if [[ -e $HOME/.cache/airplane_backup ]]; then
+  printf '%s\n' '{ "text":"󰀝", "tooltip":"airplane-mode <span color='"'"'#a6da95'"'"'>on</span>", "class":"on" }'
+else
+  printf '%s\n' '{ "text":"󰀞", "tooltip":"airplane-mode <span color='"'"'#ee99a0'"'"'>off</span>", "class":"off" }'
+fi

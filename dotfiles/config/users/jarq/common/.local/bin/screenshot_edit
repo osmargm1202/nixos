@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+screenshot_dir="$HOME/Pictures/Screenshots"
+latest=$(find "$screenshot_dir" -mindepth 1 -maxdepth 1 -type f -printf '%T@:%p\n' | sort -nr | sed -n '1{s/^[^:]*://;p;}')
+[[ -n $latest ]] || {
+  printf 'screenshot_edit: no screenshot found in %s\n' "$screenshot_dir" >&2
+  exit 1
+}
+exec swappy -f "$latest"

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if command -v hyprctl >/dev/null 2>&1 && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  hyprctl switchxkblayout all next >/dev/null 2>&1
+  exit $?
+fi
+
+if command -v swaymsg >/dev/null 2>&1 && [ -n "${SWAYSOCK:-}" ]; then
+  swaymsg input type:keyboard xkb_switch_layout next >/dev/null 2>&1
+  exit $?
+fi
+
+exit 1

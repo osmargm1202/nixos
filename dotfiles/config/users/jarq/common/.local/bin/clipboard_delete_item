@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+clip=$(cliphist list | rofi -dmenu -p 'clipboard delete item') || exit 0
+[[ -n $clip ]] || exit 0
+printf '%s\n' "$clip" | cliphist delete
+dunstify Clipboard "Clip '$clip' was deleted" -t 2000

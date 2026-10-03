@@ -35,4 +35,6 @@
       "teams"
     ];
   };
+
+  orgm.tailscale.peerNotifications.enable = true;
 }

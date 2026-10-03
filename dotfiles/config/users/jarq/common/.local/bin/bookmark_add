@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+bookmark=$(wl-paste)
+bookmarks_file=.bookmarks
+if [[ -z $bookmark ]]; then
+  dunstify Bookmarks 'Can`t add empty space' -u critical -t 2000
+elif [[ -f $bookmarks_file ]] && grep -Fxq -- "$bookmark" "$bookmarks_file"; then
+  dunstify Bookmarks "Bookmark '$bookmark' already exists" -u critical -t 2000
+else
+  printf '%s\n' "$bookmark" >> "$bookmarks_file"
+  dunstify Bookmarks "Bookmark '$bookmark' was added" -t 2000
+fi

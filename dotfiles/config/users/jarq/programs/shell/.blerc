@@ -1,0 +1,33 @@
+# Loaded by blesh after it has initialized its editing API.
+# Emacs keybindings are the sole interactive editing mode.
+bleopt default_keymap=emacs
+bleopt complete_auto_complete=1 complete_auto_history=1
+ble-face auto_complete=fg=242
+
+# blesh owns PROMPT_COMMAND. Register the separator through its pre-prompt
+# hook instead of replacing its deferred attach command.
+_orgm_command_separator() {
+  local glyph=${BASH_COMMAND_SEPARATOR_GLYPH:-·}
+  local columns=${COLUMNS:-80}
+  local line=
+
+  if [[ -z ${__ORGM_PROMPT_SEEN:-} ]]; then
+    __ORGM_PROMPT_SEEN=1
+    return
+  fi
+
+  while ((${#line} < columns)); do
+    line+=$glyph
+  done
+  printf '\e[90m%s\e[0m\n' "${line:0:columns}"
+}
+blehook PRECMD+=_orgm_command_separator
+
+if command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
+  ble-import contrib/integration/fzf-key-bindings
+  blesh_config_dir="${ORGM_BASH_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/bash}"
+  if [[ -r "$blesh_config_dir/fzf-widgets.bash" ]]; then
+    . "$blesh_config_dir/fzf-widgets.bash"
+  fi
+  unset blesh_config_dir
+fi

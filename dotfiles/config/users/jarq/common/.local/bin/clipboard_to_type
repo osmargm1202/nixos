@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+cliphist list | rofi -dmenu -p clipboard | cliphist decode | wtype -
