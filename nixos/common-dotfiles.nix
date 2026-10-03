@@ -113,10 +113,21 @@ let
   ryokuOwns = path: builtins.any (
     root: path == root || lib.hasPrefix (root + "/") path
   ) ryokuConfigRoots;
+  # A common user directory must not pull another desktop's controls into
+  # Ryoku. Keep only workflows for which Ryoku has no equivalent; its native
+  # shell owns capture, history, night light, network menus and status widgets.
+  ryokuSharedUserHelpers = [
+    "bookmark_add" "bookmark_delete" "bookmark_to_type" "clipboard_copy"
+    "hypr-video-timer"
+  ];
   mergedFiles = lib.filterAttrs (
-    path: _: profileName != "ryoku" || (
-      !ryokuOwns path && !builtins.elem path [
-        ".local/bin/orgm-visual-profile" ".local/bin/openrgb-autostart"
+    path: source: profileName != "ryoku" || (
+      !ryokuOwns path
+      && !(lib.hasPrefix ".local/bin/" path
+        && source == (userFiles.${path} or null)
+        && !builtins.elem (builtins.baseNameOf path) ryokuSharedUserHelpers)
+      && !builtins.elem path [
+        ".local/bin/orgm-visual-profile" ".local/bin/openrgb-autostart" ".local/bin/dunst_pause"
       ]
     )
   ) selectedFiles;
@@ -236,6 +247,20 @@ in
                 $DRY_RUN_CMD mv "$target" "$backup/$p"
               fi
             done
+            # Kitty's dedicated user override is writable and survives Ryoku
+            # updates. Remove only our include when returning to another
+            # profile, retaining all other user preferences and a backup.
+            ryoku_kitty="''${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
+            if [ -f "$ryoku_kitty/user.conf" ] && [ ! -L "$ryoku_kitty/user.conf" ] &&
+               ${pkgs.gnugrep}/bin/grep -Fxq 'include orgm-ryoku.conf' "$ryoku_kitty/user.conf"; then
+              $DRY_RUN_CMD mkdir -p "$backup/.config/kitty"
+              $DRY_RUN_CMD cp -a "$ryoku_kitty/user.conf" "$backup/.config/kitty/user.conf"
+              $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i '/^include orgm-ryoku\.conf$/d; /^# ORGM Ryoku terminal preferences$/d' "$ryoku_kitty/user.conf"
+            fi
+            if [ -f "$ryoku_kitty/orgm-ryoku.conf" ] && [ ! -L "$ryoku_kitty/orgm-ryoku.conf" ]; then
+              $DRY_RUN_CMD mkdir -p "$backup/.config/kitty"
+              $DRY_RUN_CMD mv "$ryoku_kitty/orgm-ryoku.conf" "$backup/.config/kitty/orgm-ryoku.conf"
+            fi
             $DRY_RUN_CMD rm "$ryoku_state/active"
           fi
         ''}

@@ -5,13 +5,15 @@ let
   materializer = ryokuPackages.ryoku-materialize;
   prepare = pkgs.writeShellApplication {
     name = "orgm-ryoku-prepare";
-    runtimeInputs = [ pkgs.coreutils ];
+    runtimeInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.systemd pkgs.jq ];
     text = builtins.readFile ./prepare.sh;
   };
-  sharedHelpers = [
-    "hypr-rofi-calc" "hypr-rofi-open-file" "hypr-rofi-open-file-dir"
-    "hypr-rofi-open-file-terminal" "hypr-kill-windows"
-  ];
+  rofiTheme = pkgs.writeShellApplication {
+    name = "orgm-ryoku-rofi-theme";
+    runtimeInputs = [ pkgs.coreutils pkgs.jq ];
+    text = builtins.readFile ./rofi-theme.sh;
+  };
+  # These add personal focus/SSH/Pi workflows, rather than another desktop UI.
   personalHelpers = [
     "hypr-obsidian-open-or-focus" "hypr-pi-prompt" "hypr-rofi-ssh-host"
   ];
@@ -19,7 +21,16 @@ let
     target: { source = root + "/${builtins.baseNameOf target}"; executable = true; }
   );
 in {
-  imports = [ inputs.ryoku.nixosModules.default ../keyring-never-ask.nix ../../print/printer.nix ];
+  imports = [ inputs.ryoku.nixosModules.default ../../print/printer.nix ];
+
+  # Upstream includes Mako as a shell probe, but publishing its D-Bus service
+  # lets it claim notifications before Quickshell. Filter the merged package
+  # list only while Ryoku is enabled; other desktops retain their daemons.
+  options.environment.systemPackages = lib.mkOption {
+    apply = packages: if enabled then lib.filter (
+      package: !builtins.elem (lib.getName package) [ "mako" "dunst" ]
+    ) packages else packages;
+  };
 
   config = lib.mkMerge [
     {
@@ -47,6 +58,12 @@ in {
         wayland.enable = false;
       };
       services.displayManager.defaultSession = "hyprland";
+      # PAM can unlock an encrypted login keyring only after password login.
+      services.displayManager.autoLogin.enable = lib.mkForce false;
+      security.pam.services.sddm.enableGnomeKeyring = true;
+      security.pam.services.login.enableGnomeKeyring = true;
+      # The upstream drop-in otherwise overrides Lenovo's hardware lid policy.
+      environment.etc."systemd/logind.conf.d/10-ryoku-lid.conf".enable = lib.mkForce false;
       environment.localBinInPath = true;
       environment.systemPackages = with pkgs; [
         rofi rofi-calc rofimoji grim slurp swappy playerctl xdg-utils
@@ -55,31 +72,47 @@ in {
       ];
       xdg.mime.defaultApplications."inode/directory" = "org.gnome.Nautilus.desktop";
       services.gnome.gnome-online-accounts.enable = true;
+      programs.nautilus-open-any-terminal = {
+        enable = true;
+        terminal = "kitty";
+      };
 
       systemd.user.services.ryoku-materialize = {
         unitConfig.ConditionUser = userName;
         serviceConfig.ExecStartPre = "${prepare}/bin/orgm-ryoku-prepare";
         restartTriggers = [ prepare ];
       };
-      systemd.user.services.orgm-keyring-never-ask = {
-        after = [ "ryoku-materialize.service" ];
-        before = [ "ryoku-shell.service" ];
-      };
 
-      home-manager.users.${userName} = { lib, ... }: {
-        home.file =
-          helperFiles ../../../dotfiles/config/profiles/hyprland/.local/bin sharedHelpers
-          // helperFiles ../../../dotfiles/config/users/osmarg/profiles/hyprland/.local/bin personalHelpers
-          // {
-            ".config/orgm-ryoku/osmarg-keybindings.lua".source =
-              ../../../dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/keybindings.lua;
-          };
+      home-manager.users.${userName} = { config, lib, ... }: {
+        services.dunst.enable = lib.mkForce false;
+        services.mako.enable = lib.mkForce false;
+        home.file = helperFiles ../../../dotfiles/config/users/osmarg/profiles/hyprland/.local/bin personalHelpers;
         # Materialize before the first login, rather than waiting for a desktop
         # that cannot yet start without its Hyprland configuration.
         home.activation.ryokuDesktop = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+          $DRY_RUN_CMD ${pkgs.systemd}/bin/systemctl --user stop orgm-ryoku-rofi-theme-live.path 2>/dev/null || true
           $DRY_RUN_CMD ${prepare}/bin/orgm-ryoku-prepare
           $DRY_RUN_CMD ${materializer}/bin/ryoku-materialize
+          $DRY_RUN_CMD ${rofiTheme}/bin/orgm-ryoku-rofi-theme
         '';
+        systemd.user.services.orgm-ryoku-rofi-theme = {
+          Unit.Description = "Apply Ryoku palette to Rofi menus";
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${rofiTheme}/bin/orgm-ryoku-rofi-theme";
+          };
+        };
+        systemd.user.paths.orgm-ryoku-rofi-theme = {
+          Unit = {
+            Description = "Watch Ryoku palette changes for Rofi";
+            PartOf = [ "graphical-session.target" ];
+          };
+          Path = {
+            PathChanged = "${config.xdg.cacheHome}/ryoku/colors.json";
+            Unit = "orgm-ryoku-rofi-theme.service";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
       };
       assertions = [ {
         assertion = userName == "osmarg";

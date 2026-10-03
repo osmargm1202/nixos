@@ -77,7 +77,6 @@ let
 in
 {
   imports = [
-    ../keyring-never-ask.nix
     ../../sddm/sddm.nix
     ../../print/printer.nix
   ];

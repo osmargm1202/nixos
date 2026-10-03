@@ -38,6 +38,16 @@ in
     hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     boot.initrd.kernelModules = [ "i915" ];
 
+    # A lid event applies system-wide, including when the graphical user
+    # session has exited or the active session is a TTY. Keep the ThinkPad
+    # available in those states; this deliberately does not change explicit
+    # suspend requests or idle handling.
+    services.logind.settings.Login = {
+      HandleLidSwitch = "ignore";
+      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitchDocked = "ignore";
+    };
+
     hardware.graphics = {
       enable = true;
       enable32Bit = true;

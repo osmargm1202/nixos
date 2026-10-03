@@ -10,8 +10,8 @@ local aliases = {
 
 function M.normalize(chord)
   local modifiers, key = {}, nil
-  for token in chord:gmatch("[^+]+") do
-    token = token:match("^%s*(.-)%s*$"):upper()
+  for raw_token in chord:gmatch("[^+]+") do
+    local token = raw_token:match("^%s*(.-)%s*$"):upper()
     if token == "SUPER" or token == "CTRL" or token == "ALT" or token == "SHIFT" then
       modifiers[token] = true
     else
@@ -26,56 +26,57 @@ function M.normalize(chord)
   return table.concat(parts, " + ")
 end
 
-local globals = {
-  ["hypr-app-launcher"] = "ryoku:launcher",
-  ["hypr-main-menu"] = "ryoku:quicksettings",
-  ["hypr-power-menu"] = "ryoku:quicksettings",
-  ["hypr-rofi-clipboard"] = "ryoku:clipboard",
-}
-local commands = {
-  ["hypr-keybindings-help"] = "orgm-ryoku-shortcuts",
-  ["hypr-wallpaper random-menu"] = "ryogami wallpaper ui",
-  ["hypr-lock"] = "ryoku-shell lock",
-  ["hypr-shader-menu"] = "ryoku-shell hub open",
-  ["volume-osd up"] = "ryoku-volume up",
-  ["volume-osd down"] = "ryoku-volume down",
-  ["volume-osd mute"] = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-  ["mic-volume-osd up"] = "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+",
-  ["mic-volume-osd down"] = "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-",
-  ["mic-volume-osd mute"] = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
-  ["brightness-osd up"] = "ryoku-cmd-brightness +5",
-  ["brightness-osd down"] = "ryoku-cmd-brightness -5",
-}
+-- Capture only the personal binding declarations. Actions already use native
+-- Ryoku commands; they do not borrow or translate another profile's config.
 local proxy = setmetatable({
   bind = function(chord, action, options)
-    local normalized = M.normalize(chord)
-    assert(not M.reserved[normalized], "duplicate Osmarg shortcut: " .. chord)
-    M.reserved[normalized] = true
-    M.personal[#M.personal + 1] = { chord, action, options }
+    M.personal[#M.personal + 1] = { chord, action, options, original = chord }
   end,
-  dsp = setmetatable({
-    exec_cmd = function(command)
-      if globals[command] then return real.dsp.global(globals[command]) end
-      return real.dsp.exec_cmd(commands[command] or command)
-    end,
-  }, { __index = real.dsp }),
-  -- The personal Alt+Tab handler retains its key and uses Ryoku's overview.
-  plugin = { scrolloverview = {
-    overview = function() real.dispatch(real.dsp.global("ryoku:overview")) end,
-  } },
 }, { __index = real })
 
 local config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
 local env = setmetatable({ hl = proxy }, { __index = _G })
 local personal = assert(loadfile(config .. "/orgm-ryoku/osmarg-keybindings.lua", "t", env))()
-personal.setup({
-  terminal = "kitty", fileManager = "ryoku-app files",
-  app_launcher = "hypr-app-launcher", control_center = "hypr-main-menu",
-  lock = "hypr-lock", power_menu = "hypr-power-menu",
-  piPrompt = "hypr-pi-prompt --launcher rofi",
-})
+personal.setup()
+-- Keep these chords available for the user. Relocate Ryoku's scratchpad,
+-- music and cheatsheet actions too, rather than assigning them back here.
+for _, key in ipairs({ "H", "J", "K" }) do
+  M.reserved[M.normalize("SUPER + " .. key)] = true
+end
+-- Reserve effective personal chords before upstream loads. Preserve the first
+-- assignment when a personal chord is duplicated and relocate later ones.
+local function free_chord(chord)
+  local key = chord:match("([^+]+)$"):match("^%s*(.-)%s*$")
+  local candidate = "SUPER + CTRL + ALT + SHIFT + " .. key
+  local fallback = {}
+  for _, prefix in ipairs({ "SUPER + CTRL + ALT + SHIFT + ", "SUPER + CTRL + ALT + " }) do
+    for i = 1, 12 do fallback[#fallback + 1] = prefix .. "F" .. i end
+    for i = 0, 9 do fallback[#fallback + 1] = prefix .. tostring(i) end
+    for byte = string.byte("A"), string.byte("Z") do
+      fallback[#fallback + 1] = prefix .. string.char(byte)
+    end
+  end
+  local index = 0
+  while M.reserved[M.normalize(candidate)] or M.used[M.normalize(candidate)] do
+    index = index + 1
+    assert(index <= #fallback, "Ryoku shortcut namespace exhausted")
+    candidate = fallback[index]
+  end
+  return candidate
+end
 
--- All four modifiers form a namespace absent from both pinned configurations.
+for _, binding in ipairs(M.personal) do
+  local normalized = M.normalize(binding[1])
+  if M.reserved[normalized] then
+    local relocated = free_chord(binding[1])
+    binding[1] = relocated
+    normalized = M.normalize(relocated)
+  end
+  M.reserved[normalized] = true
+end
+
+
+-- Prefer all four modifiers, with a physical-key fallback using three.
 -- Retain free Ryoku chords; relocate only collisions, including GUI rebinds.
 function M.rebind(original, requested)
   local normalized = M.normalize(requested)
@@ -83,14 +84,7 @@ function M.rebind(original, requested)
     M.used[normalized] = true
     return requested
   end
-  local key = requested:match("([^+]+)$"):match("^%s*(.-)%s*$")
-  local candidate = "SUPER + CTRL + ALT + SHIFT + " .. key
-  local index = 0
-  while M.reserved[M.normalize(candidate)] or M.used[M.normalize(candidate)] do
-    index = index + 1
-    assert(index <= 35, "Ryoku shortcut namespace exhausted")
-    candidate = "SUPER + CTRL + ALT + SHIFT + F" .. index
-  end
+  local candidate = free_chord(requested)
   M.used[M.normalize(candidate)] = true
   M.relocated[#M.relocated + 1] = { original, candidate }
   return candidate
@@ -103,7 +97,11 @@ function M.install()
   local state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
   local report = io.open(state .. "/orgm-ryoku/shortcuts.tsv", "w")
   if report then
-    for _, binding in ipairs(M.personal) do report:write("Osmarg\t", binding[1], "\n") end
+    for _, binding in ipairs(M.personal) do
+      report:write("Osmarg\t", binding.original)
+      if binding.original ~= binding[1] then report:write(" → ", binding[1]) end
+      report:write("\n")
+    end
     for _, binding in ipairs(M.relocated) do
       report:write("Ryoku\t", binding[1], " → ", binding[2], "\n")
     end

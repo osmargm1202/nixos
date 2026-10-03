@@ -47,15 +47,29 @@ SELECTED_TARGET_INDEX=""
 # Functions
 # ============================================================
 
-container_cmd() {
-  if command -v docker &>/dev/null; then
-    docker "$@" 2>/dev/null
+container_engine() {
+  # Lenovo VFIO uses Podman's keep-groups and its existing rootless VM.
+  # Ryoku also installs Docker, which has a separate container/image store.
+  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
+    command -v podman &>/dev/null || {
+      echo "Error: Lenovo Windows VFIO requires Podman." >&2
+      return 1
+    }
+    printf '%s\n' podman
+  elif command -v docker &>/dev/null; then
+    printf '%s\n' docker
   elif command -v podman &>/dev/null; then
-    podman "$@" 2>/dev/null
+    printf '%s\n' podman
   else
-    echo "Error: Neither docker nor podman found."
-    exit 1
+    echo "Error: Neither docker nor podman found." >&2
+    return 1
   fi
+}
+
+container_cmd() {
+  local engine
+  engine="$(container_engine)" || return 1
+  "$engine" "$@" 2>/dev/null
 }
 
 select_vm_profile() {
@@ -79,14 +93,9 @@ select_vm_profile() {
 }
 
 compose_cmd() {
-  if command -v docker &>/dev/null; then
-    docker compose "$@"
-  elif command -v podman &>/dev/null; then
-    podman compose "$@"
-  else
-    echo "Error: Neither docker nor podman found." >&2
-    return 1
-  fi
+  local engine
+  engine="$(container_engine)" || return 1
+  "$engine" compose "$@"
 }
 
 is_installed() {
@@ -98,22 +107,14 @@ notify_user() {
   local body="${2:-}"
   local icon="$ICON_FILE"
 
-  # Sway/mako use the standard desktop notification protocol.
-  # notify-send talks to mako, swaync, dunst, etc. when available.
+  # Use the session's notification server without probing/activating Mako.
   local is_sway=0
-  local has_mako=0
   if [[ "${XDG_CURRENT_DESKTOP:-}" == *sway* ]] || [[ "${SWAYSOCK:-}" != "" ]]; then
     is_sway=1
   elif command -v swaymsg &>/dev/null && swaymsg -t get_version &>/dev/null; then
     is_sway=1
   fi
-  if pgrep -x mako &>/dev/null; then
-    has_mako=1
-  elif command -v makoctl &>/dev/null && makoctl mode &>/dev/null; then
-    has_mako=1
-  fi
-
-  if command -v notify-send &>/dev/null && { [[ $is_sway -eq 1 ]] || [[ $has_mako -eq 1 ]] || [[ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]]; }; then
+  if command -v notify-send &>/dev/null && { [[ $is_sway -eq 1 ]] || [[ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]]; }; then
     if [[ -f "$icon" ]]; then
       notify-send -a "$SCRIPT_NAME" -i "$icon" "$title" "$body" 2>/dev/null || true
     else

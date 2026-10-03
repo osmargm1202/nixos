@@ -6,7 +6,6 @@
 }:
 {
   orgm.user = {
-    keyringMode = "never-ask";
     programs = [
       "shell"
       "git"

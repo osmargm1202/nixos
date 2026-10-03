@@ -5,6 +5,14 @@ if not package.loaded[name] then
 end
 package.loaded[name].install()
 
+-- Kitty owns the background alpha. Avoid multiplying it again by the desktop
+-- inactive opacity, including the personal AI and native SSH terminal classes.
+hl.window_rule({
+  name = "orgm-kitty-opacity",
+  match = { class = "^(kitty|orgmai-(chat|config)|ryoport-ssh)$" },
+  opacity = "1 override 1 override 1 override",
+})
+
 -- Only personal application startup; Ryoku owns shell, portals, idle, lock,
 -- notifications, wallpapers, lighting and monitor detection.
 hl.on("hyprland.start", function()

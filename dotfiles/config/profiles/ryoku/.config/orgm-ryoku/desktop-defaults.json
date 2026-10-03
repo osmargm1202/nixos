@@ -1,0 +1,16 @@
+{
+  "desktop": {
+    "appearance": {
+      "borderSize": 0,
+      "rounding": 12,
+      "roundingPower": 2
+    },
+    "input": {
+      "followMouse": 1,
+      "kbLayout": "us,latam",
+      "kbVariant": "altgr-intl,",
+      "kbOptions": "grp:ctrl_space_toggle",
+      "numlockByDefault": true
+    }
+  }
+}

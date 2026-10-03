@@ -1,0 +1,10 @@
+configuration {
+    font: "Space Grotesk 12";
+    terminal: "kitty";
+    show-icons: true;
+    icon-theme: "Papirus";
+    drun-display-format: "{name}";
+    sidebar-mode: false;
+}
+
+@theme "../orgm-ryoku/rofi.rasi"

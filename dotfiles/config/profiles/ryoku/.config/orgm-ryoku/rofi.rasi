@@ -1,0 +1,83 @@
+@import "rofi-colors.rasi"
+
+* {
+    background-color: transparent;
+    text-color: @ryoku-fg;
+    border: 0px;
+    spacing: 10px;
+}
+
+window {
+    location: center;
+    anchor: center;
+    width: 600px;
+    background-color: @ryoku-bg;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+mainbox {
+    children: [ inputbar, message, listview ];
+    spacing: 14px;
+}
+
+inputbar {
+    children: [ prompt, entry ];
+    background-color: @ryoku-surface;
+    border-radius: 10px;
+    padding: 12px 14px;
+    spacing: 12px;
+}
+
+prompt {
+    text-color: @ryoku-accent;
+}
+
+entry {
+    placeholder: "Buscar…";
+    placeholder-color: @ryoku-muted;
+}
+
+message {
+    padding: 0px 4px;
+}
+
+textbox {
+    text-color: @ryoku-muted;
+}
+
+listview {
+    lines: 10;
+    columns: 1;
+    fixed-height: false;
+    scrollbar: false;
+    spacing: 4px;
+}
+
+element {
+    children: [ element-icon, element-text ];
+    padding: 10px 12px;
+    border-radius: 10px;
+    spacing: 12px;
+}
+
+element-icon {
+    size: 24px;
+}
+
+element-text {
+    vertical-align: 0.5;
+}
+
+element selected {
+    background-color: @ryoku-selection;
+    text-color: @ryoku-selection-fg;
+}
+
+element-text selected, element-icon selected {
+    text-color: @ryoku-selection-fg;
+}
+
+element urgent, element-text urgent {
+    text-color: @ryoku-error;
+}

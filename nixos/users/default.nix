@@ -12,11 +12,6 @@
   ];
 
   options.orgm.user = {
-    keyringMode = lib.mkOption {
-      type = lib.types.nullOr (lib.types.enum [ "never-ask" ]);
-      default = null;
-      description = "Optional keyring policy for this user's Hyprland and Ryoku profiles.";
-    };
     programs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];

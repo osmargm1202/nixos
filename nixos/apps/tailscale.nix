@@ -10,133 +10,36 @@
   inputs,
   lib,
   pkgs,
+  userName,
   ...
 }:
 let
+  cfg = config.orgm.tailscale.peerNotifications;
+  localReady = pkgs.writeShellApplication {
+    name = "tailscale-local-ready";
+    runtimeInputs = [ pkgs.networkmanager pkgs.tailscale pkgs.jq ];
+    text = builtins.readFile ./tailscale-local-ready.sh;
+  };
   peerMonitorServiceName = "tailscale-peer-monitor";
   peerNotifierServiceName = "tailscale-peer-notifier";
 
   tailscalePeerMonitor = pkgs.writeShellApplication {
     name = peerMonitorServiceName;
     runtimeInputs = with pkgs; [
+      localReady
       bash
       coreutils
       jq
       systemd
       tailscale
     ];
-    text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
-
-      LOG_TAG="tailscale-peer-monitor"
-      STATE_DIR="''${STATE_DIRECTORY:-/var/lib/tailscale-peer-monitor}"
-      EVENT_FILE="$STATE_DIR/events-v2.tsv"
-      STATE_FILE="$STATE_DIR/peer-status.tsv"
-
-      collect_peers() {
-        local status_json
-
-        if ! status_json="$(tailscale status --json 2>&1)"; then
-          printf '%s\n' "tailscale status failed: $status_json" | systemd-cat -t "$LOG_TAG" -p err || true
-          return 1
-        fi
-
-        echo "$status_json" | jq -r '
-          (.Peer // {})
-          | if type == "object" then to_entries | map(.value)
-            elif type == "array" then .
-            else [] end
-          | map(select((.Self // false) | not))
-          | map({
-              host: ((.HostName // .HostInfo.HostName // "") | ascii_downcase),
-              ip: (.TailscaleIPs[0] // "sin-ip"),
-              state: (if (.Online // false) then "online" else "offline" end)
-            })
-          | map(select(.host != ""))
-          | sort_by(.host)
-          | .[]
-          | "\(.host)\t\(.ip)\t\(.state)"
-        '
-      }
-
-      emit_event() {
-        local host="$1"
-        local ip="$2"
-        local state="$3"
-        local event_id
-        local event_tmp
-        local message
-
-        if [ "$state" = "online" ]; then
-          message="''${host} (''${ip}) volvió en línea"
-        else
-          message="''${host} (''${ip}) se desconectó"
-        fi
-
-        event_id="$(date +%s%N)"
-        printf '%s\n' "$message" | systemd-cat -t "$LOG_TAG" -p info || true
-        printf '%s\t%s\t%s\t%s\n' "$event_id" "$host" "$ip" "$state" >> "$EVENT_FILE"
-
-        if [ "$(wc -l < "$EVENT_FILE")" -gt 1000 ]; then
-          event_tmp="$(mktemp "$STATE_DIR/events.XXXXXX")"
-          tail -n 1000 "$EVENT_FILE" > "$event_tmp"
-          chmod 0644 "$event_tmp"
-          mv "$event_tmp" "$EVENT_FILE"
-        fi
-      }
-
-      main() {
-        local current
-        local -A previous_state
-        local -A previous_ip
-        local -A seen_host
-
-        if ! current="$(collect_peers)"; then
-          return
-        fi
-        mkdir -p "$STATE_DIR"
-        touch "$EVENT_FILE"
-        chmod 0644 "$EVENT_FILE"
-        if [ ! -f "$STATE_FILE" ]; then
-          printf '%s\n' "$current" > "$STATE_FILE"
-          return
-        fi
-
-        while IFS=$'\t' read -r host ip state; do
-          previous_state["$host"]="$state"
-          previous_ip["$host"]="$ip"
-        done < "$STATE_FILE"
-
-        while IFS=$'\t' read -r host ip state; do
-          [ -z "''${host:-}" ] && continue
-          seen_host["$host"]=1
-
-          if [ "''${previous_state[$host]+x}" = "x" ]; then
-            if [ "''${previous_state[$host]}" != "$state" ]; then
-              emit_event "$host" "$ip" "$state"
-            fi
-          elif [ "$state" = "online" ]; then
-            emit_event "$host" "$ip" "$state"
-          fi
-        done <<< "$current"
-
-        for host in "''${!previous_state[@]}"; do
-          if [ "''${seen_host[$host]+x}" != "x" ] && [ "''${previous_state[$host]}" = "online" ]; then
-            emit_event "$host" "''${previous_ip[$host]}" offline
-          fi
-        done
-
-        printf '%s\n' "$current" > "$STATE_FILE"
-      }
-
-      main
-    '';
+    text = builtins.readFile ./tailscale-peer-monitor.sh;
   };
 
   tailscalePeerNotifier = pkgs.writeShellApplication {
     name = peerNotifierServiceName;
     runtimeInputs = with pkgs; [
+      localReady
       bash
       coreutils
       libnotify
@@ -147,15 +50,21 @@ let
       set -euo pipefail
 
       LOG_TAG="tailscale-peer-notifier"
-      EVENT_FILE="/var/lib/tailscale-peer-monitor/events-v2.tsv"
+      SYSTEM_STATE="/var/lib/tailscale-peer-monitor"
+      EVENT_FILE="$SYSTEM_STATE/events-v3.tsv"
       STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/tailscale-peer-monitor"
-      CURSOR_FILE="$STATE_DIR/last-event-id"
+      CURSOR_FILE="$STATE_DIR/last-event-id-v3"
 
       mkdir -p "$STATE_DIR"
       [ -r "$EVENT_FILE" ] || exit 0
 
       latest_event="$(tail -n 1 "$EVENT_FILE")"
-      [ -n "$latest_event" ] || exit 0
+      if [ -z "$latest_event" ]; then
+        # Start before the first real event, without replaying an existing
+        # stream on installation. Zero is the empty-stream cursor.
+        [ -f "$CURSOR_FILE" ] || printf '%s\n' 0 > "$CURSOR_FILE"
+        exit 0
+      fi
       IFS=$'\t' read -r latest_event_id _ <<< "$latest_event"
 
       if [ ! -f "$CURSOR_FILE" ]; then
@@ -168,8 +77,21 @@ let
         printf '%s\n' "$latest_event_id" > "$CURSOR_FILE"
         exit 0
       fi
+      [ "$latest_event_id" != "$last_event_id" ] || exit 0
+
+      # Suppress delivery too: an event may be queued just before our uplink
+      # disappears. It must not become a flood after reconnecting.
+      if ! tailscale-local-ready || [ -e "$SYSTEM_STATE/local-network-down" ]; then
+        printf '%s\n' "$latest_event_id" > "$CURSOR_FILE"
+        exit 0
+      fi
+      delivery_floor=0
+      if [ -r "$SYSTEM_STATE/delivery-floor" ]; then
+        read -r delivery_floor < "$SYSTEM_STATE/delivery-floor" || delivery_floor=0
+      fi
 
       cursor_found=false
+      [ "$last_event_id" != 0 ] || cursor_found=true
       while IFS=$'\t' read -r event_id _; do
         if [ "$event_id" = "$last_event_id" ]; then
           cursor_found=true
@@ -184,6 +106,7 @@ let
       fi
 
       after_cursor=false
+      [ "$last_event_id" != 0 ] || after_cursor=true
       while IFS=$'\t' read -r event_id host ip state; do
         if [ "$after_cursor" = false ]; then
           if [ "$event_id" = "$last_event_id" ]; then
@@ -192,6 +115,10 @@ let
           continue
         fi
 
+        if [ "$event_id" -lt "$delivery_floor" ]; then
+          printf '%s\n' "$event_id" > "$CURSOR_FILE"
+          continue
+        fi
         if [ "$state" = "online" ]; then
           title="Tailscale: equipo en línea"
           message="''${host} (''${ip}) volvió en línea"
@@ -211,7 +138,16 @@ let
   };
 in
 {
+  options.orgm.tailscale.peerNotifications = {
+    enable = lib.mkEnableOption "desktop notifications for real Tailscale peer changes";
+    disconnectGraceSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 90;
+      description = "Continuous observed offline time before notifying about a peer IP.";
+    };
+  };
   config = lib.mkIf (builtins.elem "tailscale" config.orgm.user.programs) {
+  orgm.tailscale.peerNotifications.enable = lib.mkDefault (builtins.elem "orgm" config.orgm.user.programs);
   # Keep tailscaled, the CLI/systray and peer-monitor tooling on one version.
   nixpkgs.overlays = [
     (_final: prev: {
@@ -231,13 +167,14 @@ in
   services.resolved.enable = true;
 
 
-  systemd = lib.mkIf (builtins.elem "orgm" config.orgm.user.programs) {
+  systemd = lib.mkIf cfg.enable {
     services.${peerMonitorServiceName} = {
       description = "Detect Tailscale peer connection changes";
       after = [ "tailscaled.service" ];
       wants = [ "tailscaled.service" ];
       serviceConfig = {
         Type = "oneshot";
+        Environment = "DISCONNECT_GRACE_SECONDS=${toString cfg.disconnectGraceSeconds}";
         StateDirectory = "tailscale-peer-monitor";
         StateDirectoryMode = "0755";
         ExecStart = "${tailscalePeerMonitor}/bin/${peerMonitorServiceName}";
@@ -261,6 +198,7 @@ in
     user.services.${peerNotifierServiceName} = {
       description = "Show desktop notifications for Tailscale peer changes";
       after = [ "graphical-session.target" ];
+      unitConfig.ConditionUser = userName;
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${tailscalePeerNotifier}/bin/${peerNotifierServiceName}";

@@ -39,22 +39,58 @@ for _, binding in ipairs(bindings) do
     actions[normalized] = binding.action
   end
 end
-assert(#shortcuts.personal > 100, "personal bindings missing")
-assert(#shortcuts.relocated > 20, "Ryoku bindings did not move")
 for _, binding in ipairs(shortcuts.personal) do
-  assert(keys[shortcuts.normalize(binding[1])], "Osmarg lost " .. binding[1])
+  assert(keys[shortcuts.normalize(binding[1])], "Osmarg lost " .. binding.original)
 end
 for _, binding in ipairs(shortcuts.relocated) do
   assert(keys[shortcuts.normalize(binding[2])], "Ryoku lost " .. binding[1])
   assert(not shortcuts.reserved[shortcuts.normalize(binding[2])])
+  local function_key = binding[2]:match("%+ F(%d+)$")
+  assert(not function_key or tonumber(function_key) <= 12, "unavailable function key: " .. binding[2])
 end
-assert(actions["SUPER + SPACE"].dispatcher == "dsp.global")
-assert(actions["SUPER + SPACE"].arguments[1] == "ryoku:launcher")
-assert(actions["SUPER + ALT + SPACE"].arguments[1] == "ryoku:quicksettings")
-assert(actions["SUPER + V"].arguments[1] == "ryoku:clipboard")
-assert(actions["SUPER + CTRL + W"].arguments[1] == "windows-rdp toggle")
-assert(actions["XF86AUDIORAISEVOLUME"].arguments[1] == "ryoku-volume up")
-actions["ALT + TAB"]()
-assert(hl.last_dispatch.arguments[1] == "ryoku:overview")
+local function action(chord)
+  return assert(actions[shortcuts.normalize(chord)], "missing " .. chord)
+end
+local terminal = action("SUPER + Return")
+assert(terminal.dispatcher == "dsp.exec_cmd" and terminal.arguments[1] == "ryoku-app terminal")
+local launcher = action("SUPER + Space")
+assert(launcher.dispatcher == "dsp.global" and launcher.arguments[1] == "ryoku:launcher")
+local help = action("SUPER + slash")
+assert(help.dispatcher == "dsp.exec_cmd" and help.arguments[1] == "ryoku-shell hub open keybinds")
+local orgmai = action("SUPER + SHIFT + A")
+assert(orgmai.dispatcher == "dsp.exec_cmd" and orgmai.arguments[1]:find("orgmai prev", 1, true))
+local quicksettings = action("SUPER + ALT + Space")
+assert(quicksettings.dispatcher == "dsp.global" and quicksettings.arguments[1] == "ryoku:quicksettings")
+local clipboard = action("SUPER + V")
+assert(clipboard.dispatcher == "dsp.global" and clipboard.arguments[1] == "ryoku:clipboard")
+local windows = action("SUPER + CTRL + W")
+assert(windows.dispatcher == "dsp.exec_cmd" and windows.arguments[1] == "windows-rdp toggle")
+local volume = action("XF86AudioRaiseVolume")
+assert(volume.dispatcher == "dsp.exec_cmd" and volume.arguments[1] == "ryoku-volume up")
+local lock = action("SUPER + L")
+assert(lock.dispatcher == "dsp.exec_cmd" and lock.arguments[1] == "ryoku-shell lock")
+local focus_right = action("SUPER + Right")
+assert(focus_right.dispatcher == "dsp.focus" and focus_right.arguments[1].direction == "right")
+for _, key in ipairs({ "H", "J", "K" }) do
+  assert(not keys[shortcuts.normalize("SUPER + " .. key)], "reserved key is not free: " .. key)
+  assert(not keys[shortcuts.normalize("SUPER + CTRL + " .. key)], "legacy direction is still bound: " .. key)
+end
+local shot = action("Print")
+assert(shot.dispatcher == "dsp.exec_cmd" and shot.arguments[1]:find("qs -c ryoshot", 1, true))
+assert(action("CTRL + Print").arguments[1]:find("RYOSHOT_MODE=monitor", 1, true))
+assert(action("SUPER + Print").arguments[1] == "ryoku-cmd-screenrecord")
+assert(action("SUPER + SHIFT + Print").arguments[1] == "ryoku-shell menu screenshot")
+assert(action("SUPER + C").arguments[1] == "ryoku:launcher")
+assert(action("SUPER + 3").arguments[1]:find("ryoku-workspace focus 3", 1, true))
+assert(action("ALT + Tab").arguments[1] == "ryoku:overview")
+for _, binding in ipairs(bindings) do
+  if type(binding.action) == "table" and binding.action.dispatcher == "dsp.exec_cmd" then
+    local command = binding.action.arguments[1] or ""
+    assert(not command:find("record_screen_", 1, true), command)
+    assert(not command:find("swappy", 1, true), command)
+    assert(not command:find("hypr-rofi-calc", 1, true), command)
+    assert(not command:find("wlogout", 1, true), command)
+  end
+end
 print(string.format("PASS: %d upstream bindings retained, %d Osmarg bindings preserved, %d Ryoku collisions relocated",
   upstream_count, #shortcuts.personal, #shortcuts.relocated))

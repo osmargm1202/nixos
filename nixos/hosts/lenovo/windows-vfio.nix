@@ -6,6 +6,10 @@
   ...
 }:
 let
+  # BuildKit cannot follow a Home Manager Dockerfile link outside its context.
+  # Publish a small immutable context containing the actual file, not the VM data.
+  spiceBuildContext = pkgs.writeTextDir "Containerfile.spice"
+    (builtins.readFile ../../containers/windows/Containerfile.spice);
   lookingGlassIddClient = pkgs.callPackage ../../containers/windows/looking-glass-idd-client.nix { };
   virtioInputIso =
     pkgs.runCommand "virtio-input.iso"
@@ -31,9 +35,10 @@ in
   home-manager.users.${userName} = {
     home.file = {
       "Apps/windows/compose.yml".source = ../../containers/windows/compose.yml;
-      "Apps/windows/compose.lenovo-vfio.yml".source =
-        ../../containers/windows/hosts/lenovo-windows/compose.yml;
-      "Apps/windows/Containerfile.spice".source = ../../containers/windows/Containerfile.spice;
+      "Apps/windows/compose.lenovo-vfio.yml".text = lib.replaceStrings
+        [ "context: .\n" ] [ "context: ${spiceBuildContext}\n" ]
+        (builtins.readFile ../../containers/windows/hosts/lenovo-windows/compose.yml);
+      "Apps/windows/Containerfile.spice".source = "${spiceBuildContext}/Containerfile.spice";
       "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
   };

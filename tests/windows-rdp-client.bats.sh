@@ -24,6 +24,9 @@ cat >"$bin/docker" <<'EOF'
 if [[ -n "${DOCKER_LOG:-}" ]]; then
   printf '%s\n' "$*" >>"$DOCKER_LOG"
 fi
+if [[ -n "${ENGINE_LOG:-}" ]]; then
+  printf '%s\n' "${0##*/} $*" >>"$ENGINE_LOG"
+fi
 running="${WINDOWS_TEST_RUNNING:-false}"
 if [[ -n "${WINDOWS_TEST_STATE_FILE:-}" && -r "$WINDOWS_TEST_STATE_FILE" ]]; then
   read -r running <"$WINDOWS_TEST_STATE_FILE"
@@ -45,6 +48,7 @@ case "$1" in
   logs) printf '%s\n' 'simulated QEMU failure' ;;
 esac
 EOF
+cp "$bin/docker" "$bin/podman"
 cat >"$bin/sdl-freerdp" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "sdl-freerdp $*" >"$RDP_LOG"
@@ -87,7 +91,7 @@ cat >"$bin/rofi" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' 0
 EOF
-chmod +x "$bin/nc" "$bin/docker" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
+chmod +x "$bin/nc" "$bin/docker" "$bin/podman" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
 rdp_password_file="$tmp/rdp-password"
 printf '%s\n' test-password >"$rdp_password_file"
 rdp_user_file="$tmp/rdp-user"
@@ -142,10 +146,14 @@ failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_
 
 profile_file="$tmp/windows-vm-profile"
 printf '%s\n' lenovo-vfio >"$profile_file"
-vfio_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$profile_file" "$helper" status)"
+engine_log="$tmp/engines.log"
+vfio_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$profile_file" ENGINE_LOG="$engine_log" "$helper" status)"
 grep -Fqx 'profile=lenovo-vfio' <<<"$vfio_status"
 grep -Fqx 'container=lenovo-windows' <<<"$vfio_status"
 grep -Fqx 'client=xfreerdp ' <<<"$vfio_status"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" ENGINE_LOG="$engine_log" "$helper" stop
+grep -Fqx 'podman stop lenovo-windows' "$engine_log"
+! grep -q '^docker ' "$engine_log"
 lg_log="$tmp/looking-glass.log"
 if [[ -e /dev/kvmfr0 ]]; then
   HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true LG_LOG="$lg_log" "$helper" looking-glass
@@ -156,8 +164,10 @@ else
 fi
 vfio_start_docker_log="$tmp/vfio-start-docker.log"
 if [[ -e /dev/vfio/16 && -e /dev/kvmfr0 && "$(ulimit -Hl)" == unlimited ]]; then
-  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true DOCKER_LOG="$vfio_start_docker_log" "$helper" start
+  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true DOCKER_LOG="$vfio_start_docker_log" ENGINE_LOG="$engine_log" "$helper" start
   grep -Fqx 'compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$vfio_start_docker_log"
+  grep -Fqx 'podman compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$engine_log"
+  ! grep -q '^docker ' "$engine_log"
 else
   vfio_start_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true "$helper" start 2>&1 || true)"
   if [[ ! -e /dev/vfio/16 ]]; then
