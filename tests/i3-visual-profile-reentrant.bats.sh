@@ -15,10 +15,7 @@ fail() {
 
 check_user() {
   local user="$1" profile wrapper home bin
-  case "$user" in
-    osmarg) profile="$USERS/osmarg/programs/orgm/.local/bin/orgm-visual-profile" ;;
-    *) profile="$USERS/$user/profiles/i3/.local/bin/orgm-visual-profile" ;;
-  esac
+  profile="$USERS/$user/programs/orgm/.local/bin/orgm-visual-profile"
   wrapper="$USERS/$user/profiles/i3/.local/bin/i3-wallpaper"
   [[ -x "$profile" && -x "$wrapper" ]] || fail "$user: i3 visual profile helpers missing"
 
@@ -42,7 +39,7 @@ EOF
   printf '#!/bin/sh\nexit 0\n' >"$bin/i3-msg"
   chmod +x "$bin/i3-wallpaper-base" "$bin/i3-msg"
 
-  env -i PATH="$bin:/run/current-system/sw/bin:/usr/bin:/bin" HOME="$home" \
+  env -i PATH="$bin:$TOOLS" HOME="$home" \
     XDG_STATE_HOME="$TMP/$user/state" XDG_CONFIG_HOME="$home/.config" \
     ORGM_VISUAL_PROFILE_BACKEND=i3 \
     timeout 15 orgm-visual-profile random-wallpaper ||
@@ -51,15 +48,28 @@ EOF
   grep -qx "$home/Pictures/orgm/a.png" "$TMP/$user/state/orgm-visual-profile/profiles/orgm/wallpaper" ||
     fail "$user: random wallpaper was not recorded in the profile"
 
-  env -i PATH="$bin:/run/current-system/sw/bin:/usr/bin:/bin" HOME="$home" \
+  env -i PATH="$bin:$TOOLS" HOME="$home" \
     XDG_STATE_HOME="$TMP/$user/state" XDG_CONFIG_HOME="$home/.config" \
     ORGM_VISUAL_PROFILE_BACKEND=i3 \
     timeout 15 i3-wallpaper --random ||
     fail "$user: direct i3-wallpaper call deadlocked or failed"
+
+  env -i PATH="$bin:$TOOLS" HOME="$home" \
+    XDG_STATE_HOME="$TMP/$user/state" XDG_CONFIG_HOME="$home/.config" \
+    ORGM_VISUAL_PROFILE_BACKEND=i3 \
+    timeout 15 orgm-visual-profile apply ||
+    fail "$user: apply failed without gsettings"
 }
+
+# A minimal PATH without gsettings, as on hosts that do not install GNOME.
+TOOLS="$TMP/tools"
+mkdir -p "$TOOLS"
+for tool in bash env flock mkdir mktemp mv cat find readlink dirname rm timeout pgrep id grep sed ln chmod; do
+  ln -s "$(command -v "$tool")" "$TOOLS/$tool"
+done
 
 for user in osmarg jarq; do
   check_user "$user"
 done
 
-printf 'PASS: i3 wallpaper helpers re-enter the visual profile lock without deadlock\n'
+printf 'PASS: i3 wallpaper helpers re-enter the visual profile lock and apply without gsettings\n'
