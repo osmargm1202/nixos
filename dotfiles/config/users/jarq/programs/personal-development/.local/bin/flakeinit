@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Create a minimal development flake without overwriting an existing file.
+set -euo pipefail
+
+target=flake.nix
+if [[ -e $target ]]; then
+  printf 'flakeinit: %s ya existe, no se sobreescribe\n' "$target" >&2
+  exit 1
+fi
+
+cat > "$target" <<'EOF'
+{
+  description = "Project dev environment";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  };
+
+  outputs =
+    { self, nixpkgs }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in
+    {
+      devShells.${system}.default = pkgs.mkShell {
+        # Paquetes del proyecto — agregar aqui
+        # (nodejs_22, python3, uv, go, rustup, gcc, pkg-config, ...)
+        packages = with pkgs; [ ];
+
+        # Variables de entorno del shell
+        env = { };
+
+        shellHook = ''
+          echo "dev shell: $PWD"
+        '';
+      };
+
+      formatter.${system} = pkgs.nixfmt-rfc-style;
+    };
+}
+EOF
+
+if [[ -d .git ]]; then
+  git add --intent-to-add "$target"
+  printf 'flakeinit: %s creado y agregado al index de git\n' "$target"
+else
+  printf 'flakeinit: %s creado\n' "$target"
+fi
+printf 'flakeinit: agrega paquetes y corre: nix develop\n'

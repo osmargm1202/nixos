@@ -1,3 +1,5 @@
+# Jarq starts from Osmarg's selection without Discord, Steam or the extra
+# flatpaks; the lists can diverge from here.
 {
   ...
 }:
@@ -11,10 +13,22 @@
       "zutty"
       "neovim"
       "development"
+      "personal-development"
       "nextcloud"
-      "tailscale"
+      "syncthing"
+      "sunshine"
+      "openrgb"
+      "containers"
+      "orgm"
+      "ai"
       "webapps"
+      "rmatrix"
+      "obsidian"
+      "kdeconnect"
+      "tailscale"
+      "sops"
       "flatpak"
+      "deskflow"
     ];
 
     flatpakPackages = [
@@ -31,10 +45,33 @@
     ];
 
     webapps = [
+      "youtube"
+      "youtube-kids"
+      "netflix"
+      "hbo-max"
+      "crunchyroll"
+      "poki"
+      "gmail"
+      "google-maps"
       "outlook"
       "teams"
+      "whatsapp"
+      "cloud-orgm"
+      "webui"
+      "banco-popular"
+      "github"
+      "google-cloud"
+      "neon"
+      "rollbar"
+      "google-ai-studio"
+      "excalidraw"
+      "fast"
+      "claude"
+      "chatgpt"
+      "facebook"
+      "instagram"
+      "reddit"
+      "ubereats"
     ];
   };
-
-  orgm.tailscale.peerNotifications.enable = true;
 }

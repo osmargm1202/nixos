@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODE="${1:-status}"
+ME="$$"
+PROTECTED_DESC="zen-browser, steam/steamwebhelper, Dota2 appid=570, Windows/qemu-system"
+
+json_escape() {
+  local s="$1"
+  s=${s//\\/\\\\}
+  s=${s//"/\\"}
+  s=${s//$'\n'/\\n}
+  printf '%s' "$s"
+}
+
+rss_kb() {
+  awk '/^VmRSS:/ { print $2; found=1 } END { if (!found) print 0 }' "/proc/$1/status" 2>/dev/null || printf '0\n'
+}
+
+cmdline_of() {
+  tr '\0' ' ' <"/proc/$1/cmdline" 2>/dev/null || cat "/proc/$1/comm" 2>/dev/null || true
+}
+
+comm_of() {
+  cat "/proc/$1/comm" 2>/dev/null || true
+}
+
+is_protected() {
+  local text="$1"
+  case "$text" in
+    *zen-browser*|*' zen '*|*'/zen '*) return 0 ;;
+    *steam*|*steamwebhelper*|*gameoverlayui*) return 0 ;;
+    *dota*|*Dota*|*appid=570*|*AppId=570*|*gameid=570*|*gameid\"570*) return 0 ;;
+    *windows*|*Windows*|*qemu-system*) return 0 ;;
+  esac
+  return 1
+}
+
+reason_for() {
+  local comm="$1" cmd="$2" text
+  text="$comm $cmd"
+  [[ "$text" == *lua-language-server* ]] && { printf 'Lua language server'; return 0; }
+  [[ "$text" == *pylance* || "$text" == *ms-python.vscode-pylance* || "$text" == *server.bundle.js* ]] && { printf 'VS Code/Pylance'; return 0; }
+  [[ "$comm" == code || "$cmd" == *'/usr/share/code/code'* || "$cmd" == *'/vscode/'* ]] && { printf 'VS Code/Pylance'; return 0; }
+  [[ "$comm" == claude || "$cmd" == *claude* || "$cmd" == *'.local/share/claude/versions/'* || "$cmd" == *'anthropic.claude-code'* ]] && { printf 'Claude'; return 0; }
+  [[ "$comm" == pi || "$cmd" == pi\ * || "$cmd" == *'/.pi/agent/'* || "$cmd" == *'context-mode/server.bundle'* || "$cmd" == *mcp* ]] && { printf 'Pi/MCP'; return 0; }
+  return 1
+}
+
+candidates() {
+  local pid comm cmd reason rss
+  for proc in /proc/[0-9]*; do
+    pid="${proc##*/}"
+    [[ "$pid" == "$ME" ]] && continue
+    [[ -r "$proc/status" ]] || continue
+    comm="$(comm_of "$pid")"
+    cmd="$(cmdline_of "$pid")"
+    [[ -n "$comm$cmd" ]] || continue
+    if is_protected "$comm $cmd"; then
+      continue
+    fi
+    if reason="$(reason_for "$comm" "$cmd")"; then
+      rss="$(rss_kb "$pid")"
+      printf '%s\t%s\t%s\t%s\t%s\n' "$pid" "$rss" "$reason" "$comm" "$cmd"
+    fi
+  done
+}
+
+summary() {
+  local count=0 total=0 line rss mib
+  while IFS=$'\t' read -r _pid rss _reason _comm _cmd; do
+    [[ -n "${rss:-}" ]] || continue
+    count=$((count + 1))
+    total=$((total + rss))
+  done < <(candidates)
+  mib=$((total / 1024))
+  printf '%s\t%s\n' "$count" "$mib"
+}
+
+status() {
+  local s count mib class tooltip text
+  s="$(summary)"
+  count="${s%%$'\t'*}"
+  mib="${s##*$'\t'}"
+  text="󰍛"
+  class="idle"
+  [[ "$count" -gt 0 ]] && class="active"
+  tooltip="Memclean dev: ${count} candidatos (~${mib} MiB RSS)\nClick: limpiar Claude/Pi/MCP/Lua LS/VS Code\nRight click: ver dry-run\nProtege: ${PROTECTED_DESC}"
+  printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$(json_escape "$text")" "$(json_escape "$tooltip")" "$(json_escape "$class")"
+}
+
+dry_run() {
+  local s count mib
+  s="$(summary)"
+  count="${s%%$'\t'*}"
+  mib="${s##*$'\t'}"
+  printf 'Memclean dev dry-run\n'
+  printf 'Protected patterns: %s\n' "$PROTECTED_DESC"
+  printf 'Candidates: %s (~%s MiB RSS)\n\n' "$count" "$mib"
+  printf '%-8s %-8s %-18s %-20s %s\n' PID RSS_MB REASON COMM CMD
+  candidates | sort -k2,2nr | while IFS=$'\t' read -r pid rss reason comm cmd; do
+    printf '%-8s %-8s %-18s %-20s %s\n' "$pid" "$((rss / 1024))" "$reason" "$comm" "${cmd:0:160}"
+  done
+}
+
+clean() {
+  local pids=() line pid rss reason comm cmd count=0 total=0
+  while IFS=$'\t' read -r pid rss reason comm cmd; do
+    [[ -n "${pid:-}" ]] || continue
+    pids+=("$pid")
+    count=$((count + 1))
+    total=$((total + rss))
+  done < <(candidates)
+
+  if [[ "$count" -gt 0 ]]; then
+    kill -TERM "${pids[@]}" 2>/dev/null || true
+  fi
+
+  # Stop all containers
+  local containers_stopped=0
+  if command -v docker >/dev/null 2>&1; then
+    local running
+    running="$(docker ps -q 2>/dev/null || true)"
+    if [[ -n "$running" ]]; then
+      docker stop $running >/dev/null 2>&1 || true
+      containers_stopped=1
+    fi
+  fi
+  if command -v podman >/dev/null 2>&1; then
+    local running_p
+    running_p="$(podman ps -q 2>/dev/null || true)"
+    if [[ -n "$running_p" ]]; then
+      podman stop --all >/dev/null 2>&1 || true
+      containers_stopped=1
+    fi
+  fi
+
+  # Sync filesystem
+  sync
+
+  # Restart all desktop components
+  hyprctl reload >/dev/null 2>&1 || true
+  (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &)
+  ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true
+  sleep 0.3
+  pkill -x conky 2>/dev/null || true
+  sleep 0.3
+  conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
+
+  local msg="Procesos: ${count} (~$((total / 1024)) MiB)"
+  [[ "$containers_stopped" -eq 1 ]] && msg="$msg · contenedores detenidos"
+  msg="$msg · desktop reiniciado"
+  command -v notify-send >/dev/null 2>&1 && notify-send "Memclean dev" "$msg" || true
+  printf '%s\n' "$msg"
+}
+
+case "$MODE" in
+  status) status ;;
+  dry-run|list) dry_run ;;
+  clean) clean ;;
+  *)
+    printf 'Usage: memclean-dev [status|dry-run|clean]\n' >&2
+    exit 2
+    ;;
+esac

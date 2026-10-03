@@ -68,6 +68,10 @@ let
     ./nixos/apps/deskflow.nix
     ./nixos/gaming/default.nix
   ];
+  jarqDesktopModules = [
+    ./nixos/apps/deskflow.nix
+    ./nixos/gaming/sunshine.nix
+  ];
   lenovoDesktopModules = [
     ./nixos/hosts/lenovo/p14s-gen2i.nix
     ./nixos/gaming/steam.nix
@@ -113,18 +117,21 @@ in
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "i3";
       userName = "jarq";
+      extraModules = jarqDesktopModules;
     };
     jarq-labwc = desktop {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "labwc";
       userName = "jarq";
+      extraModules = jarqDesktopModules;
     };
     jarq-hyprland = desktop {
       hostName = "jarq";
       hardware = ./nixos/hosts/jarq/hardware-configuration.nix;
       profileName = "hyprland";
       userName = "jarq";
+      extraModules = jarqDesktopModules;
     };
 
     orgm-terminal = terminal {

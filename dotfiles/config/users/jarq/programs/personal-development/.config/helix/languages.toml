@@ -1,0 +1,61 @@
+[language-server.hyprls]
+command = "hyprls"
+
+[[language]]
+name = "hyprlang"
+language-servers = [ "hyprls" ]
+
+[language-server.emmet-lsp]
+command = "emmet-language-server"
+args = ["--stdio"]
+
+[language-server.lsp-ai]
+command = "lsp-ai"
+args = ["--stdio"]
+
+[[language]]
+name = "rust"
+language-servers = [ "rust-analyzer" ]
+
+[language-server.rust-analyzer.config]
+checkOnSave = { command = "clippy" }
+
+[[language]]
+name = "html"
+language-servers = [ "emmet-lsp", "vscode-html-language-server" ]
+
+[[language]]
+name = "javascript"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = [ "typescript-language-server" ]
+
+[[language]]
+name = "jsx"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = [ "typescript-language-server" ]
+
+[[language]]
+name = "typescript"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = [ "typescript-language-server" ]
+
+[[language]]
+name = "tsx"
+auto-format = true
+indent = { tab-width = 4, unit = "   " }
+language-servers = [ "typescript-language-server" ]
+
+[[language]]
+name = "json"
+comment-token = "//"
+
+[[language]]
+name = "config"
+scope = "source.conf"
+file-types = [ "conf" ]
+comment-token = "#"
+roots = []
+indent = { tab-width = 4, unit = "    " }

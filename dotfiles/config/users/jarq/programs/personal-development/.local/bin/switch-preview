@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+path=${1:-}
+if [[ -f $path ]]; then
+  if [[ ! -s $path ]]; then
+    printf 'File is empty\n'
+  elif archive-preview "$path"; then
+    exit 0
+  elif [[ $(file -b --mime-type "$path") == image/* ]]; then
+    image-preview "$path"
+  else
+    file-preview "$path"
+  fi
+elif [[ -d $path ]]; then
+  dir-preview "$path"
+else
+  printf 'Preview unavailable\n'
+fi
