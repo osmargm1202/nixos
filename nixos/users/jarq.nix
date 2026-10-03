@@ -1,5 +1,5 @@
-# Jarq starts from Osmarg's selection without Discord, Steam or the extra
-# flatpaks; the lists can diverge from here.
+# Jarq starts from Osmarg's selection without Discord, Steam, the extra
+# flatpaks or sops (Osmarg's secrets); the lists can diverge from here.
 {
   ...
 }:
@@ -26,7 +26,6 @@
       "obsidian"
       "kdeconnect"
       "tailscale"
-      "sops"
       "flatpak"
       "deskflow"
     ];
