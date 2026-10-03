@@ -7,5 +7,6 @@ if [[ -z "$profile_id" ]]; then
 fi
 case "$profile_id" in slc|orgm|osmar) ;; *) profile_id=orgm ;; esac
 export I3_WALLPAPER_DIR="${I3_WALLPAPER_DIR:-$HOME/Pictures/$profile_id}"
-export I3_WALLPAPER_RECORD_COMMAND=orgm-visual-profile
+# orgm-visual-profile records the result itself after a random/profile change.
+[[ -n "${ORGM_VISUAL_PROFILE_SKIP_RECORD:-}" ]] || export I3_WALLPAPER_RECORD_COMMAND=orgm-visual-profile
 exec i3-wallpaper-base "$@"

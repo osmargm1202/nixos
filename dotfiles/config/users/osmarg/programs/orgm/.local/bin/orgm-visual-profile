@@ -9,8 +9,13 @@ config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 # Serialize state and runtime-output updates without using a mutable lock file.
 mkdir -p "$state_root"
-exec {profile_lock_fd}<"$state_root"
-flock -x "$profile_lock_fd"
+# Wallpaper helpers call back into this command while the parent holds the
+# lock; children inherit the marker instead of waiting on their own parent.
+if [[ "${ORGM_VISUAL_PROFILE_LOCKED:-}" != "$state_root" ]]; then
+  exec {profile_lock_fd}<"$state_root"
+  flock -x "$profile_lock_fd"
+  export ORGM_VISUAL_PROFILE_LOCKED="$state_root"
+fi
 
 usage() {
   printf '%s\n' 'usage: orgm-visual-profile {current|waybar|menu|set ID|apply|toggle-mode|random-wallpaper|record-wallpaper PATH}' >&2
@@ -160,7 +165,8 @@ refresh_surfaces() {
   command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
   if [[ "$(backend)" == hypr ]] && command -v hypr-nwg-dock-reload >/dev/null 2>&1; then
     (
-      exec {profile_lock_fd}>&-
+      [[ -n "${profile_lock_fd:-}" ]] && exec {profile_lock_fd}>&-
+      unset ORGM_VISUAL_PROFILE_LOCKED
       exec hypr-nwg-dock-reload
     ) >/dev/null 2>&1 &
   elif [[ "$(backend)" == i3 ]] && command -v i3-msg >/dev/null 2>&1; then
