@@ -98,6 +98,24 @@ Los ajustes personales iniciales activan el enfoque al pasar el mouse, eliminan
 el borde y redondean las esquinas a 12 px. Se guardan en el store de Ryoku
 (`desktop.json`), conservando las modificaciones posteriores del Hub.
 
+Las ventanas auxiliares de Osmarg se abren flotantes y centradas en su monitor:
+calculadora 420×640, extensión Bitwarden 480×680, Orgmai chat 1360×820,
+Orgmai configuración 1120×740, bandeja Nextcloud 560×680 y Syncthing 760×600.
+Los tamaños iniciales se limitan al 92 % del ancho y 88 % del alto del monitor;
+se pueden redimensionar después. La regla de Bitwarden exige el título de la
+extensión de Firefox y no coincide con páginas habituales del navegador.
+Firefox asigna ese título después de crear la ventana; un listener de
+`window.title` aplica la posición una sola vez y conserva los cambios manuales
+al recargar. Se usa la
+[API nativa de eventos](https://wiki.hypr.land/configuring/core/rules/window-rules/#static-effects)
+porque las reglas estáticas solo evalúan el título inicial. Estas reglas
+adaptativas están en el override personal
+`dotfiles/config/users/osmarg/profiles/ryoku/.config/orgm-ryoku/window-rules.lua`,
+cargado desde `hypr/user.lua`; no modifican i3, Hyprland habitual ni Jarq.
+Ryoku Hub → Window Rules (modo avanzado) permite agregar otras reglas; su editor
+de tamaños de esta revisión admite dimensiones fijas, mientras este override
+usa las expresiones adaptativas de Hyprland.
+
 Hypridle 0.1.7 busca su configuración habitual incluso al recibir una ruta con
 `-c`. La preparación crea `~/.config/hypr/hypridle.conf` como enlace a la política
 generada por Ryoku cuando esa ruta está libre; conserva configuraciones existentes.
@@ -142,6 +160,8 @@ ejecuta su Hyprland real con `--verify-config`, incluido el overlay de usuario.
 Comprueba los atajos de terminal, launcher, ayuda y controles, sin colisiones
 efectivas, incluidos nombres equivalentes como `Next` y `Page_Down`. El cargador
 es compatible con Lua 5.5 y reubica también duplicados de los atajos personales.
+También comprueba que el título tardío de Bitwarden solo afecte a la extensión,
+respete escala y rotación del monitor y conserve los ajustes manuales posteriores.
 Las pruebas de transición conservan los archivos editables y llaveros existentes;
 la evaluación de perfiles comprueba PAM efectivo, autologin y política de tapa.
 

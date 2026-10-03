@@ -18,13 +18,14 @@ chmod 700 "$tmp/runtime"
 cp -a "$upstream/ryoku/hyprland/." "$tmp/config/hypr/"
 chmod -R u+w "$tmp/config/hypr"
 cp "$ROOT"/dotfiles/config/profiles/ryoku/.config/orgm-ryoku/*.lua "$tmp/config/orgm-ryoku/"
-cp "$ROOT/dotfiles/config/users/osmarg/profiles/ryoku/.config/orgm-ryoku/osmarg-keybindings.lua" \
-  "$tmp/config/orgm-ryoku/osmarg-keybindings.lua"
+cp "$ROOT"/dotfiles/config/users/osmarg/profiles/ryoku/.config/orgm-ryoku/*.lua \
+  "$tmp/config/orgm-ryoku/"
 cp "$tmp/config/orgm-ryoku/rebind.lua" "$tmp/config/hypr/modules/rebind.lua"
 cp "$tmp/config/orgm-ryoku/user.lua" "$tmp/config/hypr/user.lua"
 cp "$tmp/config/orgm-ryoku/keyboard.lua" "$tmp/config/hypr/keyboard.lua"
 XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/state" \
   "${LUA_BIN:-lua}" "$ROOT/tests/ryoku-shortcuts.lua" "$upstream"
+XDG_CONFIG_HOME="$tmp/config" "${LUA_BIN:-lua}" "$ROOT/tests/ryoku-window-rules.lua"
 env -u HYPRLAND_INSTANCE_SIGNATURE -u WAYLAND_DISPLAY -u DISPLAY \
   -u GNOME_KEYRING_CONTROL HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" \
   XDG_STATE_HOME="$tmp/state" XDG_RUNTIME_DIR="$tmp/runtime" \

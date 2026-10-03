@@ -5,6 +5,9 @@ if not package.loaded[name] then
 end
 package.loaded[name].install()
 
+-- Personal placement rules belong to this user and this desktop profile.
+assert(loadfile(config .. "/orgm-ryoku/window-rules.lua"))().setup()
+
 -- Kitty owns the background alpha. Avoid multiplying it again by the desktop
 -- inactive opacity, including the personal AI and native SSH terminal classes.
 hl.window_rule({
