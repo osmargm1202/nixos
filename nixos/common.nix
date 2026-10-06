@@ -384,9 +384,12 @@ in
       "inode/directory" = lib.mkForce [
         (if builtins.elem profileName [ "hyprland" "ryoku" ] then "org.gnome.Nautilus.desktop" else "thunar.desktop")
       ];
-      "text/plain" = lib.mkForce [ "nvim.desktop" ];
-      "text/markdown" = lib.mkForce [ "nvim.desktop" ];
-      "text/x-markdown" = lib.mkForce [ "nvim.desktop" ];
+      "text/plain" = lib.mkDefault [ "org.gnome.TextEditor.desktop" ];
+      "text/markdown" = lib.mkDefault [ "org.gnome.TextEditor.desktop" ];
+      "text/x-markdown" = lib.mkDefault [ "org.gnome.TextEditor.desktop" ];
+      "application/x-zerosize" = lib.mkDefault [
+        (if profileName == "cinnamon" then "xed.desktop" else "org.gnome.TextEditor.desktop")
+      ];
       "text/x-lua" = lib.mkForce [ "nvim.desktop" ];
       "text/x-python" = lib.mkForce [ "nvim.desktop" ];
       "application/json" = lib.mkForce [ "nvim.desktop" ];

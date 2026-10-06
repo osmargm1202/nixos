@@ -15,7 +15,12 @@ let
   hostName = config.networking.hostName;
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
+  useKittyForNeovim = profileName != "terminal" && programEnabled "neovim" && programEnabled "kitty";
   directoryMimeHandlers = lib.toList (config.xdg.mime.defaultApplications."inode/directory" or [ ]);
+  fileMimeHandlers = lib.genAttrs [
+    "text/plain" "text/markdown" "text/x-markdown" "application/x-zerosize"
+    "text/x-lua" "text/x-python" "application/json" "application/x-shellscript"
+  ] (mime: lib.toList (config.xdg.mime.defaultApplications.${mime} or [ "nvim.desktop" ]));
 
   # Mirrors *.desktop files Steam (and similar launchers) drop into
   # ~/Desktop over to ~/.local/share/applications so dock/launcher icons
@@ -174,6 +179,20 @@ in
       ...
     }:
     {
+      # Terminal=true lets GIO choose its own terminal (often xterm), ignoring
+      # TERMINAL and xdg-terminal-exec. Launch Kitty explicitly for Neovim.
+      xdg.desktopEntries.nvim = lib.mkIf useKittyForNeovim {
+        name = "Neovim";
+        genericName = "Text Editor";
+        exec = "${pkgs.kitty}/bin/kitty -e nvim %F";
+        icon = "nvim";
+        terminal = false;
+        categories = [ "Utility" "TextEditor" "Development" ];
+        mimeType = [ "text/plain" "text/x-lua" "text/x-python" "application/json" "application/x-shellscript" ];
+      };
+      xdg.dataFile."applications/nvim.desktop" = lib.mkIf useKittyForNeovim {
+        source = "${builtins.head (builtins.filter (p: p.name == "nvim.desktop") config.home.packages)}/share/applications/nvim.desktop";
+      };
       xdg.configFile = lib.mkMerge [
         (lib.optionalAttrs (programEnabled "tailscale") {
           # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
@@ -220,16 +239,10 @@ in
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/http
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/https
         ''}
-        for mime in \
-          text/plain \
-          text/markdown \
-          text/x-markdown \
-          text/x-lua \
-          text/x-python \
-          application/json \
-          application/x-shellscript; do
-          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default nvim.desktop "$mime"
-        done
+        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (mime: handlers:
+          lib.optionalString (handlers != [ ])
+            "$DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${lib.escapeShellArg (builtins.head handlers)} ${lib.escapeShellArg mime}"
+        ) fileMimeHandlers)}
       '';
 
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''

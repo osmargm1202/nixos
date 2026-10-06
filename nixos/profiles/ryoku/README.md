@@ -61,6 +61,18 @@ launcher busca archivos con `/file` y carpetas con `/folder`. `Win+Shift+M`
 abre el gestor de archivos: en Nautilus, el menú contextual «Open in Kitty»
 permite abrir la terminal en la carpeta seleccionada o actual.
 
+Texto plano y Markdown abren GNOME Text Editor desde la configuración común,
+tanto en Ryoku como en Hyprland. Los tipos de programación conservan Neovim;
+su entrada `nvim.desktop` lanza Kitty explícitamente para que GIO no elija xterm.
+La activación aplica los mismos handlers declarados por el perfil.
+
+Los iconos de carpetas siguen la paleta mediante `ryoku-cmd-folders`. El paquete
+de integración usa Papirus desde Nix Store, ya que la ruta upstream
+`/usr/share/icons/Papirus` no existe en NixOS. `prepare.sh` instala el hook de
+Matugen como archivo regular en `ryoku/user_edits/matugen/config.toml`;
+Ryoku ignora los enlaces simbólicos en ese overlay. La primera activación
+selecciona `ryoku-folders` y las posteriores respetan otros temas elegidos.
+
 Ryoku conserva exclusivamente cinco utilidades de la antigua capa común de
 Osmarg: sus tres acciones de marcadores, copiar stdin y el temporizador de
 reproducción. El historial, la luz nocturna, los menús de red, el cierre de

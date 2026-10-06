@@ -20,6 +20,8 @@ printf 'font_size 15\n' > "$tmp/original/kitty-user.conf"
 ln -s "$tmp/original/kitty-user.conf" "$XDG_CONFIG_HOME/kitty/user.conf"
 printf 'immutable original\n' > "$tmp/original/user.lua"
 ln -s "$tmp/original/user.lua" "$XDG_CONFIG_HOME/hypr/user.lua"
+printf 'Nix palette hook\n' > "$tmp/original/matugen-config.toml"
+ln -s "$tmp/original/matugen-config.toml" "$XDG_CONFIG_HOME/orgm-ryoku/matugen-config.toml"
 # The retired alias may change, but encrypted and passwordless collections stay.
 mkdir -p "$XDG_DATA_HOME/keyrings"
 printf 'existing encrypted login bytes\n' > "$XDG_DATA_HOME/keyrings/login.keyring"
@@ -27,6 +29,8 @@ printf 'existing passwordless collection bytes\n' > "$XDG_DATA_HOME/keyrings/org
 printf '%s\n' orgm-never-ask > "$XDG_DATA_HOME/keyrings/default"
 bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
 [[ ! -L "$XDG_CONFIG_HOME/hypr/user.lua" ]]
+[[ ! -L "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml" ]]
+cmp "$tmp/original/matugen-config.toml" "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml"
 [[ ! -L "$XDG_CONFIG_HOME/kitty/user.conf" ]]
 grep -Fxq 'font_size 15' "$XDG_CONFIG_HOME/kitty/user.conf"
 grep -Fxq 'background_opacity 0.85' "$XDG_CONFIG_HOME/kitty/orgm-ryoku.conf"
@@ -50,7 +54,9 @@ printf 'personal idle config\n' > "$XDG_CONFIG_HOME/hypr/hypridle.conf"
 [[ "$(<"$XDG_DATA_HOME/keyrings/login.keyring")" == 'existing encrypted login bytes' ]]
 [[ "$(<"$XDG_DATA_HOME/keyrings/orgm-never-ask.keyring")" == 'existing passwordless collection bytes' ]]
 printf 'keyboard edited through Ryoku\n' > "$XDG_CONFIG_HOME/hypr/keyboard.lua"
+printf 'updated Nix palette hook\n' > "$tmp/original/matugen-config.toml"
 bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
+cmp "$tmp/original/matugen-config.toml" "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml"
 jq -e '.desktop.appearance.rounding == 18 and .desktop.appearance.borderSize == 1 and .desktop.input.followMouse == 0' "$XDG_CONFIG_HOME/ryoku/desktop.json" > /dev/null
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/hypridle.conf")" == 'personal idle config' ]]
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/keyboard.lua")" == 'keyboard edited through Ryoku' ]]

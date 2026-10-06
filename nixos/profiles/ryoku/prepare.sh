@@ -16,6 +16,15 @@ install_override "$config_home/orgm-ryoku/rebind.lua" \
   "$config_home/ryoku/user_edits/hypr/modules/rebind.lua" rebind
 install_override "$config_home/orgm-ryoku/user.lua" "$config_home/hypr/user.lua" user
 
+# Ryoku's overlay scanner accepts regular files only, not Home Manager links.
+# Materialize our generated palette hook as a user-owned overlay before Ryoku
+# lays its base. Keep the declarative source outside Ryoku's config roots.
+if [[ -f "$config_home/orgm-ryoku/matugen-config.toml" ]]; then
+  mkdir -p "$config_home/ryoku/user_edits/matugen"
+  install_override "$config_home/orgm-ryoku/matugen-config.toml" \
+    "$config_home/ryoku/user_edits/matugen/config.toml" matugen
+fi
+
 # Dedicated Kitty user config is never shipped by Ryoku. Keep palette/font
 # updates in its normal config and append our include without losing other
 # user settings or writing through an old Home Manager link.
