@@ -114,11 +114,16 @@ Las ventanas auxiliares de Osmarg se abren flotantes y centradas en su monitor:
 calculadora 420×640, extensión Bitwarden 480×680, Orgmai chat 1360×820,
 Orgmai configuración 1120×740, bandeja Nextcloud 560×680 y Syncthing 760×600.
 Los tamaños iniciales se limitan al 92 % del ancho y 88 % del alto del monitor;
-se pueden redimensionar después. La regla de Bitwarden exige el título de la
-extensión de Firefox y no coincide con páginas habituales del navegador.
-Firefox asigna ese título después de crear la ventana; un listener de
-`window.title` aplica la posición una sola vez y conserva los cambios manuales
-al recargar. Se usa la
+se pueden redimensionar después. Bitwarden se identifica por el título de la
+extensión en Firefox o por el app_id de Chromium
+(`chrome-nngceckbapebfimnlniiiahkandclblb-<perfil>`); las páginas habituales del
+navegador conservan su disposición. Firefox asigna el título después de crear
+la ventana, por lo que también se escucha `window.title`.
+Las ventanas auxiliares reciben foco y el cursor en su centro una vez por
+apertura, incluida la calculadora y los diálogos de bandeja. Esto evita que
+el enfoque al pasar el mouse vuelva a la ventana debajo del cursor anterior.
+Los cambios de título y las recargas conservan el foco y los ajustes manuales;
+al cerrar y reabrir un diálogo se permite un nuevo enfoque inicial. Se usa la
 [API nativa de eventos](https://wiki.hypr.land/configuring/core/rules/window-rules/#static-effects)
 porque las reglas estáticas solo evalúan el título inicial. Estas reglas
 adaptativas están en el override personal

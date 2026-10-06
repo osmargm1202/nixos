@@ -12,6 +12,9 @@ end
 local function is_bitwarden_extension(window)
   if not window or not window.mapped then return false end
   local class = window.class:lower()
+  -- Chromium popouts have the extension's own app_id; normal tabs retain the
+  -- browser app_id, even when their page title happens to be "Bitwarden".
+  if class:match("^chrome%-nngceckbapebfimnlniiiahkandclblb%-.+$") then return true end
   if class ~= "firefox" and class ~= "org.mozilla.firefox" then return false end
   -- Firefox supplies this prefix for extension popouts, after mapping them.
   -- A regular tab titled "Bitwarden" must keep its normal browser placement.
@@ -24,44 +27,87 @@ local function is_bitwarden_extension(window)
   return false
 end
 
+local function exact(value)
+  return "^" .. value:gsub("([^%w_%- ])", "\\%1") .. "$"
+end
+
 function M.setup()
   local windows = {
     {
       name = "osmarg-calculator",
-      match = { class = "^(org\\.gnome\\.Calculator|[Qq]alculate-gtk|[Qq]alculate-qt)$" },
+      classes = { "org.gnome.Calculator", "Qalculate-gtk", "qalculate-gtk", "Qalculate-qt", "qalculate-qt" },
       width = 420, height = 640,
     },
     {
       name = "osmarg-orgmai-chat",
-      match = { class = "^orgmai-chat$" },
+      classes = { "orgmai-chat" },
       width = 1360, height = 820,
     },
     {
       name = "osmarg-orgmai-config",
-      match = { class = "^orgmai-config$" },
+      classes = { "orgmai-config" },
       width = 1120, height = 740,
     },
     {
       name = "osmarg-nextcloud-tray",
-      match = { class = "^com\\.nextcloud\\.desktopclient\\.nextcloud$", title = "^Nextcloud$" },
+      classes = { "com.nextcloud.desktopclient.nextcloud" }, title = "Nextcloud",
       width = 560, height = 680,
     },
     {
       -- The native Wayland tray dialog has an empty app_id on this machine.
       name = "osmarg-syncthing-tray",
-      match = { title = "^Syncthing Tray$" },
+      classes = { "" }, title = "Syncthing Tray",
       width = 760, height = 600,
     },
   }
 
   for _, window in ipairs(windows) do
+    local match = {}
+    if window.classes then
+      local alternatives = {}
+      for _, class in ipairs(window.classes) do
+        alternatives[#alternatives + 1] = class:gsub("%.", "\\.")
+      end
+      match.class = "^(" .. table.concat(alternatives, "|") .. ")$"
+    end
+    if window.title then match.title = exact(window.title) end
     hl.window_rule({
       name = window.name,
-      match = window.match,
+      match = match,
       float = true,
       size = fit(window.width, window.height),
       center = true,
+      no_initial_focus = false,
+      focus_on_activate = true,
+      no_follow_mouse = false,
     })
+  end
+
+  local function is_utility_window(window)
+    if not window or not window.mapped then return false end
+    for _, utility in ipairs(windows) do
+      if not utility.title or utility.title == window.title then
+        if not utility.classes then return true end
+        for _, class in ipairs(utility.classes) do
+          if class == window.class then return true end
+        end
+      end
+    end
+    return false
+  end
+
+  local focused = {}
+  local function focus_once(window)
+    if focused[window.stable_id] then return end
+    focused[window.stable_id] = true
+    hl.dispatch(hl.dsp.focus({ window = window }))
+    -- follow_mouse=1 would otherwise return focus to the window beneath the
+    -- old pointer. Use the final geometry after floating/resizing/centering.
+    local at, size = window.at, window.size
+    hl.dispatch(hl.dsp.cursor.move({
+      x = math.floor(at.x + size.x / 2),
+      y = math.floor(at.y + size.y / 2),
+    }))
   end
 
   -- Static rules cannot float/resize a popout whose title arrives late.
@@ -86,17 +132,34 @@ function M.setup()
     }))
     hl.dispatch(hl.dsp.window.center({ window = window }))
   end
-  hl.on("window.open", place_bitwarden)
-  hl.on("window.title", place_bitwarden)
-  hl.on("window.destroy", function(window)
-    if window and window.stable_id then placed[window.stable_id] = nil end
-  end)
+  local function on_window(window)
+    if is_bitwarden_extension(window) then
+      place_bitwarden(window)
+      if placed[window.stable_id] then focus_once(window) end
+    elseif is_utility_window(window) then
+      focus_once(window)
+    end
+  end
+  hl.on("window.open", on_window)
+  hl.on("window.title", on_window)
+  local function forget(window)
+    if window and window.stable_id then
+      placed[window.stable_id], focused[window.stable_id] = nil, nil
+    end
+  end
+  hl.on("window.close", forget)
+  hl.on("window.destroy", forget)
   hl.on("config.reloaded", function()
     for _, window in ipairs(hl.get_windows()) do
       if is_bitwarden_extension(window) then
         -- Preserve a user's subsequent manual size/position on config reload.
         if window.floating then placed[window.stable_id] = true
         else place_bitwarden(window) end
+      end
+      -- Reload applies missing placement but must not move the cursor or
+      -- steal focus from the user's current window on later title updates.
+      if is_bitwarden_extension(window) or is_utility_window(window) then
+        focused[window.stable_id] = true
       end
     end
   end)
