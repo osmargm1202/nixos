@@ -127,12 +127,13 @@ function , {
 
 alias za='zellij attach'
 
+# Modern terminal clients support UTF-8 even when SSH does not forward a locale.
+# Keep this at the command boundary: reloading tmux.conf cannot change client UTF-8.
+tmux() { command tmux -u "$@"; }
+
 # tmux shortcuts: ta attaches to an existing session; tn creates a named one.
 alias ta='tmux attach'
 
-tn() {
-  tmux new-session -s "$1"
-}
 alias tn='tmux new -s'
 
 if command -v curl >/dev/null && command -v fzf >/dev/null && command -v bat >/dev/null; then

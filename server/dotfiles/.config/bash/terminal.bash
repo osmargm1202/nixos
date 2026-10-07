@@ -1,3 +1,7 @@
+# Modern terminal clients support UTF-8 even when SSH does not forward a locale.
+# Keep this at the command boundary: reloading tmux.conf cannot change client UTF-8.
+tmux() { command tmux -u "$@"; }
+
 # Portable counterparts of the interactive NixOS terminal configuration.
 _orgm_path_with() {
   local dir joined= IFS=:

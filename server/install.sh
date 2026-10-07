@@ -435,4 +435,5 @@ else
         action 'Herramientas opcionales: bun-install; blesh-install; codex-install; claude-install; omp-install'
     fi
     action 'Para recargar una sesión tmux existente: tmux source-file ~/.tmux.conf'
+    action 'Para activar UTF-8 en un cliente ya conectado: desconecta con Ctrl-a q y reconecta con tmux -u attach (no cierres las sesiones).'
 fi

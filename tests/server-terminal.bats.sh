@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory(prefix='orgm-server-terminal-') as root:
                 '"prefix": os.environ.get("NPM_CONFIG_PREFIX"), '
                 '"bun": os.environ.get("BUN_INSTALL"), '
                 '"assets": os.environ.get("PI_PACKAGE_DIR")}))\n')
-    for name in ('codex', 'claude', 'omp', 'bun', 'npm'):
+    for name in ('codex', 'claude', 'omp', 'bun', 'npm', 'tmux'):
         executable(name, recorder)
     env = os.environ.copy()
     coreutils_bin = str(pathlib.Path(shutil.which('readlink')).resolve().parent)
@@ -46,6 +46,9 @@ with tempfile.TemporaryDirectory(prefix='orgm-server-terminal-') as root:
         assert result.returncode == 0, result.stdout + result.stderr
         return result
     for command, expected in (
+        ('tmux attach -t "session with spaces"', ['-u', 'attach', '-t', 'session with spaces']),
+        ("eval 'ta -t existing'", ['-u', 'attach', '-t', 'existing']),
+        ("eval 'tn trabajo'", ['-u', 'new', '-s', 'trabajo']),
         ('codex "prompt with spaces"', ['--dangerously-bypass-approvals-and-sandbox', 'prompt with spaces']),
         ('codex resume --last', ['--dangerously-bypass-approvals-and-sandbox', 'resume', '--last']),
         ('claude "prompt with spaces"', ['--dangerously-skip-permissions', 'prompt with spaces']),
@@ -59,6 +62,12 @@ with tempfile.TemporaryDirectory(prefix='orgm-server-terminal-') as root:
         logged = json.loads(record.read_text())
         assert logged['args'] == expected, (command, logged)
         assert logged['stdin'] == 'stdin remains attached\n', (command, logged)
+
+    # Desktop Bash shares the UTF-8 behavior, regardless of the selected profile.
+    for config in (repo/'dotfiles/config/programs/shell/.config/bash/config.bash',
+                   *sorted((repo/'dotfiles/config/users').glob('*/programs/shell/.config/bash/config.bash'))):
+        result = shell(f'source "{config}"; tmux attach -t "desktop session"')
+        assert json.loads(record.read_text())['args'] == ['-u', 'attach', '-t', 'desktop session'], config
 
     for name, package in (('codex', '@openai/codex'), ('claude', '@anthropic-ai/claude-code'),
                           ('omp', '@oh-my-pi/pi-coding-agent')):

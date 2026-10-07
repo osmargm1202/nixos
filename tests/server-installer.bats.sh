@@ -7,6 +7,7 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+import tomllib
 
 repo = pathlib.Path(sys.argv[1])
 bash = subprocess.check_output(["which", "bash"], text=True).strip()
@@ -52,6 +53,10 @@ with tempfile.TemporaryDirectory(prefix="orgm-installer-") as root:
                    'switch-preview', 'dir-preview'):
         assert os.access(home / '.local/bin' / helper, os.X_OK), f'{helper} must be executable'
     assert (home / '.blerc').is_file(), 'Emacs editing and completion settings must be installed'
+    prompt = tomllib.loads((home / '.config/starship.toml').read_text())
+    assert prompt['scan_timeout'] == 200 and prompt['command_timeout'] == 1000, prompt
+    assert prompt['netns']['disabled'], 'SSH prompts must not query unused network namespaces'
+    assert prompt['palette'] in prompt['palettes'], 'installed prompt must retain its color palette'
 
     env = os.environ.copy()
     env.update(HOME=str(home), TERM="dumb")

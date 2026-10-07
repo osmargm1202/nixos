@@ -1,3 +1,7 @@
+# Allow scans of cold directories on SSH login without the default 30 ms warning.
+scan_timeout = 200
+command_timeout = 1000
+
 palette = "noctalia"
 [aws]
 symbol = "  "
@@ -95,6 +99,9 @@ symbol = "󰔷 "
 
 [nim]
 symbol = "󰆥 "
+
+[netns]
+disabled = true
 
 [nix_shell]
 symbol = " "

@@ -23,6 +23,6 @@ if [[ $target == *@* ]]; then
   target="${target##*@}"
 fi
 if [[ "$target" =~ ^\[([^]]+)\]:([0-9]+)$ ]]; then
-  exec kitty -e env TERM=xterm-256color ssh -t -p "${BASH_REMATCH[2]}" "$user_prefix${BASH_REMATCH[1]}" 'tmux attach'
+  exec kitty -e env TERM=xterm-256color ssh -t -p "${BASH_REMATCH[2]}" "$user_prefix${BASH_REMATCH[1]}" 'tmux -u attach'
 fi
-exec kitty -e env TERM=xterm-256color ssh -t "$selection" 'tmux attach'
+exec kitty -e env TERM=xterm-256color ssh -t "$selection" 'tmux -u attach'

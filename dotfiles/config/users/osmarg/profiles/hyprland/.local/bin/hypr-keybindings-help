@@ -59,7 +59,7 @@ entries() {
       entry 'Win+/' 'Atajos Hyprland' 'hypr-keybindings-help'
       entry 'Win+Enter' 'Terminal' 'kitty'
       entry 'Win+Shift+Enter' 'Terminal' 'kitty'
-      entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux new-session -A -s main'
+      entry 'Win+Ctrl+Enter' 'Kitty con tmux main' 'kitty -e tmux -u new-session -A -s main'
       entry 'Win+Space' 'Apps con rofi' 'hypr-app-launcher'
       entry 'Win+Alt+Space' 'Menú principal' 'hypr-main-menu'
       entry 'Win+E' 'Archivos' 'nautilus --new-window'

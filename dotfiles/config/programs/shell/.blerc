@@ -2,7 +2,11 @@
 # Emacs keybindings are the sole interactive editing mode.
 bleopt default_keymap=emacs
 bleopt complete_auto_complete=1 complete_auto_history=1
-ble-face auto_complete=fg=242
+if declare -F ble-face >/dev/null; then
+  ble-face auto_complete=fg=242
+elif declare -F ble-color-setface >/dev/null; then
+  ble-color-setface auto_complete fg=242
+fi
 
 # blesh owns PROMPT_COMMAND. Register the separator through its pre-prompt
 # hook instead of replacing its deferred attach command.
@@ -21,9 +25,12 @@ _orgm_command_separator() {
   done
   printf '\e[90m%s\e[0m\n' "${line:0:columns}"
 }
-blehook PRECMD+=_orgm_command_separator
+# PRECMD hooks are available in ble.sh 0.4; retain stock prompt handling on 0.3.
+if declare -F blehook >/dev/null; then
+  blehook PRECMD+=_orgm_command_separator
+fi
 
-if command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
+if declare -F blehook >/dev/null && command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
   ble-import contrib/integration/fzf-key-bindings
   blesh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/bash"
   if [[ -r "$blesh_config_dir/fzf-widgets.bash" ]]; then

@@ -18,6 +18,9 @@ El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
   y separador entre comandos. Detecta ble.sh local o de `/usr/share/blesh`
   (incluidos paquetes de Arch); FZF añade atajos y previews de texto para SSH.
 - El mismo `starship.toml` de NixOS, que se utiliza si Starship está instalado.
+  Se copia a `~/.config/starship.toml`, con `scan_timeout = 200`,
+  `command_timeout = 1000` y `netns` desactivado para evitar trabajo innecesario
+  y avisos al explorar carpetas frías por SSH.
   Sus iconos requieren una Nerd Font en el terminal del dispositivo cliente.
 - Neofetch automático solo en terminales interactivas, fuera de tmux,
   sin redirección y una vez por shell. El comando manual sigue disponible.
@@ -89,8 +92,32 @@ Abrir una nueva sesión Bash para aplicar los cambios. Para sesiones tmux existe
 tmux source-file ~/.tmux.conf
 ```
 
-En `server.or-gm.com`, cuyo login es Fish, esto configura Bash pero no lo convierte
-en el shell de login. Entrar con `bash` para usar la configuración de Bash.
+Todas las llamadas interactivas a `tmux` desde Bash fuerzan `-u`, incluidos
+`ta` y `tn`. Los lanzadores del escritorio también lo hacen. Esto evita que
+un SSH sin `LANG`/`LC_CTYPE` haga que tmux filtre acentos y otros caracteres.
+Recargar `.tmux.conf` no cambia la capacidad UTF-8 de un cliente ya conectado:
+desconectar con **Ctrl-a q** y reconectar con `tmux -u attach`, sin cerrar
+las sesiones ni los programas. Comprobar con:
+
+```bash
+tmux list-clients -F '#{client_name} utf8=#{client_utf8}'
+printf 'Prueba: áéíóú ñ Ñ ü ¿¡ ✓\n'
+```
+
+El instalador configura Bash y no cambia el shell de login. Si el usuario
+utiliza otro shell, entrar con `bash` para cargar esta configuración.
+
+ble.sh 0.3.4 (paquete estable de Arch) no tiene `ble-face`, `blehook` ni el
+soporte RGB del prompt de 0.4. La `.blerc` admite su API antigua sin errores,
+pero para conservar los colores RGB y disponer del separador y los atajos FZF,
+ejecutar `blesh-install` y abrir una nueva sesión Bash. Se prefiere esta copia
+local a la de `/usr/share/blesh`; no se reemplaza el paquete del sistema.
+Al aplicar estos cambios a otros servidores con esa versión antigua, ejecutar
+el instalador completo y después `~/.local/bin/blesh-install` con el mismo usuario.
+
+El prompt compartido usa Noctalia. El perfil Ryoku administra su propio prompt
+Mythos, así que su diseño y paleta pueden diferir aunque SSH y tmux funcionen
+correctamente. El servidor no configura los colores de fondo de Kitty.
 
 ## Instalar las herramientas de terminal y desarrollo
 
@@ -156,7 +183,7 @@ Fuentes de los instaladores:
 
 ## Win+D: SSH directamente en tmux
 
-Los selectores de i3 y Hyprland abren Kitty con `ssh -t <destino> 'tmux attach'`.
+Los selectores de i3 y Hyprland abren Kitty con `ssh -t <destino> 'tmux -u attach'`.
 No dependen del alias remoto `ta` ni de que el shell remoto sea Bash.
 Se conectan a una sesión existente; no crean una nueva si no hay sesiones.
 
@@ -252,7 +279,16 @@ Referencias oficiales:
 - `bash tests/server-terminal.bats.sh`: flags de permisos, subcomandos de login
   y acceso remoto, stdin preservado, instaladores con gestores simulados,
   prefijos de usuario, fallback nativo de Claude, descargas fallidas, assets de
-  OMP, rutas sin duplicados, navegación y previews.
+  OMP, rutas sin duplicados, navegación, previews y llamadas tmux con UTF-8
+  desde Bash de servidor y escritorio.
+- `bash tests/bash-blesh-emacs.bats.sh`: API estable 0.3 y actual 0.4,
+  sin invocar funciones ausentes; edición Emacs y widgets conservados.
+- `bash tests/terminal-utf8.bats.sh`: cliente tmux real en socket aislado,
+  con `LC_ALL=C`; verifica `client_utf8=1` y salida con acentos.
+- En `server.or-gm.com`, instalación con respaldo y restauración aislada
+  comprobada: login SSH real con ble.sh 0.4, secuencias RGB intactas y sin
+  avisos de Starship ni funciones ausentes. Misma lista de panes y PIDs antes
+  y después; los clientes previamente conectados requieren reconexión.
 - Instalación real de Bun 1.4.2 y ble.sh nightly en HOME temporal; perfiles
   conservados, carga en PTY interactiva, Emacs, sugerencias y widgets de FZF
   verificados también con un `XDG_CONFIG_HOME` diferente.

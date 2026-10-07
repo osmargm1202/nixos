@@ -53,6 +53,7 @@ local function action(chord)
 end
 local terminal = action("SUPER + Return")
 assert(terminal.dispatcher == "dsp.exec_cmd" and terminal.arguments[1] == "ryoku-app terminal")
+assert(action("SUPER + CTRL + Return").arguments[1] == "ryoku-app terminal -- tmux -u new-session -A -s main")
 local launcher = action("SUPER + Space")
 assert(launcher.dispatcher == "dsp.global" and launcher.arguments[1] == "ryoku:launcher")
 local help = action("SUPER + slash")
