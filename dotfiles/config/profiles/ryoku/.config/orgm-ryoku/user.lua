@@ -5,6 +5,14 @@ if not package.loaded[name] then
 end
 package.loaded[name].install()
 
+-- Native scrolling column presets: one third, one half and the whole viewport.
+-- Keep the user's selected layout and default width under Hub ownership.
+hl.config({ scrolling = {
+  explicit_column_widths = "0.333, 0.5, 1.0",
+  -- A lone column must also honor the selected width instead of forcing 100%.
+  fullscreen_on_one_column = false,
+} })
+
 -- Personal placement rules belong to this user and this desktop profile.
 assert(loadfile(config .. "/orgm-ryoku/window-rules.lua"))().setup()
 

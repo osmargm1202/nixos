@@ -85,7 +85,9 @@ function M.setup()
   hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + T", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())
-  -- Win+R keeps Ryoku's native resize submap.
+  -- Cycle scrolling columns through the personal widths defined in user.lua.
+  -- The shortcut merger preserves Ryoku's resize submap on its relocated chord.
+  hl.bind(mainMod .. " + R", hl.dsp.layout("colresize +conf"))
 
   -- Group navigation (tabbed windows): Win+` next, Win+Shift+` back
   hl.bind(mainMod .. " + grave", hl.dsp.group.next())

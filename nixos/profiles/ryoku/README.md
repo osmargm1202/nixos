@@ -35,6 +35,15 @@ Windows/VFIO sigue usando Podman y su contenedor existente aunque Ryoku habilite
 también Docker. La imagen SPICE se construye desde un contexto mínimo en Nix Store
 con un `Containerfile.spice` regular, compatible con los enlaces de Home Manager.
 
+En modo scrolling, **Win+R** alterna el ancho de la columna activa entre
+**33 %, 50 % y 100 %** del área disponible, conservando la altura. Usa la acción
+nativa `colresize +conf` y los presets definidos en el override `hypr/user.lua`.
+También funciona con una sola columna: se desactiva el ajuste que la forzaba
+a ocupar todo el ancho.
+El modo de redimensionar con flechas queda en **Win+Ctrl+Alt+Shift+R**.
+Los atajos se consultan en **Ryoku Hub → Keybinds** (`Super+,`), y el layout
+se selecciona en **Window Manager**.
+
 Los atajos personales tienen su propio archivo en
 `dotfiles/config/users/osmarg/profiles/ryoku/.config/orgm-ryoku/osmarg-keybindings.lua`.
 El perfil no importa los atajos del Hyprland habitual. Las acciones de escritorio usan los controles de Ryoku. Las colisiones

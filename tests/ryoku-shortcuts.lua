@@ -15,6 +15,7 @@ hl = {
     scope = name; fn(); scope = "default"
   end,
   on = function() end,
+  config = function() end,
   window_rule = function() end,
   dispatch = function(action) hl.last_dispatch = action end,
 }
