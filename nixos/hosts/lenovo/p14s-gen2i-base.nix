@@ -38,6 +38,11 @@ in
     hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     boot.initrd.kernelModules = [ "i915" ];
 
+    # The internal panel is broken. Keep fbcon from enabling it on a text VT,
+    # where a different CRTC assignment can break the compositor's VT restore.
+    # External display modes and hotplug remain under the desktop's control.
+    boot.kernelParams = [ "video=eDP-1:d" ];
+
     # A lid event applies system-wide, including when the graphical user
     # session has exited or the active session is a TTY. Keep the ThinkPad
     # available in those states; this deliberately does not change explicit

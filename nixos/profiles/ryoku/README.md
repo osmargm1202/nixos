@@ -161,6 +161,14 @@ las activaciones posteriores. Ryoku controla el hotplug y los ajustes de
 pantallas desde Hub → Displays. El dock usa QS Bar Settings → Dock, cuyo estado
 y aplicaciones fijadas se guardan por la shell, sin un segundo dock.
 
+El hardware de Lenovo también añade `video=eDP-1:d` al arranque para que la
+consola de Linux no reactive el panel interno averiado al cambiar de TTY.
+Esto mitiga el conflicto observado entre la asignación de salidas de la consola
+y la que Hyprland intenta restaurar. No fija el conector ni el modo de las
+pantallas externas. Requiere reconstruir NixOS y reiniciar; la recuperación debe
+comprobarse con imagen visible al recorrer `tty1 → tty3 → tty1`. Si se repara el
+panel interno, hay que retirar ese parámetro del módulo de hardware de Lenovo.
+
 El monitor de Tailscale identifica dispositivos por su primera IP Tailscale,
 no por un nombre que puede repetirse. Una IP debe permanecer desconectada en
 observaciones continuas durante al menos 90 segundos para avisar; se muestra
