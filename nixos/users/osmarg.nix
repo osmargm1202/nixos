@@ -5,6 +5,9 @@
   ...
 }:
 {
+  # Peer-change polling and desktop alerts are independent of the VPN.
+  orgm.tailscale.peerNotifications.enable = false;
+
   orgm.user = {
     programs = [
       "shell"

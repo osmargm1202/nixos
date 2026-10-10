@@ -48,6 +48,9 @@ nix eval --json "path:$ROOT#nixosConfigurations" --apply '
           (name: name != "orgm") systems.orgm-i3.config.orgm.user.programs);
       }) ];
     };
+    withPeerNotifications = systems.orgm-i3.extendModules {
+      modules = [ ({ lib, ... }: { orgm.tailscale.peerNotifications.enable = lib.mkForce true; }) ];
+    };
   in {
     jarq = describe jarq "jarq";
     jarqTerminal = describe systems.jarq-terminal "jarq";
@@ -55,6 +58,7 @@ nix eval --json "path:$ROOT#nixosConfigurations" --apply '
     withoutNextcloud = describe withoutNextcloud "jarq";
     withoutTmux = describe withoutTmux "osmarg";
     withoutOrgm = describe withoutOrgm "osmarg";
+    withPeerNotifications = describe withPeerNotifications "osmarg";
   }
 ' > "$inventory"
 
@@ -94,7 +98,8 @@ assert inventory["osmarg"]["secrets"], "Osmarg lost its selected secrets"
 assert ".tmux.conf" not in inventory["withoutTmux"]["managedFiles"], "disabled tmux still deploys personal dotfiles"
 assert ".config/tmux/plugins.conf" not in inventory["withoutTmux"]["managedFiles"], "disabled tmux still deploys plugins"
 for name in ("tailscalePeerMonitorService", "tailscalePeerMonitorTimer", "tailscalePeerNotifierService", "tailscalePeerNotifierTimer"):
-    assert inventory["osmarg"][name], ("Osmarg lost Tailscale peer infrastructure", name)
+    assert not inventory["osmarg"][name], ("Osmarg retained disabled Tailscale peer infrastructure", name)
+    assert inventory["withPeerNotifications"][name], ("explicit peer notifications missing infrastructure", name)
     assert not inventory["withoutOrgm"][name], ("disabling orgm retained Tailscale peer infrastructure", name)
 assert inventory["withoutOrgm"]["tailscale"], "disabling orgm disabled Tailscale"
 print("PASS: Jarq work applications, exclusions, Tailscale, immutable dotfiles and independent program selection")

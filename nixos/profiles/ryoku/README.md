@@ -179,6 +179,8 @@ la red y descarta la cola anterior a esa recuperación. La política declarativa
 está en `orgm.tailscale.peerNotifications`, con `enable` independiente de la VPN
 y `disconnectGraceSeconds` configurable. Los eventos nuevos usan un stream v3
 para no reutilizar el estado antiguo indexado por nombre.
+Para Osmarg está desactivado desde `nixos/users/osmarg.nix`, en todos sus
+perfiles; Tailscale y su integración de DNS continúan habilitados.
 
 ## Verificación
 

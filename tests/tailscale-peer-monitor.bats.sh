@@ -7,7 +7,10 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 build_helper() {
   nix build --impure --no-link --print-out-paths --expr "
     let flake = builtins.getFlake \"path:$ROOT\";
-        exec = flake.nixosConfigurations.orgm-hyprland.config.$1;
+        system = flake.nixosConfigurations.orgm-hyprland.extendModules {
+          modules = [ ({ lib, ... }: { orgm.tailscale.peerNotifications.enable = lib.mkForce true; }) ];
+        };
+        exec = system.config.$1;
     in builtins.dirOf (builtins.dirOf exec)
   "
 }
