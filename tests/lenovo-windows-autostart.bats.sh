@@ -12,6 +12,9 @@ printf '%s\n' lenovo-vfio >"$WINDOWS_VM_PROFILE_FILE"
 cat >"$tmp/bin/podman" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$PODMAN_TEST_LOG"
+if [[ "$*" == "container exists ${PODMAN_FAIL_CONTAINER:-}" ]]; then
+  exit 125
+fi
 case "$*" in
   'inspect --format {{.State.Running}} lenovo-windows')
     printf '%s\n' "$VM_RUNNING" ;;
@@ -74,4 +77,18 @@ export OTHER_EXISTS=false
 bash -euo pipefail "$ROOT/nixos/hosts/lenovo/windows-autostart.sh"
 grep -Eq '^compose .*up -d --no-build --no-recreate windows$' "$PODMAN_TEST_LOG"
 ! grep -Eq '(stop |rm |exec |force-recreate|--build)' "$PODMAN_TEST_LOG"
+
+# Runtime failures are not missing containers and must never provision/start.
+for profile in lenovo-vfio lenovo-render-node; do
+  printf '%s\n' "$profile" >"$WINDOWS_VM_PROFILE_FILE"
+  for failed_container in windows lenovo-windows; do
+    : >"$PODMAN_TEST_LOG"
+    export PODMAN_FAIL_CONTAINER="$failed_container" VM_MISSING=true OTHER_EXISTS=false
+    result=0
+    bash -euo pipefail "$ROOT/nixos/hosts/lenovo/windows-autostart.sh" 2>"$tmp/error" || result=$?
+    [[ "$result" == 125 ]]
+    grep -Fq "Cannot check Windows container $failed_container" "$tmp/error"
+    ! grep -Eq '^(start |compose )' "$PODMAN_TEST_LOG"
+  done
+done
 printf '%s\n' 'PASS: profile-aware autostart preserves active VMs and shared disks; first render-node boot only reuses the local image'

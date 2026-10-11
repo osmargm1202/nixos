@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   userName,
@@ -23,7 +24,9 @@ let
   startExistingWindows = pkgs.writeShellApplication {
     name = "lenovo-windows-autostart";
     runtimeInputs = [
-      pkgs.podman
+      # NixOS adds the setuid UID/GID mapping wrappers and host runtimes.
+      # Plain pkgs.podman fails in systemd's minimal PATH for rootless users.
+      config.virtualisation.podman.package
       pkgs.podman-compose
     ];
     text =
@@ -35,6 +38,7 @@ let
 in
 {
   system.build.lenovoWindowsRenderCompose = renderCompose;
+  system.build.lenovoWindowsAutostart = startExistingWindows;
   virtualisation.podman.enable = true;
   environment.etc."orgm/windows-vm-profile".text = lib.mkDefault "lenovo-render-node\n";
   users.users.${userName} = {

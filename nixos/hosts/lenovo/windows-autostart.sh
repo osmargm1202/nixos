@@ -7,9 +7,22 @@ case "$profile" in
   *) printf 'Unsupported Lenovo Windows profile: %s\n' "$profile" >&2; exit 1 ;;
 esac
 
+# Podman returns 1 for an absent container; other failures must not be treated
+# as absence, particularly before provisioning a shared-disk runtime.
+container_exists() {
+  local result=0
+  podman container exists "$1" || result=$?
+  case "$result" in
+    0) return 0 ;;
+    1) return 1 ;;
+    *) printf 'Cannot check Windows container %s (Podman exit %s).\n' "$1" "$result" >&2
+       exit "$result" ;;
+  esac
+}
+
 # The render-node VM shares the storage. Do not start a second QEMU if it is
 # already using that disk, even if someone changed the host profile manually.
-if podman container exists "$other_container"; then
+if container_exists "$other_container"; then
   other_running="$(podman inspect --format '{{.State.Running}}' "$other_container")"
   if [[ "$other_running" == true ]]; then
     printf '%s\n' 'The other Windows VM is active; refusing concurrent disk access.' >&2
@@ -17,7 +30,7 @@ if podman container exists "$other_container"; then
   fi
 fi
 
-if podman container exists "$container_name"; then
+if container_exists "$container_name"; then
   running="$(podman inspect --format '{{.State.Running}}' "$container_name")"
   [[ "$running" != true ]] || exit 0
   exec podman start "$container_name"

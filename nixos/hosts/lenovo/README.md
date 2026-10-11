@@ -24,6 +24,10 @@ Los fallos de arranque se reintentan cada 15 segundos; un runtime VFIO borrado
 requiere restaurarse manualmente. El servicio no vigila ni reinicia Windows
 después de un apagado manual. El helper `windows-rdp` usa Podman en ambos tipos
 de perfil Lenovo, incluso cuando Ryoku también instala Docker.
+El autoinicio utiliza el paquete Podman configurado por NixOS, que incluye
+los wrappers de `newuidmap` y `newgidmap` necesarios en un servicio rootless.
+Un error de Podman al consultar el contenedor aborta el intento; no se confunde
+con un contenedor ausente ni provoca la creación de otro runtime.
 
 El kernel carga i915 temprano y desactiva el panel roto con `video=eDP-1:d`;
 esto también se aplica a la consola del modo server. El escritorio mantiene
