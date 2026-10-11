@@ -145,6 +145,15 @@ failure_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_
 
 
 profile_file="$tmp/windows-vm-profile"
+render_profile="$tmp/lenovo-render-node-profile"
+printf '%s\n' lenovo-render-node >"$render_profile"
+render_engine_log="$tmp/render-engines.log"
+render_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$render_profile" ENGINE_LOG="$render_engine_log" "$helper" status)"
+grep -Fqx 'profile=lenovo-render-node' <<<"$render_status"
+grep -Fqx 'container=windows' <<<"$render_status"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_TEST_RUNNING=true WINDOWS_VM_PROFILE_FILE="$render_profile" ENGINE_LOG="$render_engine_log" "$helper" start >/dev/null
+grep -q '^podman ' "$render_engine_log"
+! grep -q '^docker ' "$render_engine_log"
 printf '%s\n' lenovo-vfio >"$profile_file"
 engine_log="$tmp/engines.log"
 vfio_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$profile_file" ENGINE_LOG="$engine_log" "$helper" status)"

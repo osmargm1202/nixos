@@ -21,7 +21,11 @@ let
   };
 in
 {
-  imports = [ ../../hardware/kernel/lts.nix ];
+  imports = [
+    ../../hardware/kernel/lts.nix
+    ./windows-autostart.nix
+    ./external-monitor.nix
+  ];
 
   options.orgm.lenovo = {
     windowsVfio.enable = lib.mkEnableOption "exclusive T500 VFIO passthrough for Windows";
@@ -65,34 +69,51 @@ in
     };
 
     # PRIME owns the T500 unless another boot specialisation claims or disables it.
-    services.xserver.videoDrivers = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) [ "nvidia" ];
-    environment.systemPackages = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) [ nvidiaPackage nvidiaGame ];
-    hardware.nvidia = lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)) {
-      modesetting.enable = true;
-      open = lib.mkOverride 990 (nvidiaPackage ? open && nvidiaPackage ? firmware);
-      nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
-      powerManagement.enable = true;
-      powerManagement.finegrained = true;
-      prime = {
-        intelBusId = "PCI:0:2:0";
-        nvidiaBusId = "PCI:1:0:0";
-        offload = {
-          enable = lib.mkOverride 990 true;
-          enableOffloadCmd = lib.mkIf config.hardware.nvidia.prime.offload.enable true;
+    services.xserver.videoDrivers = lib.mkIf (
+      !(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable)
+    ) [ "nvidia" ];
+    environment.systemPackages =
+      lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable))
+        [
+          nvidiaPackage
+          nvidiaGame
+        ];
+    hardware.nvidia =
+      lib.mkIf (!(config.orgm.lenovo.windowsVfio.enable || config.orgm.lenovo.nvidiaDisabled.enable))
+        {
+          modesetting.enable = true;
+          open = lib.mkOverride 990 (nvidiaPackage ? open && nvidiaPackage ? firmware);
+          nvidiaSettings = true;
+          package = config.boot.kernelPackages.nvidiaPackages.stable;
+          powerManagement.enable = true;
+          powerManagement.finegrained = true;
+          prime = {
+            intelBusId = "PCI:0:2:0";
+            nvidiaBusId = "PCI:1:0:0";
+            offload = {
+              enable = lib.mkOverride 990 true;
+              enableOffloadCmd = lib.mkIf config.hardware.nvidia.prime.offload.enable true;
+            };
+          };
         };
-      };
-    };
 
     services.tlp.enable = lib.mkDefault (!config.services.power-profiles-daemon.enable);
     services.fstrim.enable = lib.mkDefault true;
     hardware.trackpoint.enable = lib.mkDefault true;
     hardware.trackpoint.emulateWheel = lib.mkDefault config.hardware.trackpoint.enable;
   }
-  // lib.optionalAttrs (builtins.elem profileName [ "gnome" "hyprland" "i3" "labwc" ]) {
-    orgm.sddm = {
-      profile = lib.mkDefault "qylock";
-      qylockTheme = lib.mkDefault "winter";
-    };
-  };
+  //
+    lib.optionalAttrs
+      (builtins.elem profileName [
+        "gnome"
+        "hyprland"
+        "i3"
+        "labwc"
+      ])
+      {
+        orgm.sddm = {
+          profile = lib.mkDefault "qylock";
+          qylockTheme = lib.mkDefault "winter";
+        };
+      };
 }

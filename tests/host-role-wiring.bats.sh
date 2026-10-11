@@ -25,7 +25,7 @@ assert_json '.#nixosConfigurations.jarq-terminal.config.services.zerotierone.ena
 
 assert_json '.#nixosConfigurations.lenovo-terminal.config.hardware.graphics.enable' true
 assert_json '.#nixosConfigurations.lenovo-hyprland.config.hardware.graphics.enable' true
-assert_json '.#nixosConfigurations.lenovo-hyprland.config.boot.loader.systemd-boot.sortKey' '"nixos-01-normal"'
+assert_json '.#nixosConfigurations.lenovo-hyprland.config.boot.loader.systemd-boot.sortKey' '"nixos-02-normal"'
 assert_json '.#nixosConfigurations.jarq-terminal.config.hardware.sensor.iio.enable' true
 assert_json '.#nixosConfigurations.jarq-hyprland.config.hardware.sensor.iio.enable' true
 assert_json '.#nixosConfigurations.ero-terminal.config.hardware.graphics.enable' true

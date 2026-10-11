@@ -8,8 +8,9 @@
 let
   # BuildKit cannot follow a Home Manager Dockerfile link outside its context.
   # Publish a small immutable context containing the actual file, not the VM data.
-  spiceBuildContext = pkgs.writeTextDir "Containerfile.spice"
-    (builtins.readFile ../../containers/windows/Containerfile.spice);
+  spiceBuildContext = pkgs.writeTextDir "Containerfile.spice" (
+    builtins.readFile ../../containers/windows/Containerfile.spice
+  );
   lookingGlassIddClient = pkgs.callPackage ../../containers/windows/looking-glass-idd-client.nix { };
   virtioInputIso =
     pkgs.runCommand "virtio-input.iso"
@@ -35,9 +36,9 @@ in
   home-manager.users.${userName} = {
     home.file = {
       "Apps/windows/compose.yml".source = ../../containers/windows/compose.yml;
-      "Apps/windows/compose.lenovo-vfio.yml".text = lib.replaceStrings
-        [ "context: .\n" ] [ "context: ${spiceBuildContext}\n" ]
-        (builtins.readFile ../../containers/windows/hosts/lenovo-windows/compose.yml);
+      "Apps/windows/compose.lenovo-vfio.yml".text =
+        lib.replaceStrings [ "context: .\n" ] [ "context: ${spiceBuildContext}\n" ]
+          (builtins.readFile ../../containers/windows/hosts/lenovo-windows/compose.yml);
       "Apps/windows/Containerfile.spice".source = "${spiceBuildContext}/Containerfile.spice";
       "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
@@ -54,7 +55,7 @@ in
     "vfio_iommu_type1"
   ];
 
-  # Rootless Podman runs as user osmarg, who belongs to the podman group.
+  # Rootless Podman runs as the selected user, who belongs to the podman group.
   # Permit it to pass the IOMMU group and Looking Glass shared memory to QEMU.
   services.udev.extraRules = ''
     SUBSYSTEM=="vfio", KERNEL=="[0-9]*", GROUP="podman", MODE="0660"
@@ -65,7 +66,7 @@ in
   # This takes effect for new login sessions and keeps rootless Podman viable.
   security.pam.loginLimits = [
     {
-      domain = "osmarg";
+      domain = userName;
       type = "-";
       item = "memlock";
       value = "unlimited";
@@ -87,5 +88,4 @@ in
   ];
 
   environment.etc."orgm/windows-vm-profile".text = "lenovo-vfio\n";
-  environment.etc."orgm/desktop-profile".text = lib.mkForce "windows\n";
 }

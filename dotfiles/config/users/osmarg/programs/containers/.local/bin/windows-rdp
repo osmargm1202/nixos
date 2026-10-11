@@ -48,11 +48,11 @@ SELECTED_TARGET_INDEX=""
 # ============================================================
 
 container_engine() {
-  # Lenovo VFIO uses Podman's keep-groups and its existing rootless VM.
+  # Both Lenovo runtimes use Podman's keep-groups and the rootless VM store.
   # Ryoku also installs Docker, which has a separate container/image store.
-  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
+  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio || "$WINDOWS_VM_PROFILE" == lenovo-render-node ]]; then
     command -v podman &>/dev/null || {
-      echo "Error: Lenovo Windows VFIO requires Podman." >&2
+      echo "Error: Lenovo Windows requires Podman." >&2
       return 1
     }
     printf '%s\n' podman
@@ -82,6 +82,12 @@ select_vm_profile() {
       CONTAINER="lenovo-windows"
       INACTIVE_CONTAINER="windows"
       COMPOSE_FILES=(-f compose.yml -f compose.lenovo-vfio.yml)
+      LOCAL_WINDOWS_NAME="lenovo-windows"
+      ;;
+    lenovo-render-node)
+      CONTAINER="windows"
+      INACTIVE_CONTAINER="lenovo-windows"
+      COMPOSE_FILES=()
       LOCAL_WINDOWS_NAME="lenovo-windows"
       ;;
     *)
