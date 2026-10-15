@@ -9,16 +9,7 @@
 let
   nvidiaPackage = config.hardware.nvidia.package;
   intelMediaRuntime = pkgs.vpl-gpu-rt or pkgs.onevpl-intel-gpu;
-  nvidiaGame = pkgs.writeShellApplication {
-    name = "nvidia-game";
-    text = ''
-      if ! command -v nvidia-offload >/dev/null 2>&1; then
-        printf '%s\n' 'NVIDIA PRIME offload is unavailable; refusing to fall back to Intel.' >&2
-        exit 1
-      fi
-      exec nvidia-offload "$@"
-    '';
-  };
+  nvidiaGame = import ../../gaming/nvidia-game.nix { inherit pkgs; };
 in
 {
   imports = [

@@ -15,6 +15,7 @@ let
     __VK_LAYER_NV_optimus = "NVIDIA_only";
   };
   gamescopeCommand = if nvidiaGameOffload then "nvidia-game gamescope" else "gamescope";
+  nvidiaGame = import ./nvidia-game.nix { inherit pkgs; };
 in
 
 {
@@ -34,12 +35,12 @@ in
         });
       };
 
-      environment.systemPackages = with pkgs; [
+      environment.systemPackages = (with pkgs; [
         mangohud
         gamescope
         protonup-qt
         steam-run
-      ];
+      ]) ++ lib.optional nvidiaGameOffload nvidiaGame;
     }
     (lib.mkIf config.orgm.gaming.gamescopeTty1.enable {
       programs.bash.loginShellInit = lib.mkForce ''

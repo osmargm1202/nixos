@@ -64,6 +64,12 @@ let
         ;
     };
 
+  envyDesktopModules = [
+    ./nixos/apps/deskflow.nix
+    ./nixos/gaming/steam.nix
+    ./nixos/gaming/emulators.nix
+    ./nixos/gaming/sunshine.nix
+  ];
   orgmDesktopModules = [
     ./nixos/apps/deskflow.nix
     ./nixos/gaming/default.nix
@@ -96,6 +102,7 @@ in
       hardware = ./nixos/hosts/envy/hardware-configuration.nix;
       profileName = "ryoku";
       userName = "osmarg";
+      extraModules = envyDesktopModules;
     };
     cinnamon = desktop { profileName = "cinnamon"; };
     gnome = desktop { profileName = "gnome"; };
