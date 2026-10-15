@@ -2,6 +2,7 @@
 
 let
   hostModules = {
+    envy = [ ../hosts/envy/default.nix ];
     jarq = [
       ../hardware/gpu/intel.nix
       ../hosts/jarq/default.nix

@@ -1,4 +1,7 @@
 cinnamon
+envy
+envy-hyprland
+envy-normal
 ero-i3
 ero-labwc
 ero-server
