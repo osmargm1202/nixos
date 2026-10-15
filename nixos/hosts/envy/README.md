@@ -6,7 +6,8 @@ HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 `envy`, `envy-normal` y `envy-ryoku` seleccionan el mismo escritorio Ryoku
 de `osmarg`, con sus preferencias y aplicaciones compartidas. Esta fase NO
-configura VM Windows, VFIO, especializaciones server o gaming. El menú de
+configura VM Windows, VFIO, especializaciones server o gaming. Por petición
+posterior sí incorpora Steam, emuladores compartidos y Sunshine dentro de normal. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
 Kernel 6.12 LTS, NVIDIA propietario `legacy_580`, Intel para escritorio y
@@ -63,7 +64,7 @@ debe confundirse con un fallo de Wi-Fi o de los controladores del hardware.
 
 ## Pruebas de hardware tras arrancar
 
-- Arranque: `findmnt / /home /nix /var/log /boot`; `swapon --show`; `systemctl --failed`.
+- Arranque: comprobar cada montaje con el loop de abajo; `swapon --show`; `systemctl --failed`.
 - Wi-Fi/red: `nmcli device`; `ip route`; `resolvectl query nixos.org`; probar Ethernet con cable.
 - GPU: `lspci -nnk`; `nvidia-smi`; `vulkaninfo --summary`; `nvidia-offload vulkaninfo --summary`.
 - Escritorio: `hyprctl monitors all`; `glxinfo -B`; `nvidia-offload glxinfo -B` dentro de sesión gráfica.
@@ -81,5 +82,69 @@ pruebas pendientes del usuario.
 
 Diseño completo: `docs/superpowers/specs/2026-10-15-envy-design.md`.
 Plan fase normal: `docs/superpowers/plans/2026-10-15-envy-normal.md`.
-Tras validar la base: gaming, Windows render virtual/Pascal, VFIO e IOMMU,
-server y Compose por host declarativo. No activarlos hasta esa segunda fase.
+Tras validar la base: perfil gaming dedicado, Windows render virtual/Pascal,
+VFIO e IOMMU, server y Compose por host declarativo. Las aplicaciones de juegos
+ya pertenecen a normal; esos perfiles avanzados siguen en una segunda fase.
+
+## Juegos en normal
+
+Steam, GameMode, MangoHud, Gamescope y ProtonUp-Qt; emuladores declarados vía
+Flathub y Sunshine para streaming. Intel sigue renderizando el escritorio;
+Steam configura PRIME para sus juegos y `nvidia-game programa` invoca
+`nvidia-offload`, rechazando fallback silencioso si falta el helper. No hay
+autologin GamescopeTTY1 ni especialización gaming en esta fase. Instalar las
+aplicaciones no instala juegos/ROMs ni inicia sesión en Steam por el usuario.
+Los emuladores pueden seguir descargándose por `flatpak-managed-install`.
+
+## Puertas de instalación y recuperación
+
+1. Antes de formatear: verificar inventario, serial exacto, backups privados de
+   metadatos y autorización del SSD. Si ya está instalado, NO repetir el formato.
+2. Provisión privada separada del repo: conexión NetworkManager persistente,
+   clave pública autorizada y contraseña de usuario por canal acordado. No
+   sobrescribir credenciales existentes al reanudar; no poner secretos en Nix.
+3. Antes de reiniciar: sistema construido/copiadovalidado, contraseña probada,
+   repositorio presente, EFI/default/timeout revisados y acceso remoto preparado.
+4. Después: comparar sistema real con el cierre construido, comprobar red/SSH,
+   login gráfico, monitores/workspaces y servicios; mantener una generación
+   anterior como recuperación. Generación anterior no es copia de tus datos.
+5. SOPS es opcional hasta que Osmarg aporte su identidad: no trasladar claves ni
+   bloquear esta fase esperando el archivo. Su fallo puede dejar HomeManager
+   parcialmente activado; revisar y completar cuando el usuario lo suministre.
+6. Verificar las aplicaciones Flatpak aparte del arranque del sistema.
+
+```bash
+for m in / /home /nix /var/log /var/lib/windows /boot; do
+  findmnt -M "$m" || break
+done
+```
+
+## Recuperación local Btrfs
+
+Snapper programa snapshots diarios de `/` y `/home`, retiene hasta 7 diarios por
+configuración y hasta 3 manuales si se crean con `--cleanup-algorithm number`.
+No hay buckets horarios/semanales/mensuales ni snapshots automáticos por boot.
+Los snapshots son no recursivos: `/nix`, `/var/log`, `/var/lib/windows` y `/boot`
+no forman parte de esas copias. No se crea swap ni se utiliza Optane.
+
+El servicio `envy-prepare-snapshots` verifica ambos puntos de montaje Btrfs,
+rechaza rutas existentes inseguras y prepara `/.snapshots` y `/home/.snapshots`
+con propietario root y modo 0700. Snapper espera su preparación satisfactoria.
+
+```bash
+sudo snapper -c root list
+sudo snapper -c home list
+systemctl status snapper-timeline.timer snapper-cleanup.timer
+```
+
+Para recuperar un archivo de home: inspeccionar con sudo
+`/home/.snapshots/ID/snapshot/osmarg/`, copiar a un destino NUEVO y comprobar
+contenido/propietario antes de reemplazar el original. No usar `snapper rollback`
+como si restaurara automáticamente el arranque: NixOS usa generaciones y el
+fstab fija `@root`; EFI/Nix están fuera de estos snapshots.
+
+Retención se aplica por cleanup, no es una cuota instantánea ni garantiza espacio
+libre. Vigilar espacio, sobre todo tras descargar/borrar juegos grandes. No son
+backup independiente ante fallo/robo del SSD; el respaldo externo necesita un
+destino acordado. Los snapshots pueden conservar archivos privados hasta que
+expire su retención, aunque se borren en el sistema activo.

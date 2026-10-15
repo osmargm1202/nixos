@@ -230,3 +230,51 @@ brechas y aceptación para futuras instalaciones, no cambios extra autorizados.
 
 - Confirmación posterior del usuario: workspaces/cursor ya funcionan. Se cierra
   esa prueba visual concreta; no las demás pruebas físicas ni el fallo SOPS/HM.
+
+## Refuerzo posterior: juegos, fuente estable y recuperación local
+
+- Usuario confirmó expresamente Steam/emuladores/herramientas como Lenovo dentro
+  de normal. SOPS deja de ser prioridad: usuario aportará archivo cuando quiera.
+  No se modifican secretos ni se afirma que la unidad SOPS/HomeManager esté verde.
+- Configuración actual: `/nix/store/fb3mvk9ps0bzg54lb3h7i2wy2fq4bli2-nixos-system-envy-ryoku`,
+  generación4, timeout1, Wi-Fi/SSH/contraseña conservados, sin otro reinicio.
+- Aplicaciones de juegos en extraModules del escritorio, no hardware base. Helper
+  nvidia-game compartido sin cambiar semántica Lenovo. Steam, GameMode, Gamescope,
+  MangoHud, ProtonUp-Qt y Sunshine presentes; Sunshine unit active/running.
+- OpenGL con glxinfo: Intel UHD CML GT2; mismo probe vía nvidia-game: NVIDIA
+  GeForceMX250. Es render real de contexto OpenGL, no benchmark/FPS de juegos.
+- Flathub falló primero por timeout de objetos DuckStation; remote-info y descarga
+  directa confirmaron app válida. Reintento automático terminó Result=success:
+  RetroArch, Dolphin, Cemu, Ryujinx, DuckStation, PPSSPP, PCSX2, RPCS3 y shadPS4
+  enumerados instalados. No se descargan ROMs/juegos ni se validan todos los emuladores.
+  Avisos EOL de runtimes24.08 observados, sin forzar cambio incompatible.
+- Guardas de disco ahora comprueban estado del comando antes de comparar stdout.
+  Fallo real valid-output+exit7 reproducido y cerrado; PATH de pruebas hermético,
+  identidad/tipo/tamaño/UID/montajes/errores sin escrituras. No se formateó nada.
+- Hostname test obsoleto reemplazado por contrato Nix evaluado para tres roles;
+  mutaciones temporales de hostname rechazadas.
+- Filtro dotfiles previo a builtins.path: raíces consumidas, metadata y directorios
+  vacíos filtrados; hash workingtree igual a gitarchive del árbol real. Conserva
+  scripts ejecutables, symlinks y contenido. No excluye configuraciones reales sin
+  trackear ni promete reproducibilidad de todo el sistema/cleanclone con prefs pendientes.
+- Snapper: diarios root/home, retención7diarios, manuales3 con number cleanup;
+  otros buckets0, sin snapshots por boot ni configuración de cuotas. Ambos
+  .snapshots preparados como subvolúmenes root:root0700; snapshots ro=true.
+- Prueba real: archivo efímero en home snapshot1, archivo activo modificado,
+  restauración a ruta NUEVA y hash original comprobado; archivo activo se mantuvo
+  modificado. Snapshot de prueba y archivos efímeros eliminados. Home timeline2 y
+  root timeline1/manual2 creados; cleanup y timers verificados. No prueba de rollback
+  de todo el sistema; EFI/Nix y otros subvolúmenes fuera de esas copias. No backup externo.
+- Revisión independiente sin Critical/Important; cuatro suites clave corroboradas
+  por revisor. Suite enfocada final15PASS/1FAIL: user-program-isolation falla igual
+  en master por paquetes Jarq no esperados. Flakecheck global terminó incompleto
+  con interrupted by the user. No afirmar suite global verde ni integrar rama.
+- LGULTRAGEAR109MXYG4W010 real enDP-2, 2560×1440@143,933Hz, eDP activa y
+  DP-1 genérica sinEDID desactivada. Registro inicial sin transiciones observadas;
+  usuario pidió probar USB-C/HDMI y se solicitó dejar soloHDMI primero. Pendiente
+  correlación por puerto y retirada/reconexión, no inferir nombres físicos de DP-2.
+- SKU leído7PS43UA#ABA: ficha de HP identifica17m-ce1013dx y especifica USB-C con
+  DisplayPort1.2 y HDMI2.0. Capacidades de ficha no equivalen a prueba física.
+  [Ficha del fabricante HP](https://files.bbystatic.com/gUeZ%2Fnd3maD2L7Jr56nDHA%3D%3D/53411AC3-93D9-42BB-B87F-F7DB6D08954F.pdf).
+- Privileged Nix copy helper temporal eliminado; sin trusted-users permanente,
+  sin push/merge ni cambios a los cuatro diffs previos del usuario.
