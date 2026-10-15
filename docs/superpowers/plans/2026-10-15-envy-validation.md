@@ -56,8 +56,35 @@ Conservar Optane serial `PHTE9395032P512B-2` y USB instalador.
 - Menú predeterminado `nixos-generation-1.conf`, solo normal. HP dejó la entrada
   Linux0002 al final, así que se puso primero y se seleccionó BootNext0002 para
   no volver al USB instalador. No se borraron otras entradas de firmware.
-- Reinicio y prueba del sistema arrancado: PENDIENTES.
-- Verificaciones de hardware después de arrancar: PENDIENTES.
+- Reinicio: PASS, SSH como `osmarg@10.0.0.50` volvió con la misma clave HOST.
+  Hostname `envy`, kernel6.12.96, raíz Btrfs@root en SSD y cierre75mf correctos.
+- Arranque medido: 27,939s total (incluye firmware/loader), graphical.target
+  tras 4,669s de userspace. En greeter: 1,1GiB RAM; zram5,7GiB activa sin uso.
+  No es todavía un benchmark de la sesión personal ni de juegos.
+- Wi-FiAX201/conexión/DHCP/ruta/DNS: PASS; SSH, NetworkManager, SDDM y
+  HomeManager activos. 0 unidades de sistema fallidas en la comprobación.
+- Intel i915 y NVIDIA580.173.02/MX2502GiB: drivers ligados. Vulkan enumera ambos,
+  VAAPI Intel iHD inicializa y ofrece perfiles decode/encode. No confundir esa
+  enumeración con render de un juego o selección efectiva de GPU de cada app.
+- ALSA/SOF detecta audio analógico y HDMI1/2/3. PipeWire/WirePlumber arrancan;
+  sin login gráfico personal, sesión SSH no mostró dispositivos de audio.
+  Revalidar en la sesión activa y probar parlantes/micrófono físicamente.
+- BluetoothAX201 presente. USB/Synaptics/lectorSD y conectores internos/DP
+  enumerados. Ethernetr8169 disponible, sin cable durante la comprobación.
+- Cámara: NO enumerada, sin `/dev/video*`; revisar físicamente antes de atribuir
+  fallo a controlador. Pantallas y todos los puertos siguen pendientes de prueba.
+- SMART ambos NVMe PASS y fingerprints de Optane/USB iguales también postboot.
+- Aplicaciones Flatpak declaradas: servicio `flatpak-managed-install` continúa
+  instalándolas en segundo plano (activating, sin fallo registrado). No se
+  declara que todas las aplicaciones estén descargadas ya.
+- SOPS de usuario: unidad fallida por identidad age aún no provisionada;
+  esperado, no bloqueó HomeManager, SSH ni greeter. NO copiar claves privadas
+  personales automáticamente; completar después con el usuario.
+- Avisos kernel observados: sensor `lis3lv02d` no reconocido y errores ACPI/WMI
+  CreateField de BIOSF.05(2020). No impidieron este arranque; no se cambian BIOS,
+  ACPI global ni firmware a ciegas. Revisar sensores/teclas/brillo en pruebas.
+- `efibootmgr` no está instalado en el perfil normal; para consulta posterior
+  usar `bootctl status` o herramienta efímera, no asumir ese comando disponible.
 
 Esta sección se actualiza con resultados reales, no con los resultados esperados.
 
@@ -103,3 +130,27 @@ done
 Después de validar normal: evaluar uso Optane con autorización nueva; medir GPU y
 rendimiento; verificar IOMMU/aislamiento/reset, Windows virtual y VFIO, gaming y
 server. No se ha instalado Windows ni reservado una GPU para un guest.
+
+## Decisiones operativas y pendientes de revisión
+
+1. Ejecutar la instalación directamente tras aprobación explícita, sin otra
+   ronda de diseño. Cualquier corrección de alcance sigue en fases futuras.
+2. Mientras llegaba consentimiento de worktree se trabajó en rama feature sin
+   alterar diffs ajenos; al recibirlo se aisló la misma rama y se restauró master.
+3. No arreglar el test textual obsoleto ajeno; permanece rojo y no se declara
+   suite global verde ni rama integrada en master. Suites relevantes sí pasaron.
+4. Mantener snapshot dotfiles ignorados sin limpieza global: un checkout limpio
+   puede tener otro hash de fuente, aunque seleccione los mismos ajustes.
+5. Windows/VFIO/server/gaming y paquetes específicos gaming siguen diferidos;
+   Deskflow normal seleccionado sí se conserva. Si se necesitan otras
+   integraciones específicas de Lenovo/orgm, incorporarlas explícitamente.
+6. Provisión privada de red/password/hostkeys y cierre fue una puerta de
+   despliegue obligatoria, verificada antes del reboot; no escribir secretos
+   en código. Contraseña temporal comunicada solo a solicitud del usuario;
+   NO incluir su valor en este registro ni memoria.
+
+Menores diferidos: ampliar negativas de guardas de disco para mapping/tipo/
+capacidad/UID/comandos fallidos; corregir el comando múltiple findmnt del README
+(arriba se proporciona el loop válido). No afectan a las comprobaciones reales
+de identidad/montajes ya realizadas, pero conviene resolverlos antes de reutilizar
+el instalador en otro contexto. Rama `feat/envy-normal` conservada, sin push/merge.
