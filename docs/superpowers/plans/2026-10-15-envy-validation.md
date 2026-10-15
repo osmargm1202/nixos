@@ -185,3 +185,45 @@ el instalador en otro contexto. Rama `feat/envy-normal` conservada, sin push/mer
 Revisión conjunta solicitada por el usuario:
 `docs/superpowers/plans/2026-10-15-envy-installation-gaps.md`. Es una lista de
 brechas y aceptación para futuras instalaciones, no cambios extra autorizados.
+
+### Verificación recuperada y corrección de salida fantasma
+
+- El usuario confirmó arranque y volvió SSH. Se comprobó cierreRyoku `s8wxc...`,
+  sesión gráfica personal Hyprland/Ryoku, shell y materializador activos,
+  HomeManager inicialmente activo, contraseña privada conservada y menú1s.
+  No se estableció la causa del intervalo previo sin conexión.
+- Problema real reportado: al cambiar de workspace se perdía el escritorio/cursor.
+  Hyprland tenía eDP-1 real1920x1080 más DP-1 a800x600, identificación vacía y
+  EDID de0bytes. Workspace2 estaba enDP-1; el usuario confirmó ningún monitor,
+  adaptador ni dongle conectado. No era necesario cambiar drivers del cursor.
+- Un `hl.monitor` live aislado fue revertido por el manejo automático de layout;
+  un override manual persistente, cargado tras el generado, sí mantuvo el ajuste.
+- Solución exclusiva de envy: seed declarativo
+  `dotfiles/config/hosts/envy/profiles/ryoku/.config/orgm-ryoku/monitors_user.lua`
+  desactiva soloDP-1, sin desactivar eDP ni otros conectores. El preparador ya
+  existente lo instala solo cuando no hay override personal. Al conectar un
+  monitor real enDP-1, quitar la regla del override personal y revisar el seed.
+- Prueba `tests/envy-monitors.bats.sh`: RED por seed ausente; GREEN ejecutando el
+  Lua realmente seleccionado por HomeManager y comprobando salidas desactivadas.
+  envy-normal/ryoku-transition también PASS. Revisión independiente sin hallazgos
+  sustantivos (revisor no pudo ejecutar Lua; ejecución completa hecha por operador).
+- Build nuevo PASS, cierre
+  `/nix/store/zqddg1wrvn7ha6nskwjry19x533xcz9j-nixos-system-envy-ryoku`.
+  Copia completada, helper temporal borrado. Override aplicado por reload sin
+  cerrar sesión. Verificación repetida: soloeDP activa, workspaces en eDP,
+  coordenadas de cursor dentro del panel real, sin errores de configuración.
+  Confirmación visual del cursor por el usuario sigue siendo prueba física.
+- IMPORTANTE: `switch-to-configuration switch` seleccionó generación3 y aplicó
+  links/override y Ryoku, pero devolvió exit4 al fallar `home-manager-osmarg` en
+  su pasoSOPS, porque sigue sin identidad age. El ajuste de monitores SÍ está
+  declarado/materializado y funcionando por comprobación posterior, pero NO
+  declarar el rebuild global limpio: queda1unidad de sistema fallida porSOPS.
+  No se copian claves privadas ni se deshabilitan secretos para ocultar el fallo.
+- Timeout1/defaultgeneración3 y autenticación sudo conservados tras switch.
+  Generaciones previas disponibles. No hizo falta otro reinicio para este fix.
+- Prueba textual `flake-architecture.bats.sh` continúa fallando con
+  `host registry must receive the configuration hostname` (preexistente).
+- Verificación amplia adicional: `nix flake check --no-build` evaluó múltiples
+  configuraciones, incluido envy, pero terminó exit1 con `interrupted by the
+  user` al pasar por Lenovo/GNOME. No se atribuye causa sin evidencia ni se
+  declara ese check completo/verde. Suites enfocadas y fullbuild de envy sí PASS.

@@ -18,6 +18,16 @@ con subvolúmenes `@root`, `@home`, `@nix`, `@log`, `@windows`. El último queda
 vacío, reservado, sin Windows instalado. Discos VM futuros se crearán sin CoW.
 Se usa zram del 50% de RAM, no Optane como swap ni hibernación.
 
+## Pantalla fantasma detectada
+
+Con solo el panel interno conectado, el kernel presenta además `DP-1` como
+conectado, sin EDID, a 800×600. Ryoku asignaba allí el workspace2 y el cursor.
+El seed exclusivo de envy `.config/orgm-ryoku/monitors_user.lua` desactiva esa
+salida; la preparación lo instala como `~/.config/hypr/monitors_user.lua` solo
+si no hay override personal. No desactiva eDP ni los otros conectores.
+Si un monitor real utiliza DP-1 más adelante, retirar la regla del override
+personal y revisar el seed declarado, recargar Hyprland y probar ese puerto.
+
 ## Optane: pendiente, NO modificar
 
 El Intel H10 contiene NAND y Optane en una misma tarjeta. Linux detecta el

@@ -82,12 +82,20 @@ Do not commit the password or alter disks, GPU ownership or deferred profiles.
 - [x] Add evaluated regression for Ryoku/timeout1; observe RED against old profile.
 - [x] Wire envy-ryoku, update aliases/inventory and timeout; run GREEN plus existing Ryoku tests.
 - [x] Build corrected system, review the change and transfer closure safely.
-- [ ] Deploy without losing remote access or unexpectedly interrupting a logged-in desktop; verify live or next boot profile, timeout, user password preservation and repository planning.
+- [x] Deploy without losing remote access or unexpectedly interrupting a logged-in desktop; verify live or next boot profile, timeout, user password preservation and repository planning. See later evidence: Ryoku verified after connectivity returned; subsequent monitor-fix rebuild has known SOPS failure, not global green.
 
-Task4 deployment status: generation2 Ryoku staged, default/timeout1 verified,
+Historical Task4 deployment checkpoint (later recovered below): generation2 Ryoku staged, default/timeout1 verified,
 helper removed, authorized reboot requested. No SSH after reconnect window;
 postboot verification blocked pending physical screen/Wi-Fi observation.
-Do not mark the last checkbox complete. New installation gaps recorded in
+At that checkpoint, postboot acceptance was not complete. New installation gaps recorded in
 2026-10-15-envy-installation-gaps.md at the user's request; review together
-before implementing extra hardening. Latest notes still need target sync once
-SSH returns (target currently contains source through e704d08).
+before implementing extra hardening. Those notes awaited target sync while
+SSH was absent; recovered status is documented in the validation report.
+
+### Task 5: Physical-session follow-up
+
+- [x] Diagnose phantomDP-1/workspace/cursor issue with monitor/EDID/runtime evidence and user confirmation of internal-panel-only hardware.
+- [x] Add regression RED/GREEN, host-only monitor seed and apply without session logout; full build/copy succeed.
+- [x] Verify one active real panel, workspace mapping, cursor coordinates, timeout1 and password preserved; record partial switch exit4 due missing SOPS identity.
+- [ ] Obtain physical confirmation of cursor/workspace behavior from user.
+- [ ] Agree/provision private age identity and retry HomeManager activation; do not mark installation globally clean before this succeeds.
