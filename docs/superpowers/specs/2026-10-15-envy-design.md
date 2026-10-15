@@ -1,6 +1,21 @@
 # Envy: instalación declarativa NixOS, Btrfs y Windows
 
-Estado: propuesta para aprobación; inventario SSH realizado, ningún disco modificado.
+Estado: aprobado con alcance por fases el 2026-10-15; inicialmente SOLO normal.
+
+## Alcance inmediato aprobado (prevalece sobre las fases futuras)
+
+El usuario decidió instalar primero NixOS con perfil normal, sin Windows, sin
+server y sin perfil gaming. Normal será el arranque predeterminado. Se conserva
+el diseño avanzado de abajo como hoja de ruta, no como funcionalidades a activar
+en esta instalación. El repositorio completo y la planificación deben quedar en
+`/home/osmarg/Hobby/nixos` del equipo nuevo.
+
+Primero se validarán arranque, rendimiento, Wi-Fi, Ethernet, pantallas/salidas,
+USB, sonido y vídeo, documentando cuáles pruebas requieren intervención física.
+Se mantiene Btrfs, Intel para escritorio y MX250 mediante PRIME bajo demanda,
+sin asignaciones VFIO ni contenedores Windows. Se utiliza zram inicialmente.
+El Optane de 27,3 GiB se deja intacto: su posible uso como swap o recuperación
+se evaluará después y requerirá autorización antes de borrar sus datos.
 
 ## Objetivo y requisitos del usuario
 
