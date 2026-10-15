@@ -227,3 +227,6 @@ brechas y aceptación para futuras instalaciones, no cambios extra autorizados.
   configuraciones, incluido envy, pero terminó exit1 con `interrupted by the
   user` al pasar por Lenovo/GNOME. No se atribuye causa sin evidencia ni se
   declara ese check completo/verde. Suites enfocadas y fullbuild de envy sí PASS.
+
+- Confirmación posterior del usuario: workspaces/cursor ya funcionan. Se cierra
+  esa prueba visual concreta; no las demás pruebas físicas ni el fallo SOPS/HM.

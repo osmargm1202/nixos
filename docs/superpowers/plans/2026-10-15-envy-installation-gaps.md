@@ -11,12 +11,13 @@ resueltos. Alcance actual: normal con Ryoku, sin Windows/server/gaming/VFIO.
 
 | Prioridad | Debilidad / evidencia | Base esperada desde cero | Estado |
 | --- | --- | --- | --- |
-| Alta | Primer despliegue usó Hyprland personal en vez de Ryoku; timeout inicial 5s | Checklist de preferencias aprobado antes del primer build, alias normal evaluado como Ryoku y timeout1s probado | Configuración corregida; registrar verificación postreinicio en el informe de validación |
+| Alta | Primer despliegue usó Hyprland personal en vez de Ryoku; timeout inicial 5s | Checklist de preferencias aprobado antes del primer build, alias normal evaluado como Ryoku y timeout1s probado | Corregido y verificado tras arranque: Ryoku/timeout1; faltó contrato explícito antes del primer despliegue |
 | Alta | Identidad age personal no provisionada; sops-nix de usuario falló en el primer arranque y en el rebuild posterior hizo fallar home-manager-osmarg (switch exit4) | Flujo privado de enrolamiento y diagnóstico explícito; no copiar claves personales automáticamente | Pendiente acordar/provisionar con usuario |
 | Alta | Contraseña inicial difícil de introducir; hubo que cambiarla por petición del usuario | Credencial inicial elegida/entregada por canal acordado y prueba de login local antes del cierre | Cambio privado verificado; valor fuera de Git/Store. Revisar fortaleza y retirar archivo de recuperación tras guardarlo |
-| Alta | Salida fantasma DP-1 conectada sin EDID ni monitor: workspace2/cursor fuera del panel | Comparar salidas reales con inventario y probar cambios de workspace en sesión local | Corrección host-only aplicada y declarada; confirmar cursor físicamente con usuario |
+| Alta | Salida fantasma DP-1 conectada sin EDID ni monitor: workspace2/cursor fuera del panel | Comparar salidas reales con inventario y probar cambios de workspace en sesión local | Corrección host-only aplicada y declarada; usuario confirmó que ya funciona. DP-1 queda desactivada hasta revisar un monitor real en ese conector |
 | Alta | Pruebas SSH no prueban audio/sesión gráfica ni cada puerto | Checklist de aceptación local: login, audio/micrófono, cámara, brillo, suspensión, pantallas y conectividad | Requiere pruebas físicas del usuario; cámara no enumerada en primer arranque |
 | Media | Btrfs con subvolúmenes no equivale a snapshots ni backup recuperable | Acordar política de snapshots, retención, copia externa y ensayo de restauración | No implementado; Optane intacto, no es respaldo independiente al compartir tarjeta H10 |
+| Alta | Particionado automatizado, pero parte de la provisión privada de red/credenciales necesitó pasos operativos fuera del flujo versionado | Instalación reproducible de extremo a extremo: pedir entradas privadas, validar acceso/red y repetir sin exponer secretos ni sobrescribir credenciales existentes | Falta consolidar esos pasos en un flujo reutilizable; no implica guardar secretos en Nix |
 | Media | Snapshot dotfiles incorpora residuos locales ignorados mediante builtins.path | Fuente de configuración reproducible también desde checkout limpio | Diferencia de hash documentada; limpieza/refactor global fuera de este alcance |
 | Media | Suite flake-architecture ya tenía una comprobación textual obsoleta | Suite base verde antes de usarla como puerta de nuevas instalaciones | Falla preexistente documentada; no declarar éxito global |
 | Media | Tests de disco no cubren todas las negativas de mapping/tipo/capacidad/UID/comandos de inspección fallidos | Probar cada guarda antes de reutilizar automatización destructiva | Guardas reales revisadas; ampliar pruebas pendiente |
@@ -49,3 +50,15 @@ resueltos. Alcance actual: normal con Ryoku, sin Windows/server/gaming/VFIO.
    ajustes exclusivos de envy.
 3. Definir aceptación, recuperación y manejo privado de credenciales/secretos.
 4. Aprobar un plan separado antes de implementar refuerzos.
+
+## Confirmación del usuario
+
+El usuario confirmó que el cambio de workspaces/cursor ya funciona. El arreglo
+DP-1 es una excepción específica de este hardware, no una solución universal de
+autodetección. HomeManager/SOPS, reproducibilidad, recuperación y cobertura de
+instalación siguen pendientes; esa confirmación no convierte el rebuild en verde.
+
+La prioridad inmediata identificada es el arranque inicial de SOPS: una identidad
+personal todavía ausente no debe quedar como sorpresa al reconstruir. Hace
+falta acordar su provisión privada y cómo representar explícitamente el estado
+no enrolado, sin eliminar secretos ni copiar identidades automáticamente.

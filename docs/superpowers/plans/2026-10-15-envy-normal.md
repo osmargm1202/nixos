@@ -97,5 +97,5 @@ SSH was absent; recovered status is documented in the validation report.
 - [x] Diagnose phantomDP-1/workspace/cursor issue with monitor/EDID/runtime evidence and user confirmation of internal-panel-only hardware.
 - [x] Add regression RED/GREEN, host-only monitor seed and apply without session logout; full build/copy succeed.
 - [x] Verify one active real panel, workspace mapping, cursor coordinates, timeout1 and password preserved; record partial switch exit4 due missing SOPS identity.
-- [ ] Obtain physical confirmation of cursor/workspace behavior from user.
+- [x] Obtain physical confirmation of cursor/workspace behavior from user: confirmed working.
 - [ ] Agree/provision private age identity and retry HomeManager activation; do not mark installation globally clean before this succeeds.
