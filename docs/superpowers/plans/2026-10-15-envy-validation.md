@@ -43,13 +43,20 @@ Conservar Optane serial `PHTE9395032P512B-2` y USB instalador.
   `@windows` vacío y atributo NOCOW confirmado.
 - Fingerprints de primeros4MiB Optane y USB: iguales antes/después. No se usan
   como almacenamiento ni swap, y los comandos destructivos no los referencian.
-- Transferencia de cierre: EN CURSO al store `/mnt`, no al tmpfs del live.
+- Transferencia de cierre: PASS, 2795paths al store `/mnt`, no al tmpfs del live;
+  `nix-store --store /mnt --check-validity` pasó.
 - Repositorio completo y planificación: COPIADOS a `/mnt/home/osmarg/Hobby/nixos`.
 - Perfil Wi-Fi privado persistente, autoconnect/MACpermanente y claves HOST SSH
   del propio live: PROVISIONADOS, permisos verificados.
-- Contraseña inicial aleatoria: archivo privado del usuario creado, pero
-  aplicación a shadow y prueba de acceso: PENDIENTES tras activar el usuario.
-- Instalación bootloader, reinicio y prueba del sistema arrancado: PENDIENTES.
+- Contraseña inicial aleatoria: aplicada privadamente a shadow tras activar
+  usuario1000:1000; hash comparado sin imprimirlo. `passwd -S osmarg`: P.
+  Huella clave autorizada comprobada y claves HOST SSH iguales a las del live.
+- `nixos-install --system <cierre> --no-root-passwd --no-channel-copy`: PASS,
+  systemd-boot instalado en EFI, entrada Linux Boot Manager creada.
+- Menú predeterminado `nixos-generation-1.conf`, solo normal. HP dejó la entrada
+  Linux0002 al final, así que se puso primero y se seleccionó BootNext0002 para
+  no volver al USB instalador. No se borraron otras entradas de firmware.
+- Reinicio y prueba del sistema arrancado: PENDIENTES.
 - Verificaciones de hardware después de arrancar: PENDIENTES.
 
 Esta sección se actualiza con resultados reales, no con los resultados esperados.
