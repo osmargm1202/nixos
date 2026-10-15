@@ -154,3 +154,34 @@ capacidad/UID/comandos fallidos; corregir el comando múltiple findmnt del READM
 (arriba se proporciona el loop válido). No afectan a las comprobaciones reales
 de identidad/montajes ya realizadas, pero conviene resolverlos antes de reutilizar
 el instalador en otro contexto. Rama `feat/envy-normal` conservada, sin push/merge.
+
+## Corrección Ryoku y menú1s (despliegue posterior)
+
+- Petición explícita: normal debe usar Ryoku, no el Hyprland personal inicial;
+  menú1s y cambio de contraseña por canal privado (valor NO registrado aquí).
+- `envy`, `envy-normal` y `envy-ryoku` seleccionan Ryoku. Regresión evaluada
+  observada RED con configuración inicial y GREEN tras corregir perfil/timeout.
+- Build completo PASS: `/nix/store/s8wxc65v0r9f04c06r4h3v453026lnyz-nixos-system-envy-ryoku`,
+  drv `aq572pqb31gfm0f84ir1w4kngjgndria`. Cierre30,5GiB (no confundir con RAM
+  o espacio adicional en disco; comparte rutas con la generación anterior).
+- Build demorado por timeout de un NAR en cache.nixos.org; recuperó sin cambiar
+  fuentes/lockfile. Copia de2001rutas al store instalado completó con exit0.
+- Revisión independiente de corrección: sin hallazgos sustantivos. Suites envy
+  normal/disk/inventory y Ryoku profile/transition PASS de nuevo antes de reboot;
+  shortcuts/folder-icons/rofi PASS con Lua/esquemas GTK explícitos en entorno.
+- Fuente completa/metadata Git sincronizada al destino hasta commit `e704d08`;
+  cuatro diffs previos y documento previo del usuario conservados sin commit.
+- Generación2 preparada con `nix-env --profile .../system --set` y
+  `switch-to-configuration boot`, exit0. Default `nixos-generation-2.conf`
+  (Ryoku), loader.conf timeout1 y EFI timeout1 establecidos. Generación1
+  Hyprland conservada para recuperación. Helper temporal de copia root eliminado.
+- Contraseña solicitada verificada por sudo antes de preparar Ryoku; mutableUsers
+  conserva cambios privados. Probar de nuevo tras el nuevo arranque.
+- Antes de este reboot el instalador Flatpak terminó con Result=success,
+  24 aplicaciones enumeradas. Eso no valida el funcionamiento de cada app.
+- Usuario autorizó el reinicio y se solicitó; reconexión SSH/verificación de
+  sesión Ryoku aún PENDIENTES. No afirmar arranque Ryoku exitoso hasta verificar.
+
+Revisión conjunta solicitada por el usuario:
+`docs/superpowers/plans/2026-10-15-envy-installation-gaps.md`. Es una lista de
+brechas y aceptación para futuras instalaciones, no cambios extra autorizados.

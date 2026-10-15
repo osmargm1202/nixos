@@ -4,7 +4,7 @@
 
 **Goal:** Install a reproducible normal-only NixOS desktop on envy and retain the complete repository and advanced-profile roadmap there.
 
-**Architecture:** Add envy-hyprland (aliases envy/envy-normal), its own hardware/base module, and a guarded disk preparation script. Reuse osmarg's current configuration and Hyprland without changing unrelated pending work. Build locally before disk erasure, copy the system closure to the mounted target, provision private networking/access, and install using nixos-install.
+**Architecture:** Current target is envy-ryoku (aliases envy/envy-normal), its own hardware/base module, and a guarded disk preparation script. Reuse osmarg's configuration with Ryoku without changing unrelated pending work. The initial Hyprland selection below is historical and corrected by Task4. Build locally before disk erasure, copy the system closure to the mounted target, provision private networking/access, and install using nixos-install.
 
 **Tech Stack:** NixOS/Home Manager, Bash, Python tests, SSH, Btrfs, systemd-boot, Intel i915, proprietary NVIDIA580 PRIME.
 
@@ -17,7 +17,7 @@
 - Intel UHD PCI0:2:0 owns desktop; MX250 PCI2:0:0 proprietary driver and offload; no Lenovo broken-panel/PCI/IOMMU settings.
 - Preserve existing local changes and include their current osmarg preferences in the deployment snapshot without committing them as ours.
 - All planning and repo go to /home/osmarg/Hobby/nixos; Wi-Fi/credentials/private keys outside repo/Store/logs.
-- No push/merge without explicit user instruction. Worktree use pending user's async preference.
+- No push/merge without explicit user instruction. User approved isolated worktree; preserve pending preferences in both checkouts.
 
 ## Review Focus
 - Wrong disk/serial, mounted partition, or missing erase confirmation must prevent every destructive command.
@@ -80,6 +80,14 @@ Do not commit the password or alter disks, GPU ownership or deferred profiles.
 
 - [x] Change runtime password privately and verify sudo authentication.
 - [x] Add evaluated regression for Ryoku/timeout1; observe RED against old profile.
-- [ ] Wire envy-ryoku, update aliases/inventory and timeout; run GREEN plus existing Ryoku tests.
-- [ ] Build corrected system, review the change and transfer closure safely.
+- [x] Wire envy-ryoku, update aliases/inventory and timeout; run GREEN plus existing Ryoku tests.
+- [x] Build corrected system, review the change and transfer closure safely.
 - [ ] Deploy without losing remote access or unexpectedly interrupting a logged-in desktop; verify live or next boot profile, timeout, user password preservation and repository planning.
+
+Task4 deployment status: generation2 Ryoku staged, default/timeout1 verified,
+helper removed, authorized reboot requested. No SSH after reconnect window;
+postboot verification blocked pending physical screen/Wi-Fi observation.
+Do not mark the last checkbox complete. New installation gaps recorded in
+2026-10-15-envy-installation-gaps.md at the user's request; review together
+before implementing extra hardening. Latest notes still need target sync once
+SSH returns (target currently contains source through e704d08).
