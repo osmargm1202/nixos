@@ -1,6 +1,6 @@
 { config, lib, pkgs, userName, ... }:
 {
-  imports = [ ../../apps/deskflow.nix ];
+  imports = [ ./recovery.nix ];
   # Phase one: normal desktop only, without inheriting Lenovo specialisations.
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.initrd.kernelModules = [ "i915" ];
