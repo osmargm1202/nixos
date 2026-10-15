@@ -29,6 +29,8 @@ nix eval --impure --raw --expr '
       && !(c.systemd.user.services ? lenovo-windows-autostart)
       && !(builtins.any (p: lib.hasPrefix "vfio-pci.ids=" p) c.boot.kernelParams)
       && !(builtins.elem "video=eDP-1:d" c.boot.kernelParams));
+  assert check "selected normal-desktop Deskflow integration must not be lost"
+    (builtins.any (p: p.appId == "org.deskflow.deskflow") c.services.flatpak.packages);
   assert check "Btrfs subvolumes must share only the authorized SSD filesystem"
     (builtins.all (m: fs.${m}.fsType == "btrfs"
       && fs.${m}.device == "/dev/disk/by-label/ENVY_ROOT")
