@@ -35,12 +35,34 @@ Conservar Optane serial `PHTE9395032P512B-2` y USB instalador.
 
 ## Estado operacional
 
-- Build completo: EN CURSO. No confundir evaluación con compilación terminada.
-- Formateo, transferencia de cierre, instalación y reinicio: PENDIENTES.
-- Configuración Wi-Fi/contraseña/clave SSH del sistema nuevo: PENDIENTE de provisión.
+- Build completo: PASS, kernel6.12.96/NVIDIA580.173.02/Hyprland0.56.2.
+  Cierre `/nix/store/75mf3nxb4iw6m3jbnh56mx4xq44h0kv5-nixos-system-envy-hyprland`,
+  18,1 GiB; `nix build` exit0 y comparación con evaluación de la configuración final.
+- Formateo autorizado: PASS, solo SSDprincipal; UUID Btrfs
+  `c5b103f7-60c1-47e5-b1d6-f752c460cf7b`. Montajes verificados destino por destino;
+  `@windows` vacío y atributo NOCOW confirmado.
+- Fingerprints de primeros4MiB Optane y USB: iguales antes/después. No se usan
+  como almacenamiento ni swap, y los comandos destructivos no los referencian.
+- Transferencia de cierre: EN CURSO al store `/mnt`, no al tmpfs del live.
+- Repositorio completo y planificación: COPIADOS a `/mnt/home/osmarg/Hobby/nixos`.
+- Perfil Wi-Fi privado persistente, autoconnect/MACpermanente y claves HOST SSH
+  del propio live: PROVISIONADOS, permisos verificados.
+- Contraseña inicial aleatoria: archivo privado del usuario creado, pero
+  aplicación a shadow y prueba de acceso: PENDIENTES tras activar el usuario.
+- Instalación bootloader, reinicio y prueba del sistema arrancado: PENDIENTES.
 - Verificaciones de hardware después de arrancar: PENDIENTES.
 
 Esta sección se actualiza con resultados reales, no con los resultados esperados.
+
+## Aislamiento del trabajo
+
+Por confirmación del usuario, la rama `feat/envy-normal` se continúa en
+`/home/osmarg/Hobby/nixos/.worktrees/envy-normal`. El checkout principal volvió a
+master manteniendo sus cuatro modificaciones previas intactas. El worktree y
+el destino conservan esas preferencias sin atribuirlas a estos commits.
+La copia de dotfiles incluye el snapshot local original; residuos ignorados
+pueden cambiar el hash de `builtins.path` aunque no se seleccionen como archivos
+Home Manager. No se limpian archivos del usuario durante esta instalación.
 
 ## Acceso previsto y seguridad
 
