@@ -22,11 +22,16 @@ for tool in readlink lsblk blockdev; do
 done
 disk=$(readlink -e "$disk_id") || fail 'Authorized SSD by-id does not exist'
 [[ "$disk" == /dev/nvme0n1 ]] || fail 'SSD device mapping changed; re-inventory before erasing'
-[[ "$(lsblk -dnro TYPE "$disk")" == disk ]] || fail 'Target must be a whole disk'
-[[ "$(lsblk -dnro SERIAL "$disk")" == "$expected_serial" ]] || fail 'SSD serial mismatch'
-[[ "$(blockdev --getsize64 "$disk")" == "$expected_bytes" ]] || fail 'SSD size mismatch'
+# Assign before comparing: [[ $(command) == expected ]] can hide a failed
+# inventory command when its stdout still looks correct.
+disk_type=$(lsblk -dnro TYPE "$disk") || fail 'Unable to inventory SSD type'
+[[ "$disk_type" == disk ]] || fail 'Target must be a whole disk'
+serial=$(lsblk -dnro SERIAL "$disk") || fail 'Unable to inventory SSD serial'
+[[ "$serial" == "$expected_serial" ]] || fail 'SSD serial mismatch'
+bytes=$(blockdev --getsize64 "$disk") || fail 'Unable to inventory SSD size'
+[[ "$bytes" == "$expected_bytes" ]] || fail 'SSD size mismatch'
 # Includes all descendant partitions. Any mounted target makes format unsafe.
-mounts=$(lsblk -nr -o MOUNTPOINTS "$disk")
+mounts=$(lsblk -nr -o MOUNTPOINTS "$disk") || fail 'Unable to inventory SSD mounts'
 [[ -z "${mounts//[[:space:]]/}" ]] || fail "Target or a descendant is mounted: $mounts"
 printf 'Verified SSD: %s (%s, %s bytes)\n' "$disk" "$expected_serial" "$expected_bytes"
 if [[ "$mode" == check ]]; then
@@ -34,7 +39,8 @@ if [[ "$mode" == check ]]; then
   exit 0
 fi
 [[ "$confirmation" == "$expected_serial" ]] || fail 'Destructive format requires --confirm PHTE9395032P512B-1'
-[[ "$(id -u)" == 0 ]] || fail 'Formatting requires root'
+uid=$(id -u) || fail 'Unable to determine effective UID'
+[[ "$uid" == 0 ]] || fail 'Formatting requires root'
 for tool in wipefs parted mkfs.fat mkfs.btrfs btrfs mount umount chattr mkdir udevadm; do
   command -v "$tool" >/dev/null || fail "Missing tool: $tool"
 done

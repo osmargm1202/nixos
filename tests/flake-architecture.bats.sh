@@ -92,8 +92,37 @@ assert_contains './dns/hosts.nix' "$COMMON" 'host registry missing from common d
 for role_module in "$TERMINAL" "$SERVER"; do
   assert_contains '../dns/hosts.nix' "$role_module" "host registry missing from $role_module"
 done
-assert_contains 'inherit inputs userName hostName;' "$BUILDER" \
-  'host registry must receive the configuration hostname'
+# Removing/renaming hostName in the builder's specialArgs must fail this
+# evaluated module-consumer contract, even if the source is reformatted or
+# additional arguments (such as role) are forwarded alongside it.
+actual_hostnames="$(nix eval --impure --json --expr "
+  let
+    flake = builtins.getFlake \"path:$ROOT\";
+    builders = import $BUILDER {
+      inputs = flake.inputs;
+      nixpkgs = flake.inputs.nixpkgs;
+      system = \"x86_64-linux\";
+      defaultHardware = $ROOT/nixos/hosts/generic/hardware-configuration.nix;
+      profiles = {};
+    };
+    probe = role:
+      let
+        evaluated = builders.mkSystem {
+          inherit role;
+          hostName = \"contract-\" + role;
+          profile = {};
+          extraModules = [ ({ hostName, ... }: {
+            networking.domain = hostName + \".example.invalid\";
+          }) ];
+        };
+      in {
+        hostName = evaluated.config.networking.hostName;
+        domain = evaluated.config.networking.domain;
+      };
+  in builtins.map probe [ \"desktop\" \"server\" \"terminal\" ]
+")" || fail 'builder hostname propagation did not evaluate'
+[[ "$actual_hostnames" == '[{"domain":"contract-desktop.example.invalid","hostName":"contract-desktop"},{"domain":"contract-server.example.invalid","hostName":"contract-server"},{"domain":"contract-terminal.example.invalid","hostName":"contract-terminal"}]' ]] \
+  || fail "builder must propagate each requested hostname to configuration and module consumers: $actual_hostnames"
 assert_not_contains '../../deskflow.nix' "$ORGM_HOST" \
   'Deskflow must stay outside ORGM base hardware'
 assert_contains '172.18.0.251 vilserver1' "$HOSTS" \
