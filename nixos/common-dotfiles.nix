@@ -8,10 +8,8 @@
 }:
 
 let
-  sourceRoot = builtins.path {
-    path = ../dotfiles/config;
-    name = "user-dotfiles";
-  };
+  dotfileSource = import ../lib/dotfile-source.nix;
+  sourceRoot = dotfileSource.source ../dotfiles/config;
   hostName = config.networking.hostName;
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
@@ -56,18 +54,7 @@ let
         files: name: type:
         let
           target = prefix + name;
-          metadata =
-            builtins.elem name [
-              ".git"
-              ".gitignore"
-              ".DS_Store"
-              "icon-theme.cache"
-              "mimeinfo.cache"
-              "__pycache__"
-            ]
-            || builtins.match "Icon." name != null
-            || lib.hasSuffix "~" name
-            || lib.hasSuffix ".bak" name;
+          metadata = dotfileSource.isMetadata name;
         in
         if metadata then
           files
