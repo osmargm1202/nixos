@@ -5,7 +5,7 @@
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.initrd.kernelModules = [ "i915" ];
   boot.loader.systemd-boot.configurationLimit = 3;
-  boot.loader.timeout = lib.mkForce 5;
+  boot.loader.timeout = lib.mkForce 1;
 
   hardware.graphics = {
     enable = true;

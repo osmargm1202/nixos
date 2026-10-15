@@ -83,18 +83,18 @@ in
   inherit profiles;
 
   aliases = {
-    envy = "envy-hyprland";
-    envy-normal = "envy-hyprland";
+    envy = "envy-ryoku";
+    envy-normal = "envy-ryoku";
     orgm = "orgm-hyprland";
     lenovo = "lenovo-hyprland";
     jarq = "jarq-i3";
   };
 
   configurations = {
-    envy-hyprland = desktop {
+    envy-ryoku = desktop {
       hostName = "envy";
       hardware = ./nixos/hosts/envy/hardware-configuration.nix;
-      profileName = "hyprland";
+      profileName = "ryoku";
       userName = "osmarg";
     };
     cinnamon = desktop { profileName = "cinnamon"; };

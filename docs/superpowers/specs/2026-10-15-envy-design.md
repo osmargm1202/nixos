@@ -8,7 +8,10 @@ El usuario decidió instalar primero NixOS con perfil normal, sin Windows, sin
 server y sin perfil gaming. Normal será el arranque predeterminado. Se conserva
 el diseño avanzado de abajo como hoja de ruta, no como funcionalidades a activar
 en esta instalación. El repositorio completo y la planificación deben quedar en
-`/home/osmarg/Hobby/nixos` del equipo nuevo.
+`/home/osmarg/Hobby/nixos` del equipo nuevo. Corrección explícita posterior:
+el escritorio normal debe ser **Ryoku**, no el Hyprland simple inicialmente
+propuesto, y el menú de arranque debe durar **1 segundo**. Esa instrucción
+prevalece sobre las propuestas de escritorio de la hoja de ruta histórica.
 
 Primero se validarán arranque, rendimiento, Wi-Fi, Ethernet, pantallas/salidas,
 USB, sonido y vídeo, documentando cuáles pruebas requieren intervención física.

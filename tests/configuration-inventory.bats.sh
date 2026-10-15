@@ -21,8 +21,8 @@ diff -u "$EXPECTED" <(printf '%s\n' "$actual_names") \
 
 jq -e '
   .aliases == {
-    envy: "envy-hyprland",
-    "envy-normal": "envy-hyprland",
+    envy: "envy-ryoku",
+    "envy-normal": "envy-ryoku",
     jarq: "jarq-i3",
     lenovo: "lenovo-hyprland",
     orgm: "orgm-hyprland"

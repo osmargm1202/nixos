@@ -71,3 +71,15 @@
 ## Phase-one outcome
 
 Normal installation and SSH/Wi-Fi reboot verified; see 2026-10-15-envy-validation.md for actual results. Physical hardware tests, user logins/secrets and advanced profiles remain explicitly pending. Known preexisting flake-architecture textual failure blocks any global-green/merge claim; branch/worktree kept without push or merge.
+
+### Task 4: User correction — Ryoku and one-second boot menu
+
+**Requirements:** User explicitly requires Ryoku normal (envy/envy-normal aliases
+to envy-ryoku), timeout1s, and a runtime password change by direct request.
+Do not commit the password or alter disks, GPU ownership or deferred profiles.
+
+- [x] Change runtime password privately and verify sudo authentication.
+- [x] Add evaluated regression for Ryoku/timeout1; observe RED against old profile.
+- [ ] Wire envy-ryoku, update aliases/inventory and timeout; run GREEN plus existing Ryoku tests.
+- [ ] Build corrected system, review the change and transfer closure safely.
+- [ ] Deploy without losing remote access or unexpectedly interrupting a logged-in desktop; verify live or next boot profile, timeout, user password preservation and repository planning.

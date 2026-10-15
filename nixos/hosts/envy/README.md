@@ -4,9 +4,10 @@ HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 ## Configuración activa
 
-`envy`, `envy-normal` y `envy-hyprland` seleccionan el mismo escritorio Hyprland
+`envy`, `envy-normal` y `envy-ryoku` seleccionan el mismo escritorio Ryoku
 de `osmarg`, con sus preferencias y aplicaciones compartidas. Esta fase NO
-configura VM Windows, VFIO, especializaciones server o gaming.
+configura VM Windows, VFIO, especializaciones server o gaming. El menú de
+arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
 Kernel 6.12 LTS, NVIDIA propietario `legacy_580`, Intel para escritorio y
 `nvidia-offload programa` para GPU discreta. No se promete apagado completo de

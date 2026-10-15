@@ -8,15 +8,17 @@ nix eval --impure --raw --expr '
     f = builtins.getFlake ("path:" + toString ./.);
     lib = f.inputs.nixpkgs.lib;
     inventory = import ./configurations.nix;
-    c = f.nixosConfigurations.envy-hyprland.config;
+    c = f.nixosConfigurations.envy.config;
     check = message: condition: lib.assertMsg condition message;
     fs = c.fileSystems;
   in
+  assert check "envy normal must use Ryoku with a one-second boot menu"
+    (c.boot.loader.timeout == 1 && c.programs.ryoku.enable);
   assert check "envy aliases must resolve to the normal desktop"
-    (inventory.aliases.envy == "envy-hyprland"
-      && inventory.aliases.envy-normal == "envy-hyprland"
+    (inventory.aliases.envy == "envy-ryoku"
+      && inventory.aliases.envy-normal == "envy-ryoku"
       && f.nixosConfigurations.envy.config.networking.hostName == "envy"
-      && f.nixosConfigurations.envy-normal.config.programs.hyprland.enable);
+      && f.nixosConfigurations.envy-normal.config.programs.ryoku.enable);
   assert check "envy must inherit osmarg desktop configuration"
     (c.networking.hostName == "envy" && c.users.users.osmarg.uid == 1000
       && c.home-manager.users.osmarg.home.homeDirectory == "/home/osmarg"
