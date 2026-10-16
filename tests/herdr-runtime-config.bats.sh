@@ -10,7 +10,7 @@ fail() {
 
 
 home_files="$(nix eval --json \
-  "path:$ROOT#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file")"
+  --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "orgm-hyprland.config.home-manager.users.osmarg.home.file")"
 jq -e 'keys | all(. != ".config/herdr" and (startswith(".config/herdr/") | not))' <<<"$home_files" >/dev/null ||
   fail 'Home Manager must not link or own the Herdr runtime directory'
 

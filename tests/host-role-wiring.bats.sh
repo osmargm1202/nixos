@@ -8,12 +8,14 @@ fail() {
 }
 
 assert_json() {
-  local expression="path:$ROOT#${1#.#}" expected="$2"
-  [[ "$(nix eval --json "$expression")" == "$expected" ]] || fail "$expression is not $expected"
+  local expression="${1#.#}" expected="$2"
+  expression="${expression#nixosConfigurations.}"
+  [[ "$(nix eval --json --impure --file "$ROOT/tests/fixtures/legacy-configurations.nix" "$expression")" == "$expected" ]] || fail "$expression is not $expected"
 }
 assert_host_alias() {
-  local expression="path:$ROOT#${1#.#}" alias="$2"
-  nix eval --raw "$expression" | grep -Fxq -- "$alias" ||
+  local expression="${1#.#}" alias="$2"
+  expression="${expression#nixosConfigurations.}"
+  nix eval --raw --impure --file "$ROOT/tests/fixtures/legacy-configurations.nix" "$expression" | grep -Fxq -- "$alias" ||
     fail "$expression does not contain $alias"
 }
 
@@ -24,12 +26,12 @@ assert_json '.#nixosConfigurations.lenovo-terminal.config.services.zerotierone.e
 assert_json '.#nixosConfigurations.jarq-terminal.config.services.zerotierone.enable' false
 
 assert_json '.#nixosConfigurations.lenovo-terminal.config.hardware.graphics.enable' true
-assert_json '.#nixosConfigurations.lenovo-hyprland.config.hardware.graphics.enable' true
+[[ "$(nix eval --json "path:$ROOT#nixosConfigurations.lenovo.config.hardware.graphics.enable")" == true ]] || fail 'canonical Lenovo graphics disabled'
 assert_json '.#nixosConfigurations.lenovo-hyprland.config.boot.loader.systemd-boot.sortKey' '"nixos-02-normal"'
 assert_json '.#nixosConfigurations.jarq-terminal.config.hardware.sensor.iio.enable' true
 assert_json '.#nixosConfigurations.jarq-hyprland.config.hardware.sensor.iio.enable' true
 assert_json '.#nixosConfigurations.ero-terminal.config.hardware.graphics.enable' true
-assert_json '.#nixosConfigurations.ero-i3.config.hardware.graphics.enable' true
+[[ "$(nix eval --json "path:$ROOT#nixosConfigurations.ero.config.hardware.graphics.enable")" == true ]] || fail 'canonical Ero graphics disabled'
 
 assert_host_alias '.#nixosConfigurations.lenovo-terminal.config.networking.extraHosts' '172.18.0.251 vilserver1'
 assert_host_alias '.#nixosConfigurations.orgm-terminal.config.networking.extraHosts' '172.18.0.251 vilserver1'
@@ -40,7 +42,7 @@ assert_json '.#nixosConfigurations.lenovo-terminal.config.services.tailscale.ext
 assert_json '.#nixosConfigurations.orgm-hyprland.config.services.earlyoom.freeMemThreshold' 4
 assert_json '.#nixosConfigurations.orgm-hyprland.config.systemd.services.earlyoom.environment.EARLYOOM_ARGS' '"-m4,2 -n -r3600 -s100,100 --sort-by-rss"'
 assert_json '.#nixosConfigurations.server.config.users.users.osmarg.shell.pname' '"bash-interactive"'
-[[ "$(nix eval --json "path:$ROOT#nixosConfigurations.jarq-server.config" \
+[[ "$(nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "jarq-server.config" \
   --apply 'config: config ? home-manager')" == false ]] ||
   fail 'Jarq server must evaluate without a Home Manager module'
 printf 'PASS: host modules apply consistently across roles\n'

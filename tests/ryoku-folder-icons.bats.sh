@@ -11,7 +11,7 @@ import tempfile
 
 expression = '''let f = builtins.getFlake "path:ROOT"; in
   builtins.filter (p: (p.name or "") == "ryoku-folder-icons")
-    f.nixosConfigurations.lenovo-ryoku.config.environment.systemPackages'''.replace("ROOT", sys.argv[1])
+    f.nixosConfigurations.lenovo.config.environment.systemPackages'''.replace("ROOT", sys.argv[1])
 package = subprocess.check_output([
     "nix", "build", "--impure", "--no-link", "--print-out-paths", "--expr", expression
 ], text=True).strip()

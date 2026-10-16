@@ -10,7 +10,7 @@ LENOVO_TEST_CONFIGURATION="$profile" nix eval --impure --raw --expr '
     flake = builtins.getFlake "path:${toString ./.}" ;
     lib = flake.inputs.nixpkgs.lib;
     profileName = builtins.getEnv "LENOVO_TEST_CONFIGURATION";
-    config = flake.nixosConfigurations.${profileName}.config;
+    config = (import ./tests/fixtures/legacy-configurations.nix).${profileName}.config;
     vfioProfiles = if profileName == "lenovo-terminal" then [ ] else [
       config.specialisation.windows-vfio.configuration
       config.specialisation.server.configuration
@@ -63,7 +63,7 @@ LENOVO_TEST_CONFIGURATION="$profile" nix eval --impure --raw --expr '
         && !config.specialisation.battery.configuration.orgm.lenovo.windowsVfio.enable
         && config.specialisation.battery.configuration.orgm.lenovo.nvidiaDisabled.enable
       ))
-      && !(flake.nixosConfigurations.orgm-hyprland.config.systemd.user.services ? lenovo-windows-autostart)
+      && !((import ./tests/fixtures/legacy-configurations.nix).orgm-hyprland.config.systemd.user.services ? lenovo-windows-autostart)
     then "${profileName}: server/windows VFIO and Windows autostart ok\n"
     else throw ("${profileName}: Lenovo Windows VFIO or autostart is incomplete " + builtins.toJSON {
       vfio = map isVfio vfioProfiles;

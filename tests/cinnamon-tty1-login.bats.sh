@@ -10,15 +10,15 @@ fail() {
 }
 
 for configuration in cinnamon orgm-cinnamon; do
-  prefix="path:$ROOT#nixosConfigurations.${configuration}.config"
+  prefix="${configuration}.config"
 
-  [[ "$(nix eval --json "${prefix}.services.displayManager.sddm.enable" 2>/dev/null)" == false ]] \
+  [[ "$(nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "${prefix}.services.displayManager.sddm.enable" 2>/dev/null)" == false ]] \
     || fail "${configuration} must disable SDDM"
-  [[ "$(nix eval --json "${prefix}.services.xserver.displayManager.startx.enable" 2>/dev/null)" == true ]] \
+  [[ "$(nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "${prefix}.services.xserver.displayManager.startx.enable" 2>/dev/null)" == true ]] \
     || fail "${configuration} must enable startx"
-  [[ "$(nix eval --json "${prefix}.services.xserver.displayManager.startx.generateScript" 2>/dev/null)" == false ]] \
+  [[ "$(nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "${prefix}.services.xserver.displayManager.startx.generateScript" 2>/dev/null)" == false ]] \
     || fail "${configuration} must not generate xinitrc"
-  [[ "$(nix eval --json "${prefix}.services.getty.autologinUser" 2>/dev/null)" == null ]] \
+  [[ "$(nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "${prefix}.services.getty.autologinUser" 2>/dev/null)" == null ]] \
     || fail "${configuration} must require manual TTY login"
 done
 

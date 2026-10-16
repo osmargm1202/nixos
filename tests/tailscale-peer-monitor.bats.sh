@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 build_helper() {
   nix build --impure --no-link --print-out-paths --expr "
     let flake = builtins.getFlake \"path:$ROOT\";
-        system = flake.nixosConfigurations.orgm-hyprland.extendModules {
+        system = (import ./tests/fixtures/legacy-configurations.nix).orgm-hyprland.extendModules {
           modules = [ ({ lib, ... }: { orgm.tailscale.peerNotifications.enable = lib.mkForce true; }) ];
         };
         exec = system.config.$1;

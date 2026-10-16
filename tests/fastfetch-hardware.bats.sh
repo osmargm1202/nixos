@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_dir"
 config="$repo_dir/dotfiles/config/users/osmarg/programs/personal-development/.config/fastfetch/hardware.jsonc"
 bash_config="$repo_dir/dotfiles/config/users/osmarg/programs/shell/.config/bash/config.bash"
 
@@ -38,7 +39,7 @@ mapfile -t fastfetch_args <"$temp_dir/fastfetch-args"
 [[ "${fastfetch_args[1]}" == "$HOME/.config/fastfetch/hardware.jsonc" ]]
 
 nix eval --impure --raw --expr '
-  let c = (builtins.getFlake "path:${toString ./.}").nixosConfigurations.lenovo-hyprland;
+  let c = (import ./tests/fixtures/legacy-configurations.nix).lenovo-hyprland;
   in if builtins.elem c.pkgs.fastfetch c.config.home-manager.users.osmarg.home.packages
     then "fastfetch installed"
     else throw "fastfetch missing from user packages"

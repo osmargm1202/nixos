@@ -1,6 +1,15 @@
 { config, lib, pkgs, inputs, userName ? "osmarg", ... }:
 let
   enabled = config.programs.ryoku.enable;
+  userAutostart = config.orgm.user.autostart;
+  hasProgram = name: builtins.elem name config.orgm.user.programs;
+  nativeSession = {
+    required = lib.optional (hasProgram "tailscale") "tailscale systray --theme light"
+      ++ lib.optional (hasProgram "syncthing") "syncthingtray --single-instance --wait";
+    optional = userAutostart;
+    desktop = builtins.fromJSON (builtins.readFile
+      ../../../dotfiles/config/profiles/ryoku/.config/orgm-ryoku/native-keybinds.json);
+  };
   ryokuPackages = inputs.ryoku.packages.${pkgs.stdenv.hostPlatform.system};
   materializer = ryokuPackages.ryoku-materialize;
   # The upstream helper still assumes Arch's /usr/share/icons. Package its
@@ -19,7 +28,7 @@ let
   '';
   prepare = pkgs.writeShellApplication {
     name = "orgm-ryoku-prepare";
-    runtimeInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.systemd pkgs.jq ];
+    runtimeInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.systemd pkgs.jq pkgs.python3 ];
     text = builtins.readFile ./prepare.sh;
   };
   rofiTheme = pkgs.writeShellApplication {
@@ -35,7 +44,7 @@ let
     target: { source = root + "/${builtins.baseNameOf target}"; executable = true; }
   );
 in {
-  imports = [ inputs.ryoku.nixosModules.default ../../print/printer.nix ];
+  imports = [ inputs.ryoku.nixosModules.default ../../print/printer.nix ./runtime-path.nix ];
 
   # Upstream includes Mako as a shell probe, but publishing its D-Bus service
   # lets it claim notifications before Quickshell. Filter the merged package
@@ -101,6 +110,26 @@ in {
       systemd.user.services.ryoku-shell.path = lib.mkBefore [ folderIcons ];
 
       home-manager.users.${userName} = { config, lib, ... }: {
+        # Ryoku alone launches the Nextcloud client from the user's Session
+        # selection. Mask the package/setup-created XDG entry in this profile,
+        # without touching the account config or other desktops' launcher.
+        xdg.configFile."autostart/com.nextcloud.desktopclient.nextcloud.desktop" = lib.mkIf (hasProgram "nextcloud") {
+          force = true;
+          text = "[Desktop Entry]\nType=Application\nName=Nextcloud\nHidden=true\n";
+        };
+        home.activation.ryokuNextcloudAutostartBackup = lib.mkIf (hasProgram "nextcloud") (
+          lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+            entry="''${XDG_CONFIG_HOME:-$HOME/.config}/autostart/com.nextcloud.desktopclient.nextcloud.desktop"
+            state="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
+            backup="$state/nextcloud-autostart.before-native-session-v1.desktop"
+            if [ -e "$entry" ] && [ ! -e "$backup" ]; then
+              $DRY_RUN_CMD mkdir -p "$state"
+              $DRY_RUN_CMD cp --dereference --preserve=mode,timestamps "$entry" "$backup"
+            fi
+          ''
+        );
+        xdg.configFile."orgm-ryoku/native-session.json".text = builtins.toJSON nativeSession;
+        xdg.configFile."orgm-ryoku/native-session.py".source = ./native-session.py;
         services.dunst.enable = lib.mkForce false;
         services.mako.enable = lib.mkForce false;
         home.file = helperFiles ../../../dotfiles/config/users/osmarg/profiles/hyprland/.local/bin personalHelpers;
@@ -122,7 +151,9 @@ in {
           $DRY_RUN_CMD ${folderIcons}/bin/ryoku-cmd-folders
           state="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
           if [ ! -f "$state/folder-icons-selected" ]; then
-            $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme ryoku-folders
+            # Activation does not inherit a GTK application's schema wrapper.
+            GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas" \
+              $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme ryoku-folders
             $DRY_RUN_CMD mkdir -p "$state"
             $DRY_RUN_CMD touch "$state/folder-icons-selected"
           fi

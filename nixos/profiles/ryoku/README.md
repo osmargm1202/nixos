@@ -1,6 +1,6 @@
 # Ryoku para Osmarg
 
-Perfiles independientes: `orgm-ryoku` y `lenovo-ryoku`. Se usa el módulo oficial
+Hosts Ryoku: `envy`, `orgm` y `lenovo`; cada host tiene una única salida pública. Se usa el módulo oficial
 de [Ryoku on NixOS](https://github.com/aethctl/Ryoku-on-NixOS), fijado en
 `28c5207586babb136aecf8568ce3ed873fa8f8fd`. Su nixpkgs se conserva separado:
 Hyprland, plugins, portales y Quickshell deben usar el mismo conjunto compatible.
@@ -8,16 +8,16 @@ Hyprland, plugins, portales y Quickshell deben usar el mismo conjunto compatible
 Desde la raíz del repo:
 
 ```bash
-nh os build . -H lenovo-ryoku
-nh os switch . -H lenovo-ryoku -s windows-vfio
+nh os build . -H lenovo
+nh os switch . -H lenovo -s windows-vfio
 ```
 
 `-s windows-vfio` conserva ese modo de Lenovo. Para elegir normal usa `-S`.
-En ORGM usa `-H orgm-ryoku -S`. Tras aplicar, cierra la sesión y entra de nuevo
+En ORGM usa `-H orgm -S`. Tras aplicar, cierra la sesión y entra de nuevo
 en Hyprland: cambiar el paquete del compositor necesita una sesión nueva.
 Los archivos nuevos utilizados por el flake deben estar registrados en Git;
 no hace falta crear un commit para construir o aplicar la configuración.
-Usa `-H lenovo-ryoku`: el alias `lenovo` selecciona `lenovo-hyprland`.
+Usa `-H lenovo`: selecciona Ryoku directamente; ya no hay alias ni variantes públicas por escritorio.
 
 Ryoku controla barra, dock, fondos, temas, Kitty, Neovim, monitores, bloqueo,
 idle y notificaciones. Las aplicaciones y herramientas de Osmarg conservan su
@@ -56,10 +56,63 @@ El informe de la integración se consulta con:
 orgm-ryoku-shortcuts --list
 ```
 
-`Win+L` conserva el bloqueo nativo de Ryoku. `Win+H/J/K` quedan libres;
-las funciones nativas que usaban esas teclas se reubican. El enfoque y el
-movimiento usan las flechas. `Win+/` abre Ryoku Hub → Keybinds; el informe de
-CLI también recoge los accesos personales y las reubicaciones efectivas.
+`Win+L` conserva el bloqueo nativo. **Win+H abre Stash** (panel lateral) y
+**Win+K alterna la ayuda nativa** (cheatsheet). `Win+J` queda reservado.
+El enfoque y movimiento siguen usando flechas; **Win+S** conserva el scratchpad
+personal y **Win+Shift+S** oculta la ventana. El antiguo H nativo para ocultar
+se conserva en `Win+Ctrl+Alt+Shift+H` únicamente en Hyprland.
+`Win+/` abre Hub → Keybinds; `Win+,` abre el Hub.
+
+H se expresa mediante `desktop.keybindRebinds`, `desktop.keybinds` y
+`desktop.unbinds`, admitidos por ambos proveedores. Si existe una preferencia
+explícita H/S del usuario o está ocupado el destino del scratchpad, se conserva
+y se omite ese conjunto de valores iniciales (se avisa en el log). Si H/K ya
+pertenecen a una acción personalizada del Hub, solo se reubica el default nativo
+en un acorde libre del mapa soportado; no se sobrescriben rebindings/unbinds
+explícitos. K respeta sus rebindings nativos existentes.
+Las nuevas acciones compartidas son visibles en Hub → Keybinds; esto **no**
+convierte el registro Lua personal en un catálogo nativo: el Hub/cheatsheet puede
+seguir anunciando acordes incorrectos para otras colisiones automáticas.
+`orgm-ryoku-shortcuts --list` recoge las reubicaciones dinámicas de Hyprland.
+Niri no adquiere las acciones personales de scratchpad, grupos o ventanas que
+solo existen en Hyprland; mantiene sus acciones nativas compatibles.
+La preparación genera `orgm-ryoku/native-shortcut-ownership.lua` desde las claves
+personalizadas del store para que el asignador Lua no robe sus acordes libres.
+Esta instantánea se refresca al activar/iniciar, no convierte las ediciones
+avanzadas posteriores del Hub en una traducción completa del registro personal.
+
+## Autoinicio nativo
+
+Las aplicaciones se ven y editan en **Hub → Session → Autostart**; el mismo
+`~/.config/ryoku/desktop.json` se materializa para Hyprland y Niri. No queda un
+segundo bloque de arranque en `hypr/user.lua`.
+
+`orgm.user.autostart` es una lista de comandos por usuario, vacía por defecto;
+puede declararse explícitamente por host/usuario. Osmarg conserva sus opciones
+anteriores de Nextcloud, indicador KDEConnect, Firefox, Discord y Steam desde
+`nixos/users/osmarg.nix`, no como política del host. Las bandejas de Tailscale y
+Syncthing se añaden mientras sus integraciones estén seleccionadas; sus servicios
+siguen independientes. Sunshine mantiene exclusivamente su unidad `autoStart`.
+KDEConnect daemon e indicador no son el mismo proceso.
+
+La migración `native-session-v1` funciona aunque ya exista
+`desktop-defaults.seeded`: guarda una copia de bytes en
+`~/.local/state/orgm-ryoku/desktop.before-native-session-v1.json` y modifica solo
+las claves soportadas de sesión/atajos, usando el lock del Hub y escrituras
+atómicas. Conserva otros datos, metadatos y preferencias explícitas, incluida una
+lista opcional vacía; elimina únicamente comandos exactamente duplicados.
+La máscara de la entrada XDG de Nextcloud evita el doble arranque solo en Ryoku,
+conservando antes su contenido en
+`nextcloud-autostart.before-native-session-v1.desktop`; otras sesiones no cambian.
+No se toca configuración de cuentas ni credenciales.
+
+Las ediciones posteriores del Hub persisten (salvo las dos bandejas requeridas).
+Nuevas selecciones declarativas se añaden; se retiran solo filas antiguas que la
+migración había añadido y siguen sin editar. Borrar una app opcional desde el Hub
+no la resucita en cada rebuild. Si ya había una lista de autoinicio del Hub, se
+respeta como selección explícita y no se agregan las apps opcionales iniciales.
+El registro `native-session-v1.applied.json` permite esta reconciliación sin
+reemplazar arrays enteros ni confundir preferencias con servicios.
 
 `Print` y `Alt+Print` abren Ryoshot; `Ctrl+Print` captura el monitor con Ryoshot.
 `Win+Print` alterna la grabación nativa y `Win+Shift+Print` abre el panel de
@@ -186,6 +239,7 @@ perfiles; Tailscale y su integración de DNS continúan habilitados.
 
 ```bash
 nix shell nixpkgs#lua -c bash tests/ryoku-shortcuts.bats.sh
+bash tests/ryoku-startup.bats.sh
 bash tests/ryoku-transition.bats.sh
 bash tests/ryoku-rofi.bats.sh
 bash tests/ryoku-profile.bats.sh
@@ -204,5 +258,5 @@ la evaluación de perfiles comprueba PAM efectivo, autologin y política de tapa
 Se evaluaron el módulo oficial y todos los modos de arranque de Lenovo y ORGM
 con `tests/ryoku-profile.bats.sh`. Esa comprobación valida las opciones e
 integración declarativa; no sustituye una construcción completa. Antes de
-activar, ejecuta `nh os build . -H lenovo-ryoku` en tu terminal y revisa
+activar, ejecuta `nh os build . -H lenovo` en tu terminal y revisa
 su resultado.

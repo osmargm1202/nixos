@@ -269,12 +269,65 @@ brechas y aceptación para futuras instalaciones, no cambios extra autorizados.
   por revisor. Suite enfocada final15PASS/1FAIL: user-program-isolation falla igual
   en master por paquetes Jarq no esperados. Flakecheck global terminó incompleto
   con interrupted by the user. No afirmar suite global verde ni integrar rama.
-- LGULTRAGEAR109MXYG4W010 real enDP-2, 2560×1440@143,933Hz, eDP activa y
-  DP-1 genérica sinEDID desactivada. Registro inicial sin transiciones observadas;
-  usuario pidió probar USB-C/HDMI y se solicitó dejar soloHDMI primero. Pendiente
-  correlación por puerto y retirada/reconexión, no inferir nombres físicos de DP-2.
+- Prueba física por cable único (15 de octubre, 17:02): usuario confirmó solo
+  USB-C. LGULTRAGEAR109MXYG4W010 detectada enDP-2, EDID256bytes, activa a
+  2560×1440@143,933Hz, escala1, a la derecha del panel interno eDP1920×1080,
+  escala1,25. Hotplug registrado17:01:46; DP-1 sinEDID permanece desactivada y
+  hyprctl configerrors vacío. Usuario confirmó imagen visible por USB-C y después
+  precisó contenido cortado en CUALQUIER ventana, no solo ancho de columna0,5.
+  Medición posterior de Firefox y terminal de prueba cabe dentro de la LG.
+  Prueba temporal de posición positiva no confirmó solución; se restauró posición
+  previa sin cambiar escala/layout. Usuario decidió posponer este diagnóstico.
+  Retirada y reanudación aún por probar; no se declara ajuste visual validado.
+- HDMI solo: usuario confirmó entrada HDMI seleccionada, «sin señal» y cable
+  reajustado. A16:47 seguía sin EDID de LG; HDMI-A-1 yDP-2 desconectados.
+  Esto no establece aún si la causa es cable, monitor, puerto, firmware o driver.
+- Usuario reporta varios apagados/encendidos de pantalla al volver de sleep.
+  Suspend/resume s2idle16:13–16:18 y unidades NVIDIA terminaron satisfactoriamente;
+  no equivale a reanudación visual correcta. No se ha cambiado driver/kernel.
+- Sondeo temporal deDP-1 inconcluso: no llegó a activarse. Al recargar apareció
+  una línea final extra `})` en monitors.lua generado; error reproducido con Lua,
+  backup conservado y línea retirada restaurando escala1,25. Recarga posterior
+  sin errores. Causa de generación aún no establecida; no parche especulativo.
 - SKU leído7PS43UA#ABA: ficha de HP identifica17m-ce1013dx y especifica USB-C con
   DisplayPort1.2 y HDMI2.0. Capacidades de ficha no equivalen a prueba física.
   [Ficha del fabricante HP](https://files.bbystatic.com/gUeZ%2Fnd3maD2L7Jr56nDHA%3D%3D/53411AC3-93D9-42BB-B87F-F7DB6D08954F.pdf).
 - Privileged Nix copy helper temporal eliminado; sin trusted-users permanente,
   sin push/merge ni cambios a los cuatro diffs previos del usuario.
+
+## Pendientes actualizados por el usuario
+
+- Recorte de contenido en cualquier ventana de la LG: diagnóstico pospuesto por
+  petición expresa; no seguir pidiendo fotos/cambios de cable ahora. HDMI no
+  detectado, retirada/reconexión y parpadeo al despertar también siguen abiertos.
+- Registro de usuario durante resume17:59: `ryoku wm act output.power on` falló
+  porque `ryoku-wm-hyprland` no encuentra `hyprctl` en PATH. Reproducido con el
+  PATH real; corregido declarativamente en `runtime-path.nix`, con pruebas
+  RED/GREEN, build y revisión aprobada. Activación y aceptación física separadas;
+  no prueba causa del recorte ni estabilidad física del resume.
+- Falta aceptación física de audio/micrófono/cámara (revisar kill switch), brillo,
+  USB/lectorSD, conectividad bajo uso, juegos/streaming y consumo/temperatura.
+- Backup externo sin destino acordado; automatización privada inicial y auditoría
+  de servicios/firewall pendientes. SOPS opcional y Optane intacto. Tests globales
+  no cerrados, documentación de esta ronda aún sin commit/integración.
+
+## Comprobación de inicio y Num Lock
+
+Consulta posterior: loader.conf activo contiene timeout1/defaultgeneration4.
+Hyprland input:numlock_by_default=true y teclados NumLock=true. SDDM tenía
+Numlock=none; añadido al host autoNumlock=true y settings.General.Numlock=on.
+Contrato envy-normal RED por falta de política greeter y GREEN tras declaración.
+Actualización de migración: política desplegada en generación5, con timeout1
+verificado y display-manager sin reiniciar. Falta aceptación visual del NumLock
+del greeter en su próximo arranque, no despliegue de la declaración.
+Consulta sobre otros perfiles: técnicamente preparables mediante configuraciones
+independientes eval/build, sin activación; aún no implementados por esa consulta.
+
+## Cierre de migración de hosts
+
+Ver `2026-10-15-host-desktop-deployment.md`: cinco configuraciones públicas y
+builds completos aprobados; solo Envy activado. PATH de hypridle comprobado en
+el proceso real, Hyprland sin errores, Bitwarden CLI disponible, startup nativo
+migrado. Switch terminó con código4 en la etapa SOPS sin identidad privada,
+después de enlazar paquetes y aplicar la migración; no afirmar activación limpia.
+LG, aceptación física del resume y perfiles avanzados de Envy siguen separados.

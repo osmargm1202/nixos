@@ -13,7 +13,7 @@ grep -Fq 'include current-theme.conf' "$KITTY_CONF" ||
   fail 'Kitty must include the runtime visual-profile theme'
 
 home_files="$(nix eval --json \
-  "path:$ROOT#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.file")"
+  --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "orgm-hyprland.config.home-manager.users.osmarg.home.file")"
 jq -e '
   has(".config/kitty/kitty.conf") and
   (has(".config/kitty/current-theme.conf") | not) and

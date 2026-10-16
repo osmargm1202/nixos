@@ -1,0 +1,16 @@
+{
+  "keybindRebinds": {
+    "SUPER + H": "SUPER + CTRL + ALT + SHIFT + H",
+    "SUPER + S": "SUPER + H"
+  },
+  "keybinds": [
+    {
+      "keys": "SUPER + H",
+      "action": "exec",
+      "value": "ryoku-shell stash"
+    }
+  ],
+  "unbinds": [
+    "SUPER + H"
+  ]
+}

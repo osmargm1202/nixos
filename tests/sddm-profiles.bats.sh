@@ -10,7 +10,7 @@ flake = f"path:{sys.argv[1]}"
 
 def evaluate(attribute, expression):
     result = subprocess.run(
-        ["nix", "eval", "--json", f"{flake}#{attribute}", "--apply", expression],
+        ["nix", "eval", "--impure", "--json", "--file", f"{sys.argv[1]}/tests/fixtures/legacy-configurations.nix", attribute.removeprefix("nixosConfigurations."), "--apply", expression],
         text=True, capture_output=True, check=True,
     )
     return json.loads(result.stdout)

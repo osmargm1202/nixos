@@ -14,7 +14,7 @@ fail() {
   fail 'i3 must not launch a second udiskie outside systemd'
 grep -Fq 'systemd.user.services.udiskie' "$MODULE" ||
   fail 'udiskie must be owned by one systemd user service'
-command="$(nix eval --raw "path:$ROOT#nixosConfigurations.lenovo-i3.config.systemd.user.services.udiskie.serviceConfig.ExecStart")"
+command="$(nix eval --raw --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "lenovo-i3.config.systemd.user.services.udiskie.serviceConfig.ExecStart")"
 [[ "$command" == *'/bin/udiskie --automount --notify --tray' ]] ||
   fail 'the managed udiskie service must retain automount and tray support'
 

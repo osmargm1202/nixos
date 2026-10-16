@@ -8,10 +8,11 @@ nix eval --impure --raw --expr '
   let
     flake = builtins.getFlake "path:${toString ./.}" ;
     profileNames = [ "lenovo-gnome" "lenovo-labwc" "lenovo-hyprland" "lenovo-i3" "lenovo-ryoku" ];
-    configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
-    i3 = flake.nixosConfigurations.lenovo-i3.config;
+    configs = builtins.map (name: (import ./tests/fixtures/legacy-configurations.nix).${name}.config) profileNames
+      ++ [ flake.nixosConfigurations.lenovo.config ];
+    i3 = (import ./tests/fixtures/legacy-configurations.nix).lenovo-i3.config;
     autologinConfigs = builtins.map (
-      name: flake.nixosConfigurations.${name}.config
+      name: (import ./tests/fixtures/legacy-configurations.nix).${name}.config
     ) [ "lenovo-gnome" "lenovo-labwc" "lenovo-hyprland" ];
     hasTtyAutologin = config:
       builtins.any (line: builtins.match ".*--autologin osmarg.*" line != null)
@@ -72,8 +73,8 @@ touch "$boot_root/loader/entries/nixos-generation-999-specialisation-server.conf
 
 # This is exactly the executable embedded in extraInstallCommands. Give it a
 # private ESP-shaped tree and assert the post-install default it writes.
-nix build --no-link "path:$repo_dir#nixosConfigurations.lenovo-i3.config.system.build.installBootLoader"
-install_hook="$(nix eval --raw "path:$repo_dir#nixosConfigurations.lenovo-i3.config.boot.loader.systemd-boot.extraInstallCommands")"
+nix build --no-link "path:$repo_dir#nixosConfigurations.lenovo.config.system.build.installBootLoader"
+install_hook="$(nix eval --raw "path:$repo_dir#nixosConfigurations.lenovo.config.boot.loader.systemd-boot.extraInstallCommands")"
 SYSTEMD_BOOT_ROOT="$boot_root" "$install_hook"
 grep -Fxq 'default nixos-generation-999-specialisation-server.conf' \
   "$boot_root/loader/loader.conf"

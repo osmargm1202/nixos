@@ -77,7 +77,8 @@ jq -e '.desktop.appearance.rounding == 18 and .desktop.appearance.borderSize == 
 if [[ -n "${RYOKU_RETURN_CLEANUP:-}" ]]; then
   cp "$RYOKU_RETURN_CLEANUP" "$tmp/cleanup.sh"
 else
-  nix eval --raw "path:$ROOT#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.home.activation.removeConflictingDotfiles.data" > "$tmp/cleanup.sh"
+  nix eval --impure --raw --file "$ROOT/tests/fixtures/legacy-configurations.nix" \
+    lenovo-hyprland.config.home-manager.users.osmarg.home.activation.removeConflictingDotfiles.data > "$tmp/cleanup.sh"
 fi
 mkdir -p "$XDG_CONFIG_HOME/kitty"
 printf 'Ryoku Kitty settings\n' > "$XDG_CONFIG_HOME/kitty/kitty.conf"

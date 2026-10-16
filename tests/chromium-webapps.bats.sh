@@ -28,11 +28,15 @@ assert wayland_app_id("https://claude.ai") == "chrome-claude.ai__-Default"
 catalog = evaluate("--file", str(root / "nixos/apps/webapps.catalog.nix"))
 apps = [app for group in catalog.values() for app in group]
 ids = {app["id"] for app in apps}
-assert len(apps) == len(ids) == 27, "Catalog must retain 27 unique applications"
+assert len(apps) == len(ids) == 28, "Catalog must retain 28 unique applications"
+perplexity = next(app for app in apps if app["id"] == "perplexity")
+assert perplexity["name"] == "Perplexity"
+assert perplexity["url"] == "https://www.perplexity.ai/"
 expression = '''hm: {
   entries = builtins.mapAttrs (_: d: {
     inherit (d) name exec icon categories terminal settings;
-  }) (builtins.removeAttrs hm.xdg.desktopEntries [ "com.discordapp.Discord" ]);
+  # Account for the independent editor/Discord launchers, not just webapps.
+  }) (builtins.removeAttrs hm.xdg.desktopEntries [ "com.discordapp.Discord" "nvim" ]);
   packages = map (p: { inherit (p) name text; })
     (builtins.filter (p:
       builtins.match "orgm-webapp-.*" (p.name or "") != null
@@ -42,7 +46,8 @@ expression = '''hm: {
 
 for configuration, native_wayland in (("hyprland", True), ("i3", False)):
     hm = evaluate(
-        f"path:{root}#nixosConfigurations.{configuration}.config.home-manager.users.osmarg",
+        "--impure", "--file", str(root / "tests/fixtures/legacy-configurations.nix"),
+        f"{configuration}.config.home-manager.users.osmarg",
         "--apply",
         expression,
     )
@@ -106,11 +111,19 @@ with tempfile.TemporaryDirectory(prefix="chromium-webapps-regression-") as tempo
     fixture = directory / "webapps.catalog.nix"
     expression = f'''let
       flake = builtins.getFlake {json.dumps(str(root))};
+      base = (import {root}/tests/fixtures/legacy-configurations.nix).hyprland;
+      lib = flake.inputs.nixpkgs.lib;
+      selected = lib.concatMap (entries: map (app: app.id) entries)
+        (builtins.attrValues (import {fixture}));
       module = import {directory}/webapps.nix {{
-        inherit (flake.nixosConfigurations.hyprland) config pkgs;
-        lib = flake.inputs.nixpkgs.lib;
+        inherit (base) pkgs;
+        inherit lib;
+        config = {{
+          inherit (base.config) programs;
+          orgm.user = {{ programs = [ "webapps" ]; webapps = selected; }};
+        }};
       }};
-    in builtins.attrNames module.home-manager.users.osmarg.xdg.desktopEntries'''
+    in builtins.attrNames module.config.content.home-manager.users.osmarg.xdg.desktopEntries'''
     cases = [
         ('{ id = "Bad_ID"; name = "Bad"; url = "https://example.com"; icon = "web"; }',
          "Invalid Chromium webapp id 'Bad_ID'"),

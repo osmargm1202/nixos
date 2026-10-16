@@ -4,7 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
-attr="path:$repo_dir#nixosConfigurations.lenovo-hyprland.config.home-manager.users.osmarg.home.file"
+attr="lenovo-hyprland.config.home-manager.users.osmarg.home.file"
 paths=(
   '.config/waybar-hypr/config'
   '.config/waybar-hypr/style.css'
@@ -23,10 +23,10 @@ for path in "${paths[@]}"; do
   source_layer='profiles/hyprland'
   [[ "$path" == '.local/bin/orgm-visual-profile' ]] && source_layer='shared'
   [[ -e "dotfiles/config/$source_layer/$path" ]]
-  nix eval --raw "$attr.\"$path\".source" >/dev/null
+  nix eval --raw --impure --file "${repo_dir}/tests/fixtures/legacy-configurations.nix" "$attr.\"$path\".source" >/dev/null
 done
 
-home_files="$(nix eval --json "$attr")"
+home_files="$(nix eval --json --impure --file "${repo_dir}/tests/fixtures/legacy-configurations.nix" "$attr")"
 jq -e 'has(".config/waybar-hypr/orgm-current.css") | not' <<<"$home_files" >/dev/null
 grep -Fxq '@import "orgm-current.css";' \
   'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'

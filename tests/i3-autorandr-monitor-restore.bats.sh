@@ -79,7 +79,7 @@ fi
 grep -Fq 'Could not save broken: simulated autorandr failure' "$tmp/notifications" ||
   fail 'save failure did not notify user'
 
-nix eval --json "path:$ROOT#nixosConfigurations.jarq-i3.config.home-manager.users.jarq.systemd.user.services.i3-monitor-hotplug.Service" >"$tmp/service.json"
+nix eval --json --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "jarq-i3.config.home-manager.users.jarq.systemd.user.services.i3-monitor-hotplug.Service" >"$tmp/service.json"
 python3 - "$tmp" "$HELPER" <<'PY'
 import json
 import pathlib

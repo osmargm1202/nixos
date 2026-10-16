@@ -9,7 +9,7 @@ fail() {
 }
 
 for profile in orgm-cinnamon orgm-i3; do
-  if ! packages="$(nix eval --json "${REPO_DIR}#nixosConfigurations.${profile}.config.environment.systemPackages")"; then
+  if ! packages="$(nix eval --json --impure --file "${REPO_DIR}/tests/fixtures/legacy-configurations.nix" "${profile}.config.environment.systemPackages")"; then
     fail "$profile"
   fi
 

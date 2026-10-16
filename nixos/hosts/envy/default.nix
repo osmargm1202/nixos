@@ -1,11 +1,16 @@
 { config, lib, pkgs, userName, ... }:
 {
-  imports = [ ./recovery.nix ];
+  imports = [ ./recovery.nix ./audio.nix ];
   # Phase one: normal desktop only, without inheriting Lenovo specialisations.
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.initrd.kernelModules = [ "i915" ];
   boot.loader.systemd-boot.configurationLimit = 3;
   boot.loader.timeout = lib.mkForce 1;
+  # The greeter must not inherit an arbitrary firmware Num Lock state.
+  services.displayManager.sddm = {
+    autoNumlock = true;
+    settings.General.Numlock = "on";
+  };
 
   hardware.graphics = {
     enable = true;

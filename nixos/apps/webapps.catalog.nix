@@ -29,6 +29,7 @@
     { id = "fast"; name = "Fast"; url = "https://fast.com"; icon = "fast"; }
     { id = "claude"; name = "Claude"; url = "https://claude.ai"; icon = "claude-webapp"; }
     { id = "chatgpt"; name = "Chatgpt"; url = "https://chatgpt.com"; icon = "chatgpt"; }
+    { id = "perplexity"; name = "Perplexity"; url = "https://www.perplexity.ai/"; icon = "applications-internet"; }
   ];
   social = [
     { id = "facebook"; name = "Facebook"; url = "https://www.facebook.com/"; icon = "facebook"; }

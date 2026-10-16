@@ -74,5 +74,11 @@ reproducible; no seguir tratándolo como bloqueo de aceptación del usuario.
   recuperado a destino nuevo y comprobado sin sustituir el archivo activo.
 - Suite enfocada:15/16 PASS; única falla Jarq preexistente, reproducida en master.
   Flakecheck amplio incompleto con mensaje interrupted by the user; no globalgreen.
-- LG observada en DP-2 a2560×1440~144Hz. Correlación HDMI/USB-C y retirada física
-  pendientes de la secuencia de cables con usuario, no afirmar ambos probados.
+- USB-C único confirmado: LG enDP-2 a2560×1440~144Hz y usuario confirma imagen.
+  HDMI único sigue sin detectar LG tras ajustar cable/entrada. Contenido cortado
+  en cualquier ventana de la LG; usuario pospone diagnóstico. Retirada y resume
+  estable pendientes; no declarar HDMI funcional ni defecto de hardware probado.
+- Resume: además del parpadeo reportado, journal confirma que el proveedor WM de
+  Ryoku no encuentra hyprctl en PATH al ejecutar output.power on. Reproducido y
+  corregido declarativamente, con pruebas y build aprobados. Activación y prueba
+  física de resume se registran aparte; relación con recorte desconocida.

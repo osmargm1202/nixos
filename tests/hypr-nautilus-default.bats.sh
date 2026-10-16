@@ -31,7 +31,7 @@ in {
 
 for profile in sys.argv[2:] or ("hyprland", "ryoku", "i3", "gnome", "labwc", "cinnamon", "terminal"):
     result = subprocess.run([
-        "nix", "eval", "--json", f"path:{root}#nixosConfigurations.orgm-{profile}",
+        "nix", "eval", "--impure", "--json", "--file", str(root / "tests/fixtures/legacy-configurations.nix"), f"orgm-{profile}",
         "--apply", projection,
     ], text=True, capture_output=True, check=True)
     config = json.loads(result.stdout)

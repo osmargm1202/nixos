@@ -18,6 +18,12 @@
       description = "Program integrations enabled for the configured user.";
     };
 
+    autostart = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Personal commands seeded into Ryoku Hub Session; mandatory integration trays are separate.";
+    };
+
     flatpakPackages = lib.mkOption {
       type = lib.types.listOf (lib.types.either lib.types.str lib.types.attrs);
       default = [ ];

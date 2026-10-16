@@ -35,12 +35,22 @@ local proxy = setmetatable({
 }, { __index = real })
 
 local config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+-- The native store owns custom GUI chords. Keep them out of both personal
+-- relocation and native fallback space (including four-modifier candidates).
+-- Unbound chords can still be used temporarily by upstream: settings.lua
+-- explicitly removes them before installing its custom action.
+local nativeUnbound = {}
+local loaded, ownership = pcall(dofile, config .. "/orgm-ryoku/native-shortcut-ownership.lua")
+if loaded and type(ownership) == "table" then
+  for _, key in ipairs(ownership.custom or {}) do M.reserved[M.normalize(key)] = true end
+  for _, key in ipairs(ownership.unbound or {}) do nativeUnbound[M.normalize(key)] = true end
+end
 local env = setmetatable({ hl = proxy }, { __index = _G })
 local personal = assert(loadfile(config .. "/orgm-ryoku/osmarg-keybindings.lua", "t", env))()
 personal.setup()
--- Keep these chords available for the user. Relocate Ryoku's scratchpad,
--- music and cheatsheet actions too, rather than assigning them back here.
-for _, key in ipairs({ "H", "J", "K" }) do
+-- J remains a personal placeholder. Native K is accessible cheatsheet help;
+-- H/S ownership is expressed by the supported shared desktop store instead.
+for _, key in ipairs({ "J" }) do
   M.reserved[M.normalize("SUPER + " .. key)] = true
 end
 -- Reserve effective personal chords before upstream loads. Preserve the first
@@ -80,7 +90,7 @@ end
 -- Retain free Ryoku chords; relocate only collisions, including GUI rebinds.
 function M.rebind(original, requested)
   local normalized = M.normalize(requested)
-  if not M.reserved[normalized] and not M.used[normalized] then
+  if (not M.reserved[normalized] or nativeUnbound[normalized]) and not M.used[normalized] then
     M.used[normalized] = true
     return requested
   end

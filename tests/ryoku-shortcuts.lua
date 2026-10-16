@@ -11,6 +11,11 @@ hl = {
   bind = function(chord, action, options)
     bindings[#bindings + 1] = { chord = chord, action = action, scope = scope, options = options }
   end,
+  unbind = function(chord)
+    for i = #bindings, 1, -1 do
+      if bindings[i].scope == "default" and bindings[i].chord == chord then table.remove(bindings, i) end
+    end
+  end,
   define_submap = function(name, fn)
     scope = name; fn(); scope = "default"
   end,
@@ -26,6 +31,7 @@ require("modules.ryoshot")
 require("modules.resize")
 require("modules.record")
 local upstream_count = #bindings
+require("settings")
 assert(loadfile(config .. "/orgm-ryoku/user.lua"))()
 local shortcuts = assert(package.loaded["orgm-ryoku.shortcuts"])
 assert(shortcuts.normalize("SUPER + Next") == shortcuts.normalize("SUPER + Page_Down"))
@@ -35,7 +41,12 @@ local keys, actions = {}, {}
 for _, binding in ipairs(bindings) do
   if binding.scope == "default" then
     local normalized = shortcuts.normalize(binding.chord)
-    assert(not keys[normalized], "shortcut collision: " .. binding.chord)
+    if keys[normalized] then
+      local previous = actions[normalized]
+      error("shortcut collision: " .. binding.chord .. " previous=" ..
+        tostring(type(previous) == "table" and previous.arguments[1] or previous) .. " next=" ..
+        tostring(type(binding.action) == "table" and binding.action.arguments[1] or binding.action))
+    end
     keys[normalized] = true
     actions[normalized] = binding.action
   end
@@ -73,7 +84,17 @@ local lock = action("SUPER + L")
 assert(lock.dispatcher == "dsp.exec_cmd" and lock.arguments[1] == "ryoku-shell lock")
 local focus_right = action("SUPER + Right")
 assert(focus_right.dispatcher == "dsp.focus" and focus_right.arguments[1].direction == "right")
-for _, key in ipairs({ "H", "J", "K" }) do
+local stash = action("SUPER + H")
+assert(stash.dispatcher == "dsp.exec_cmd" and stash.arguments[1] == (os.getenv("RYOKU_EXPECT_STASH") or "ryoku-shell stash"))
+local old_hide = action("SUPER + CTRL + ALT + SHIFT + H")
+assert(old_hide.dispatcher == "dsp.exec_cmd" and old_hide.arguments[1]:find(" hide", 1, true))
+if os.getenv("RYOKU_EXPECT_STASH") then
+  assert(action("SUPER + K").arguments[1] == "personal-help")
+  assert(action("SUPER + CTRL + ALT + SHIFT + K").arguments[1] == "personal-other")
+end
+local native_help = action(os.getenv("RYOKU_EXPECT_HELP_CHORD") or "SUPER + K")
+assert(native_help.dispatcher == "dsp.exec_cmd" and native_help.arguments[1]:find("qs -c keys", 1, true))
+for _, key in ipairs({ "J" }) do
   assert(not keys[shortcuts.normalize("SUPER + " .. key)], "reserved key is not free: " .. key)
   assert(not keys[shortcuts.normalize("SUPER + CTRL + " .. key)], "legacy direction is still bound: " .. key)
 end

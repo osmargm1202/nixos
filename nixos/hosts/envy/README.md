@@ -4,7 +4,7 @@ HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 ## Configuración activa
 
-`envy`, `envy-normal` y `envy-ryoku` seleccionan el mismo escritorio Ryoku
+`envy` es la única salida pública de este host y selecciona el escritorio Ryoku
 de `osmarg`, con sus preferencias y aplicaciones compartidas. Esta fase NO
 configura VM Windows, VFIO, especializaciones server o gaming. Por petición
 posterior sí incorpora Steam, emuladores compartidos y Sunshine dentro de normal. El menú de
@@ -28,6 +28,17 @@ salida; la preparación lo instala como `~/.config/hypr/monitors_user.lua` solo
 si no hay override personal. No desactiva eDP ni los otros conectores.
 Si un monitor real utiliza DP-1 más adelante, retirar la regla del override
 personal y revisar el seed declarado, recargar Hyprland y probar ese puerto.
+
+## Estado de salidas externas (2026-10-15)
+
+Con solo USB-C conectado, LG ULTRAGEAR detectada en `DP-2`, activa a
+2560×1440 ~144Hz y escala1, junto a eDP escala1,25; sin errores de Ryoku.
+Imagen confirmada por el usuario, con contenido cortado en cualquier ventana;
+el usuario decidió posponer ese diagnóstico. Retirada y reanudación estable pendientes. HDMI solo no
+identifica la LG, incluso tras reajustar el cable y seleccionar entrada HDMI.
+El usuario también reporta parpadeo al despertar: servicios de resume correctos
+no prueban una reanudación visual correcta. Causa aún sin determinar;
+no modificar drivers basándose únicamente en estos síntomas.
 
 ## Optane: pendiente, NO modificar
 
@@ -148,3 +159,45 @@ libre. Vigilar espacio, sobre todo tras descargar/borrar juegos grandes. No son
 backup independiente ante fallo/robo del SSD; el respaldo externo necesita un
 destino acordado. Los snapshots pueden conservar archivos privados hasta que
 expire su retención, aunque se borren en el sistema activo.
+
+## Inicio: menú y Num Lock
+
+Menú systemd-boot declarado a1segundo y comprobado en loader.conf del sistema
+activo. Hyprland ya tiene numlock_by_default=true tanto en teclado como ajustes;
+estado de teclados comprobado encendido. SDDM se encontró con Numlock=none;
+ahora el host declara autoNumlock=true y General.Numlock=on, con contrato Nix
+RED/GREEN. Esta modificación aún NO se ha desplegado ni se ha reiniciado SDDM;
+el greeter activo no se declara corregido hasta aplicar y comprobar un login.
+
+Los modos avanzados futuros pertenecen a specialisations dentro de `envy`, no
+a salidas flake independientes; pueden validarse con eval/build --no-link sin
+switch/test/boot. No se han creado todavía
+ni se ha aprobado en esta consulta su implementación completa. Mantener normal
+sin specialisations/VFIO/Windows activados; preparar fuentes no modifica arranque
+ni inicia VMs. Instalar perfiles en menú requiere una fase posterior explícita.
+
+
+## Volumen inicial de audio y micrófono
+
+`audio.nix` declara **150%** para las rutas nuevas de entrada/salida de la tarjeta
+integrada PCI00:1f.3. Se usa la propiedad nativa por dispositivo de WirePlumber:
+la ganancia lineal3.375 corresponde a1.5³, es decir150% en wpctl/PulseAudio.
+No usar1.5 como ganancia lineal ni una configuración global limitada a1.0.
+
+Los volúmenes, balance y mute que guarde el usuario tienen prioridad. No hay
+servicio que vuelva a imponer150% en cada login/reconexión, ni se borra el estado.
+La primera aplicación también ajusta las dos rutas predeterminadas actuales;
+USB/Bluetooth u otras preferencias existentes no se amplifican automáticamente.
+
+150% puede saturar/distorsionar, especialmente el micrófono. Es un valor inicial
+solicitado, no una mejora de calidad ni garantía de nivel acústico. Se puede
+reducir desde Ryoku/Pavucontrol. Prueba `tests/envy-audio-policy.bats.sh` verifica
+la configuración y ejecuta el consumidor de rutas real de WirePlumber fijado.
+
+Referencia: [WirePlumber: defaults de rutas y propiedades por dispositivo](https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/settings.html).
+
+El límite del control de Ryoku es independiente del nivel de PipeWire:
+`orgm-ryoku/audio-defaults.json` habilita inicialmente `qsbar.audioBoost` en
+`shell.json` mediante migración única bloqueada y respaldada. Así el deslizador
+qsbar y `ryoku-volume` admiten150%; sin ese indicador las teclas vuelven a100%.
+Las elecciones posteriores del Hub se respetan, sin forzar el toggle cada rebuild.

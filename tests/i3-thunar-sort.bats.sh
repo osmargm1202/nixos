@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
 fixture="$(THUNAR_TEST_ROOT="$ROOT" nix build --no-link --print-out-paths --impure --expr '
   let
     flake = builtins.getFlake ("path:" + builtins.getEnv "THUNAR_TEST_ROOT");
-    system = flake.nixosConfigurations.jarq-i3;
+    system = (import ./tests/fixtures/legacy-configurations.nix).jarq-i3;
     pkgs = system.pkgs;
     home = system.config.home-manager.users.jarq;
     thunar = builtins.head (builtins.filter

@@ -8,7 +8,8 @@ nix eval --impure --raw --expr '
   let
     flake = builtins.getFlake "path:${toString ./.}" ;
     profileNames = [ "orgm-cinnamon" "orgm-gnome" "orgm-hyprland" "orgm-i3" "orgm-labwc" ];
-    configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
+    configs = builtins.map (name: (import ./tests/fixtures/legacy-configurations.nix).${name}.config) profileNames
+      ++ [ flake.nixosConfigurations.orgm.config ];
     hasServerMode = config:
       let server = config.specialisation.server.configuration;
       in config.boot.loader.systemd-boot.sortKey == "nixos-00-normal"
@@ -24,6 +25,8 @@ nix eval --impure --raw --expr '
       && !server.services.xserver.desktopManager.gnome.enable
       && !server.services.xserver.windowManager.i3.enable
       && !server.services.xserver.displayManager.startx.enable
+      && !(server.programs.ryoku.enable or false)
+      && !(server.programs.niri.enable or false)
       && !server.programs.hyprland.enable
       && !server.programs.labwc.enable
       && !server.programs.xwayland.enable;

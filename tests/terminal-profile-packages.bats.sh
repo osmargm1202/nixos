@@ -7,7 +7,7 @@ cd "$repo_dir"
 profile_has_zutty() {
   local configuration="$1"
   nix eval --impure --raw --expr "
-    let c = (builtins.getFlake \"path:$repo_dir\").nixosConfigurations.${configuration};
+    let c = (import ./tests/fixtures/legacy-configurations.nix).${configuration};
         packages = c.config.environment.systemPackages
           ++ c.config.users.users.osmarg.packages
           ++ c.config.home-manager.users.osmarg.home.packages;

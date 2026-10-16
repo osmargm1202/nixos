@@ -61,15 +61,23 @@ Suite final15/16 PASS; Jarq isolation falla igual en master, sin relación con
 este trabajo. Flakecheck amplio no concluyó (interrupted by the user).
 Revisión independiente: sin Critical/Important. Nota menor sobre documentos
 intermedios obsoletos solapaba la documentación de Task4, completada aquí.
-Pantallas: LG DP-2 real y DP-1 fantasma desactivada; falta correlación física
-por cable único HDMI, luego USB-C, luego retirada. No dar esa prueba por cerrada.
+Pantallas: con solo USB-C confirmado por usuario, LG enDP-2 activa
+2560×1440~144Hz, hotplug registrado17:01:46, sin errores de configuración.
+HDMI solo sigue sin detectar LG tras reajustar cable/seleccionar entrada.
+Imagen USB-C confirmada, pero contenido cortado en cualquier ventana; usuario
+pospone ese diagnóstico. Faltan retirada/reconexión y reanudación sin parpadeo.
+Hallado fallo concreto de resume: el proveedor WM no encuentra hyprctl en PATH;
+corrección declarativa implementada, probada y compilada en la migración de hosts;
+su activación se registra aparte. Relación con recorte no demostrada y aceptación
+física del resume pendiente. Ver envy-validation.md.
 
 ## Decisiones y límites de revisión
 
 1. Snapshots locales con retención por cleanup, no cuota ni respaldo externo;
    restauración de un archivo probada, recuperación completa de arranque no probada.
-2. Mapeo físico/hotplug de puertos requiere intervención del usuario; la salida
-   observada DP-2 no basta para afirmar HDMI y USB-C probados por separado.
+2. Cable USB-C único correlacionado con DP-2 activo; HDMI único no detecta LG.
+   No declarar HDMI funcional ni fallo de hardware; USB-C sí muestra imagen,
+   geometría de ventanas, retirada y reanudación estable siguen pendientes.
 3. Render OpenGL Intel/NVIDIA probado; FPS/juegos, streaming con cliente y cada
    emulador quedan fuera de esa evidencia, aunque servicios/apps estén instalados.
 4. Bundle gaming inicialmente elegido por operador como Lenovo; usuario lo confirmó.

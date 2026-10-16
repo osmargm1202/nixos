@@ -5,7 +5,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # Exercise the evaluated activation only inside a disposable HOME.
-activation="$(nix eval --raw "path:$ROOT#nixosConfigurations.orgm-hyprland.config.home-manager.users.osmarg.home.activation.initGeneratedConfigs.data")"
+activation="$(nix eval --raw --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "orgm-hyprland.config.home-manager.users.osmarg.home.activation.initGeneratedConfigs.data")"
 export HOME="$TMP/home" DRY_RUN_CMD=''
 mkdir -p "$HOME/.config/gtk-3.0"
 printf 'user-owned settings\n' >"$HOME/.config/gtk-3.0/settings.ini"

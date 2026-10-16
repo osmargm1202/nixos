@@ -101,7 +101,7 @@ function M.setup()
   hl.bind(mainMod .. " + ALT + up", hl.dsp.window.resize({ x = 0, y = -40, relative = true }), { repeating = true })
   hl.bind(mainMod .. " + ALT + down", hl.dsp.window.resize({ x = 0, y = 40, relative = true }), { repeating = true })
 
-  -- Focus / move: Win+H/J/K stay free; Win+L belongs to Ryoku lock.
+  -- Focus / move: Win+H is Stash, Win+K help; Win+L belongs to Ryoku lock.
   local dirs = { left = "left", down = "down", up = "up", right = "right" }
   local moveDirs = { left = "l", down = "d", up = "u", right = "r" }
   for key, dir in pairs(dirs) do

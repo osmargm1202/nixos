@@ -27,6 +27,7 @@
       "containers"
       "orgm"
       "ai"
+      "bitwarden-cli"
       "webapps"
       "rmatrix"
       "obsidian"
@@ -35,6 +36,17 @@
       "sops"
       "flatpak"
       "deskflow"
+    ];
+
+    # Preserve Osmarg's explicit existing startup choices, not host defaults.
+    # Syncthing/Tailscale trays follow their selected integrations; Sunshine is
+    # already owned by its mode-specific autoStart systemd unit.
+    autostart = [
+      "nextcloud --background"
+      "kdeconnect-indicator"
+      "firefox"
+      "sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'"
+      "sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'"
     ];
 
     flatpakPackages = [
@@ -87,6 +99,7 @@
       "fast"
       "claude"
       "chatgpt"
+      "perplexity"
       "facebook"
       "instagram"
       "reddit"

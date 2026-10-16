@@ -24,14 +24,5 @@ hl.window_rule({
   opacity = "1 override 1 override 1 override",
 })
 
--- Only personal application startup; Ryoku owns shell, portals, idle, lock,
--- notifications, wallpapers, lighting and monitor detection.
-hl.on("hyprland.start", function()
-  for _, command in ipairs({
-    "tailscale systray --theme light", "nextcloud --background",
-    "syncthingtray --single-instance --wait", "kdeconnect-indicator", "firefox",
-    "sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'",
-    "sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'",
-    "systemctl --user --quiet start sunshine.service || true",
-  }) do hl.exec_cmd(command) end
-end)
+-- Personal startup is stored in desktop.autostart (Hub → Session), shared
+-- by Hyprland and Niri. No second compositor-specific launcher belongs here.

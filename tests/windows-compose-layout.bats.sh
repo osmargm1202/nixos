@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_dir"
 compose_dir="$repo_dir/nixos/containers/windows"
 common_env=(
   WINDOWS_PASSWORD=verification-password
@@ -49,14 +50,14 @@ export WINDOWS_TEST_REPO="$repo_dir"
 build_context="$(nix build --impure --no-link --print-out-paths --expr '
   let
     flake = builtins.getFlake ("path:" + builtins.getEnv "WINDOWS_TEST_REPO");
-    vfio = flake.nixosConfigurations.lenovo-ryoku.config.specialisation.windows-vfio.configuration;
+    vfio = (import ./tests/fixtures/legacy-configurations.nix).lenovo-ryoku.config.specialisation.windows-vfio.configuration;
   in builtins.dirOf vfio.home-manager.users.osmarg.home.file."Apps/windows/Containerfile.spice".source
 ')"
 [[ -f "$build_context/Containerfile.spice" && ! -L "$build_context/Containerfile.spice" ]]
 nix eval --impure --raw --expr '
   let
     flake = builtins.getFlake ("path:" + builtins.getEnv "WINDOWS_TEST_REPO");
-    vfio = flake.nixosConfigurations.lenovo-ryoku.config.specialisation.windows-vfio.configuration;
+    vfio = (import ./tests/fixtures/legacy-configurations.nix).lenovo-ryoku.config.specialisation.windows-vfio.configuration;
   in vfio.home-manager.users.osmarg.home.file."Apps/windows/compose.lenovo-vfio.yml".text
 ' > "$tmp/deployed-overlay.yml"
 mkdir "$tmp/project"

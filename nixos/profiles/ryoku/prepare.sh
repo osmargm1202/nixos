@@ -78,6 +78,12 @@ if [[ ! -e "$state/desktop-defaults.seeded" ]]; then
   touch "$state/desktop-defaults.seeded"
 fi
 
+# Versioned migration is separate from the old one-shot appearance seed. It
+# edits only supported session/keybinding keys, preserving all other Hub data.
+if [[ -f "$config_home/orgm-ryoku/native-session.json" ]]; then
+  python3 "$config_home/orgm-ryoku/native-session.py" "$config_home" "$state" || exit $?
+fi
+
 # Keep the encrypted login collection; PAM reuses the SDDM login password.
 printf '%s\n' '{"mode":"unlock-on-login"}' > "$state/keyring.json"
 install_override "$state/keyring.json" "$config_home/ryoku/keyring.json" keyring-policy

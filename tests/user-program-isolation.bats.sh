@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
 
 inventory="$(mktemp)"
 trap 'rm -f "$inventory"' EXIT
-nix eval --json "path:$ROOT#nixosConfigurations" --apply '
+nix eval --impure --json "path:$ROOT#nixosConfigurations" --apply '
   systems:
   let
+    historical = import ./tests/fixtures/legacy-configurations.nix;
     packageNames = packages: map (package: package.pname or package.name) packages;
     describe = system: user:
       let
@@ -29,32 +31,32 @@ nix eval --json "path:$ROOT#nixosConfigurations" --apply '
         globalGitIdentity = config.programs.git.config.user or {};
         managedFiles = builtins.attrNames home.home.file;
       };
-    jarq = systems.jarq-i3;
+    jarq = systems.jarq;
     withoutNextcloud = jarq.extendModules {
       modules = [ ({ lib, ... }: {
         orgm.user.programs = lib.mkForce (builtins.filter
           (name: name != "nextcloud") jarq.config.orgm.user.programs);
       }) ];
     };
-    withoutTmux = systems.orgm-i3.extendModules {
+    withoutTmux = systems.orgm.extendModules {
       modules = [ ({ lib, ... }: {
         orgm.user.programs = lib.mkForce (builtins.filter
-          (name: name != "tmux") systems.orgm-i3.config.orgm.user.programs);
+          (name: name != "tmux") systems.orgm.config.orgm.user.programs);
       }) ];
     };
-    withoutOrgm = systems.orgm-i3.extendModules {
+    withoutOrgm = systems.orgm.extendModules {
       modules = [ ({ lib, ... }: {
         orgm.user.programs = lib.mkForce (builtins.filter
-          (name: name != "orgm") systems.orgm-i3.config.orgm.user.programs);
+          (name: name != "orgm") systems.orgm.config.orgm.user.programs);
       }) ];
     };
-    withPeerNotifications = systems.orgm-i3.extendModules {
+    withPeerNotifications = systems.orgm.extendModules {
       modules = [ ({ lib, ... }: { orgm.tailscale.peerNotifications.enable = lib.mkForce true; }) ];
     };
   in {
     jarq = describe jarq "jarq";
-    jarqTerminal = describe systems.jarq-terminal "jarq";
-    osmarg = describe systems.orgm-i3 "osmarg";
+    jarqTerminal = describe historical.jarq-terminal "jarq";
+    osmarg = describe systems.orgm "osmarg";
     withoutNextcloud = describe withoutNextcloud "jarq";
     withoutTmux = describe withoutTmux "osmarg";
     withoutOrgm = describe withoutOrgm "osmarg";

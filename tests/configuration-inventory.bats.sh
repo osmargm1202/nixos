@@ -19,16 +19,20 @@ actual_names="$(
 diff -u "$EXPECTED" <(printf '%s\n' "$actual_names") \
   || fail 'inventory names differ from public output baseline'
 
+jq -e '.aliases == {}' <<<"$inventory_json" >/dev/null \
+  || fail 'desktop aliases must not be public outputs'
+
 jq -e '
-  .aliases == {
-    envy: "envy-ryoku",
-    "envy-normal": "envy-ryoku",
-    jarq: "jarq-i3",
-    lenovo: "lenovo-hyprland",
-    orgm: "orgm-hyprland"
-  }
+  [.configurations | to_entries[] | {key: .key, host: .value.hostName,
+    user: .value.userName, desktop: .value.profileName}] == [
+    {key: "envy", host: "envy", user: "osmarg", desktop: "ryoku"},
+    {key: "ero", host: "ero", user: "osmarg", desktop: "i3"},
+    {key: "jarq", host: "jarq", user: "jarq", desktop: "i3"},
+    {key: "lenovo", host: "lenovo", user: "osmarg", desktop: "ryoku"},
+    {key: "orgm", host: "orgm", user: "osmarg", desktop: "ryoku"}
+  ]
 ' <<<"$inventory_json" >/dev/null \
-  || fail 'alias map changed'
+  || fail 'canonical host, user or desktop selection changed'
 
 jq -e '
   all(.configurations[];
@@ -45,11 +49,4 @@ jq -e '
 ' <<<"$inventory_json" >/dev/null \
   || fail 'configuration specs do not match normalized schema'
 
-[[ "$(jq -r '.configurations["ero-server"].hostName' <<<"$inventory_json")" == 'ero' ]] \
-  || fail 'ero-server hostname changed'
-[[ "$(jq -r '.configurations["jarq-hyprland"].userName' <<<"$inventory_json")" == 'jarq' ]] \
-  || fail 'jarq user changed'
-[[ "$(jq -r '.configurations["orgm-hyprland"].extraModules | length' <<<"$inventory_json")" == '2' ]] \
-  || fail 'orgm desktop extras changed'
-
-printf 'PASS: explicit configuration inventory\n'
+printf 'PASS: canonical five-host configuration inventory\n'

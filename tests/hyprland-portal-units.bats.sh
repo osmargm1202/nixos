@@ -8,7 +8,7 @@ nix eval --impure --raw --expr '
   let
     flake = builtins.getFlake ("path:" + toString ./.);
     profileNames = [ "jarq-hyprland" "orgm-hyprland" "lenovo-hyprland" ];
-    configs = builtins.map (name: flake.nixosConfigurations.${name}.config) profileNames;
+    configs = builtins.map (name: (import ./tests/fixtures/legacy-configurations.nix).${name}.config) profileNames;
     hasOneHyprlandPortal = config:
       builtins.length (builtins.filter (
         portal: portal == config.programs.hyprland.portalPackage

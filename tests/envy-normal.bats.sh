@@ -14,11 +14,14 @@ nix eval --impure --raw --expr '
   in
   assert check "envy normal must use Ryoku with a one-second boot menu"
     (c.boot.loader.timeout == 1 && c.programs.ryoku.enable);
-  assert check "envy aliases must resolve to the normal desktop"
-    (inventory.aliases.envy == "envy-ryoku"
-      && inventory.aliases.envy-normal == "envy-ryoku"
-      && f.nixosConfigurations.envy.config.networking.hostName == "envy"
-      && f.nixosConfigurations.envy-normal.config.programs.ryoku.enable);
+  assert check "envy SDDM must enable Num Lock from the greeter"
+    (c.services.displayManager.sddm.autoNumlock
+      && c.services.displayManager.sddm.settings.General.Numlock == "on");
+  assert check "envy must be the only public output for its desktop"
+    (inventory.aliases == { }
+      && inventory.configurations.envy.profileName == "ryoku"
+      && !(f.nixosConfigurations ? envy-normal)
+      && !(f.nixosConfigurations ? envy-ryoku));
   assert check "envy must inherit osmarg desktop configuration"
     (c.networking.hostName == "envy" && c.users.users.osmarg.uid == 1000
       && c.home-manager.users.osmarg.home.homeDirectory == "/home/osmarg"

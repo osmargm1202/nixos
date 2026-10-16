@@ -157,6 +157,7 @@ in
     ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
+      ./apps/bitwarden-cli.nix
       ./apps/lazyvim.nix
       ./dns/hosts.nix
       ./apps/tailscale.nix

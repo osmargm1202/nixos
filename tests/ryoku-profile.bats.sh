@@ -3,7 +3,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 inventory="$(mktemp)"
 trap 'rm -f "$inventory"' EXIT
-nix eval --json "path:$ROOT#nixosConfigurations" --apply '
+RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
+  let
+    root = builtins.getEnv "RYOKU_TEST_REPO";
+    f = builtins.getFlake ("path:" + root);
+    legacy = import (root + "/tests/fixtures/legacy-configurations.nix");
+    check =
   systems:
   let
     packageName = package: package.pname or (builtins.parseDrvName package.name).name;
@@ -38,11 +43,12 @@ nix eval --json "path:$ROOT#nixosConfigurations" --apply '
       specialisations = builtins.mapAttrs (_: s: describe s.configuration) c.specialisation;
     };
   in {
-    lenovo = host "lenovo-ryoku";
-    orgm = host "orgm-ryoku";
+    lenovo = host "lenovo";
+    orgm = host "orgm";
     legacyNotifications = builtins.mapAttrs (_: name:
-      builtins.elem "dunst" (map packageName systems.${name}.config.environment.systemPackages)
+      builtins.elem "dunst" (map packageName legacy.${name}.config.environment.systemPackages)
     ) { i3 = "lenovo-i3"; hyprland = "lenovo-hyprland"; };
   }
+  ; in check f.nixosConfigurations
 ' > "$inventory"
 python3 "$ROOT/tests/ryoku-profile-check.py" "$inventory"
