@@ -10,7 +10,8 @@ let
     desktop = builtins.fromJSON (builtins.readFile
       ../../../dotfiles/config/profiles/ryoku/.config/orgm-ryoku/native-keybinds.json);
   };
-  ryokuPackages = inputs.ryoku.packages.${pkgs.stdenv.hostPlatform.system};
+  providerCompat = import ./provider-compat.nix { inherit inputs pkgs lib; };
+  ryokuPackages = providerCompat.packages;
   materializer = ryokuPackages.ryoku-materialize;
   # The upstream helper still assumes Arch's /usr/share/icons. Package its
   # native implementation with the Nix Papirus path and an explicit runtime.
@@ -44,7 +45,7 @@ let
     target: { source = root + "/${builtins.baseNameOf target}"; executable = true; }
   );
 in {
-  imports = [ inputs.ryoku.nixosModules.default ../../print/printer.nix ./runtime-path.nix ];
+  imports = [ providerCompat.module ../../print/printer.nix ./runtime-path.nix ];
 
   # Upstream includes Mako as a shell probe, but publishing its D-Bus service
   # lets it claim notifications before Quickshell. Filter the merged package

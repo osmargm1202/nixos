@@ -215,5 +215,68 @@ class NativeSession(unittest.TestCase):
         self.assertEqual(shell.read_text(), '{broken')
         self.assertFalse((self.state / "audio-boost-v1.applied.json").exists())
 
+    def test_window_defaults_seed_once_keep_hub_data_and_derive_hypr_widths(self):
+        defaults = {"windowRules": [
+            {"class": "^firefox$", "action": "columnwidth", "value": "1"},
+            {"class": "^windows-rdp$", "action": "fullscreen", "value": ""},
+        ]}
+        (self.seed / "window-defaults.json").write_text(json.dumps(defaults))
+        existing = {"class": "^kitty$", "action": "float", "value": "", "future": True}
+        original = {"desktop": {"windowRules": [existing]}, "unrelated": {"keep": [1]}}
+        self.store.write_text(json.dumps(original))
+        result = self.prepare()
+        self.assertEqual(result["desktop"]["windowRules"], [existing, *defaults["windowRules"]])
+        self.assertEqual(result["unrelated"], original["unrelated"])
+        backup = self.state / "desktop.before-window-defaults-v1.json"
+        self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(json.loads(backup.read_text())["desktop"]["windowRules"], [existing])
+        derived = self.seed / "native-window-widths.lua"
+        self.assertIn('scrolling_width = 1.0', derived.read_text())
+        self.assertNotIn('fullscreen', derived.read_text(), 'native provider owns fullscreen')
+        # Hub changes after seeding win, including deleting the Windows rule.
+        result["desktop"]["windowRules"] = [{"class": "^firefox$", "action": "columnwidth", "value": "0.75"}]
+        self.store.write_text(json.dumps(result))
+        self.assertEqual(self.prepare(), result)
+        self.assertIn('scrolling_width = 0.75', derived.read_text())
+        self.assertNotIn('scrolling_width = 1.0', derived.read_text())
+
+    def test_window_defaults_do_not_duplicate_existing_native_rule(self):
+        rule = {"class": "^firefox$", "action": "columnwidth", "value": "1"}
+        (self.seed / "window-defaults.json").write_text(json.dumps({"windowRules": [rule]}))
+        self.store.write_text(json.dumps({"desktop": {"windowRules": [rule]}}))
+        self.assertEqual(self.prepare()["desktop"]["windowRules"], [rule])
+        self.assertTrue((self.state / "window-defaults-v1.applied.json").exists())
+
+    def test_hub_blank_columnwidth_uses_native_fallback_without_blocking_prepare(self):
+        (self.seed / "window-defaults.json").write_text('{"windowRules":[]}')
+        self.prepare()
+        for value in ("", "not-yet-a-number"):
+            original = {"desktop": {"windowRules": [
+                {"class": "^personal$", "action": "columnwidth", "value": value}]}}
+            self.store.write_text(json.dumps(original))
+            self.assertEqual(self.prepare()["desktop"]["windowRules"], original["desktop"]["windowRules"])
+            self.assertIn('scrolling_width = 0.5', (self.seed / "native-window-widths.lua").read_text())
+
+    def test_out_of_range_hub_width_does_not_block_other_rules_or_change_store(self):
+        (self.seed / "window-defaults.json").write_text('{"windowRules":[]}')
+        self.prepare()
+        for value in ("NaN", "inf", "0", "-1", "1.5"):
+            rules = [{"class": "^personal$", "action": "columnwidth", "value": value},
+                     {"class": "^firefox$", "action": "columnwidth", "value": "1"}]
+            self.store.write_text(json.dumps({"desktop": {"windowRules": rules}}))
+            self.assertEqual(self.prepare()["desktop"]["windowRules"], rules)
+            derived = (self.seed / "native-window-widths.lua").read_text()
+            self.assertNotIn('^personal$', derived)
+            self.assertIn('scrolling_width = 1.0', derived)
+
+    def test_invalid_window_defaults_do_not_mark_migration_or_replace_rules(self):
+        (self.seed / "window-defaults.json").write_text('{"windowRules":"broken"}')
+        self.store.write_text('{"desktop":{"windowRules":[]}}')
+        process = subprocess.run(["bash", str(ROOT / "nixos/profiles/ryoku/prepare.sh")],
+                                 env=self.env, capture_output=True)
+        self.assertNotEqual(process.returncode, 0)
+        self.assertEqual(json.loads(self.store.read_text())["desktop"]["windowRules"], [])
+        self.assertFalse((self.state / "window-defaults-v1.applied.json").exists())
+
 if __name__ == "__main__":
     unittest.main()

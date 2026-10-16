@@ -1,6 +1,7 @@
 """Surgical versioned migration of the supported mutable Ryoku desktop store."""
 import json
 import fcntl
+import math
 import os
 from pathlib import Path
 import sys
@@ -25,6 +26,60 @@ def atomic_json(path, value):
 
 def chord(value):
     return frozenset(part.strip().upper() for part in value.split("+"))
+
+
+def migrate_window_defaults(config, state):
+    source = config / "orgm-ryoku/window-defaults.json"
+    if not source.exists():
+        return
+    path = config / "ryoku/desktop.json"
+    original = path.read_bytes().decode()
+    store = json.loads(original)
+    desktop = store.setdefault("desktop", {})
+    marker = state / "window-defaults-v1.applied.json"
+    if not marker.exists():
+        defaults = json.loads(source.read_text())["windowRules"]
+        if not isinstance(defaults, list) or not all(isinstance(row, dict) for row in defaults):
+            raise ValueError("windowRules defaults must be a list of rule objects")
+        rules = desktop.setdefault("windowRules", [])
+        for row in defaults:
+            if row not in rules:
+                rules.append(row)
+        backup = state / "desktop.before-window-defaults-v1.json"
+        if not backup.exists():
+            atomic_text(backup, original)
+    # The pinned Niri provider honors columnwidth, but Hyprland drops that
+    # neutral action. Bridge only this missing action into the existing personal
+    # module; fullscreen and all other supported actions stay provider-owned.
+    lines = ["-- Derived from desktop.windowRules; edit the Hub store, not this file."]
+    for index, row in enumerate(desktop.get("windowRules", [])):
+        if row.get("action") != "columnwidth":
+            continue
+        # Selecting the action in the Hub initially leaves an empty value.
+        # Match Niri's 0.5 fallback instead of blocking the next activation.
+        try:
+            width = float(row.get("value", ""))
+        except (TypeError, ValueError):
+            width = 0.5
+        if not math.isfinite(width) or not 0 < width <= 1:
+            print("Ryoku: skipped unsupported Hyprland columnwidth at rule "
+                  + str(index + 1), file=sys.stderr)
+            continue
+        match = ", ".join(key + " = " + json.dumps(row[key], ensure_ascii=False)
+                          for key in ("class", "title") if row.get(key))
+        if not match:
+            continue
+        lines.append('hl.window_rule({ name = "orgm-native-column-width-' + str(index + 1)
+                     + '", match = { ' + match + ' }, scrolling_width = ' + str(width) + ' })')
+    # Validate/render before marking or replacing the user's store.
+    if json.loads(original) != store:
+        atomic_json(path, store)
+    target = config / "orgm-ryoku/native-window-widths.lua"
+    text = "\n".join(lines) + "\n"
+    if not target.exists() or target.read_text() != text:
+        atomic_text(target, text)
+    if not marker.exists():
+        atomic_json(marker, {"windowRules": defaults})
 
 
 def migrate_audio_boost(config, state):
@@ -164,4 +219,5 @@ if __name__ == "__main__":
     with (config / "ryoku/.desktop.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         migrate(config, state)
+        migrate_window_defaults(config, state)
     migrate_audio_boost(config, state)

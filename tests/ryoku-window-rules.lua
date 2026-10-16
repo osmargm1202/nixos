@@ -26,11 +26,20 @@ end
 hl.dsp.focus = function(options) return { name = "focus", options = options } end
 hl.dsp.cursor.move = function(options) return { name = "cursor", options = options } end
 assert(loadfile(config .. "/orgm-ryoku/window-rules.lua"))().setup()
-assert(#rules == 5)
+local utilities, widths = 0, 0
 for _, rule in ipairs(rules) do
-  assert(rule.float and rule.center and rule.focus_on_activate)
-  assert(rule.no_initial_focus == false and rule.no_follow_mouse == false)
+  if rule.name:match("^orgm%-native%-column%-width%-") then
+    widths = widths + 1
+    assert(rule.scrolling_width == 1)
+    assert(not rule.float and not rule.fullscreen and not rule.maximize)
+  else
+    utilities = utilities + 1
+    assert(rule.float and rule.center and rule.focus_on_activate)
+    assert(rule.no_initial_focus == false and rule.no_follow_mouse == false)
+  end
 end
+assert(utilities == 5)
+assert(widths == tonumber(os.getenv("RYOKU_EXPECT_WIDTH_RULES") or "0"))
 local title = "Extension: (Bitwarden Password Manager) - Bitwarden — Mozilla Firefox"
 local function window(id, window_title, class)
   return {

@@ -32,6 +32,13 @@ local function exact(value)
 end
 
 function M.setup()
+  -- Bridge the columnwidth action missing from the pinned Hyprland provider.
+  -- The source remains Ryoku's native desktop.windowRules (also used by Niri).
+  local config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+  local widths = config .. "/orgm-ryoku/native-window-widths.lua"
+  local file = io.open(widths, "r")
+  if file then file:close(); assert(loadfile(widths))() end
+
   local windows = {
     {
       name = "osmarg-calculator",

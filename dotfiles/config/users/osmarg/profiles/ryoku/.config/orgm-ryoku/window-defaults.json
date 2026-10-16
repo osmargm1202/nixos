@@ -1,0 +1,19 @@
+{
+  "windowRules": [
+    {
+      "class": "(?i)^(firefox|firefox-esr|firefox-bin|org\\.mozilla\\.firefox|chromium|chromium-browser|org\\.chromium\\.Chromium|google-chrome(-stable|-beta|-unstable)?|com\\.google\\.Chrome|brave-browser(-beta|-nightly)?|brave-origin|com\\.brave\\.Browser|opera|vivaldi(-stable)?)$",
+      "action": "columnwidth",
+      "value": "1"
+    },
+    {
+      "class": "^(chrome-.*\\..*-Default|orgm-webapp-[a-z0-9-]+)$",
+      "action": "columnwidth",
+      "value": "1"
+    },
+    {
+      "class": "^windows-rdp$",
+      "action": "fullscreen",
+      "value": ""
+    }
+  ]
+}
