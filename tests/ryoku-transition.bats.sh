@@ -78,23 +78,26 @@ jq -e '.desktop.appearance.rounding == 18 and .desktop.appearance.borderSize == 
 if [[ -n "${RYOKU_RETURN_CLEANUP:-}" ]]; then
   cp "$RYOKU_RETURN_CLEANUP" "$tmp/cleanup.sh"
 else
-  nix eval --impure --raw --file "$ROOT/tests/fixtures/legacy-configurations.nix" \
-    lenovo-hyprland.config.home-manager.users.osmarg.home.activation.removeConflictingDotfiles.data > "$tmp/cleanup.sh"
+  # Realize the script context too: return metadata is a declared Store input.
+  cleanup=$(RYOKU_TEST_REPO="$ROOT" nix build --impure --no-link --print-out-paths --expr '
+    let systems = import (builtins.getEnv "RYOKU_TEST_REPO" + "/tests/fixtures/legacy-configurations.nix");
+        system = systems.lenovo-hyprland;
+    in system.pkgs.writeShellScript "ryoku-return-test" system.config.home-manager.users.osmarg.home.activation.removeConflictingDotfiles.data')
+  cp "$cleanup" "$tmp/cleanup.sh"
 fi
 mkdir -p "$XDG_CONFIG_HOME/kitty"
 printf 'Ryoku Kitty settings\n' > "$XDG_CONFIG_HOME/kitty/kitty.conf"
 printf 'Ryoku compositor settings\n' > "$XDG_CONFIG_HOME/hypr/hyprland.lua"
 printf 'personal unmanaged settings\n' > "$XDG_CONFIG_HOME/kitty/custom.conf"
 bash "$tmp/cleanup.sh"
-backups=("$state"/return-*)
+backups=("$state"/return-*/)
 [[ ${#backups[@]} -eq 1 && -d "${backups[0]}" ]]
 [[ "$(cat "${backups[0]}/.config/kitty/kitty.conf")" == 'Ryoku Kitty settings' ]]
 [[ "$(cat "${backups[0]}/.config/hypr/hyprland.lua")" == 'Ryoku compositor settings' ]]
 [[ "$(cat "$XDG_CONFIG_HOME/kitty/custom.conf")" == 'personal unmanaged settings' ]]
 grep -Fxq 'font_size 15' "$XDG_CONFIG_HOME/kitty/user.conf"
 ! grep -Fq 'include orgm-ryoku.conf' "$XDG_CONFIG_HOME/kitty/user.conf"
-[[ ! -e "$XDG_CONFIG_HOME/kitty/orgm-ryoku.conf" ]]
-grep -Fxq 'background_opacity 0.85' "${backups[0]}/.config/kitty/orgm-ryoku.conf"
+grep -Fxq 'background_opacity 0.85' "$XDG_CONFIG_HOME/kitty/orgm-ryoku.conf"
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/keyboard.lua")" == 'keyboard edited through Ryoku' ]]
 [[ ! -e "$state/active" ]]
 # A subsequent activation must leave regular files alone without the marker.

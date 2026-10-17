@@ -68,6 +68,31 @@ def atomic_file(path, data, mode, replace=False):
             os.unlink(name)
 
 
+def previous_preference(state, relative):
+    """Restore a prior Ryoku choice only during entry from another boot mode."""
+    pointer = state / "return-latest"
+    if (state / "active").exists() or pointer.is_symlink() or not pointer.is_file():
+        return None
+    root = Path(pointer.read_text().strip())
+    if root.parent != state or not root.name.startswith("return-") or root.is_symlink():
+        return None
+    source = root / relative
+    current = source
+    while current != root:
+        if current.is_symlink():
+            return None
+        current = current.parent
+    if not source.is_file():
+        return None
+    replacements = root / "replacement-sources.json"
+    expected = []
+    if replacements.is_file() and not replacements.is_symlink():
+        value = json.loads(replacements.read_text()).get(relative)
+        if isinstance(value, str):
+            expected.append(value)
+    return source, expected
+
+
 def seed(config, state, home, records):
     prepared = []
     for row in records:
@@ -90,6 +115,12 @@ def seed(config, state, home, records):
                 print("Ryoku: preserved directory link for " + row["target"], file=sys.stderr)
                 continue
             exists = os.path.lexists(target)
+            previous = previous_preference(state, row["target"])
+            if previous is not None:
+                saved, replacements = previous
+                if not exists or known_legacy(target, row.get("legacySources", []) + replacements):
+                    atomic_file(target, saved.read_bytes(), saved.stat().st_mode & 0o777, replace=exists)
+                    continue
             key = hashlib.sha256(row["target"].encode()).hexdigest()
             backup_dir = state / "seeds-v1"
             metadata = backup_dir / (key + ".metadata.json")

@@ -274,34 +274,34 @@ in
         '');
 
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-        ${lib.optionalString (profileName != "ryoku") ''
+        ${lib.optionalString (!ryokuEnabled) ''
           # Returning from Ryoku: save writable materialized files that the
           # selected profile will replace with generation-owned links.
           ryoku_state="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
           if [ -f "$ryoku_state/active" ]; then
             backup="$ryoku_state/return-$(date +%Y%m%d-%H%M%S)-$$"
-            for p in ${lib.concatMapStringsSep " " lib.escapeShellArg (builtins.filter ryokuOwns (builtins.attrNames linkedFiles))}; do
+            $DRY_RUN_CMD mkdir -p -m0700 "$backup"
+            $DRY_RUN_CMD cp ${pkgs.writeText "ryoku-return-sources.json" (builtins.toJSON
+              (lib.genAttrs (builtins.attrNames linkedFiles)
+                (path: toString config.home.file.${path}.source)))} "$backup/replacement-sources.json"
+            for p in ${lib.concatMapStringsSep " " lib.escapeShellArg (builtins.filter
+              (path: ryokuOwns path || ryokuShellPreference path || ryokuCodePreference path)
+              (builtins.attrNames linkedFiles))}; do
               target="$HOME/$p"
-              case "$p" in .config/*) ;; *) continue ;; esac
+              case "$p" in .config/*|.bashrc|.blerc) ;; *) continue ;; esac
               if [ -f "$target" ] && [ ! -L "$target" ]; then
                 $DRY_RUN_CMD mkdir -p "$backup/$(dirname "$p")"
                 $DRY_RUN_CMD mv "$target" "$backup/$p"
               fi
             done
-            # Kitty's dedicated user override is writable and survives Ryoku
-            # updates. Remove only our include when returning to another
-            # profile, retaining all other user preferences and a backup.
-            ryoku_kitty="''${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
-            if [ -f "$ryoku_kitty/user.conf" ] && [ ! -L "$ryoku_kitty/user.conf" ] &&
-               ${pkgs.gnugrep}/bin/grep -Fxq 'include orgm-ryoku.conf' "$ryoku_kitty/user.conf"; then
-              $DRY_RUN_CMD mkdir -p "$backup/.config/kitty"
-              $DRY_RUN_CMD cp -a "$ryoku_kitty/user.conf" "$backup/.config/kitty/user.conf"
-              $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i '/^include orgm-ryoku\.conf$/d; /^# ORGM Ryoku terminal preferences$/d' "$ryoku_kitty/user.conf"
-            fi
-            if [ -f "$ryoku_kitty/orgm-ryoku.conf" ] && [ ! -L "$ryoku_kitty/orgm-ryoku.conf" ]; then
-              $DRY_RUN_CMD mkdir -p "$backup/.config/kitty"
-              $DRY_RUN_CMD mv "$ryoku_kitty/orgm-ryoku.conf" "$backup/.config/kitty/orgm-ryoku.conf"
-            fi
+            # Keep user.conf and its editable opacity include untouched.
+            # Other profiles use their own Kitty base (without that include).
+            $DRY_RUN_CMD ${pkgs.bash}/bin/bash -c '
+              umask 077
+              tmp=$(mktemp "$2.XXXXXX")
+              printf "%s\n" "$1" > "$tmp"
+              mv -f -- "$tmp" "$2"
+            ' _ "$backup" "$ryoku_state/return-latest"
             $DRY_RUN_CMD rm "$ryoku_state/active"
           fi
         ''}

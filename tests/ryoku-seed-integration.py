@@ -30,7 +30,10 @@ class SeedIntegration(unittest.TestCase):
  normalize = name: lib.removePrefix (h.home.homeDirectory+"/") name;
  sources=lib.mapAttrs' (name: file: lib.nameValuePair (normalize name) (toString file.source))
    (lib.filterAttrs (name: _: lib.hasPrefix ".config/orgm-ryoku/" (normalize name) || lib.hasPrefix ".config/orgm-shell/" (normalize name)) h.home.file);
- in { _runtime={inherit sources;generation=toString h.home.activationPackage;cleanup=h.home.activation.removeConflictingDotfiles.data;materializer=toString p.ryoku-materialize;data=toString p.ryoku-desktop-data;hub=toString p.ryoku-hub;}; envy=describe "envy" "osmarg";lenovo=describe "lenovo" "osmarg";orgm=describe "orgm" "osmarg";ero=describe "ero" "osmarg";jarq=describe "jarq" "jarq";}'''
+ serverHome=f.nixosConfigurations.lenovo.config.specialisation.server.configuration.home-manager.users.osmarg;
+ returnCleanup=serverHome.home.activation.removeConflictingDotfiles.data;
+ serverRc=toString serverHome.home.file.".bashrc".source;
+ in { _runtime={inherit sources returnCleanup serverRc;generation=toString h.home.activationPackage;cleanup=h.home.activation.removeConflictingDotfiles.data;materializer=toString p.ryoku-materialize;data=toString p.ryoku-desktop-data;hub=toString p.ryoku-hub;}; envy=describe "envy" "osmarg";lenovo=describe "lenovo" "osmarg";orgm=describe "orgm" "osmarg";ero=describe "ero" "osmarg";jarq=describe "jarq" "jarq";}'''
         cls.inventory=json.loads(subprocess.check_output(["nix","eval","--impure","--json","--expr",expr],env=dict(os.environ,RYOKU_TEST_REPO=str(ROOT)),text=True))
 
     def setUp(self):
@@ -125,6 +128,27 @@ class SeedIntegration(unittest.TestCase):
         self.assertIn("ryoku.bash",(self.home/".bashrc").read_text())
         helper=self.config/"orgm-ryoku/shortcuts.lua"
         self.assertFalse(helper.is_symlink());self.assertEqual(helper.read_text(),"old-generation preferences")
+
+    def test_ryoku_console_roundtrip_restores_editable_bootstrap_and_preferences(self):
+        subprocess.run(["nix","build","--no-link",str(ROOT)+"#nixosConfigurations.envy.config.home-manager.users.osmarg.home.activationPackage"],check=True,capture_output=True,text=True)
+        self.early();self.populate_runtime();self.prepare();self.materialize()
+        rc=self.home/".bashrc";rc.write_text(rc.read_text()+"\n# my preserved bootstrap edit\n")
+        starship=self.config/"starship.toml";starship.write_text("# my preserved prompt\n")
+        before={".bashrc":rc.read_bytes(),".config/starship.toml":starship.read_bytes()}
+        result=subprocess.run(["bash","-c",self.inventory["_runtime"]["returnCleanup"]],env=self.env,capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertFalse(rc.exists(),"console profile would conflict with a regular Ryoku .bashrc")
+        records={row["target"]:row for row in self.inventory["envy"]["manifest"]}
+        for name in before:
+            target=self.home/name;target.parent.mkdir(parents=True,exist_ok=True)
+            if target.exists() or target.is_symlink():
+                continue  # This console mode does not replace every GUI preference.
+            source=self.inventory["_runtime"]["serverRc"] if name==".bashrc" else records[name]["legacySources"][0]
+            target.symlink_to(source)
+        self.early();self.populate_runtime();self.prepare();self.materialize()
+        for name,content in before.items():
+            self.assertFalse((self.home/name).is_symlink(),name)
+            self.assertEqual((self.home/name).read_bytes(),content,name)
 
     def test_existing_fastfetch_and_mutable_preferences_survive_real_lifecycle(self):
         runtime=self.inventory["_runtime"]
