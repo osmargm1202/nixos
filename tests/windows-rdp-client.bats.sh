@@ -275,4 +275,62 @@ if web_no_browser_output="$(HOME="$tmp/home" PATH="$web_no_browser_bin:$bin" WIN
 fi
 [[ "$web_no_browser_output" == *"Error: Firefox tab helper and Firefox are unavailable."* ]]
 
+# Envy lifecycle is exclusively delegated; engine errors must never fall back.
+cat >"$bin/envy-windows" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$1" >>"$ENVY_LOG"
+[[ "${ENVY_FAIL:-0}" == 0 ]] || exit 125
+[[ "$1" != status ]] || printf '%s\n' '{"running":true,"mode":"render","pending":false}'
+EOF
+chmod +x "$bin/envy-windows"
+ln -s "$(command -v python3)" "$bin/python3"
+for profile in envy-render-node envy-vfio envy-disabled; do
+ printf '%s\n' "$profile" >"$tmp/envy-profile"
+ for action in start stop toggle status web connect; do
+  : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"
+  set +e
+  HOME="$tmp/home" PATH="$web_helper_bin:$bin:/usr/bin:/bin" \
+   WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" ENVY_LOG="$tmp/envy-log" \
+   ENVY_FAIL=1 DOCKER_LOG="$tmp/envy-engine-log" WEB_LOG="$tmp/envy-web" \
+   "$helper" "$action" >"$tmp/envy-output" 2>&1
+  result=$?
+  set -e
+  [[ "$result" != 0 ]]
+  [[ -s "$tmp/envy-log" ]]
+  [[ ! -s "$tmp/envy-engine-log" ]]
+ done
+done
+printf '%s\n' envy-render-node >"$tmp/envy-profile"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
+ ENVY_LOG="$tmp/envy-log" "$helper" status >"$tmp/envy-output"
+grep -q 'container=envy-windows' "$tmp/envy-output"
+# Successful paths use only explicit Envy credentials and keep VFIO clients on Intel.
+cat >"$bin/nvidia-offload" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' offload >>"$ENVY_LOG"
+exec "$@"
+EOF
+chmod +x "$bin/nvidia-offload"
+for profile in envy-render-node envy-vfio; do
+ printf '%s\n' "$profile" >"$tmp/envy-profile"
+ for action in start stop toggle web run connect; do
+  : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"
+  HOME="$tmp/home" PATH="$web_helper_bin:$bin:/usr/bin:/bin" DISPLAY=:0 WAYLAND_DISPLAY= \
+   WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" ENVY_LOG="$tmp/envy-log" \
+   DOCKER_LOG="$tmp/envy-engine-log" WEB_LOG="$tmp/envy-web" NOTIFY_LOG="$tmp/notify" RDP_LOG="$tmp/envy-rdp" \
+   WINDOWS_RDP_ENVY_WINDOWS_USER=envy-user WINDOWS_RDP_ENVY_WINDOWS_PASSWORD_FILE="$rdp_password_file" \
+   WINDOWS_RDP_OSMAR_WINDOWS_USER=wrong-host WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE=/missing \
+   "$helper" "$action" >"$tmp/envy-output" 2>&1
+  [[ ! -s "$tmp/envy-engine-log" ]]
+  case "$action" in
+   stop|toggle) grep -qx stop "$tmp/envy-log" ;;
+   *) grep -qx start "$tmp/envy-log" ;;
+  esac
+  if [[ "$action" == run || "$action" == connect ]]; then
+   grep -q '/u:envy-user' "$tmp/envy-rdp"
+   ! grep -q wrong-host "$tmp/envy-rdp"
+   if [[ "$profile" == envy-vfio ]]; then ! grep -qx offload "$tmp/envy-log"; fi
+  fi
+ done
+done
 printf '%s\n' 'windows-rdp-client: ok'

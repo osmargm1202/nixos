@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
+let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
+ describe = c: let u=c.systemd.user.services.envy-windows; in {
+  alloc=c.orgm.envy.windows; mode=c.orgm.envy.mode; marker=c.environment.etc."orgm/windows-vm-profile".text;
+  manifest=c.system.build.envyWindowsManifest; compose=c.system.build.envyWindowsCompose;
+  controller=c.system.build.envyWindowsController; service=u.serviceConfig;
+  wanted=u.wantedBy; restart=u.restartIfChanged; stop=u.stopIfChanged;
+  linger=c.users.users.osmarg.linger; groups=c.users.users.osmarg.extraGroups;
+  prep=c.systemd.services.envy-windows-storage.serviceConfig;
+  mount=c.systemd.services.envy-windows-storage.unitConfig.RequiresMountsFor;
+  files=builtins.attrNames c.home-manager.users.osmarg.home.file;
+  env=c.home-manager.users.osmarg.home.sessionVariables;
+ };
+ c=f.nixosConfigurations.envy.config;
+in {normal=describe c; modes=builtins.mapAttrs (_: s: describe s.configuration) c.specialisation;}
+' | python3 -c '
+import json,sys
+v=json.load(sys.stdin)
+for name,c in {"normal":v["normal"],**v["modes"]}.items():
+ auto=name in ("windows-vfio","server")
+ assert c["wanted"]==(["default.target"] if auto else []),name
+ assert c["marker"].strip()==("envy-vfio" if auto else "envy-disabled" if name=="gaming" else "envy-render-node")
+ assert c["alloc"]=={"memoryMiB":4096,"cpus":4,"diskGiB":96,"vramMiB":1024}
+ assert c["linger"] and {"kvm","render","video","podman"}.issubset(c["groups"])
+ assert not c["restart"] and not c["stop"]
+ s=c["service"]
+ assert s["Type"]=="notify" and s["TimeoutStopSec"]=="infinity" and s["KillMode"]=="process"
+ assert s["ExecStart"].startswith(c["controller"]+"/libexec/")
+ assert c["mount"]=="/var/lib/windows" and c["prep"]["Type"]=="oneshot"
+ assert "Apps/windows/envy/compose.yml" in c["files"]
+ assert c["env"]["WINDOWS_RDP_ENVY_WINDOWS_PASSWORD_FILE"]=="/home/osmarg/.config/envy-windows/password"
+ assert "PASSWORD" not in c["env"] and "WINDOWS_PASSWORD" not in c["env"]
+print("PASS: Envy immutable Windows wiring and safe user lifecycle in all modes")
+'

@@ -1,6 +1,6 @@
 { config, lib, pkgs, userName, ... }:
 {
-  imports = [ ./recovery.nix ./audio.nix ./options.nix ./gpu.nix ./modes.nix ];
+  imports = [ ./recovery.nix ./audio.nix ./options.nix ./gpu.nix ./modes.nix ./windows.nix ];
   # Envy modes share this reviewed kernel candidate; no Lenovo hardware policy.
   boot.kernelPackages = pkgs.linuxPackages_6_18;
   boot.initrd.kernelModules = [ "i915" ];

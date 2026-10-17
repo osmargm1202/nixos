@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -17,6 +18,15 @@ OWNER = "org.orgm.windows.owner"
 MODE = "org.orgm.windows.mode"
 GENERATION = "org.orgm.windows.generation"
 DIGEST = "org.orgm.windows.config"
+
+
+def notify_ready():
+    address = os.environ.get("NOTIFY_SOCKET")
+    if address:
+        if address.startswith("@"): address = "\0" + address[1:]
+        with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+            sock.connect(address)
+            sock.sendall(b"READY=1")
 
 
 class Refused(Exception):
@@ -291,6 +301,7 @@ class Controller:
                     print("Reconciliation failed; retaining lifetime ownership until guest exit", file=sys.stderr, flush=True)
                     result = {"running": None, "pending": True, "blocked": True}
                 print(json.dumps(result), flush=True)
+                if not result.get("blocked"): notify_ready()
                 while True:
                     # On query failure keep the lock: a missing monitor is not a stopped VM.
                     owned_now = False

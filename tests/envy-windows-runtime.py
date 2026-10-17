@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """No real VM/devices: sysfs fixtures and an actual isolated fake Podman process."""
-import copy, importlib.util, json, os, subprocess, sys, tempfile, time, unittest
+import copy, importlib.util, json, os, subprocess, sys, tempfile, time, unittest, unittest.mock
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 SCRIPT=ROOT/"nixos/hosts/envy/windows-runtime.py"
@@ -33,6 +33,13 @@ sys.exit(125)
 '''
 
 class Runtime(unittest.TestCase):
+ def test_readiness_notification(self):
+  import socket
+  sock=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM);self.addCleanup(sock.close)
+  address=self.root/'notify';sock.bind(str(address));sock.settimeout(1)
+  with unittest.mock.patch.dict(os.environ,{'NOTIFY_SOCKET':str(address)}):
+   self.mod.notify_ready()
+  self.assertEqual(sock.recv(1024),b'READY=1')
  def setUp(self):
   self.assertTrue(SCRIPT.is_file(),'Envy Windows controller not implemented')
   spec=importlib.util.spec_from_file_location('envy_windows',SCRIPT);self.mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(self.mod)
