@@ -19,7 +19,7 @@ in
     "/home" = btrfs "@home";
     "/nix" = (btrfs "@nix") // { neededForBoot = true; };
     "/var/log" = btrfs "@log";
-    # Reserved storage only. No Windows guest or service is installed yet.
+    # Shared Windows subvolume; guarded preparation happens only on future activation.
     "/var/lib/windows" = btrfs "@windows";
     "/boot" = {
       device = "/dev/disk/by-label/ENVY_EFI";

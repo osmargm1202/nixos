@@ -78,6 +78,11 @@ select_vm_profile() {
   fi
 
   case "$WINDOWS_VM_PROFILE" in
+    envy-render-node|envy-vfio|envy-disabled)
+      CONTAINER="envy-windows"
+      LOCAL_WINDOWS_NAME="envy-windows"
+      COMPOSE_FILES=()
+      ;;
     lenovo-vfio)
       CONTAINER="lenovo-windows"
       INACTIVE_CONTAINER="windows"
@@ -169,11 +174,23 @@ move_next_rdp_window_to_workspace() {
   ) &
 }
 
+is_envy_profile() { [[ "$WINDOWS_VM_PROFILE" == envy-* ]]; }
+
+envy_controller() { "${ENVY_WINDOWS_CONTROLLER:-envy-windows}" "$@"; }
+
+envy_running() {
+  local state
+  state="$(envy_controller status)" || return 2
+  python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if s["running"] else 1)' <<<"$state"
+}
+
 container_is_running() {
+  if is_envy_profile; then envy_running; return; fi
   [[ "$(container_cmd inspect --format '{{.State.Running}}' "$CONTAINER")" == true ]]
 }
 
 report_container_failure() {
+  if is_envy_profile; then envy_controller status >&2; return 1; fi
   local status
   status="$(container_cmd inspect --format '{{.State.Status}} (exit {{.State.ExitCode}})' "$CONTAINER" || true)"
   echo "Container '$CONTAINER' failed: ${status:-not found}." >&2
@@ -251,7 +268,7 @@ rdp_command() {
     return 1
   fi
 
-  if [[ "$backend" == x11 && "$WINDOWS_VM_PROFILE" != lenovo-vfio ]]; then
+  if [[ "$backend" == x11 && "$WINDOWS_VM_PROFILE" != lenovo-vfio && "$WINDOWS_VM_PROFILE" != envy-vfio ]]; then
     if command -v nvidia-offload &>/dev/null; then
       RDP_CMD=(nvidia-offload "${client_cmd[@]}")
     elif command -v prime-run &>/dev/null; then
@@ -602,7 +619,9 @@ do_choose_connect() {
 
   case "$protocol" in
     local-start)
-      if container_is_running; then
+      if is_envy_profile; then
+        do_start
+      elif container_is_running; then
         echo "Local Windows container '$CONTAINER' is already running."
       else
         do_start
@@ -652,7 +671,7 @@ require_vfio_memlock() {
 }
 
 do_looking_glass() {
-  if [[ "$WINDOWS_VM_PROFILE" != lenovo-vfio ]]; then
+  if [[ "$WINDOWS_VM_PROFILE" != lenovo-vfio && "$WINDOWS_VM_PROFILE" != envy-vfio ]]; then
     echo "Error: Looking Glass is available only for the Lenovo VFIO Windows profile." >&2
     return 1
   fi
@@ -694,7 +713,9 @@ do_start() {
   notify_user "Windows iniciando!" "Iniciando contenedor '$CONTAINER'."
   echo "Starting container '$CONTAINER'..."
 
-  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
+  if is_envy_profile; then
+    envy_controller start || return 1
+  elif [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
     container_cmd rm -f "$INACTIVE_CONTAINER" || true
     if ! (
       cd "$WINDOWS_COMPOSE_DIR"
@@ -717,6 +738,7 @@ do_start() {
 }
 
 do_stop() {
+  if is_envy_profile; then envy_controller stop; return; fi
   notify_user "Windows apagando" "Deteniendo contenedor '$CONTAINER'."
   echo "Stopping container '$CONTAINER'..."
   if ! container_cmd stop "$CONTAINER"; then
@@ -728,6 +750,12 @@ do_stop() {
 }
 
 do_toggle() {
+  if is_envy_profile; then
+    local result=0
+    envy_running || result=$?
+    case "$result" in 0) do_stop ;; 1) do_start ;; *) return "$result" ;; esac
+    return
+  fi
   if container_is_running; then
     do_stop
   else
@@ -736,6 +764,7 @@ do_toggle() {
 }
 
 do_status() {
+  if is_envy_profile; then envy_controller status || return 1; fi
   local -a RDP_CMD
 
   rdp_command
@@ -745,6 +774,7 @@ do_status() {
 }
 
 do_connect() {
+  if is_envy_profile; then envy_controller start || return 1; fi
   local target_workspace=""
 
   RDP_HOST=localhost
@@ -778,7 +808,9 @@ open_web_console() {
 }
 
 do_web() {
-  if ! container_is_running; then
+  if is_envy_profile; then
+    envy_controller start || return 1
+  elif ! container_is_running; then
     echo "Windows Web Console is unavailable. Starting container '$CONTAINER'..."
     do_start 0 || return 1
   fi

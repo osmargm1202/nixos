@@ -1,0 +1,8 @@
+{
+  "image": "docker.io/dockurr/windows@sha256:59f8bed19cfd49cf1701debe34f9df6311e61a4e2ae68aa9f41206e2184e31cc",
+  "platform": "linux/amd64",
+  "version": "6.06",
+  "revision": "013ea27498e0e820a46b3861a0fa047d5b19d846",
+  "qemuBaseVersion": "7.50",
+  "qemuWindowsVersion": "11.2.23"
+}

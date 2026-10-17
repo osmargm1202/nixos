@@ -18,11 +18,11 @@ assert lib.assertMsg (builtins.all (id: builtins.elem id apps)
 assert lib.assertMsg c.services.sunshine.enable "envy must include Sunshine";
 assert lib.assertMsg (builtins.elem "nvidia-game" packages)
  "PRIME gaming must supply its NVIDIA-only launcher";
-assert lib.assertMsg (!c.orgm.gaming.gamescopeTty1.enable && c.specialisation == {} && !c.services.displayManager.autoLogin.enable)
+assert lib.assertMsg (!c.orgm.gaming.gamescopeTty1.enable && builtins.attrNames c.specialisation == [ "gaming" "server" "windows-vfio" ] && !c.services.displayManager.autoLogin.enable)
  "adding games must not replace normal with autologin/gaming/Windows";
 assert lib.assertMsg (!(c.environment.sessionVariables ? __NV_PRIME_RENDER_OFFLOAD))
  "desktop must not globally force NVIDIA";
-"PASS: normal games installed without replacing Intel desktop or boot profiles\n"
+"PASS: normal games installed without replacing Intel desktop or normal default\n"
 '
 launcher=$(nix build --no-link --print-out-paths --impure --expr 'let f = builtins.getFlake ("path:" + toString ./.); in builtins.head (builtins.filter (p: (p.pname or (builtins.parseDrvName p.name).name) == "nvidia-game") f.nixosConfigurations.envy.config.environment.systemPackages)')
 tmp=$(mktemp -d)

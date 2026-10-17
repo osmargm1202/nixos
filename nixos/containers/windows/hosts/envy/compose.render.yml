@@ -1,0 +1,8 @@
+services:
+  windows:
+    environment:
+      GPU: "Y"
+      VGA: "virtio"
+      VRAM_SIZE: "1G"
+    devices:
+      - nvidia.com/gpu=all
