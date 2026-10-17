@@ -27,8 +27,8 @@ nix eval --impure --raw --expr '
       && c.home-manager.users.osmarg.home.homeDirectory == "/home/osmarg"
       && builtins.elem "shell" c.orgm.user.programs
       && builtins.elem "nextcloud" c.orgm.user.programs);
-  assert check "only normal is enabled, with no VM or VFIO activation"
-    (c.specialisation == { }
+  assert check "normal stays default with no host GPU reservation"
+    (builtins.attrNames c.specialisation == [ "gaming" "server" "windows-vfio" ]
       && c.environment.etc."orgm/desktop-profile".text == "normal\n"
       && !(c.environment.etc ? "orgm/windows-vm-profile")
       && !(c.systemd.user.services ? lenovo-windows-autostart)
