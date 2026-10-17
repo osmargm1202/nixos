@@ -6,7 +6,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 nix eval --raw "path:$ROOT#nixosConfigurations" --apply '
   systems: let
-    original = systems.orgm-i3;
+    original = systems.ero;
     disabled = original.extendModules {
       modules = [ ({ lib, ... }: {
         orgm.user.programs = lib.mkForce (builtins.filter

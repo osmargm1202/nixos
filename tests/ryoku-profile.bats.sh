@@ -20,7 +20,11 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
       lightdm = c.services.xserver.displayManager.lightdm.enable;
       theme = c.services.displayManager.sddm.theme;
       userFiles = builtins.attrNames c.home-manager.users.osmarg.home.file;
-      personalBindingsSource = toString (c.home-manager.users.osmarg.home.file.".config/orgm-ryoku/osmarg-keybindings.lua".source or "");
+      personalBindingsSource = let
+        rows = builtins.fromJSON (builtins.unsafeDiscardStringContext
+          (c.home-manager.users.osmarg.xdg.configFile."orgm-ryoku/seed-manifest.json".text or "[]"));
+        selected = builtins.filter (row: row.target == ".config/orgm-ryoku/osmarg-keybindings.lua") rows;
+      in if selected == [ ] then "" else (builtins.head selected).source;
       nautilusTerminal = c.programs.nautilus-open-any-terminal.terminal;
       nautilusExtension = c.programs.nautilus-open-any-terminal.enable;
       homeServices = builtins.attrNames c.home-manager.users.osmarg.systemd.user.services;

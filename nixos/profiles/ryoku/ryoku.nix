@@ -134,11 +134,11 @@ in {
         services.dunst.enable = lib.mkForce false;
         services.mako.enable = lib.mkForce false;
         home.file = helperFiles ../../../dotfiles/config/users/osmarg/profiles/hyprland/.local/bin personalHelpers;
-        # Also make the palette hook deterministic in an already-running
-        # session; this overlay survives Ryoku materialization and updates.
+        # Stable active-generation helper: the initial editable overlay must
+        # not freeze a collectable package path or need reimposition on updates.
         xdg.configFile."orgm-ryoku/matugen-config.toml".text = builtins.replaceStrings
           [ "&& ryoku-cmd-folders;" ]
-          [ "&& ${folderIcons}/bin/ryoku-cmd-folders;" ]
+          [ "&& /run/current-system/sw/bin/ryoku-cmd-folders;" ]
           (builtins.readFile "${inputs.ryoku.outPath}/ryoku/shell/matugen/config.toml");
         # Materialize before the first login, rather than waiting for a desktop
         # that cannot yet start without its Hyprland configuration.

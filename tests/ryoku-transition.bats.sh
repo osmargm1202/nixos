@@ -28,17 +28,17 @@ printf 'existing encrypted login bytes\n' > "$XDG_DATA_HOME/keyrings/login.keyri
 printf 'existing passwordless collection bytes\n' > "$XDG_DATA_HOME/keyrings/orgm-never-ask.keyring"
 printf '%s\n' orgm-never-ask > "$XDG_DATA_HOME/keyrings/default"
 bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
-[[ ! -L "$XDG_CONFIG_HOME/hypr/user.lua" ]]
+[[ -L "$XDG_CONFIG_HOME/hypr/user.lua" ]]
 [[ ! -L "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml" ]]
 cmp "$tmp/original/matugen-config.toml" "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml"
-[[ ! -L "$XDG_CONFIG_HOME/kitty/user.conf" ]]
+[[ -L "$XDG_CONFIG_HOME/kitty/user.conf" ]]
 grep -Fxq 'font_size 15' "$XDG_CONFIG_HOME/kitty/user.conf"
 grep -Fxq 'background_opacity 0.85' "$XDG_CONFIG_HOME/kitty/orgm-ryoku.conf"
 [[ "$(cat "$tmp/original/kitty-user.conf")" == 'font_size 15' ]]
 cmp "$XDG_CONFIG_HOME/ryoku/shell.json" "$tmp/dock.before.json"
 grep -Fq 'disabled = true' "$XDG_CONFIG_HOME/hypr/monitors_user.lua"
 printf 'personal monitor layout\n' > "$XDG_CONFIG_HOME/hypr/monitors_user.lua"
-[[ -L "$state/user.before-ryoku" ]]
+[[ ! -e "$state/user.before-ryoku" ]]
 [[ "$(cat "$tmp/original/user.lua")" == 'immutable original' ]]
 [[ ! -L "$XDG_CONFIG_HOME/ryoku/user_edits/hypr/modules/rebind.lua" ]]
 jq -e '.desktop.appearance.rounding == 12 and .desktop.appearance.borderSize == 0 and .desktop.input.followMouse == 1' "$XDG_CONFIG_HOME/ryoku/desktop.json" > /dev/null
@@ -56,14 +56,15 @@ printf 'personal idle config\n' > "$XDG_CONFIG_HOME/hypr/hypridle.conf"
 printf 'keyboard edited through Ryoku\n' > "$XDG_CONFIG_HOME/hypr/keyboard.lua"
 printf 'updated Nix palette hook\n' > "$tmp/original/matugen-config.toml"
 bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
-cmp "$tmp/original/matugen-config.toml" "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml"
+grep -Fxq 'Nix palette hook' "$XDG_CONFIG_HOME/ryoku/user_edits/matugen/config.toml"
 jq -e '.desktop.appearance.rounding == 18 and .desktop.appearance.borderSize == 1 and .desktop.input.followMouse == 0' "$XDG_CONFIG_HOME/ryoku/desktop.json" > /dev/null
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/hypridle.conf")" == 'personal idle config' ]]
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/keyboard.lua")" == 'keyboard edited through Ryoku' ]]
 [[ "$(cat "$XDG_CONFIG_HOME/hypr/monitors_user.lua")" == 'personal monitor layout' ]]
-[[ $(grep -Fxc 'include orgm-ryoku.conf' "$XDG_CONFIG_HOME/kitty/user.conf") -eq 1 ]]
+! grep -Fq 'include orgm-ryoku.conf' "$XDG_CONFIG_HOME/kitty/user.conf"
 cmp "$XDG_CONFIG_HOME/ryoku/shell.json" "$tmp/dock.before.json"
-[[ "$(cat "$state/user.before-ryoku")" == 'immutable original' ]]
+[[ ! -e "$state/user.before-ryoku" ]]
+[[ "$(cat "$tmp/original/user.lua")" == 'immutable original' ]]
 # Do not rewrite an unrelated user-selected collection on repeated activation.
 printf '%s\n' custom > "$XDG_DATA_HOME/keyrings/default"
 bash "$ROOT/nixos/profiles/ryoku/prepare.sh"

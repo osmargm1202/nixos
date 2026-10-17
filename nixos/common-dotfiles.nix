@@ -11,6 +11,7 @@ let
   dotfileSource = import ../lib/dotfile-source.nix;
   sourceRoot = dotfileSource.source ../dotfiles/config;
   hostName = config.networking.hostName;
+  ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   useKittyForNeovim = profileName != "terminal" && programEnabled "neovim" && programEnabled "kitty";
@@ -105,6 +106,33 @@ let
   ryokuOwns = path: builtins.any (
     root: path == root || lib.hasPrefix (root + "/") path
   ) ryokuConfigRoots;
+  ryokuShellPreference = path: path == ".bashrc" || path == ".blerc" || lib.hasPrefix ".config/bash/" path;
+  ryokuCodePreference = path: lib.hasPrefix ".config/orgm-ryoku/" path
+    && (lib.hasSuffix ".lua" path || lib.hasSuffix ".rasi" path);
+  ryokuAppSeed = path: path == ".config/starship.toml" || builtins.any
+    (root: lib.hasPrefix (root + "/") path) [ ".config/fastfetch" ".config/nvim" ".config/btop" ];
+  ryokuEditable = path: ryokuShellPreference path || ryokuCodePreference path || ryokuOwns path;
+  # Preference templates remain in the generation, but their active targets do
+  # not remain Home Manager links. Match old source suffixes across generations.
+  preferenceFiles = lib.filterAttrs (path: _: ryokuAppSeed path || ryokuCodePreference path) selectedFiles;
+  oldShellFiles = lib.filterAttrs (path: _: lib.hasPrefix ".config/bash/" path) selectedFiles;
+  seedRecord = target: source: {
+    inherit target source;
+    legacySources = lib.optional (builtins.hasAttr target selectedFiles) selectedFiles.${target};
+  };
+  seedRecords = lib.mapAttrsToList seedRecord preferenceFiles
+    ++ lib.mapAttrsToList (target: source: (seedRecord target source) // { seed = false; }) oldShellFiles
+    ++ [
+      ((seedRecord ".bashrc" ./profiles/ryoku/bashrc) // { replaceLegacy = true; })
+      ((seedRecord ".blerc" ./profiles/ryoku/blerc) // { replaceLegacy = true; })
+      (seedRecord ".config/bash/user.bash" ./profiles/ryoku/bash-user.bash)
+      (seedRecord ".config/kitty/user.conf" ./profiles/ryoku/kitty-user.conf)
+    ];
+  seedManifest = pkgs.writeText "ryoku-first-seed-manifest.json" (builtins.toJSON seedRecords);
+  importLibraryFiles = lib.filterAttrs (path: _: builtins.elem (builtins.baseNameOf path)
+    [ "functions.bash" "completions.bash" "sops-age.bash" "host-${hostName}.bash" ]) oldShellFiles;
+  importLibraries = lib.mapAttrs' (path: source: lib.nameValuePair
+    (".config/orgm-shell/" + builtins.baseNameOf path) { inherit source; }) importLibraryFiles;
   # A common user directory must not pull another desktop's controls into
   # Ryoku. Keep only workflows for which Ryoku has no equivalent; its native
   # shell owns capture, history, night light, network menus and status widgets.
@@ -115,6 +143,7 @@ let
   mergedFiles = lib.filterAttrs (
     path: source: profileName != "ryoku" || (
       !ryokuOwns path
+      && !(ryokuEnabled && (ryokuShellPreference path || ryokuCodePreference path))
       && !(lib.hasPrefix ".local/bin/" path
         && source == (userFiles.${path} or null)
         && !builtins.elem (builtins.baseNameOf path) ryokuSharedUserHelpers)
@@ -129,7 +158,8 @@ let
     // layerFiles "programs/${program}"
     // layerFiles "users/${userName}/programs/${program}"
   ) { } allProgramNames;
-  disabledProgramFiles = lib.filterAttrs (path: _: !builtins.hasAttr path mergedFiles) allProgramFiles;
+  disabledProgramFiles = lib.filterAttrs (path: _: !builtins.hasAttr path mergedFiles
+    && !(ryokuEnabled && ryokuEditable path)) allProgramFiles;
   nautilusWallpaperScript =
     mergedFiles.".local/share/nautilus/scripts/Set as Hyprland Wallpaper" or null;
   hyprReloadHelper = mergedFiles.".local/bin/hypr-reload-after-switch" or null;
@@ -181,6 +211,10 @@ in
         source = "${builtins.head (builtins.filter (p: p.name == "nvim.desktop") config.home.packages)}/share/applications/nvim.desktop";
       };
       xdg.configFile = lib.mkMerge [
+        (lib.optionalAttrs ryokuEnabled {
+          "orgm-ryoku/seed.py".source = ./profiles/ryoku/seed.py;
+          "orgm-ryoku/seed-manifest.json".text = builtins.toJSON seedRecords;
+        })
         (lib.optionalAttrs (programEnabled "tailscale") {
           # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
           # and Labwc start the same command explicitly.
@@ -232,6 +266,13 @@ in
         ) fileMimeHandlers)}
       '';
 
+      home.activation.ryokuFirstSeed = lib.mkIf ryokuEnabled (lib.hm.dag.entryBefore
+        [ "removeConflictingDotfiles" "checkLinkTargets" ] ''
+          $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./profiles/ryoku/seed.py} \
+            "''${XDG_CONFIG_HOME:-$HOME/.config}" "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku" \
+            "$HOME" ${seedManifest}
+        '');
+
       home.activation.removeConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         ${lib.optionalString (profileName != "ryoku") ''
           # Returning from Ryoku: save writable materialized files that the
@@ -270,6 +311,7 @@ in
 
         for old_dir in \
           .config/hypr \
+          ${lib.optionalString ryokuEnabled ".config/niri"} \
           .config/orgm-hypr \
           .config/waybar .config/waybar-hypr \
           .config/nwg-dock-hyprland \
@@ -283,6 +325,26 @@ in
           .local/share/icons; do
           target="$HOME/$old_dir"
           if [ -L "$target" ]; then
+            ${lib.optionalString ryokuEnabled ''
+              resolved="$(${pkgs.coreutils}/bin/readlink -f "$target" || true)"
+              case "$resolved" in
+                /nix/store/*-home-manager-files/*|/nix/store/*-user-dotfiles/*)
+                  backup="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku/legacy-directories-v1/$old_dir"
+                  if [ ! -e "$backup" ]; then
+                    $DRY_RUN_CMD mkdir -p -m0700 "$(dirname "$backup")"
+                    $DRY_RUN_CMD cp -aL -- "$target" "$backup"
+                  fi
+                  ;;
+                *)
+                  case "$old_dir" in
+                    .config/hypr|.config/niri|.config/quickshell|.config/qt6ct|.config/gtk-3.0|.config/gtk-4.0)
+                      echo "Ryoku: preserved personal directory link $old_dir; use a writable directory before materializing" >&2
+                      exit 1 ;;
+                    *) continue ;;
+                  esac
+                  ;;
+              esac
+            ''}
             $DRY_RUN_CMD rm "$target"
           fi
         done
@@ -480,6 +542,9 @@ in
 
       home.file =
         (lib.mapAttrs (_: source: { inherit source; }) linkedFiles)
+        // lib.optionalAttrs ryokuEnabled (importLibraries // {
+          ".config/orgm-shell/workflows.bash".source = ./profiles/ryoku/bash-workflows.bash;
+        })
         // lib.optionalAttrs (programEnabled "tmux") {
           # Plugins are supplied directly from the immutable Nix store; TPM
           # never needs a mutable clone under ~/.tmux/plugins.

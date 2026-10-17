@@ -43,6 +43,31 @@ class NativeSession(unittest.TestCase):
                        env=self.env, check=True, capture_output=True)
         return json.loads(self.store.read_text())
 
+    def test_prepare_preserves_personal_overrides_and_removed_kitty_import(self):
+        (self.seed / "matugen-config.toml").write_text("initial palette hook")
+        self.prepare()
+        values = {
+            "hypr/user.lua": "-- user edited Lua",
+            "ryoku/user_edits/hypr/modules/rebind.lua": "-- user edited rebind",
+            "ryoku/user_edits/matugen/config.toml": "user edited palette hook",
+            "kitty/orgm-ryoku.conf": "background_opacity 0.55",
+            "kitty/user.conf": "# include deliberately removed",
+            "ryoku/keyring.json": '{"mode":"ask"}',
+        }
+        for name, value in values.items():
+            (self.config / name).write_text(value)
+        self.prepare()
+        for name, value in values.items():
+            self.assertEqual((self.config / name).read_text(), value, name)
+
+    def test_keyring_alias_selected_after_initial_prepare_is_not_retired_later(self):
+        self.prepare()
+        keyrings=self.home/".local/share/keyrings";keyrings.mkdir(parents=True)
+        (keyrings/"login.keyring").write_text("private fixture")
+        alias=keyrings/"default";alias.write_text("orgm-never-ask\n")
+        self.prepare()
+        self.assertEqual(alias.read_text(),"orgm-never-ask\n")
+
     def test_already_seeded_store_gets_native_startup_and_preserves_unrelated_data(self):
         self.state.mkdir(parents=True)
         (self.state / "desktop-defaults.seeded").touch()

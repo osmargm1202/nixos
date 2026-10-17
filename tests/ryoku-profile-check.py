@@ -29,7 +29,7 @@ for host in ("lenovo", "orgm"):
     assert "orgm-keyring-never-ask" not in normal["services"], host
     conflicting = (".config/kitty/", ".config/nvim/", ".config/waybar-hypr/", ".config/hypr/lua/")
     assert not any(path.startswith(conflicting) for path in normal["userFiles"]), host
-    assert ".config/orgm-ryoku/osmarg-keybindings.lua" in normal["userFiles"], host
+    assert ".config/orgm-ryoku/osmarg-keybindings.lua" not in normal["userFiles"], host
     assert "/users/osmarg/profiles/ryoku/" in normal["personalBindingsSource"], host
     assert normal["nautilusExtension"] and normal["nautilusTerminal"] == "kitty", host
     obsolete = {

@@ -1,0 +1,2 @@
+# Minimal NixOS editing preference. Ryoku owns prompt, colours and shell setup.
+bleopt default_keymap=emacs

@@ -35,6 +35,10 @@ assert toString c.programs.hyprland.package == toString original.ryoku-hyprland;
 {
   hyprProvider = toString fixed.ryoku-wm-hyprland;
   oldHyprProvider = toString original.ryoku-wm-hyprland;
+  cli = toString fixed.ryoku-cli;
+  data = toString fixed.ryoku-desktop-data;
+  oldCli = toString original.ryoku-cli;
+  oldData = toString original.ryoku-desktop-data;
   provider = toString fixed.ryoku-wm-niri;
   oldProvider = toString original.ryoku-wm-niri;
   materializer = toString fixed.ryoku-materialize;
@@ -47,6 +51,11 @@ from pathlib import Path
 import sys
 v = json.loads(Path(sys.argv[1]).read_text())
 materializer = (Path(v["materializer"]) / "bin/ryoku-materialize").read_text()
+assert v["cli"] + "/bin/ryoku materialize" in materializer
+assert v["data"] + "/share/ryoku/config" in materializer
+assert v["oldCli"] not in materializer and v["oldData"] not in materializer
+assert (Path(v["bundle"]) / "bin/ryoku").resolve() == Path(v["cli"]) / "bin/ryoku"
+assert v["data"] in (Path(v["cli"]) / "bin/ryoku").read_text()
 assert v["provider"] + "/bin/ryoku-wm-niri apply" in materializer
 assert v["oldProvider"] not in materializer
 assert v["hyprProvider"] + "/bin/ryoku-wm-hyprland apply" in materializer
