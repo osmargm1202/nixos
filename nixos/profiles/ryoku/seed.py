@@ -3,6 +3,7 @@ import fcntl
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path, PurePosixPath
 import sys
 import tempfile
@@ -19,8 +20,9 @@ def store_suffix(path):
     return parts[1]
 
 
-def known_legacy(target, sources):
-    if not target.is_symlink() or not target.is_file():
+def known_legacy(target, sources, directory=False):
+    present = target.is_dir() if directory else target.is_file()
+    if not target.is_symlink() or not present:
         return False
     actual = target.resolve()
     for source in sources:
@@ -144,6 +146,50 @@ def seed(config, state, home, records):
                     print("Ryoku: preserved personal .bashrc; import ~/.config/bash/ryoku.bash to use native startup", file=sys.stderr)
 
 
+def migrate_directories(home, state, records):
+    """Withdraw only a registered old directory link; preserve full provenance."""
+    state.mkdir(parents=True, exist_ok=True)
+    with (state / ".seed.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        for row in records:
+            relative = PurePosixPath(row["target"])
+            if relative.is_absolute() or ".." in relative.parts or not relative.parts:
+                raise ValueError("unsafe legacy directory: " + str(relative))
+            target = home / str(relative)
+            if not target.is_symlink():
+                continue
+            if not safe_parent(home, target):
+                if row["blocksNative"]:
+                    raise ValueError("Ryoku: preserved personal directory link above " + str(relative)
+                                     + "; use a writable directory before materializing")
+                continue
+            actual = target.resolve()
+            parts = str(actual).removeprefix("/nix/store/").split("/", 1)
+            hm_owned = (str(actual).startswith("/nix/store/") and len(parts) == 2
+                        and parts[0].endswith("-home-manager-files") and parts[1] == str(relative))
+            known = known_legacy(target, row["sources"], directory=True) or hm_owned
+            backup = state / "legacy-directories-v1" / str(relative)
+            metadata = backup.with_name(backup.name + ".metadata.json")
+            if not known or metadata.exists():
+                if row["blocksNative"]:
+                    raise ValueError("Ryoku: preserved personal directory link " + str(relative)
+                                     + "; use a writable directory before materializing")
+                continue
+            # Do not follow a link in our backup parents either.
+            if not safe_parent(state, backup) or backup.exists() or backup.is_symlink():
+                raise ValueError("preserved legacy directory; inspect existing backup: " + str(backup))
+            backup.parent.chmod(0o700)
+            shutil.copytree(target, backup, copy_function=shutil.copyfile)
+            backup.chmod(0o700)
+            info = {"target": str(relative), "link": os.readlink(target), "resolved": str(actual)}
+            atomic_file(metadata, (json.dumps(info, indent=2) + "\n").encode(), 0o600)
+            target.unlink()  # Bytes and link provenance already safely backed up.
+
+
 if __name__ == "__main__":
-    config, state, home, manifest = map(Path, sys.argv[1:])
-    seed(config, state, home, json.loads(manifest.read_text()))
+    if sys.argv[1] == "--directories":
+        home, state, manifest = map(Path, sys.argv[2:])
+        migrate_directories(home, state, json.loads(manifest.read_text()))
+    else:
+        config, state, home, manifest = map(Path, sys.argv[1:])
+        seed(config, state, home, json.loads(manifest.read_text()))

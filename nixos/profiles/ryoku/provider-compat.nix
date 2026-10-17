@@ -25,6 +25,11 @@ let
   });
   cli = original.ryoku-cli.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
+      install -m0644 ${./materialize-directory-guard.go} internal/updater/materialize_directory_guard.go
+      substituteInPlace internal/updater/materialize.go \
+        --replace-fail '// ~/.config/ryoku is where' 'if err := guardMaterializeDirectories(base, dest, state); err != nil { return err }
+        // ~/.config/ryoku is where'
+      gofmt -w internal/updater/materialize_directory_guard.go internal/updater/materialize.go
       substituteInPlace internal/updater/materialize.go \
         --replace-fail 'return generatedSeed[rel] || strings.HasPrefix(rel, "nvim/")' \
           'return generatedSeed[rel] || rel == "starship.toml" || strings.HasPrefix(rel, "btop/") || strings.HasPrefix(rel, "nvim/")'

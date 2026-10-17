@@ -33,8 +33,11 @@ class SeedIntegration(unittest.TestCase):
  serverHome=f.nixosConfigurations.lenovo.config.specialisation.server.configuration.home-manager.users.osmarg;
  returnCleanup=serverHome.home.activation.removeConflictingDotfiles.data;
  serverRc=toString serverHome.home.file.".bashrc".source;
- in { _runtime={inherit sources returnCleanup serverRc;generation=toString h.home.activationPackage;cleanup=h.home.activation.removeConflictingDotfiles.data;materializer=toString p.ryoku-materialize;data=toString p.ryoku-desktop-data;hub=toString p.ryoku-hub;}; envy=describe "envy" "osmarg";lenovo=describe "lenovo" "osmarg";orgm=describe "orgm" "osmarg";ero=describe "ero" "osmarg";jarq=describe "jarq" "jarq";}'''
-        cls.inventory=json.loads(subprocess.check_output(["nix","eval","--impure","--json","--expr",expr],env=dict(os.environ,RYOKU_TEST_REPO=str(ROOT)),text=True))
+ in f.nixosConfigurations.envy.pkgs.writeText "ryoku-seed-test-inventory.json" (builtins.toJSON { _runtime={inherit sources returnCleanup serverRc;generation=toString h.home.activationPackage;cleanup=h.home.activation.removeConflictingDotfiles.data;materializer=toString p.ryoku-materialize;data=toString p.ryoku-desktop-data;hub=toString p.ryoku-hub;}; envy=describe "envy" "osmarg";lenovo=describe "lenovo" "osmarg";orgm=describe "orgm" "osmarg";ero=describe "ero" "osmarg";jarq=describe "jarq" "jarq";})'''
+        # Realize exactly this expression's runtime, scripts and manifests; raw
+        # eval reports paths without building their dependencies.
+        inventory=subprocess.check_output(["nix","build","--impure","--no-link","--print-out-paths","--expr",expr],env=dict(os.environ,RYOKU_TEST_REPO=str(ROOT)),text=True).strip()
+        cls.inventory=json.loads(Path(inventory).read_text())
 
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
@@ -98,6 +101,32 @@ class SeedIntegration(unittest.TestCase):
         self.assertEqual((outside/"keep").read_text(),"untouched")
         self.assertIn("preserved personal directory link",result.stderr)
 
+    def test_legacy_directory_migration_never_unlinks_through_a_parent_link(self):
+        row=next(row for row in self.inventory["envy"]["manifest"] if row["target"]==".config/orgm-ryoku/user.lua")
+        source=row["source"].split("-user-dotfiles/",1)[0]+"-user-dotfiles/profiles/hyprland/.config/hypr"
+        self.config.rmdir()
+        outside_tmp=tempfile.TemporaryDirectory(prefix="ryoku-external-config-")
+        self.addCleanup(outside_tmp.cleanup)
+        outside=Path(outside_tmp.name)
+        self.config.symlink_to(outside,target_is_directory=True)
+        target=outside/"hypr";target.symlink_to(source,target_is_directory=True)
+        result=subprocess.run(["bash","-c",self.inventory["_runtime"]["cleanup"]],env=self.env,capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn("preserved personal directory link",result.stderr)
+        self.assertTrue(target.is_symlink())
+        self.assertTrue(self.config.is_symlink())
+
+    def test_cleanup_preserves_arbitrary_store_directory_link(self):
+        row=next(row for row in self.inventory["envy"]["manifest"] if row["target"]==".bashrc")
+        source=Path(row["legacySources"][0]).parent/".config/bash"
+        self.assertTrue(source.is_dir())
+        target=self.config/"hypr";target.symlink_to(source,target_is_directory=True)
+        result=subprocess.run(["bash","-c",self.inventory["_runtime"]["cleanup"]],env=self.env,capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn("preserved personal directory link",result.stderr)
+        self.assertTrue(target.is_symlink())
+        self.assertEqual(target.resolve(),source)
+
     def test_cleanup_backs_up_known_legacy_directory_without_merging_desktops(self):
         row=next(row for row in self.inventory["envy"]["manifest"] if row["target"]==".config/orgm-ryoku/user.lua")
         source=row["source"].split("-user-dotfiles/",1)[0]+"-user-dotfiles/profiles/hyprland/.config/hypr"
@@ -109,6 +138,31 @@ class SeedIntegration(unittest.TestCase):
         backup=self.state/"orgm-ryoku/legacy-directories-v1/.config/hypr"
         self.assertTrue(backup.is_dir())
         self.assertEqual(sorted(p.name for p in backup.iterdir()),sorted(p.name for p in Path(source).iterdir()))
+        metadata_path=backup.with_name(backup.name+".metadata.json")
+        self.assertTrue(metadata_path.is_file(),"directory migration needs link provenance")
+        metadata=json.loads(metadata_path.read_text())
+        self.assertEqual(metadata["link"],source)
+        self.assertEqual(metadata["resolved"],source)
+        self.assertEqual(metadata["target"],".config/hypr")
+        self.assertEqual(backup.parent.stat().st_mode & 0o777,0o700)
+
+    def test_known_older_directory_generation_keeps_bytes_and_provenance(self):
+        old=self.home/"old-directory-source"
+        relative="profiles/hyprland/.config/hypr"
+        source=old/relative;source.mkdir(parents=True)
+        (source/"old.lua").write_text("old generation bytes")
+        expr='builtins.path {path=builtins.toPath (builtins.getEnv "RYOKU_OLD_SOURCE");name="user-dotfiles";}'
+        copied=subprocess.check_output(["nix","eval","--impure","--raw","--expr",expr],env=dict(os.environ,RYOKU_OLD_SOURCE=str(old)),text=True).strip()
+        expected=str(Path(copied)/relative)
+        target=self.config/"hypr";target.symlink_to(expected,target_is_directory=True)
+        result=subprocess.run(["bash","-c",self.inventory["_runtime"]["cleanup"]],env=self.env,capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertFalse(target.is_symlink())
+        backup=self.state/"orgm-ryoku/legacy-directories-v1/.config/hypr"
+        self.assertEqual((backup/"old.lua").read_text(),"old generation bytes")
+        metadata=json.loads(backup.with_name("hypr.metadata.json").read_text())
+        self.assertEqual(metadata["link"],expected)
+        self.assertEqual(metadata["resolved"],expected)
 
     def test_old_store_generation_links_are_proven_by_registered_relative_source(self):
         records={row["target"]:row for row in self.inventory["envy"]["manifest"]}
@@ -130,7 +184,6 @@ class SeedIntegration(unittest.TestCase):
         self.assertFalse(helper.is_symlink());self.assertEqual(helper.read_text(),"old-generation preferences")
 
     def test_ryoku_console_roundtrip_restores_editable_bootstrap_and_preferences(self):
-        subprocess.run(["nix","build","--no-link",str(ROOT)+"#nixosConfigurations.envy.config.home-manager.users.osmarg.home.activationPackage"],check=True,capture_output=True,text=True)
         self.early();self.populate_runtime();self.prepare();self.materialize()
         rc=self.home/".bashrc";rc.write_text(rc.read_text()+"\n# my preserved bootstrap edit\n")
         starship=self.config/"starship.toml";starship.write_text("# my preserved prompt\n")
@@ -152,7 +205,6 @@ class SeedIntegration(unittest.TestCase):
 
     def test_existing_fastfetch_and_mutable_preferences_survive_real_lifecycle(self):
         runtime=self.inventory["_runtime"]
-        subprocess.run(["nix","build","--no-link",str(ROOT)+"#nixosConfigurations.envy.config.home-manager.users.osmarg.home.activationPackage"],check=True,capture_output=True,text=True)
         old_rc=next(row for row in self.inventory["envy"]["manifest"] if row["target"]==".bashrc")["legacySources"][0]
         (self.home/".bashrc").symlink_to(old_rc)
         existing=self.config/"fastfetch/config.jsonc";existing.parent.mkdir()

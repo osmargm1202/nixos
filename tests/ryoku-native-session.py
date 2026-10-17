@@ -43,6 +43,24 @@ class NativeSession(unittest.TestCase):
                        env=self.env, check=True, capture_output=True)
         return json.loads(self.store.read_text())
 
+    def test_prepare_refuses_nested_override_directory_links_without_mutations(self):
+        for relative in ("ryoku/user_edits/hypr", "ryoku/user_edits/hypr/modules", "ryoku/user_edits/matugen", "ryoku-terminal"):
+            with self.subTest(relative=relative):
+                self.setUp()  # Each link case gets an independent configuration tree.
+                target=self.config/relative
+                target.parent.mkdir(parents=True,exist_ok=True)
+                outside_tmp=tempfile.TemporaryDirectory(prefix="ryoku-external-")
+                self.addCleanup(outside_tmp.cleanup)
+                outside=Path(outside_tmp.name)
+                (outside/"personal").write_text("untouched")
+                target.symlink_to(outside,target_is_directory=True)
+                result=subprocess.run(["bash",str(ROOT/"nixos/profiles/ryoku/prepare.sh")],env=self.env,capture_output=True,text=True)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn("preserved personal directory link",result.stderr)
+                self.assertTrue(target.is_symlink())
+                self.assertEqual(sorted(p.name for p in outside.iterdir()),["personal"])
+                target.unlink()
+
     def test_prepare_preserves_personal_overrides_and_removed_kitty_import(self):
         (self.seed / "matugen-config.toml").write_text("initial palette hook")
         self.prepare()

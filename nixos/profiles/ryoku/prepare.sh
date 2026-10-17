@@ -1,11 +1,19 @@
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 state="${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
-# Do not let a native materialization follow a personal directory link.
-for directory in hypr niri quickshell matugen qt6ct gtk-3.0 gtk-4.0 btop fastfetch kitty fish wireplumber yazi nvim bash ryoku; do
-  if [[ -L "$config_home/$directory" ]]; then
-    printf 'Ryoku: preserved personal directory link %s; materialization needs a writable directory\n' "$directory" >&2
-    exit 1
-  fi
+# Refuse links in every ancestor we may write through, not only top-level roots.
+if [[ -L "$config_home" ]]; then
+  printf 'Ryoku: preserved personal directory link %s; use a writable configuration directory\n' "$config_home" >&2
+  exit 1
+fi
+for directory in hypr niri quickshell matugen qt6ct gtk-3.0 gtk-4.0 btop fastfetch kitty fish wireplumber yazi nvim bash ryoku ryoku-terminal orgm-ryoku ryoku/user_edits/hypr/modules ryoku/user_edits/matugen; do
+  parent="$config_home/$directory"
+  while [[ "$parent" == "$config_home/"* ]]; do
+    if [[ -L "$parent" ]]; then
+      printf 'Ryoku: preserved personal directory link %s; materialization needs a writable directory\n' "$parent" >&2
+      exit 1
+    fi
+    parent="${parent%/*}"
+  done
 done
 mkdir -p "$state" "$config_home/hypr" "$config_home/ryoku/user_edits/hypr/modules"
 

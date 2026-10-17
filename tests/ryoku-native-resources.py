@@ -35,6 +35,26 @@ class NativeResources(unittest.TestCase):
     def write(self, root, relative, data):
         p=root/relative;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(data);return p
 
+    def test_real_materializer_refuses_directory_links_before_any_copy(self):
+        for relative in ("ryoku-terminal", "hypr/modules", "ryoku/user_edits/hypr"):
+            with self.subTest(relative=relative):
+                self.setUp()  # Each link case gets an independent configuration tree.
+                self.write(self.base,"ryoku-terminal/env.sh","native runtime")
+                self.write(self.base,"hypr/modules/env.lua","native runtime")
+                target=self.config/relative;target.parent.mkdir(parents=True,exist_ok=True)
+                outside_tmp=tempfile.TemporaryDirectory(prefix="ryoku-external-")
+                self.addCleanup(outside_tmp.cleanup)
+                outside=Path(outside_tmp.name)
+                self.write(outside,"env.sh","personal environment")
+                target.symlink_to(outside,target_is_directory=True)
+                result=subprocess.run([str(self.cli),"materialize"],env=self.env,capture_output=True,text=True)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn("preserved personal directory link",result.stderr)
+                self.assertTrue(target.is_symlink())
+                self.assertEqual((outside/"env.sh").read_text(),"personal environment")
+                self.assertEqual(sorted(p.name for p in outside.iterdir()),["env.sh"])
+                target.unlink()
+
     def test_native_bash_environment_and_rashin_are_packaged(self):
         for name in ("bash/ryoku.bash","bash/rashin.bash","ryoku-terminal/env.sh"):
             self.assertTrue((self.data/"share/ryoku/config"/name).is_file(),name)

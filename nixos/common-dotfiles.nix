@@ -103,6 +103,26 @@ let
     ".config/wireplumber" ".config/yazi" ".config/nvim" ".config/pip"
     ".config/chromium-flags.conf" ".config/hyprland-preview-share-picker"
   ];
+  # Register destination-to-source directory mappings, not arbitrary Store roots.
+  legacyDirectoryTargets = [
+    ".config/hypr" ".config/niri" ".config/orgm-hypr" ".config/waybar" ".config/waybar-hypr"
+    ".config/nwg-dock-hyprland" ".config/qt5ct" ".config/qt6ct" ".config/quickshell"
+    ".config/gtk-4.0" ".config/Kvantum" ".config/i3" ".config/picom"
+    ".config/labwc" ".config/conky" ".icons" ".local/share/icons"
+  ];
+  legacyDirectoryLayers = [ "shared" "users/${userName}/common" "hosts/${hostName}/shared" ]
+    ++ map (p: "profiles/${p}") (layerNames "profiles")
+    ++ map (p: "users/${userName}/profiles/${p}") (layerNames "users/${userName}/profiles")
+    ++ map (p: "hosts/${hostName}/profiles/${p}") (layerNames "hosts/${hostName}/profiles")
+    ++ map (p: "programs/${p}") programs
+    ++ map (p: "users/${userName}/programs/${p}") programs;
+  legacyDirectoryManifest = pkgs.writeText "ryoku-legacy-directory-sources.json" (builtins.toJSON
+    (map (target: {
+      inherit target;
+      sources = builtins.filter builtins.pathExists (map
+        (layer: "${sourceRoot}/${layer}/${target}") legacyDirectoryLayers);
+      blocksNative = builtins.elem target ryokuConfigRoots;
+    }) legacyDirectoryTargets));
   ryokuOwns = path: builtins.any (
     root: path == root || lib.hasPrefix (root + "/") path
   ) ryokuConfigRoots;
@@ -309,6 +329,11 @@ in
           $DRY_RUN_CMD rm "$HOME/.local/share/applications"
         fi
 
+        ${lib.optionalString ryokuEnabled ''
+          $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./profiles/ryoku/seed.py} --directories \
+            "$HOME" "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku" ${legacyDirectoryManifest} || exit $?
+        ''}
+
         for old_dir in \
           .config/hypr \
           ${lib.optionalString ryokuEnabled ".config/niri"} \
@@ -325,26 +350,7 @@ in
           .local/share/icons; do
           target="$HOME/$old_dir"
           if [ -L "$target" ]; then
-            ${lib.optionalString ryokuEnabled ''
-              resolved="$(${pkgs.coreutils}/bin/readlink -f "$target" || true)"
-              case "$resolved" in
-                /nix/store/*-home-manager-files/*|/nix/store/*-user-dotfiles/*)
-                  backup="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku/legacy-directories-v1/$old_dir"
-                  if [ ! -e "$backup" ]; then
-                    $DRY_RUN_CMD mkdir -p -m0700 "$(dirname "$backup")"
-                    $DRY_RUN_CMD cp -aL -- "$target" "$backup"
-                  fi
-                  ;;
-                *)
-                  case "$old_dir" in
-                    .config/hypr|.config/niri|.config/quickshell|.config/qt6ct|.config/gtk-3.0|.config/gtk-4.0)
-                      echo "Ryoku: preserved personal directory link $old_dir; use a writable directory before materializing" >&2
-                      exit 1 ;;
-                    *) continue ;;
-                  esac
-                  ;;
-              esac
-            ''}
+            ${lib.optionalString ryokuEnabled "continue # Registered migration above owns Ryoku directory decisions."}
             $DRY_RUN_CMD rm "$target"
           fi
         done

@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
-RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
+inventory="$(RYOKU_TEST_REPO="$ROOT" nix build --impure --no-link --print-out-paths --expr '
 let
   f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO");
   c = f.nixosConfigurations.envy.config;
@@ -32,7 +32,7 @@ assert has fixed.ryoku-wm-hyprland c.environment.systemPackages;
 assert !(has original.ryoku-wm-hyprland c.environment.systemPackages);
 assert has fixed.ryoku-wm-hyprland c.systemd.user.services.ryoku-shell.path;
 assert toString c.programs.hyprland.package == toString original.ryoku-hyprland;
-{
+f.nixosConfigurations.envy.pkgs.writeText "ryoku-compat-test-inventory.json" (builtins.toJSON {
   hyprProvider = toString fixed.ryoku-wm-hyprland;
   oldHyprProvider = toString original.ryoku-wm-hyprland;
   cli = toString fixed.ryoku-cli;
@@ -44,7 +44,8 @@ assert toString c.programs.hyprland.package == toString original.ryoku-hyprland;
   materializer = toString fixed.ryoku-materialize;
   bundle = toString fixed.ryoku-bundle;
   wrapper = toString c.systemd.user.services.ryoku-materialize.serviceConfig.ExecStart;
-}' > "$tmp"
+})')"
+cp "$inventory" "$tmp"
 python3 - "$tmp" <<'CHECK'
 import json
 from pathlib import Path
