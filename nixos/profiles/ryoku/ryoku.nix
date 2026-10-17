@@ -27,6 +27,24 @@ let
       pkgs.coreutils pkgs.gawk pkgs.gnused pkgs.util-linux pkgs.glib pkgs.gtk3
     ]}
   '';
+  lockPam = pkgs.writeShellScript "orgm-ryoku-lock-pam" ''
+    set -eu
+    pam_dir="$HOME/.local/share/quickshell-lockscreen/assets/pam"
+    test -d "$pam_dir"
+    cat > "$pam_dir/ryoku-lock" <<'EOF'
+#%PAM-1.0
+# Independent fingerprint conversation; Ryoku controls whether to start it.
+auth required ${pkgs.fprintd}/lib/security/pam_fprintd.so timeout=-1
+account required ${config.security.pam.package}/lib/security/pam_unix.so
+EOF
+    cat > "$pam_dir/ryoku-lock-pw" <<'EOF'
+#%PAM-1.0
+# Independent password conversation, kept available alongside fingerprint.
+auth required ${config.security.pam.package}/lib/security/pam_unix.so
+account required ${config.security.pam.package}/lib/security/pam_unix.so
+EOF
+    chmod 600 "$pam_dir/ryoku-lock" "$pam_dir/ryoku-lock-pw"
+  '';
   prepare = pkgs.writeShellApplication {
     name = "orgm-ryoku-prepare";
     runtimeInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.systemd pkgs.jq pkgs.python3 ];
@@ -84,13 +102,15 @@ in {
       services.displayManager.defaultSession = "hyprland";
       # PAM can unlock an encrypted login keyring only after password login.
       services.displayManager.autoLogin.enable = lib.mkForce false;
+      # Hub owns enrollment and the lockscreen fingerprint preference.
+      services.fprintd.enable = true;
       security.pam.services.sddm.enableGnomeKeyring = true;
       security.pam.services.login.enableGnomeKeyring = true;
       # The upstream drop-in otherwise overrides Lenovo's hardware lid policy.
       environment.etc."systemd/logind.conf.d/10-ryoku-lid.conf".enable = lib.mkForce false;
       environment.localBinInPath = true;
       environment.systemPackages = with pkgs; [
-        folderIcons
+        folderIcons pkgs.fprintd
         rofi rofi-calc rofimoji grim slurp swappy playerctl xdg-utils
         nautilus gnome-text-editor evince loupe file-roller
         gnome-online-accounts-gtk pavucontrol wl-screenrec ffmpeg libqalculate woomer
@@ -105,10 +125,11 @@ in {
       systemd.user.services.ryoku-materialize = {
         unitConfig.ConditionUser = userName;
         serviceConfig.ExecStartPre = "${prepare}/bin/orgm-ryoku-prepare";
+        serviceConfig.ExecStartPost = lib.mkAfter [ "${lockPam}" ];
         restartTriggers = [ prepare ];
       };
-      systemd.user.services.ryogami.path = lib.mkBefore [ folderIcons ];
-      systemd.user.services.ryoku-shell.path = lib.mkBefore [ folderIcons ];
+      systemd.user.services.ryogami.path = lib.mkBefore [ folderIcons pkgs.fprintd ];
+      systemd.user.services.ryoku-shell.path = lib.mkBefore [ folderIcons pkgs.fprintd ];
 
       home-manager.users.${userName} = { config, lib, ... }: {
         # Ryoku alone launches the Nextcloud client from the user's Session

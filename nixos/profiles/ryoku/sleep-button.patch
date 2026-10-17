@@ -1,0 +1,19 @@
+--- a/ryoku/shell/quickshell/shell/modules/bar/framebars/menus/quicksettings/QuickSettingsHome.qml
++++ b/ryoku/shell/quickshell/shell/modules/bar/framebars/menus/quicksettings/QuickSettingsHome.qml
+@@ -91,6 +91,16 @@
+                         tipBelow: true
+                         onClicked: {
+                             Quickshell.execDetached(["ryoku-shell", "lock"]);
++                            if (root.closePanel)
++                                root.closePanel();
++                        }
++                    }
++                    Menus.QsIconButton {
++                        icon: "bedtime"
++                        tip: I18n.tr("Suspend")
++                        tipBelow: true
++                        onClicked: {
++                            Quickshell.execDetached(["systemctl", "suspend"]);
+                             if (root.closePanel)
+                                 root.closePanel();
+                         }

@@ -21,6 +21,9 @@ in
 assert builtins.all (host: hasDefaults host "osmarg") [ "envy" "lenovo" "orgm" ];
 assert !(hasDefaults "ero" "osmarg");
 assert !(hasDefaults "jarq" "jarq");
+assert c.services.fprintd.enable;
+assert has fixed.ryoku-hub fixed.ryoku-bundle.paths;
+assert !(has original.ryoku-hub fixed.ryoku-bundle.paths);
 assert has fixed.ryoku-wm-niri c.environment.systemPackages;
 assert !(has original.ryoku-wm-niri c.environment.systemPackages);
 assert has fixed.ryoku-bundle c.environment.systemPackages;
@@ -35,6 +38,9 @@ assert toString c.programs.hyprland.package == toString original.ryoku-hyprland;
 f.nixosConfigurations.envy.pkgs.writeText "ryoku-compat-test-inventory.json" (builtins.toJSON {
   hyprProvider = toString fixed.ryoku-wm-hyprland;
   oldHyprProvider = toString original.ryoku-wm-hyprland;
+  hub = toString fixed.ryoku-hub;
+  plugins = toString original.ryoku-hypr-plugins;
+  lockPam = map toString c.systemd.user.services.ryoku-materialize.serviceConfig.ExecStartPost;
   cli = toString fixed.ryoku-cli;
   data = toString fixed.ryoku-desktop-data;
   oldCli = toString original.ryoku-cli;
@@ -50,6 +56,9 @@ python3 - "$tmp" <<'CHECK'
 import json
 from pathlib import Path
 import sys
+import os
+import subprocess
+import tempfile
 v = json.loads(Path(sys.argv[1]).read_text())
 materializer = (Path(v["materializer"]) / "bin/ryoku-materialize").read_text()
 assert v["cli"] + "/bin/ryoku materialize" in materializer
@@ -67,5 +76,38 @@ wrapper = Path(v["wrapper"]).read_text()
 assert v["materializer"] + "/bin/ryoku-materialize" in wrapper
 for transaction in ("config.autoreload off", "config.reload config-only", "config.autoreload on", "trap cleanup EXIT"):
     assert transaction in wrapper, transaction
+# Exercise installed binaries with isolated config and no compositor socket.
+with tempfile.TemporaryDirectory() as home:
+    cfg = Path(home) / ".config"
+    (cfg / "ryoku").mkdir(parents=True)
+    (cfg / "hypr").mkdir()
+    store = cfg / "ryoku/desktop.json"
+    original_store = {
+        "desktop": {"appearance": {"rounding": 17, "wobblyWindows": True, "windowStyle": "gnomed"}},
+        "wm": {"hyprland": {"anim": {"items": [{"leaf": "windowsIn", "enabled": True, "speed": 4}], "curves": []}}},
+    }
+    store.write_text(json.dumps(original_store))
+    env = dict(os.environ, HOME=home, XDG_CONFIG_HOME=str(cfg), XDG_RUNTIME_DIR=home, RYOKU_WM="hyprland",
+               PATH=v["hyprProvider"] + "/bin:" + os.environ["PATH"])
+    env.pop("HYPRLAND_INSTANCE_SIGNATURE", None)
+    env.pop("XDG_CURRENT_DESKTOP", None)
+    subprocess.run([v["hub"] + "/bin/ryoku-hub", "desktop", "anim-preset", "fade"], env=env, check=True)
+    saved = json.loads(store.read_text())
+    assert saved["desktop"]["appearance"]["rounding"] == 17
+    assert saved["desktop"]["appearance"]["windowStyle"] == "preset"
+    assert "anim" not in saved["wm"]["hyprland"]
+    assert json.loads(Path(str(store) + ".before-animation-presets").read_text()) == original_store
+    settings = (cfg / "hypr/settings.lua").read_text()
+    assert "gnomed" not in settings and 'leaf = "windowsIn"' not in settings
+    roster = json.loads(subprocess.check_output([v["hyprProvider"] + "/bin/ryoku-wm-hyprland", "plugins", "list"], env=env))
+    assert roster["toolchain"]["ok"], roster["toolchain"]
+    assert all(p["installed"] for p in roster["plugins"] if p["bundled"]), roster
+    assert all(p["path"].startswith(v["plugins"]) for p in roster["plugins"] if p["bundled"])
+    pam = Path(v["lockPam"][-1]).read_text()
+    assert "pam_fprintd.so timeout=-1" in pam and "ryoku-lock-pw" in pam
+    fprint_path = pam.split("auth required ", 1)[1].split(" timeout", 1)[0]
+    assert Path(fprint_path).is_file(), fprint_path
+    quicksettings = (Path(v["data"]) / "share/ryoku/config/quickshell/shell/modules/bar/framebars/menus/quicksettings/QuickSettingsHome.qml").read_text()
+    assert '["systemctl", "suspend"]' in quicksettings
 print("PASS: fixed providers reach Hub/PATH, bundle, materializer, live transaction and HM; compositor ABI unchanged")
 CHECK

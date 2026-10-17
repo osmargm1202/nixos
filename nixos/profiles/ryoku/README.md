@@ -24,6 +24,26 @@ idle y notificaciones. Las aplicaciones y herramientas de Osmarg conservan su
 selección habitual. Se mantienen sus menús de SSH, Pi, archivos, Obsidian,
 Firefox, Windows/RDP y AI, sin arrancar Waybar, nwg-dock ni el gestor visual anterior.
 
+Los valores básicos se guardan como configuración inicial de Ryoku, sin
+reimponerlos en cada activación ni sobrescribir cambios posteriores del Hub.
+Del perfil Hyprland habitual solo se conservan los atajos personales adaptados
+a Ryoku; no se heredan sus ajustes visuales, animaciones ni comportamiento del
+escritorio. Las correcciones de integración deben permitir configurar esas
+preferencias desde Ryoku.
+
+La integración resuelve los plugins incluidos desde su paquete en Nix Store,
+con el compositor y sus cabeceras de la misma revisión. El Hub conserva sus
+interruptores y dispone de herramientas para compilar plugins desde GitHub.
+Seleccionar un preset de animación en el Hub reemplaza los ajustes anteriores
+solo de animación; la primera selección guarda una copia del escritorio en
+`~/.config/ryoku/desktop.json.before-animation-presets`. No se fuerza ningún
+preset durante la activación del perfil.
+
+El menú de ajustes rápidos incluye **Suspend**. El servicio `fprintd` está
+habilitado y el bloqueo conserva conversaciones PAM independientes para huella
+y contraseña. El registro de dedos y el interruptor de desbloqueo se manejan
+desde Ryoku Hub; no se registra ninguna huella automáticamente.
+
 Quickshell es el único servidor de notificaciones del perfil Ryoku. La revisión
 oficial incluye Mako, cuya activación por D-Bus puede adelantarse a la shell;
 la integración excluye Mako y Dunst de los paquetes publicados mientras Ryoku

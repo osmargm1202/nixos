@@ -4,8 +4,24 @@ let
   upstream = inputs.ryoku;
   system = pkgs.stdenv.hostPlatform.system;
   original = upstream.packages.${system};
+  compositor = original.ryoku-hyprland;
+  buildDeps = lib.unique (lib.concatMap (p: [ p ] ++ (p.propagatedBuildInputs or []))
+    ([ compositor ] ++ compositor.buildInputs));
+  pluginTools = [ pkgs.git pkgs.gnumake pkgs.cmake pkgs.pkg-config
+    compositor.stdenv.cc pkgs.binutils pkgs.coreutils ];
   hyprland = original.ryoku-wm-hyprland.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ ./animation-preset-provider.patch ];
+    nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+    postInstall = (old.postInstall or "") + ''
+      wrapProgram "$out/bin/ryoku-wm-hyprland" \
+        --prefix PATH : ${lib.makeBinPath pluginTools} \
+        --prefix PKG_CONFIG_PATH : ${lib.makeSearchPathOutput "dev" "lib/pkgconfig" buildDeps}:${lib.makeSearchPathOutput "dev" "share/pkgconfig" buildDeps}
+    '';
     postPatch = (old.postPatch or "") + ''
+      substituteInPlace ryoku/wm/hyprland/config_plugins.go \
+        --replace-fail '/usr/lib/hyprland/plugins' '${original.ryoku-hypr-plugins}/lib/hyprland/plugins'
+      substituteInPlace ryoku/wm/hyprland/config_plugins_tier.go \
+        --replace-fail 'return filepath.Join(p, "hyprland", "src", "version.h")' 'return "${lib.getDev compositor}/include/hyprland/src/version.h"'
       substituteInPlace ryoku/wm/hyprland/act.go \
         --replace-fail 'hl.dsp.dpms({ state = ' 'hl.dsp.dpms({ action = '
     '';
@@ -16,7 +32,11 @@ let
         --replace-fail 'kdlNum(parseFloat(r.Value, 0.5))' 'kdlFloat(parseFloat(r.Value, 0.5))'
     '';
   });
+  hub = original.ryoku-hub.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ ./animation-preset-hub.patch ];
+  });
   desktopData = original.ryoku-desktop-data.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ ./sleep-button.patch ./animation-preset-ui.patch ];
     postInstall = (old.postInstall or "") + ''
       install -Dm644 ${upstream.outPath}/ryoku/apps/bash/ryoku.bash "$out/share/ryoku/config/bash/ryoku.bash"
       install -Dm644 ${upstream.outPath}/ryoku/apps/bash/rashin.bash "$out/share/ryoku/config/bash/rashin.bash"
@@ -45,13 +65,14 @@ let
     { before = original.ryoku-wm-niri; after = niri; }
     { before = original.ryoku-desktop-data; after = desktopData; }
     { before = original.ryoku-cli; after = cli; }
+    { before = original.ryoku-hub; after = hub; }
   ];
   replacePackage = p: lib.foldl' (result: replacement:
     if toString p == toString replacement.before then replacement.after else result
   ) p replacements;
   materializer = original.ryoku-materialize.overrideAttrs (old:
     assert builtins.all (r: lib.hasInfix
-      (builtins.unsafeDiscardStringContext (toString r.before)) old.text) replacements;
+      (builtins.unsafeDiscardStringContext (toString r.before)) old.text) (lib.filter (r: toString r.before != toString original.ryoku-hub) replacements);
     {
       text = builtins.replaceStrings
         (map (r: toString r.before) replacements)
@@ -63,6 +84,7 @@ let
   packages = original // {
     ryoku-desktop-data = desktopData;
     ryoku-cli = cli;
+    ryoku-hub = hub;
     ryoku-wm-hyprland = hyprland;
     ryoku-wm-niri = niri;
     ryoku-materialize = materializer;

@@ -1,0 +1,39 @@
+--- a/desktop.go
++++ b/desktop.go
+@@ -641,11 +641,31 @@
+ 	if !animPresets[name] {
+ 		return fmt.Errorf("unknown animation preset %q", name)
+ 	}
+-	if err := atomicWrite(animPresetPath(), []byte(name+"\n"), 0o644); err != nil {
+-		return err
+-	}
+-	reloadDesktop()
+-	return nil
++	return withDesktopLock(func() error {
++		// A preset replaces the previous animation edits, not other preferences.
++		// Keep the original store available before the first such replacement.
++		m := effectiveStore()
++		if b, err := os.ReadFile(desktopStorePath()); err == nil {
++			backup := desktopStorePath() + ".before-animation-presets"
++			if _, err := os.Stat(backup); os.IsNotExist(err) {
++				if err := atomicWrite(backup, b, 0o600); err != nil { return err }
++			}
++		}
++		if d, ok := m["desktop"].(map[string]any); ok {
++			if a, ok := d["appearance"].(map[string]any); ok {
++				a["wobblyWindows"] = false
++				a["windowStyle"] = "preset"
++				a["animations"] = name != "disable"
++			}
++		}
++		if w, ok := m["wm"].(map[string]any); ok {
++			if h, ok := w["hyprland"].(map[string]any); ok { delete(h, "anim") }
++		}
++		if err := atomicWrite(desktopStorePath(), mustJSON(m), 0o644); err != nil { return err }
++		if err := atomicWrite(animPresetPath(), []byte(name+"\n"), 0o644); err != nil { return err }
++		os.Remove(desktopPreviewPath())
++		return applyDesktop()
++	})
+ }
+ 
+ // freshCaps probes the provider without the shared client's process-lifetime

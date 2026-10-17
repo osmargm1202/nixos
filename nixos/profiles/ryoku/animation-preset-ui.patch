@@ -1,0 +1,47 @@
+--- a/ryoku/hub/quickshell/pages/AnimationsPage.qml
++++ b/ryoku/hub/quickshell/pages/AnimationsPage.qml
+@@ -187,7 +187,28 @@
+         running: true
+         stdout: StdioCollector { onStreamFinished: { try { var d = JSON.parse(this.text); if (d && d.preset) pg.animPreset = d.preset; } catch (e) {} } }
+     }
+-    Process { id: animPresetSet }
++    Process {
++        id: animPresetSet
++        onExited: (exitCode, exitStatus) => {
++            if (exitCode !== 0 || !pg.hub) return;
++            // Mirror only the animation fields changed by the backend. Keep
++            // unrelated staged edits, and do not resurrect the previous preset.
++            pg.hub.hyprDrop("wm.hyprland.anim");
++            var draft = JSON.parse(JSON.stringify(pg.hub.hyprDraft));
++            var committed = JSON.parse(JSON.stringify(pg.hub.hyprCommitted));
++            var values = {
++                "desktop.appearance.wobblyWindows": false,
++                "desktop.appearance.windowStyle": "preset",
++                "desktop.appearance.animations": pg.animPreset !== "disable"
++            };
++            for (var key in values) {
++                pg.hub.pathSet(draft, key, values[key]);
++                pg.hub.pathSet(committed, key, values[key]);
++            }
++            pg.hub.hyprDraft = draft;
++            pg.hub.hyprCommitted = committed;
++        }
++    }
+ 
+     // ── curves model ────────────────────────────────────────────────────────
+     function curvesArr() { var a = pg.hv("wm.hyprland.anim.curves"); return Array.isArray(a) ? a : []; }
+--- a/ryoku/hub/quickshell/schema/WindowSettings.js
++++ b/ryoku/hub/quickshell/schema/WindowSettings.js
+@@ -562,10 +562,11 @@
+         "group": "MOTION",
+         "key": "desktop.appearance.windowStyle",
+         "label": "Open / close",
+-        "desc": "Open and close motion: pop, slide, or GNOME",
++        "desc": "Follow the animation preset, or override with pop, slide, or GNOME",
+         "ctl": "seg",
+         "src": "desktop.json",
+         "opts": [
++            "preset",
+             "pop",
+             "slide",
+             "gnomed"

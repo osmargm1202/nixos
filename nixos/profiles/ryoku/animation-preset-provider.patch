@@ -1,0 +1,16 @@
+--- a/ryoku/wm/hyprland/config_settings.go
++++ b/ryoku/wm/hyprland/config_settings.go
+@@ -774,10 +774,12 @@
+ 	case a.WobblyWindows:
+ 		b.WriteString(wobbleCurve)
+ 		b.WriteString("hl.animation({ leaf = \"windowsMove\", enabled = true, speed = 5, bezier = \"ryokuWobble\" })\n")
+-	case full:
++	case full && a.WindowStyle != "preset":
+ 		b.WriteString("hl.animation({ leaf = \"windowsMove\", enabled = true, speed = 3.2, bezier = \"ryokuSettle\" })\n")
+ 	}
+ 	switch a.WindowStyle {
++	case "preset":
++		// The selected preset owns window motion until edited in Hub.
+ 	case "slide", "gnomed":
+ 		fmt.Fprintf(&b, "hl.animation({ leaf = \"windowsIn\", enabled = true, speed = 3.8, bezier = \"ryokuBloom\", style = %s })\n", luaStr(a.WindowStyle))
+ 		fmt.Fprintf(&b, "hl.animation({ leaf = \"windowsOut\", enabled = true, speed = 2.4, bezier = \"ryokuSettle\", style = %s })\n", luaStr(a.WindowStyle))
