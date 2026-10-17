@@ -16,9 +16,30 @@ let
         --replace-fail 'kdlNum(parseFloat(r.Value, 0.5))' 'kdlFloat(parseFloat(r.Value, 0.5))'
     '';
   });
+  desktopData = original.ryoku-desktop-data.overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
+      install -Dm644 ${upstream.outPath}/ryoku/apps/bash/ryoku.bash "$out/share/ryoku/config/bash/ryoku.bash"
+      install -Dm644 ${upstream.outPath}/ryoku/apps/bash/rashin.bash "$out/share/ryoku/config/bash/rashin.bash"
+      install -Dm644 ${upstream.outPath}/ryoku/apps/terminal-shell/env.sh "$out/share/ryoku/config/ryoku-terminal/env.sh"
+    '';
+  });
+  cli = original.ryoku-cli.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace internal/updater/materialize.go \
+        --replace-fail 'return generatedSeed[rel] || strings.HasPrefix(rel, "nvim/")' \
+          'return generatedSeed[rel] || rel == "starship.toml" || strings.HasPrefix(rel, "btop/") || strings.HasPrefix(rel, "nvim/")'
+      substituteInPlace internal/sys/useredits.go \
+        --replace-fail 'if strings.HasPrefix(rel, "nvim/") {' \
+          'if rel == "starship.toml" || strings.HasPrefix(rel, "btop/") || strings.HasPrefix(rel, "nvim/") {'
+    '';
+    installPhase = builtins.replaceStrings
+      [ (toString original.ryoku-desktop-data) ] [ (toString desktopData) ] old.installPhase;
+  });
   replacements = [
     { before = original.ryoku-wm-hyprland; after = hyprland; }
     { before = original.ryoku-wm-niri; after = niri; }
+    { before = original.ryoku-desktop-data; after = desktopData; }
+    { before = original.ryoku-cli; after = cli; }
   ];
   replacePackage = p: lib.foldl' (result: replacement:
     if toString p == toString replacement.before then replacement.after else result
@@ -35,6 +56,8 @@ let
     paths = map replacePackage old.paths;
   });
   packages = original // {
+    ryoku-desktop-data = desktopData;
+    ryoku-cli = cli;
     ryoku-wm-hyprland = hyprland;
     ryoku-wm-niri = niri;
     ryoku-materialize = materializer;
