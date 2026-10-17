@@ -40,6 +40,14 @@ El usuario también reporta parpadeo al despertar: servicios de resume correctos
 no prueban una reanudación visual correcta. Causa aún sin determinar;
 no modificar drivers basándose únicamente en estos síntomas.
 
+## Memoria de incidencias abiertas
+
+Ver [PENDING.md](PENDING.md): **ENVY-DISPLAY-001** conserva el parpadeo y apagado
+tras lock/sleep, el recorte de contenido en la LG y la validación de HDMI, junto
+con la evidencia y criterios pendientes. Incluye los controles existentes para
+extender/duplicar monitores. No están resueltos ni se cambian políticas de
+pantalla, suspensión o bloqueo mediante esta documentación.
+
 ## Optane: pendiente, NO modificar
 
 El Intel H10 contiene NAND y Optane en una misma tarjeta. Linux detecta el
