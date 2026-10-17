@@ -8,18 +8,7 @@
 let
   enabled = builtins.elem "flatpak" config.orgm.user.programs;
   discordEnabled = builtins.elem "discord" config.orgm.user.programs;
-  fastpotifyId = "rocks.fastpotify.Fastpotify";
-  fastpotify = rec {
-    appId = fastpotifyId;
-    bundle = "${pkgs.fetchurl {
-      url = "https://github.com/crmne/fastpotify/releases/download/v0.6.0/fastpotify-v0.6.0-x86_64.flatpak";
-      hash = "sha256-BC14bYQqQm+dsUFLE600ApnPFqORPKVVCn1CXI7HSt4=";
-    }}";
-    sha256 = "sha256-BC14bYQqQm+dsUFLE600ApnPFqORPKVVCn1CXI7HSt4=";
-  };
-  packages = map (
-    package: if package == fastpotifyId then fastpotify else package
-  ) config.orgm.user.flatpakPackages;
+  packages = config.orgm.user.flatpakPackages;
   discord = pkgs.callPackage ./discord-webrtc.nix { };
 in
 {

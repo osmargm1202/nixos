@@ -60,7 +60,7 @@
       "io.podman_desktop.PodmanDesktop"
       "md.obsidian.Obsidian"
       "com.rustdesk.RustDesk"
-      "rocks.fastpotify.Fastpotify"
+      "com.spotify.Client"
       "org.mozilla.Thunderbird"
       "org.blender.Blender"
       "io.github.intoolswetrust.JSignPdf"
