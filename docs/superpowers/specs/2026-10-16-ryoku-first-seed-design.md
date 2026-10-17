@@ -1,6 +1,6 @@
 # Ryoku: preferencias iniciales y propiedad posterior del usuario
 
-Estado: **diseño para revisión; implementación y activación no realizadas**.
+Estado: **aprobado por el usuario (dale); implementación en revisión, sin activación**.
 Petición: Osmarg quiere sus preferencias como punto de partida, pero después
 configurarlas desde Ryoku sin que Nix/despliegues vuelvan a imponerlas.
 

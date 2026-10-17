@@ -1,6 +1,6 @@
 # Memoria del host: pendientes de Envy
 
-Actualizado: 2026-10-16. Estado: **abierto; defecto DPMS identificado en el proveedor, sin corrección aplicada ni validación visual**.
+Actualizado: 2026-10-16. Estado: **abierto; proveedor DPMS corregido en la configuración; despliegue y validación visual pendientes**.
 Este archivo es seguimiento versionado; no ejecuta acciones al desplegar.
 
 ## ENVY-DISPLAY-001 — Parpadeo y apagado tras lock/sleep
@@ -52,9 +52,12 @@ de esa misma versión, un socket de sesión simulado y un `hyprctl` de prueba:
 `on/on/off/off` emitió siempre el campo incorrecto `state`, sin tocar monitores
 reales. [Incidencia del proyecto](https://github.com/Ryoku-dev/ryoku/issues/258).
 
-**Todavía no está corregido ni desplegado en esta investigación.** Se propone
-corregir el proveedor en el límite de paquetes ya existente, no cambiar drivers
-ni desactivar lock/sleep. Sigue pendiente confirmar físicamente si resuelve el
+**Corrección implementada, todavía no desplegada en esta investigación.**
+`provider-compat.nix` parchea únicamente el proveedor para emitir `action`,
+con el mismo binario corregido en PATH, bundle y materializador. La prueba real
+con socket/controlador simulado verifica `on/on/off/off` y el monitor opcional;
+las repeticiones ya no emiten toggle. No se cambian drivers ni se desactiva
+lock/sleep. Sigue pendiente confirmar físicamente si resuelve el
 síntoma completo; HDMI y el recorte de la LG se diagnostican por separado.
 La sesión observada estaba encendida en eDP-1, con DP-1 fantasma deshabilitado y
 sin LG conectada; no hubo una suspensión registrada en ese arranque que permitiese

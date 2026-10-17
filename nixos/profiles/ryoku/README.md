@@ -131,7 +131,9 @@ La activación aplica los mismos handlers declarados por el perfil.
 Los iconos de carpetas siguen la paleta mediante `ryoku-cmd-folders`. El paquete
 de integración usa Papirus desde Nix Store, ya que la ruta upstream
 `/usr/share/icons/Papirus` no existe en NixOS. `prepare.sh` instala el hook de
-Matugen como archivo regular en `ryoku/user_edits/matugen/config.toml`;
+Matugen como seed regular en `ryoku/user_edits/matugen/config.toml`, solo si falta;
+las ediciones posteriores se conservan. Los nuevos hooks usan la ruta estable
+`/run/current-system/sw/bin/ryoku-cmd-folders`, no la de una generación recolectable;
 Ryoku ignora los enlaces simbólicos en ese overlay. La primera activación
 selecciona `ryoku-folders` y las posteriores respetan otros temas elegidos.
 
@@ -148,24 +150,28 @@ un watcher actualiza los colores cuando Ryoku cambia de tema o de fondo.
 Ryoku usa SDDM con greeter X11 y sesión Hyprland Wayland, sin autologin.
 PAM desbloquea la colección cifrada `login` con la contraseña de acceso; ambas
 contraseñas deben coincidir. La política `never-ask` se retiró: la activación
-restaura nuestro antiguo alias predeterminado a `login`, pero conserva todas
-las colecciones y sus secretos. No cambia contraseñas ni migra credenciales.
+retira una sola vez nuestro antiguo alias predeterminado a `login`, pero conserva
+todas las colecciones y sus secretos. Las elecciones posteriores del alias y de
+la política del Hub no vuelven a imponerse desde la preparación. No cambia contraseñas ni migra credenciales.
 La política PAM se define en Nix, sin modificar `/etc` desde el escritorio.
 
-Ryoku materializa sus configuraciones editables al activar Home Manager y al
-iniciar su sesión. Los overrides de integración se copian como archivos normales,
-porque el materializador omite los enlaces del overlay. Al volver a otro perfil,
-los archivos editables que ese perfil necesita reemplazar se guardan bajo
-`~/.local/state/orgm-ryoku/return-*`. Los ajustes iniciales del teclado se siembran
-una vez; las modificaciones posteriores desde Ryoku se conservan.
+Ryoku materializa sus recursos al activar Home Manager y al iniciar su sesión.
+Nuestras preferencias solo se siembran si falta el archivo; no se reinstalan
+sobre un archivo regular o enlace personal existente. Los archivos editables
+que un modo de consola necesita reemplazar se guardan en un snapshot privado
+`~/.local/state/orgm-ryoku/return-*`; al volver a Ryoku se recuperan solo sobre
+slots ausentes o enlaces declarativos comprobados, sin pisar archivos nuevos
+del usuario. La selección de modo se comprueba por Ryoku habilitado, no por el
+nombre del perfil. El teclado y los stores nativos conservan los cambios del Hub.
 
 Kitty usa un fondo con opacidad 85 % (15 % de transparencia), conservando
 la paleta y las fuentes nativas. La preferencia se carga desde un include en
 `~/.config/kitty/user.conf`, un archivo que Ryoku no sobrescribe. La regla de
 Kitty evita que la opacidad de ventanas inactivas multiplique ese valor:
 [semántica de las reglas de opacidad](https://wiki.hypr.land/Configuring/Basics/Window-Rules/).
-Al volver a otro perfil se retira exclusivamente ese include y se guarda una
-copia; los otros ajustes personales se conservan. Para la apariencia general,
+No se reinserta un include eliminado por el usuario. Al volver a consola se
+conservan `kitty/user.conf` y la preferencia editable de opacidad; las otras bases
+Kitty no importan ese override de Ryoku. Para la apariencia general,
 Ryoku Hub (`Super+,`) → Window Manager → Look → Opacity sigue siendo el control.
 
 Los ajustes personales iniciales activan el enfoque al pasar el mouse, eliminan
@@ -260,3 +266,79 @@ con `tests/ryoku-profile.bats.sh`. Esa comprobación valida las opciones e
 integración declarativa; no sustituye una construcción completa. Antes de
 activar, ejecuta `nh os build . -H lenovo` en tu terminal y revisa
 su resultado.
+
+## Inicialización personal y edición posterior
+
+El repo pone el punto de partida; el usuario y Ryoku mandan después. No todas
+las partes son editables en el Hub: el código Bash/Lua personal se controla
+mediante imports y archivos de usuario, no mediante una segunda GUI inventada.
+
+| Archivo o grupo | Propiedad posterior al primer seed |
+|---|---|
+| `~/.config/fastfetch/config.jsonc`, `hardware.jsonc`, logos | Archivo regular; Hub/Fastfetch y edición directa |
+| `~/.config/starship.toml`, `btop/`, `nvim/` | Seeds conservados por el CLI nativo, sin overlay congelado |
+| `~/.bashrc`, `~/.blerc`, `~/.config/bash/user.bash` | Bootstrap/imports editables; no se reponen líneas borradas |
+| `~/.config/orgm-ryoku/*.lua`, `rofi.rasi` | Módulos personales editables; sus cambios no se relinkean al Store |
+| `hypr/user.lua`, `ryoku/user_edits/hypr/modules/rebind.lua`, hook Matugen, `kitty/user.conf` | Overrides nativos iniciales; las ediciones posteriores ganan |
+| `~/.config/orgm-shell/` | Bibliotecas importables de código (OMP, Nix, SSH, tmux, completions y helpers); actualizables desde el repo |
+| Stores `desktop.json`, `shell.json` | Hub; se conservan preferencias salvo las bandejas de inicio requeridas |
+| Recursos base Bash de Ryoku y entorno, Quickshell/proveedores | Runtime de la versión fijada, actualizable |
+| `native-window-widths.lua`, hints de propiedad de atajos | Derivados del store vigente; editar la fuente del Hub, no estos artefactos |
+
+El inventario inicial se genera desde las capas seleccionadas del usuario/host,
+sin mezclar escritorios antiguos. Está en el manifiesto Nix-owned
+`orgm-ryoku/seed-manifest.json`; no se publica como enlaces de preferencias activas.
+Se procesa antes de retirar los enlaces antiguos de Home Manager y antes del
+materializador. Un archivo nuevo añadido al inventario se puede sembrar aunque
+ya se haya inicializado el resto. Si borras un archivo completo que tenga seed,
+se podrá recrear en la siguiente preparación; borrar una regla/import dentro de
+un archivo existente no lo restaura.
+
+La migración sustituye únicamente bootstraps antiguos de Home Manager
+comprobados y separa sus módulos personales del Store. Guarda bytes y procedencia
+en `~/.local/state/orgm-ryoku/seeds-v1/` (privado). Los enlaces ajenos, incluidos
+los colgantes, se conservan. Si una `.bashrc` personal no importa Ryoku, se avisa
+sin modificarla: el import normal es `. ~/.config/bash/ryoku.bash`. Un directorio
+personal enlazado que bloquearía la materialización se conserva y se informa
+antes de escribir a través de él; no se elimina silenciosamente.
+
+### Fastfetch y Bash
+
+El paquete Nix entrega ahora los recursos Bash/entorno/Rashin que faltaban.
+El bootstrap inicial entra en Bash nativo de Ryoku, que lanza `ryoku-fastfetch`
+con el mismo `config.jsonc` que guarda el Hub. Se importa la biblioteca personal
+sin volver a iniciar prompt/Starship, zoxide, fzf o un banner paralelo. Quitar un
+import de `~/.config/bash/user.bash` se respeta en el próximo switch.
+
+Tras aplicar: **Hub → Fastfetch → Save**, abrir una terminal nueva y comparar.
+Una vista previa no guarda por sí sola ni cambia un banner ya impreso. No se
+reemplaza una configuración Fastfetch regular existente, incluida la actual de
+Envy. Los procesos Bash ya abiertos mantienen lo que cargaron: abre otra terminal
+para probar el nuevo arranque.
+
+### DPMS al reanudar
+
+El proveedor Hyprland se corrige para emitir `action = "on"/"off"` en lugar de
+`state`, que la API fijada ignoraba y convertía en toggle. Se comprueba con el
+binario real y socket/controlador de prueba, sin apagar pantallas reales.
+Build y pruebas no sustituyen verificar físicamente lock/unlock y sleep/resume.
+Seguimiento: [pendientes Envy](../../hosts/envy/PENDING.md).
+
+### Aplicación manual y comprobación física
+
+No se ha activado esta revisión en Envy. Actualiza el checkout de ese host y aplica:
+
+```bash
+cd ~/Hobby/nixos
+git fetch origin
+git switch master
+git pull --ff-only
+nh os switch . -H envy
+```
+
+Revisa cualquier error de activación; la ausencia de la identidad privada SOPS
+aceptada para este host sigue siendo independiente de estas pruebas. Abre una
+terminal nueva después del switch y guarda un cambio de Fastfetch desde el Hub.
+Comprueba después lock/unlock y sleep/resume, primero solo con eDP y luego con
+la LG por USB-C. HDMI sin señal y contenido recortado continúan pendientes;
+esta corrección del proveedor no demuestra que sus causas sean las mismas.

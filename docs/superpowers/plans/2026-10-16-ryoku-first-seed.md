@@ -1,6 +1,6 @@
 # Ryoku First-Seed Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Preserve editable Ryoku preferences after initial personal seeding and fix the erroneous resume DPMS toggle.
 
@@ -37,11 +37,11 @@
 
 **Interfaces:** compatibility helper returns `.packages.ryoku-wm-hyprland`, `.packages.ryoku-wm-niri`, `.packages.ryoku-materialize`, `.packages.ryoku-bundle`; keep the existing module factory.
 
-- [ ] Write actual-binary test using an isolated listening Unix socket and fake `hyprctl`; on/on/off/off, optional monitor and invalid state; require explicit action not state and simulate idempotent outcomes.
-- [ ] Run against current provider: expect FAIL on state field (not missing executable/live session).
-- [ ] Patch only the pinned DPMS emitter; rewire both provider paths in materializer and bundle. Update wiring test to require corrected Hypr provider and unchanged compositor ABI, rather than unchanged broken provider.
-- [ ] Build selected packages and run DPMS + provider wiring tests: expect PASS.
-- [ ] Commit `fix(ryoku): make display power actions idempotent`.
+- [x] Write actual-binary test using an isolated listening Unix socket and fake `hyprctl`; on/on/off/off, optional monitor and invalid state; require explicit action not state and simulate idempotent outcomes.
+- [x] Run against current provider: expect FAIL on state field (not missing executable/live session).
+- [x] Patch only the pinned DPMS emitter; rewire both provider paths in materializer and bundle. Update wiring test to require corrected Hypr provider and unchanged compositor ABI, rather than unchanged broken provider.
+- [x] Build selected packages and run DPMS + provider wiring tests: expect PASS.
+- [x] Commit `fix(ryoku): make display power actions idempotent`.
 
 ### Task 2: Native Bash resources and native app seed semantics
 
@@ -49,11 +49,11 @@
 
 **Interfaces:** compatibility packages additionally expose corrected `ryoku-desktop-data` and `ryoku` CLI. Base under `share/ryoku/config` includes `bash/{ryoku.bash,rashin.bash}` and `ryoku-terminal/env.sh`. App seed/live-owned contract covers Fastfetch/nvim existing native paths and personal Starship/btop preferences; never freeze generated WM settings or Quickshell runtime.
 
-- [ ] Write tests of built base resources, actual CLI materialization preserving edited Starship/btop/Fastfetch and arbitrary links, and updated base runtime independently. Native Bash fixture checks one banner/import/prompt initialization and proper noninteractive behavior.
-- [ ] Run current packages: expect FAIL missing native Bash resources and overwritten personal app defaults.
-- [ ] Publish exact pinned native Bash/env sources through desktop-data; patch only missing preference seed/live-owned classifications in CLI. Rewire CLI/data references in module/materializer/bundle without changing upstream package set/ABI.
-- [ ] Build and run new resource tests plus Task 1 tests: expect PASS.
-- [ ] Commit `feat(ryoku): ship native Bash and preserve app preferences`.
+- [x] Write tests of built base resources, actual CLI materialization preserving edited Starship/btop/Fastfetch and arbitrary links, and updated base runtime independently. Native Bash fixture checks one banner/import/prompt initialization and proper noninteractive behavior.
+- [x] Run current packages: expect FAIL missing native Bash resources and overwritten personal app defaults.
+- [x] Publish exact pinned native Bash/env sources through desktop-data; patch only missing preference seed/live-owned classifications in CLI. Rewire CLI/data references in module/materializer/bundle without changing upstream package set/ABI.
+- [x] Build and run new resource tests plus Task 1 tests: expect PASS.
+- [x] Commit `feat(ryoku): ship native Bash and preserve app preferences`.
 
 ### Task 3: Manifest-driven personal initialization and safe migration
 
@@ -61,13 +61,13 @@
 
 **Interfaces:** `seed.py CONFIG_HOME STATE_HOME HOME MANIFEST` consumes JSON list of `{source,target,legacySources?,replaceLegacy?}` records with HOME-relative targets and optional XDG mapping; copies source to absent slots only, private backups/provenance for recognized legacy links. Runtime manifests/templates are Nix-owned outside mutable target roots. New `.bashrc` loads Nix env then native Ryoku once; `bash/user.bash` imports `orgm-shell` workflows/functions (no competing theme init). Seed catalog includes selected Fastfetch assets/nvim/Starship/btop, native user overrides and source modules; not historical desktop configs or credentials.
 
-- [ ] Write RED tests: missing→regular writable; edits survive changed defaults; new file seeds after previous run; arbitrary/dangling links preserved; proven legacy bootstrap replacement/private backup; helpers detach preserving current bytes; repeated run leaves removed imports removed; unsafe traversal/parent symlink cannot escape HOME.
-- [ ] Write scope/activation fixture: no HM links for editable preferences, immutable import libraries allowed, both native scripts are present before preparing shell, existing Fastfetch hash unchanged. End-to-end fresh prepare/materialize/native Bash and Hub Save/new terminal same config.
-- [ ] Run new tests plus update old transition expectations that intentionally forced arbitrary links/palette updates: expect FAIL for old unconditional writes/routing.
-- [ ] Implement seeder/manifest and hook it before native materialization, before old-HM conflict cleanup can delete evidence. Remove unconditional personal preference installs/reinsertion from prepare. Keep true derived/native migration outputs and security obligations separate.
-- [ ] Split standalone personal workflows from legacy shell initialization, preserving existing non-Ryoku path unchanged; make current personal modules writable seed targets, not immutable preference dependencies.
-- [ ] Run seed/migration/native-resource/DPMS/startup/transition/shortcut/utility/bash/OMP regressions: expect PASS; no live operations.
-- [ ] Commit `feat(ryoku): seed personal settings once and yield ownership`.
+- [x] Write RED tests: missing→regular writable; edits survive changed defaults; new file seeds after previous run; arbitrary/dangling links preserved; proven legacy bootstrap replacement/private backup; helpers detach preserving current bytes; repeated run leaves removed imports removed; unsafe traversal/parent symlink cannot escape HOME.
+- [x] Write scope/activation fixture: no HM links for editable preferences, immutable import libraries allowed, both native scripts are present before preparing shell, existing Fastfetch hash unchanged. End-to-end fresh prepare/materialize/native Bash and Hub Save/new terminal same config.
+- [x] Run new tests plus update old transition expectations that intentionally forced arbitrary links/palette updates: expect FAIL for old unconditional writes/routing.
+- [x] Implement seeder/manifest and hook it before native materialization, before old-HM conflict cleanup can delete evidence. Remove unconditional personal preference installs/reinsertion from prepare. Keep true derived/native migration outputs and security obligations separate.
+- [x] Split standalone personal workflows from legacy shell initialization, preserving existing non-Ryoku path unchanged; make current personal modules writable seed targets, not immutable preference dependencies.
+- [x] Run seed/migration/native-resource/DPMS/startup/transition/shortcut/utility/bash/OMP regressions: expect PASS; no live operations.
+- [x] Commit `feat(ryoku): seed personal settings once and yield ownership`.
 
 ### Task 4: Validation, documentation and handoff
 
