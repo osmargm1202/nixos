@@ -1,16 +1,16 @@
-# Envy: fase normal
+# Envy: configuración única y modos internos
 
 HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 ## Configuración activa
 
 `envy` es la única salida pública de este host y selecciona el escritorio Ryoku
-de `osmarg`, con sus preferencias y aplicaciones compartidas. Esta fase NO
-configura VM Windows, VFIO, especializaciones server o gaming. Por petición
-posterior sí incorpora Steam, emuladores compartidos y Sunshine dentro de normal. El menú de
+de `osmarg`, con sus preferencias y aplicaciones compartidas. Las fuentes preparan
+normal (base), gaming, windows-vfio y server; **todavía no desplegados**.
+Normal conserva Steam, emuladores y Sunshine. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
-Kernel 6.12 LTS, NVIDIA propietario `legacy_580`, Intel para escritorio y
+Candidato construido: kernel 6.18 LTS, NVIDIA propietario `legacy_580`, Intel para escritorio y
 `nvidia-offload programa` para GPU discreta. No se promete apagado completo de
 la MX250: Pascal no admite el ahorro RTD3 fino de generaciones posteriores.
 
@@ -103,7 +103,8 @@ Diseño completo: `docs/superpowers/specs/2026-10-15-envy-design.md`.
 Plan fase normal: `docs/superpowers/plans/2026-10-15-envy-normal.md`.
 Tras validar la base: perfil gaming dedicado, Windows render virtual/Pascal,
 VFIO e IOMMU, server y Compose por host declarativo. Las aplicaciones de juegos
-ya pertenecen a normal; esos perfiles avanzados siguen en una segunda fase.
+ya pertenecen a normal. Los modos avanzados están preparados sin activación;
+ver el informe de entrega enlazado más abajo.
 
 ## Juegos en normal
 
@@ -111,7 +112,7 @@ Steam, GameMode, MangoHud, Gamescope y ProtonUp-Qt; emuladores declarados vía
 Flathub y Sunshine para streaming. Intel sigue renderizando el escritorio;
 Steam configura PRIME para sus juegos y `nvidia-game programa` invoca
 `nvidia-offload`, rechazando fallback silencioso si falta el helper. No hay
-autologin GamescopeTTY1 ni especialización gaming en esta fase. Instalar las
+autologin GamescopeTTY1 en normal; solo gaming lo habilita. Instalar las
 aplicaciones no instala juegos/ROMs ni inicia sesión en Steam por el usuario.
 Los emuladores pueden seguir descargándose por `flatpak-managed-install`.
 
@@ -179,10 +180,10 @@ el greeter activo no se declara corregido hasta aplicar y comprobar un login.
 
 Los modos avanzados futuros pertenecen a specialisations dentro de `envy`, no
 a salidas flake independientes; pueden validarse con eval/build --no-link sin
-switch/test/boot. No se han creado todavía
-ni se ha aprobado en esta consulta su implementación completa. Mantener normal
-sin specialisations/VFIO/Windows activados; preparar fuentes no modifica arranque
-ni inicia VMs. Instalar perfiles en menú requiere una fase posterior explícita.
+switch/test/boot. Ya están preparados y autorizados como fuentes: no se ha
+aplicado ningún cambio vivo. Normal continúa predeterminado; instalar entradas
+en el menú requiere la acción posterior del usuario. Windows/server arrancan
+la VM solo si existen imagen, contraseña y hardware elegible.
 
 
 ## Volumen inicial de audio y micrófono
@@ -209,3 +210,35 @@ El límite del control de Ryoku es independiente del nivel de PipeWire:
 `shell.json` mediante migración única bloqueada y respaldada. Así el deslizador
 qsbar y `ryoku-volume` admiten150%; sin ese indicador las teclas vuelven a100%.
 Las elecciones posteriores del Hub se respetan, sin forzar el toggle cada rebuild.
+
+
+## Windows y modos avanzados: entrega sin despliegue
+
+Informe y procedimiento completo: [2026-10-17-envy-modes](../../../docs/superpowers/reports/2026-10-17-envy-modes.md).
+
+| Entrada | Sesión | MX250 | Windows |
+|---|---|---|---|
+| normal (base) | Ryoku/Intel | PRIME | Render virtual manual |
+| gaming | Gamescope/Steam TTY1 | NVIDIA para juegos | Bloqueado |
+| windows-vfio | Ryoku/Intel | VFIO | Automático condicionado |
+| server | Consola/SSH, sin DM/WM | VFIO | Automático condicionado |
+
+Un solo `envy-windows`, disco en `/var/lib/windows/storage`; Compose declarado en
+`nixos/containers/windows/hosts/envy/`, publicado como referencia inmutable en
+`~/Apps/windows/envy/`. **No lanzar compose directamente**: el controlador aplica
+las guardas y el bloqueo de vida completa. No se ha creado ni descargado una VM.
+
+```sh
+envy-windows status
+envy-windows preflight
+envy-windows start   # manual en normal, prohibido en gaming
+envy-windows stop    # espera apagado limpio; nunca fuerza kill
+journalctl --user -u envy-windows --no-pager
+windows-rdp connect # conserva selector RDP/web y credenciales específicas de Envy
+```
+
+Asignaciones declarativas en `orgm.envy.windows`: memoryMiB=4096, cpus=4,
+diskGiB=96, vramMiB=1024, con rangos validados por Nix. Redimensionar una imagen
+existente no se promete por editar diskGiB. No modificar credenciales existentes
+para ajustar recursos. Los cambios públicos quedan pendientes mientras la VM
+esté activa; se reconcilian en su próximo inicio detenido, sin borrar el disco.

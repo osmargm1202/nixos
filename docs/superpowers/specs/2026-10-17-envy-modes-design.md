@@ -1,7 +1,7 @@
 # Envy: modos internos Windows, gaming y server
 
-Estado: alcance aprobado por el usuario («sí» a preparar sin desplegar, normal
-predeterminado); detalle técnico nuevo pendiente de revisión del plan.
+Estado: diseño y plan aprobados, incluido candidato kernel6.18; implementación
+preparada sin despliegue. Ver informe de construcción y límites de validación.
 Complementa, no borra, `2026-10-15-envy-design.md`.
 
 ## Intención y límites
@@ -13,7 +13,7 @@ credenciales y configuraciones personales intactos. El usuario instala drivers
 Windows y autoriza por separado el primer despliegue/arranque real.
 
 Se conservará el método de ejecución inline con revisión final independiente.
-Este documento y el plan requieren aprobación antes de código de implementación.
+La aprobación precedió la implementación; primer arranque real requiere una acción posterior.
 
 ## Evidencia previa (SSH solo lectura, 2026-10-17)
 

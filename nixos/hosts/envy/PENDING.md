@@ -124,3 +124,25 @@ aquí se documenta la configuración declarada, no una comprobación física en 
 Fuente fijada: `ryoku/hyprland/modules/binds.lua` y
 `ryoku/hyprland/scripts/ryoku-monitor` de la entrada `ryoku` del flake.
 Referencia del proyecto: [comandos Ryoku](https://github.com/Ryoku-dev/ryoku-docs/blob/main/docs/commands.mdx).
+
+
+## ENVY-MODES-001 — Modos preparados, validación física pendiente
+
+Fuentes aprobadas y preparadas: normal predeterminado, gaming, windows-vfio y
+server internos. Candidato kernel6.18/legacy_580; no se ha desplegado ni reiniciado.
+El controlador comprueba aislamiento IOMMU/reset y capacidades render; **no**
+demuestra que Windows, Vulkan/EGL, suspensión o salidas físicas funcionen.
+Procedimiento: `docs/superpowers/reports/2026-10-17-envy-modes.md`.
+
+Conservar ENVY-DISPLAY-001 abierto: primero arrancar normal6.18 y validar lock,
+sleep, HDMI y recorte LG por separado. No culpar ni certificar el nuevo kernel
+sin pruebas físicas. Configurar Windows y probar VFIO en fases posteriores.
+
+## ENVY-CLIPBOARD-001 — Copiar desde SSH de otro host
+
+El usuario no consigue copiar/pegar estando en Envy conectado por SSH a orgm.
+Inspección previa solo lectura: tmux remoto con mouse y set-clipboard habilitados,
+OSC52 y atajos Kitty disponibles; no se ha confirmado una corrección funcional.
+Distinguir selección del terminal (Shift+arrastrar si tmux captura el ratón),
+Ctrl+Shift+C/V y OSC52 de una sincronización automática de portapapeles entre PCs.
+No leer contenidos del portapapeles, buffers de terminal o secretos para probarlo.
