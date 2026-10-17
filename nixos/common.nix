@@ -104,7 +104,8 @@ let
   ];
   desktopUserPackages =
     lib.optionals (hasProgram "nextcloud") [ pkgs.nextcloud-client ]
-    ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing pkgs.syncthingtray ]
+    ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
+    ++ lib.optionals (hasProgram "syncthing" && profileName != "ryoku") [ pkgs.syncthingtray ]
     ++ lib.optionals (hasProgram "development") developmentPackages
     ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]

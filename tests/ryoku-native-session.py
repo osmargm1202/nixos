@@ -172,6 +172,26 @@ class NativeSession(unittest.TestCase):
             {"command": "syncthingtray --single-instance --wait"},
             {"command": "personal"}, {"command": "new-app"}])
 
+    def test_retired_trays_and_envy_nextcloud_are_removed_once_without_losing_hub_edits(self):
+        before = self.prepare()
+        before["desktop"]["autostart"].append({"command": "personal-app", "future": True})
+        before["desktop"]["appearance"]["rounding"] = 27
+        self.store.write_text(json.dumps(before))
+        self.defaults["required"] = []
+        self.defaults["optional"] = ["firefox"]
+        self.defaults["retired"] = ["tailscale systray --theme light",
+                                    "syncthingtray --single-instance --wait", "nextcloud --background"]
+        (self.seed / "native-session.json").write_text(json.dumps(self.defaults))
+        result = self.prepare()
+        self.assertEqual(result["desktop"]["autostart"], [
+            {"command": "firefox"}, {"command": "personal-app", "future": True}])
+        self.assertEqual(result["desktop"]["appearance"]["rounding"], 27)
+        self.assertEqual(json.loads((self.state / "desktop.before-retired-startup-v1.json").read_text()), before)
+        # A later deliberate Session edit is not overwritten on each activation.
+        result["desktop"]["autostart"].append({"command": "tailscale systray --theme light", "personal": True})
+        self.store.write_text(json.dumps(result))
+        self.assertEqual(self.prepare(), result)
+
     def test_hub_file_lock_prevents_clobbering_concurrent_edits(self):
         self.prepare()
         with (self.config / "ryoku/.desktop.lock").open("a") as lock:

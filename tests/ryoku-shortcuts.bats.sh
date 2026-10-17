@@ -15,6 +15,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/config/orgm-ryoku" "$tmp/state/orgm-ryoku" "$tmp/home" "$tmp/runtime"
 chmod 700 "$tmp/runtime"
+export XDG_RUNTIME_DIR="$tmp/runtime"
 cp -a "$upstream/ryoku/hyprland/." "$tmp/config/hypr/"
 chmod -R u+w "$tmp/config/hypr"
 cp "$ROOT"/dotfiles/config/profiles/ryoku/.config/orgm-ryoku/*.lua "$tmp/config/orgm-ryoku/"
@@ -27,7 +28,7 @@ cp "$tmp/config/orgm-ryoku/keyboard.lua" "$tmp/config/hypr/keyboard.lua"
 # Render the actual supported store through BOTH pinned native providers.
 cp "$ROOT"/dotfiles/config/profiles/ryoku/.config/orgm-ryoku/{desktop-defaults.json,kitty.conf} "$tmp/config/orgm-ryoku/"
 cp "$ROOT/nixos/profiles/ryoku/native-session.py" "$tmp/config/orgm-ryoku/"
-jq '{required:["tailscale systray --theme light","syncthingtray --single-instance --wait"],optional:["firefox"],desktop:.}' \
+jq '{required:[],optional:["firefox"],desktop:.}' \
   "$ROOT/dotfiles/config/profiles/ryoku/.config/orgm-ryoku/native-keybinds.json" > "$tmp/config/orgm-ryoku/native-session.json"
 HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/state" \
   bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
@@ -51,7 +52,7 @@ root = Path(sys.argv[1])
 hypr = (root / "config/hypr/settings.lua").read_text()
 niri = (root / "config/niri/settings.kdl").read_text()
 binds = (root / "config/niri/rebinds.kdl").read_text()
-for command in ("tailscale systray --theme light", "syncthingtray --single-instance --wait", "firefox"):
+for command in ("firefox",):
     assert sum(command in line for line in hypr.splitlines() if "hl.exec_cmd(" in line) == 1, ("Hypr startup", command)
     assert sum(command in line for line in niri.splitlines() if "spawn-sh-at-startup" in line) == 1, ("Niri startup", command)
 assert 'hl.unbind("SUPER + H")' in hypr and 'ryoku-shell stash' in hypr

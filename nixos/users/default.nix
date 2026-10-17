@@ -21,7 +21,7 @@
     autostart = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
-      description = "Personal commands seeded into Ryoku Hub Session; mandatory integration trays are separate.";
+      description = "Personal commands seeded into Ryoku Hub Session; background services are independent.";
     };
 
     flatpakPackages = lib.mkOption {

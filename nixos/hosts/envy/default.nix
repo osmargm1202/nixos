@@ -1,8 +1,8 @@
 { config, lib, pkgs, userName, ... }:
 {
   imports = [ ./recovery.nix ./audio.nix ./options.nix ./gpu.nix ./modes.nix ./windows.nix ];
-  # Envy modes share this reviewed kernel candidate; no Lenovo hardware policy.
-  boot.kernelPackages = pkgs.linuxPackages_6_18;
+  # Keep the user-selected 6.12 LTS across modes; render preflight guards newer requirements.
+  boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.initrd.kernelModules = [ "i915" ];
   boot.loader.systemd-boot.configurationLimit = 3;
   boot.loader.timeout = lib.mkForce 1;

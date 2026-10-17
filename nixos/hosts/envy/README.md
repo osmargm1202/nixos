@@ -10,9 +10,13 @@ normal (base), gaming, windows-vfio y server; **todavía no desplegados**.
 Normal conserva Steam, emuladores y Sunshine. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
-Candidato construido: kernel 6.18 LTS, NVIDIA propietario `legacy_580`, Intel para escritorio y
+Kernel seleccionado por el usuario: 6.12 LTS actualizado, NVIDIA propietario
+`legacy_580`, Intel para escritorio y
 `nvidia-offload programa` para GPU discreta. No se promete apagado completo de
 la MX250: Pascal no admite el ahorro RTD3 fino de generaciones posteriores.
+La rama de modos evaluó 6.18 como candidato, pero se conserva la elección de
+6.12 LTS. El render NVIDIA de Windows requiere kernel >=6.16; su preflight
+rechaza iniciarlo en 6.12. No se cambia el kernel ni se omite ese control.
 
 SSD principal serial `PHTE9395032P512B-1`: EFI de 1 GiB y Btrfs `ENVY_ROOT`
 con subvolúmenes `@root`, `@home`, `@nix`, `@log`, `@windows`. El último queda
@@ -77,7 +81,8 @@ Repositorio completo en `/home/osmarg/Hobby/nixos`; reconstruir con
 Si el usuario mueve el repo o publica cambios, conservar sus modificaciones
 preexistentes; no dar por hecho que todo está ya enviado al remoto.
 
-Nextcloud, Tailscale, cuentas y secretos SOPS necesitan sus identidades/login;
+Envy usa Online Accounts/GVfs en lugar del cliente de sincronización Nextcloud.
+Tailscale, Syncthing, cuentas y secretos SOPS necesitan sus identidades/login;
 no copiar claves privadas indiscriminadamente. Una integración pendiente no
 debe confundirse con un fallo de Wi-Fi o de los controladores del hardware.
 

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  profileName ? null,
   ...
 }:
 {
@@ -34,7 +35,7 @@
     partOf = [ "graphical-session.target" ];
     path = [ pkgs.xdg-utils ];
     serviceConfig = {
-      ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --automount --notify --tray";
+      ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --automount --notify${lib.optionalString (profileName != "ryoku") " --tray"}";
       Restart = "on-failure";
       RestartSec = 3;
     };

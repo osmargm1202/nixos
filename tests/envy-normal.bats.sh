@@ -26,7 +26,8 @@ nix eval --impure --raw --expr '
     (c.networking.hostName == "envy" && c.users.users.osmarg.uid == 1000
       && c.home-manager.users.osmarg.home.homeDirectory == "/home/osmarg"
       && builtins.elem "shell" c.orgm.user.programs
-      && builtins.elem "nextcloud" c.orgm.user.programs);
+      && !(builtins.elem "nextcloud" c.orgm.user.programs)
+      && c.services.gnome.gnome-online-accounts.enable);
   assert check "normal stays default with no host GPU reservation"
     (builtins.attrNames c.specialisation == [ "gaming" "server" "windows-vfio" ]
       && c.environment.etc."orgm/desktop-profile".text == "normal\n"

@@ -108,6 +108,33 @@ def migrate_audio_boost(config, state):
         atomic_json(marker, {"audioBoost": enabled})
 
 
+def migrate_retired_startup(config, state):
+    source = config / "orgm-ryoku/native-session.json"
+    path = config / "ryoku/desktop.json"
+    if not source.exists() or not path.exists():
+        return
+    retired = json.loads(source.read_text()).get("retired", [])
+    if not retired:
+        return
+    marker = state / "retired-startup-v1.applied.json"
+    previous = set(json.loads(marker.read_text())) if marker.exists() else set()
+    additions = set(retired) - previous
+    if additions:
+        original = path.read_text()
+        store = json.loads(original)
+        desktop = store.get("desktop", {})
+        startup = desktop.get("autostart", [])
+        kept = [row for row in startup if row.get("command") not in additions]
+        if kept != startup:
+            backup = state / "desktop.before-retired-startup-v1.json"
+            if not backup.exists():
+                atomic_text(backup, original)
+            desktop["autostart"] = kept
+            atomic_json(path, store)
+    if set(retired) != previous:
+        atomic_json(marker, retired)
+
+
 def migrate(config, state):
     source = config / "orgm-ryoku/native-session.json"
     if not source.exists():
@@ -218,6 +245,7 @@ if __name__ == "__main__":
     # The Hub uses this same advisory lock for read-modify-write saves.
     with (config / "ryoku/.desktop.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        migrate_retired_startup(config, state)
         migrate(config, state)
         migrate_window_defaults(config, state)
     migrate_audio_boost(config, state)

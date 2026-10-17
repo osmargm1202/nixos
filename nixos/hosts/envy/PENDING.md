@@ -129,12 +129,14 @@ Referencia del proyecto: [comandos Ryoku](https://github.com/Ryoku-dev/ryoku-doc
 ## ENVY-MODES-001 — Modos preparados, validación física pendiente
 
 Fuentes aprobadas y preparadas: normal predeterminado, gaming, windows-vfio y
-server internos. Candidato kernel6.18/legacy_580; no se ha desplegado ni reiniciado.
+server internos. La rama evaluó kernel6.18/legacy_580; al integrar se conserva
+6.12 LTS por elección del usuario. No se ha desplegado ni reiniciado.
+El render NVIDIA de Windows exige kernel >=6.16 y queda bloqueado en 6.12.
 El controlador comprueba aislamiento IOMMU/reset y capacidades render; **no**
 demuestra que Windows, Vulkan/EGL, suspensión o salidas físicas funcionen.
 Procedimiento: `docs/superpowers/reports/2026-10-17-envy-modes.md`.
 
-Conservar ENVY-DISPLAY-001 abierto: primero arrancar normal6.18 y validar lock,
+Conservar ENVY-DISPLAY-001 abierto: primero arrancar normal con el kernel seleccionado y validar lock,
 sleep, HDMI y recorte LG por separado. No culpar ni certificar el nuevo kernel
 sin pruebas físicas. Configurar Windows y probar VFIO en fases posteriores.
 

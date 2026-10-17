@@ -29,7 +29,7 @@ assert sorted(v["modes"])==["gaming","server","windows-vfio"], "missing Envy int
 assert sorted(v["hosts"])==["envy","ero","jarq","lenovo","orgm"]
 for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert not c["assertionFailures"],(name,c["assertionFailures"])
- assert c["timeout"]==1 and c["kernel"].startswith("6.18.") and c["driver"].startswith("580."),name
+ assert c["timeout"]==1 and c["kernel"].startswith("6.12.") and c["driver"].startswith("580."),name
  assert "i915" in c["initrd"] and c["ssh"] and c["network"] and c["tailscale"],name
  assert "video=eDP-1:d" not in c["params"],name
  assert not any("acs_override" in p or "unsafe_interrupts" in p or "10de:1fbb" in p for p in c["params"]),name

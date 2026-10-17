@@ -4,12 +4,36 @@ let
   userAutostart = config.orgm.user.autostart;
   hasProgram = name: builtins.elem name config.orgm.user.programs;
   nativeSession = {
-    required = lib.optional (hasProgram "tailscale") "tailscale systray --theme light"
-      ++ lib.optional (hasProgram "syncthing") "syncthingtray --single-instance --wait";
+    required = [];
+    # Explicit retirement happens once; later Session edits remain user-owned.
+    retired = [ "tailscale systray --theme light" "tailscale systray"
+      "syncthingtray --single-instance --wait" "syncthingtray"
+      "blueman-applet" "nm-applet" "nm-applet --indicator" "print-applet" ]
+      ++ lib.optional (!hasProgram "nextcloud") "nextcloud --background";
     optional = userAutostart;
     desktop = builtins.fromJSON (builtins.readFile
       ../../../dotfiles/config/profiles/ryoku/.config/orgm-ryoku/native-keybinds.json);
   };
+  maskedAutostart = [
+    "tailscale-systray.desktop" "syncthingtray.desktop" "blueman.desktop"
+    "nm-applet.desktop" "print-applet.desktop"
+    "Nextcloud.desktop" "com.nextcloud.desktopclient.nextcloud.desktop"
+  ];
+  legacySyncthingUnits = [
+    ".config/systemd/user/default.target.wants/syncthing.service"
+    ".config/systemd/user/syncthing.service"
+  ];
+  unitCleanupManifest = pkgs.writeText "ryoku-syncthing-unit-cleanup.json" (builtins.toJSON {
+    packageUnits = legacySyncthingUnits;
+  });
+  cleanupManifest = pkgs.writeText "ryoku-desktop-cleanup.json" (builtins.toJSON {
+    autostart = maskedAutostart;
+    packageUnits = legacySyncthingUnits;
+    files = [ {
+      target = ".local/share/nautilus/scripts/Set as Hyprland Wallpaper";
+      sources = [ "${../../../dotfiles/config/profiles/hyprland/.local/share/nautilus/scripts}/Set as Hyprland Wallpaper" ];
+    } ];
+  });
   providerCompat = import ./provider-compat.nix { inherit inputs pkgs lib; };
   ryokuPackages = providerCompat.packages;
   materializer = ryokuPackages.ryoku-materialize;
@@ -81,6 +105,35 @@ in {
         updateFlake = "/home/${userName}/Hobby/nixos";
         updateInput = "ryoku";
       };
+      # The selected sync backend also survives console/server specialisations.
+      home-manager.users.${userName} = { lib, ... }: {
+        # Keep the daemon independent of the tray, with native state discovery.
+        # No generated folders, credentials, GUI address or peer overrides.
+        systemd.user.services.syncthing = lib.mkIf (hasProgram "syncthing") {
+          Unit = {
+            Description = "Syncthing background synchronization";
+            StartLimitIntervalSec = 60;
+            StartLimitBurst = 4;
+          };
+          Service = {
+            ExecStart = "${pkgs.syncthing}/bin/syncthing serve --no-browser --no-restart";
+            Restart = "on-failure";
+            RestartSec = 1;
+            SuccessExitStatus = [ 3 4 ];
+            RestartForceExitStatus = [ 3 4 ];
+            MemoryDenyWriteExecute = true;
+            NoNewPrivileges = true;
+            SystemCallArchitectures = "native";
+          };
+          Install.WantedBy = [ "default.target" ];
+        };
+        home.activation.ryokuSyncthingUnitCleanup = lib.mkIf (hasProgram "syncthing") (
+          lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+            $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./cleanup.py} "$HOME" \
+              "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku" ${unitCleanupManifest}
+          ''
+        );
+      };
       # Console boot modes retain Flatpak support while the Ryoku module is off.
       xdg.portal = {
         enable = lib.mkDefault true;
@@ -104,6 +157,9 @@ in {
       services.displayManager.autoLogin.enable = lib.mkForce false;
       # Hub owns enrollment and the lockscreen fingerprint preference.
       services.fprintd.enable = true;
+      # Ryoku owns Bluetooth and Wi-Fi UI; their system backends stay enabled.
+      services.blueman.enable = lib.mkForce false;
+      programs.nm-applet.enable = lib.mkForce false;
       security.pam.services.sddm.enableGnomeKeyring = true;
       security.pam.services.login.enableGnomeKeyring = true;
       # The upstream drop-in otherwise overrides Lenovo's hardware lid policy.
@@ -111,9 +167,9 @@ in {
       environment.localBinInPath = true;
       environment.systemPackages = with pkgs; [
         folderIcons pkgs.fprintd
-        rofi rofi-calc rofimoji grim slurp swappy playerctl xdg-utils
+        rofi rofimoji
         nautilus gnome-text-editor evince loupe file-roller
-        gnome-online-accounts-gtk pavucontrol wl-screenrec ffmpeg libqalculate woomer
+        gnome-online-accounts-gtk libqalculate woomer
       ];
       xdg.mime.defaultApplications."inode/directory" = "org.gnome.Nautilus.desktop";
       services.gnome.gnome-online-accounts.enable = true;
@@ -132,25 +188,24 @@ in {
       systemd.user.services.ryoku-shell.path = lib.mkBefore [ folderIcons pkgs.fprintd ];
 
       home-manager.users.${userName} = { config, lib, ... }: {
-        # Ryoku alone launches the Nextcloud client from the user's Session
-        # selection. Mask the package/setup-created XDG entry in this profile,
-        # without touching the account config or other desktops' launcher.
-        xdg.configFile."autostart/com.nextcloud.desktopclient.nextcloud.desktop" = lib.mkIf (hasProgram "nextcloud") {
-          force = true;
-          text = "[Desktop Entry]\nType=Application\nName=Nextcloud\nHidden=true\n";
+        # XDG entries otherwise launch duplicate UI outside Hub's Session list.
+        imports = [ {
+          xdg.configFile = lib.genAttrs (map (name: "autostart/${name}") maskedAutostart) (path: {
+            force = true;
+            text = "[Desktop Entry]\nType=Application\nName=${builtins.baseNameOf path}\nHidden=true\n";
+          });
+        } ];
+        home.activation.ryokuDesktopCleanup = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+          $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./cleanup.py} "$HOME" \
+            "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku" ${cleanupManifest}
+        '';
+        xdg.configFile."orgm-ryoku/cleanup-manifest.json".source = cleanupManifest;
+        services.blueman-applet.enable = lib.mkForce false;
+        services.network-manager-applet.enable = lib.mkForce false;
+        xdg.configFile."orgm-ryoku/native-session.json" = {
+          force = true; # Generated migration metadata, not the user's Hub store.
+          text = builtins.toJSON nativeSession;
         };
-        home.activation.ryokuNextcloudAutostartBackup = lib.mkIf (hasProgram "nextcloud") (
-          lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-            entry="''${XDG_CONFIG_HOME:-$HOME/.config}/autostart/com.nextcloud.desktopclient.nextcloud.desktop"
-            state="''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-ryoku"
-            backup="$state/nextcloud-autostart.before-native-session-v1.desktop"
-            if [ -e "$entry" ] && [ ! -e "$backup" ]; then
-              $DRY_RUN_CMD mkdir -p "$state"
-              $DRY_RUN_CMD cp --dereference --preserve=mode,timestamps "$entry" "$backup"
-            fi
-          ''
-        );
-        xdg.configFile."orgm-ryoku/native-session.json".text = builtins.toJSON nativeSession;
         xdg.configFile."orgm-ryoku/native-session.py".source = ./native-session.py;
         services.dunst.enable = lib.mkForce false;
         services.mako.enable = lib.mkForce false;

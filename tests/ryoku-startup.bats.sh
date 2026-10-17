@@ -7,24 +7,38 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
   let
     f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO");
     describe = c: let h = c.home-manager.users.osmarg; in {
-      session = builtins.fromJSON (h.xdg.configFile."orgm-ryoku/native-session.json".text or "{}");
-      nextcloudMask = h.xdg.configFile."autostart/com.nextcloud.desktopclient.nextcloud.desktop".text or "";
-      sunshineAuto = c.services.sunshine.autoStart;
-      nextcloudBackup = h.home.activation.ryokuNextcloudAutostartBackup.data or "";
+      session = builtins.fromJSON h.xdg.configFile."orgm-ryoku/native-session.json".text;
+      programs = c.orgm.user.programs;
+      packages = map (p: p.pname or (builtins.parseDrvName p.name).name)
+        (h.home.packages ++ c.environment.systemPackages);
+      masks = map (name: h.xdg.configFile."autostart/${name}".text) [
+        "tailscale-systray.desktop" "syncthingtray.desktop" "blueman.desktop"
+        "nm-applet.desktop" "print-applet.desktop" "Nextcloud.desktop"
+        "com.nextcloud.desktopclient.nextcloud.desktop"
+      ];
+      tailscale = c.services.tailscale.enable;
+      syncthing = builtins.toString (h.systemd.user.services.syncthing.Service.ExecStart or "");
+      blueman = c.services.blueman.enable;
+      nmApplet = c.programs.nm-applet.enable;
+      bluetooth = c.hardware.bluetooth.enable;
+      network = c.networking.networkmanager.enable;
+      onlineAccounts = c.services.gnome.gnome-online-accounts.enable;
+      gvfs = c.services.gvfs.enable;
+      printing = c.services.printing.enable;
+      automount = builtins.toString c.systemd.user.services.udiskie.serviceConfig.ExecStart;
+      helpers = builtins.filter (name: f.inputs.nixpkgs.lib.hasPrefix ".local/bin/hypr-" name)
+        (builtins.attrNames h.home.file);
+      oldWallpaperInstaller = h.home.activation ? installHyprlandNautilusScript;
     };
     userEmpty = f.nixosConfigurations.envy.extendModules { modules = [
       ({ lib, ... }: { orgm.user.autostart = lib.mkForce []; })
-    ]; };
-    withoutTrays = f.nixosConfigurations.envy.extendModules { modules = [
-      ({ lib, ... }: { orgm.user.programs = lib.mkForce (builtins.filter
-        (name: !builtins.elem name [ "tailscale" "syncthing" ])
-        f.nixosConfigurations.envy.config.orgm.user.programs); })
     ]; };
   in {
     hosts = builtins.mapAttrs (_: s: describe s.config)
       { inherit (f.nixosConfigurations) envy lenovo orgm; };
     empty = describe userEmpty.config;
-    deselectedTrays = describe withoutTrays.config;
+    serverSyncthing = builtins.toString (f.nixosConfigurations.lenovo.config.specialisation.server.configuration
+      .home-manager.users.osmarg.systemd.user.services.syncthing.Service.ExecStart or "");
     serverHasSeed = f.nixosConfigurations.lenovo.config.specialisation.server.configuration
       .home-manager.users.osmarg.xdg.configFile ? "orgm-ryoku/native-session.json";
   }
@@ -32,38 +46,31 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
 python3 - "$inventory" <<'CHECK'
 import json
 import sys
-import os
-from pathlib import Path
-import subprocess
-import tempfile
 x = json.load(open(sys.argv[1]))
 for host, c in x["hosts"].items():
     s = c["session"]
-    assert s.get("required") == ["tailscale systray --theme light", "syncthingtray --single-instance --wait"], (host, s)
-    assert "nextcloud --background" in s["optional"] and "kdeconnect-indicator" in s["optional"], host
-    assert "firefox" in s["optional"], host
+    assert s["required"] == [], (host, s)
+    assert "tailscale systray --theme light" in s["retired"]
+    assert "syncthingtray --single-instance --wait" in s["retired"]
+    assert "kdeconnect-indicator" in s["optional"] and "firefox" in s["optional"], host
     assert not any("sunshine" in row for row in s["optional"]), host
-    assert "Hidden=true" in c["nextcloudMask"], (host, c["nextcloudMask"])
-assert x["empty"]["session"]["optional"] == [], x["empty"]
-assert x["empty"]["session"]["required"] == ["tailscale systray --theme light", "syncthingtray --single-instance --wait"]
-assert x["deselectedTrays"]["session"]["required"] == []
+    assert all("Hidden=true" in text for text in c["masks"]), host
+    assert c["tailscale"] and "syncthing serve --no-browser --no-restart" in c["syncthing"], host
+    assert c["bluetooth"] and c["network"] and not c["blueman"] and not c["nmApplet"], host
+    assert c["onlineAccounts"] and c["gvfs"] and c["printing"], host
+    assert "--automount" in c["automount"] and "--tray" not in c["automount"], host
+    assert "syncthingtray" not in c["packages"] and "syncthingtray-minimal" not in c["packages"], host
+    assert not c["oldWallpaperInstaller"], host
+    assert set(c["helpers"]) == {".local/bin/" + name for name in (
+        "hypr-obsidian-open-or-focus", "hypr-pi-prompt", "hypr-rofi-ssh-host",
+        "hypr-rofi-lib", "hypr-video-timer")}, (host, c["helpers"])
+    nextcloud = host != "envy"
+    assert ("nextcloud" in c["programs"]) == nextcloud, host
+    assert ("nextcloud-client" in c["packages"]) == nextcloud, host
+    assert ("nextcloud --background" in s["optional"]) == nextcloud, host
+assert x["empty"]["session"]["optional"] == []
+assert x["empty"]["session"]["required"] == []
 assert not x["serverHasSeed"]
-with tempfile.TemporaryDirectory() as home:
-    config = Path(home) / ".config"
-    entry = config / "autostart/com.nextcloud.desktopclient.nextcloud.desktop"
-    entry.parent.mkdir(parents=True)
-    entry.write_text("personal Nextcloud autostart bytes\n")
-    env = dict(os.environ, HOME=home, XDG_CONFIG_HOME=str(config),
-               XDG_STATE_HOME=home + "/.local/state", DRY_RUN_CMD="")
-    script = x["hosts"]["envy"]["nextcloudBackup"]
-    subprocess.run(["bash", "-euc", script], env=env, check=True)
-    backup = Path(home) / ".local/state/orgm-ryoku/nextcloud-autostart.before-native-session-v1.desktop"
-    assert backup.exists(), "Ryoku must preserve the replaced XDG entry"
-    assert backup.read_text() == "personal Nextcloud autostart bytes\n"
-    entry.write_text("generation mask\n")
-    subprocess.run(["bash", "-euc", script], env=env, check=True)
-    assert backup.read_text() == "personal Nextcloud autostart bytes\n"
-
-print("PASS: user-selected native startup, mandatory trays, Nextcloud mask and console isolation")
+assert "syncthing serve --no-browser --no-restart" in x["serverSyncthing"]
+print("PASS: Ryoku removes duplicate UI, keeps backends/shortcuts, and excludes Nextcloud only on Envy")
 CHECK
-python3 "$ROOT/tests/ryoku-native-session.py"

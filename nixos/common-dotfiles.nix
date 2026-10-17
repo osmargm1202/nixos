@@ -235,7 +235,7 @@ in
           "orgm-ryoku/seed.py".source = ./profiles/ryoku/seed.py;
           "orgm-ryoku/seed-manifest.json".text = builtins.toJSON seedRecords;
         })
-        (lib.optionalAttrs (programEnabled "tailscale") {
+        (lib.optionalAttrs (programEnabled "tailscale" && !ryokuEnabled) {
           # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
           # and Labwc start the same command explicitly.
           "autostart/tailscale-systray.desktop".text = ''
@@ -249,7 +249,7 @@ in
             OnlyShowIn=GNOME;X-Cinnamon;
           '';
         })
-        (lib.optionalAttrs (programEnabled "syncthing") {
+        (lib.optionalAttrs (programEnabled "syncthing" && !ryokuEnabled) {
           # The setup wizard can create this file before Home Manager owns it.
           # Replace only the autostart entry, not the user's syncthingtray.ini.
           "autostart/syncthingtray.desktop" = {

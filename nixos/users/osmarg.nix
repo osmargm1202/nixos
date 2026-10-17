@@ -2,6 +2,7 @@
   lib,
   role,
   userName,
+  hostName ? "",
   ...
 }:
 {
@@ -18,7 +19,6 @@
       "neovim"
       "development"
       "personal-development"
-      "nextcloud"
       "syncthing"
       "discord"
       "steam"
@@ -36,13 +36,11 @@
       "sops"
       "flatpak"
       "deskflow"
-    ];
+    ] ++ lib.optional (hostName != "envy") "nextcloud";
 
     # Preserve Osmarg's explicit existing startup choices, not host defaults.
-    # Syncthing/Tailscale trays follow their selected integrations; Sunshine is
-    # already owned by its mode-specific autoStart systemd unit.
-    autostart = [
-      "nextcloud --background"
+    # Background services do not need trays. Sunshine already has its own unit.
+    autostart = lib.optional (hostName != "envy") "nextcloud --background" ++ [
       "kdeconnect-indicator"
       "firefox"
       "sh -lc 'command -v discord >/dev/null 2>&1 && exec discord --start-minimized || true'"

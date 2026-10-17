@@ -107,32 +107,35 @@ Las aplicaciones se ven y editan en **Hub → Session → Autostart**; el mismo
 `~/.config/ryoku/desktop.json` se materializa para Hyprland y Niri. No queda un
 segundo bloque de arranque en `hypr/user.lua`.
 
-`orgm.user.autostart` es una lista de comandos por usuario, vacía por defecto;
-puede declararse explícitamente por host/usuario. Osmarg conserva sus opciones
-anteriores de Nextcloud, indicador KDEConnect, Firefox, Discord y Steam desde
-`nixos/users/osmarg.nix`, no como política del host. Las bandejas de Tailscale y
-Syncthing se añaden mientras sus integraciones estén seleccionadas; sus servicios
-siguen independientes. Sunshine mantiene exclusivamente su unidad `autoStart`.
-KDEConnect daemon e indicador no son el mismo proceso.
+`orgm.user.autostart` es una lista de comandos opcionales por usuario. Las
+bandejas de Tailscale y Syncthing ya no son obligatorias ni se instalan como
+arranque XDG en Ryoku. Tailscale conserva su daemon del sistema; Syncthing tiene
+una unidad de usuario independiente, con descubrimiento nativo de su estado y
+sin imponer carpetas, pares, credenciales o dirección del panel web.
 
-La migración `native-session-v1` funciona aunque ya exista
-`desktop-defaults.seeded`: guarda una copia de bytes en
-`~/.local/state/orgm-ryoku/desktop.before-native-session-v1.json` y modifica solo
-las claves soportadas de sesión/atajos, usando el lock del Hub y escrituras
-atómicas. Conserva otros datos, metadatos y preferencias explícitas, incluida una
-lista opcional vacía; elimina únicamente comandos exactamente duplicados.
-La máscara de la entrada XDG de Nextcloud evita el doble arranque solo en Ryoku,
-conservando antes su contenido en
-`nextcloud-autostart.before-native-session-v1.desktop`; otras sesiones no cambian.
-No se toca configuración de cuentas ni credenciales.
+Nextcloud se excluye de Envy: Online Accounts y GVfs proporcionan acceso remoto
+desde Nautilus. Los otros hosts conservan su selección de Nextcloud. No se
+eliminan cuentas, credenciales, bases de Syncthing ni carpetas sincronizadas.
+Las aplicaciones opcionales de Osmarg conservan sus preferencias anteriores;
+una lista vacía elegida desde Hub → Session sigue vacía después de reconstruir.
 
-Las ediciones posteriores del Hub persisten (salvo las dos bandejas requeridas).
-Nuevas selecciones declarativas se añaden; se retiran solo filas antiguas que la
-migración había añadido y siguen sin editar. Borrar una app opcional desde el Hub
-no la resucita en cada rebuild. Si ya había una lista de autoinicio del Hub, se
-respeta como selección explícita y no se agregan las apps opcionales iniciales.
-El registro `native-session-v1.applied.json` permite esta reconciliación sin
-reemplazar arrays enteros ni confundir preferencias con servicios.
+La limpieza de inicio retira una sola vez los comandos de bandejas y el cliente
+Nextcloud deseleccionado del store nativo, conservando una copia en
+`~/.local/state/orgm-ryoku/desktop.before-retired-startup-v1.json`. Los cambios
+posteriores del Hub, incluso reañadir manualmente una aplicación, se conservan.
+`native-session-v1.applied.json` mantiene la reconciliación de atajos y nuevas
+selecciones sin reemplazar arrays enteros.
+
+Las entradas XDG de Blueman, nm-applet y el applet de impresión quedan ocultas;
+Bluetooth, NetworkManager y CUPS siguen habilitados. Udiskie conserva montaje
+automático y avisos sin su bandeja. KDEConnect conserva su daemon: no equivale
+a un indicador de bandeja ni a los controles Bluetooth de Ryoku.
+
+`cleanup.py` archiva las entradas de arranque que se sustituyen y retira el viejo
+script «Set as Hyprland Wallpaper» solamente si coincide con la copia del repo.
+Los enlaces manuales al servicio empaquetado de Syncthing se retiran antes de
+instalar la unidad declarada. Los archivos modificados y unidades personales se
+conservan. Las copias quedan en `~/.local/state/orgm-ryoku/desktop-cleanup-v1/`.
 
 `Print` y `Alt+Print` abren Ryoshot; `Ctrl+Print` captura el monitor con Ryoshot.
 `Win+Print` alterna la grabación nativa y `Win+Shift+Print` abre el panel de
@@ -301,7 +304,7 @@ mediante imports y archivos de usuario, no mediante una segunda GUI inventada.
 | `~/.config/orgm-ryoku/*.lua`, `rofi.rasi` | Módulos personales editables; sus cambios no se relinkean al Store |
 | `hypr/user.lua`, `ryoku/user_edits/hypr/modules/rebind.lua`, hook Matugen, `kitty/user.conf` | Overrides nativos iniciales; las ediciones posteriores ganan |
 | `~/.config/orgm-shell/` | Bibliotecas importables de código (OMP, Nix, SSH, tmux, completions y helpers); actualizables desde el repo |
-| Stores `desktop.json`, `shell.json` | Hub; se conservan preferencias salvo las bandejas de inicio requeridas |
+| Stores `desktop.json`, `shell.json` | Hub; preferencias conservadas después de las migraciones puntuales |
 | Recursos base Bash de Ryoku y entorno, Quickshell/proveedores | Runtime de la versión fijada, actualizable |
 | `native-window-widths.lua`, hints de propiedad de atajos | Derivados del store vigente; editar la fuente del Hub, no estos artefactos |
 
