@@ -32,7 +32,8 @@ ejecuta switch, reboot, VM, descarga de imagen o transición GPU en vivo.
 
 ## Evidencia y límites
 
-Las pruebas y construcciones finales se anotan al cerrar la revisión. Las pruebas
+Las construcciones completas de los cuatro modos y el paquete NVIDIA580/kernel6.18
+pasaron con `--no-link`; ver resultados finales más abajo. Las pruebas
 usan sysfs/montajes/motor/credenciales **sintéticos**, con procesos reales aislados;
 no son prueba física de la MX250. Validadores reales Docker Compose y Podman
 Compose procesan ambos overlays con contraseña de fixture, sin descargar/ejecutar
@@ -121,7 +122,8 @@ Superar el preflight no sustituye prueba real de Windows/driver/display.
 `envy-windows stop` pide apagado limpio y espera salida real; no mata por timeout.
 Si Windows no apaga, diagnosticar guest/ACPI/servicio con el usuario; el host puede
 esperar indefinidamente al apagar. No `kill -9`, `rm -f` ni borrar volúmenes.
-No hay política automática de matar el huésped al llegar a dos minutos.
+A los dos minutos se avisa sin matar el huésped. Un fallo transitorio al pedir
+el apagado se reintenta con backoff acotado (hasta15segundos), sin perder el lock.
 
 Rebuild preserva la VM activa y su supervisor anterior (restartIfChanged=false,
 stopIfChanged=false). `envy-windows status` marca pending si cambió generación.
@@ -129,3 +131,61 @@ Detener limpiamente y volver a iniciar aplica el runtime nuevo sobre el mismo
 disco; para cambiar ownership GPU es obligatorio reiniciar al modo correspondiente.
 Optane27GiB, swap, modos alternativos de escritorio y clipboards entre PCs quedan
 fuera del alcance; ver `nixos/hosts/envy/PENDING.md`.
+
+
+## Revisión independiente y correcciones
+
+Una revisión fresca de toda la rama señaló seis problemas importantes; corregidos
+con pruebas RED→GREEN: parada de huéspedes huérfanos, esquema de metadata y
+conservación del lock, readiness/exit verídicos, mounts de disco solapados,
+reintentos de parada transitoria y comprobación NoCoW de las imágenes existentes
+(no solo del directorio). La opción VRAM se restringió a256/512/1024/2048/4096MiB:
+aceptar valores que el renderer rechaza se revaloró como importante, no cosmético.
+
+La CLI generada se prueba como artefacto Nix, sustituyendo únicamente systemctl
+por un doble y el manifest por fixtures aislados. La recuperación de stop usa el
+mismo lock, verifica propiedad y salida real; no basta un servicio inactivo.
+RuntimeDirectoryPreserve evita perder el inode del lock por limpieza del servicio.
+Un fallo al notificar READY no deja un guest vivo sin monitor. No hubo re-revisión:
+las correcciones se verifican con regresiones y la suite completa enfocada.
+
+**Minor diferido:** un CDI/archivo de módulo ausente todavía puede producir un
+mensaje genérico de prerrequisito en vez de identificar el servicio exacto. Se
+rechaza el inicio de forma segura; mejorar diagnóstico no requiere relajar guardas.
+
+**Baseline conocido:** `tests/envy-monitors.bats.sh` todavía espera el antiguo
+archivo HM persistente, reemplazado por semillas Ryoku antes de esta rama. El
+mismo fallo exacto se reprodujo en a1b95aa desde un archivo limpio; no se cuenta
+como PASS ni como regresión de modos. Se conserva ese test histórico sin cambiar
+la política de monitores. Las pruebas de semillas/native/provider/DPMS sí pasan.
+La primera falta de `lua` en PATH se resolvió ejecutando la suite con lua5_4 del
+nixpkgs fijado; no era un defecto de audio ni se cambió su configuración.
+
+## Decisiones de cierre
+
+- No probar físicamente GPU/reset/display/sleep: se conserva el límite autorizado;
+  riesgo pendiente de incompatibilidades en el primer boot supervisado.
+- No instalar guest/drivers ni probar RDP real: provisión posterior del usuario;
+  riesgo pendiente de compatibilidad dentro de Windows.
+- Atribuir audio y test histórico de monitores mediante evidencia independiente,
+  no ocultar el fallo conocido; cobertura antigua de monitores aún requiere adaptar
+  su propietario esperado en una tarea posterior.
+
+
+## Resultado verificado
+
+- 28 grupos de pruebas PASS, 0 fallos nuevos; 1 fallo histórico de monitores
+  reproducido y contabilizado aparte (no PASS).
+- 47 pruebas runtime/almacenamiento y5 de CLI Nix generada PASS, incluidas las
+  reproducciones RED→GREEN de la revisión y exclusión por lock durante recuperación.
+- Base y las3especializaciones construidas completas con `--no-link`, además del
+  driver NVIDIA580 con el kernel6.18 seleccionado. Assertions Nix de los modos PASS.
+- Flake.lock sin cambios; ningún switch/test/boot/reboot ni guest/image pull/run.
+- El checkpoint del plan a1b95aa se publicó primero. La implementación queda en
+  `feat/envy-modes`; el checkout principal/master se conserva para el trabajo
+  paralelo del usuario. **Merge y primer despliegue quedan pendientes de elección**.
+
+Para integrar después, con cambios locales preservados y la rama revisada:
+`git fetch origin`, revisar `git log --oneline master..origin/feat/envy-modes` y
+acordar merge. No ejecutar `nh os switch` esperando estos modos si el checkout
+todavía contiene solo el checkpoint de planificación.

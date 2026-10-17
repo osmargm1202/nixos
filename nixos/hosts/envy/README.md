@@ -238,7 +238,7 @@ windows-rdp connect # conserva selector RDP/web y credenciales específicas de E
 ```
 
 Asignaciones declarativas en `orgm.envy.windows`: memoryMiB=4096, cpus=4,
-diskGiB=96, vramMiB=1024, con rangos validados por Nix. Redimensionar una imagen
+diskGiB=96, vramMiB=1024, con rangos validados por Nix (VRAM potencia de dos). Redimensionar una imagen
 existente no se promete por editar diskGiB. No modificar credenciales existentes
 para ajustar recursos. Los cambios públicos quedan pendientes mientras la VM
 esté activa; se reconcilian en su próximo inicio detenido, sin borrar el disco.
