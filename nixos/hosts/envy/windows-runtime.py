@@ -1,5 +1,6 @@
 """Envy-only Windows lifecycle. No root privileges, implicit pulls or live GPU rebinding."""
 import argparse
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
@@ -126,7 +127,10 @@ class Controller:
             raise Refused("unsupported Envy PCI identity")
 
     def command(self, name, *args, allowed=(0,), env=None, cwd=None):
-        result = subprocess.run([self.m["commands"][name], *args], env=env, cwd=cwd, capture_output=True, text=True)
+        try:
+            result = subprocess.run([self.m["commands"][name], *args], env=env, cwd=cwd, capture_output=True, text=True)
+        except OSError:
+            raise Refused(name + " invocation unavailable; retaining conservative ownership") from None
         if result.returncode not in allowed:
             raise Refused(name + " operation failed (exit " + str(result.returncode) + "); no provisioning attempted")
         return result
@@ -139,11 +143,17 @@ class Controller:
         template = '{"Id":{{json .Id}},"State":{{json .State}},"Config":{"Labels":{{json .Config.Labels}}},"Mounts":{{json .Mounts}}}'
         try:
             value = json.loads(self.command("podman", "inspect", "--format", template, name).stdout)
-            if (not isinstance(value, dict) or type(value.get("State", {}).get("Running")) is not bool
+            if (not isinstance(value, dict) or not isinstance(value.get("Id"), str) or not value["Id"]
+                or type(value.get("State", {}).get("Running")) is not bool
+                or type(value["State"].get("ExitCode", 0)) is not int
                 or not isinstance(value.get("Config"), dict)
                 or not isinstance(value["Config"].get("Labels") or {}, dict)
                 or not isinstance(value.get("Mounts"), list)
-                or not all(isinstance(row, dict) for row in value["Mounts"])):
+                or not all(isinstance(row, dict)
+                    and isinstance(row.get("Destination"), str) and row["Destination"].startswith("/")
+                    and isinstance(row.get("Source"), str)
+                    and (row["Source"].startswith("/") or (row.get("Type") == "tmpfs" and row["Source"] == ""))
+                    for row in value["Mounts"])):
                 raise ValueError()
         except (ValueError, AttributeError, TypeError):
             raise Refused("cannot determine container state; refusing to guess") from None
@@ -179,6 +189,11 @@ class Controller:
         attrs = self.command("lsattr", "-d", "--", str(Path(self.m["storageRoot"]) / "storage")).stdout.split()
         if not attrs or "C" not in attrs[0]:
             raise Refused("Windows storage is not NoCoW; no guest image will be created")
+        for path in Path(self.m["storageRoot"]).joinpath("storage").rglob("*"):
+            if path.is_file() and path.suffix.lower() in (".img", ".raw", ".qcow", ".qcow2", ".vhd", ".vhdx", ".vmdk", ".vdi"):
+                image_attrs = self.command("lsattr", "-d", "--", str(path)).stdout.split()
+                if not image_attrs or "C" not in image_attrs[0]:
+                    raise Refused("existing guest image is not NoCoW; manual migration required, nothing converted")
         if self.m["mode"] == "render":
             kernel = Path(self.m.get("kernelFile", "/proc/sys/kernel/osrelease")).read_text().strip()
             version = re.match(r"(\d+)\.(\d+)", kernel)
@@ -206,7 +221,7 @@ class Controller:
             other = self.inspect(name)
             if other and other.get("Id") != own_id and other["State"]["Running"]:
                 wanted = (Path(self.m["storageRoot"]) / "storage").resolve()
-                if any(Path(v.get("Source", "/")).resolve() == wanted for v in other.get("Mounts", [])):
+                if any(v["Source"] and (lambda source: source == wanted or source in wanted.parents or wanted in source.parents)(Path(v["Source"]).resolve()) for v in other["Mounts"]):
                     raise Refused("another running container owns the Windows disk")
 
     def write_overlay(self, hardware):
@@ -256,13 +271,28 @@ class Controller:
             if current["Config"]["Labels"].get(DIGEST) == config_digest(self.m, hardware):
                 self.start_attempted = True
                 self.command("podman", "start", self.m["container"])
-                return {"running": True, "pending": False}
+                return self.confirm_started()
             self.command("podman", "rm", self.m["container"])  # No force/volume deletion, safe if an external start races.
         env = dict(os.environ, WINDOWS_PASSWORD=self.private_password())
         files = [part for source in self.m["compose"] + [str(overlay)] for part in ("-f", source)]
         self.start_attempted = True
         self.command("compose", "--podman-path", self.m["commands"]["podman"], "--env-file", "/dev/null", "-p", "envy-windows", *files, "up", "-d", "--no-build", "windows", env=env, cwd=str(overlay.parent))
+        return self.confirm_started()
+
+    def confirm_started(self):
+        current = self.inspect(self.m["container"])
+        if current is None:
+            raise Refused("Windows start returned without an owned container")
+        self.owned(current)
+        if not current["State"]["Running"] or current["Config"]["Labels"].get(MODE) != self.m["mode"]:
+            raise Refused("Windows did not remain running in the requested GPU mode")
         return {"running": True, "pending": False}
+
+    def started(self):
+        result = self.status()
+        if not result["running"] or result["mode"] != self.m["mode"]:
+            raise Refused("Windows is not running in the requested mode; inspect the user service")
+        return result
 
     def status(self):
         current = self.inspect(self.m["container"])
@@ -271,14 +301,8 @@ class Controller:
         labels = current["Config"]["Labels"]
         return {"running": current["State"]["Running"], "mode": labels.get(MODE), "pending": labels.get(GENERATION) != self.m["generation"]}
 
-    def stop(self):
-        current = self.inspect(self.m["container"])
-        if current:
-            self.owned(current)
-            if current["State"]["Running"]:
-                self.command("podman", "stop", "--time=-1", self.m["container"])
-
-    def supervise(self):
+    @contextmanager
+    def lifetime_lock(self):
         directory = real_path(self.m["runtimeDir"])
         directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         if directory.stat().st_uid != os.getuid() or stat.S_IMODE(directory.stat().st_mode) != 0o700:
@@ -286,10 +310,33 @@ class Controller:
         lock_path = real_path(directory / "supervisor.lock")
         with lock_path.open("a") as lock:
             try: fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError: raise Refused("another Envy Windows supervisor owns the disk") from None
+            except BlockingIOError: raise Refused("another Envy Windows supervisor owns the disk; stop its service first") from None
+            yield
+
+    def stop(self):
+        # Called after systemctl stop, including recovery from a crashed owner.
+        # Serialize with supervisor starts; never claim that inactive means stopped.
+        with self.lifetime_lock():
+            current = self.inspect(self.m["container"])
+            if current:
+                self.owned(current)
+                if current["State"]["Running"]:
+                    self.command("podman", "stop", "--time=-1", self.m["container"])
+                after = self.inspect(self.m["container"])
+                if after:
+                    self.owned(after)
+                    if after["State"]["Running"]:
+                        raise Refused("Windows remains running; ownership retained during graceful stop")
+
+    def supervise(self):
+        with self.lifetime_lock():
             old_term = signal.signal(signal.SIGTERM, lambda *_: setattr(self, "stopping", True))
             old_int = signal.signal(signal.SIGINT, lambda *_: setattr(self, "stopping", True))
             stopper = None
+            retry_at = 0.0
+            stop_backoff = 0.5
+            stop_started = None
+            warned = False
             try:
                 try:
                     result = self.reconcile()
@@ -304,23 +351,56 @@ class Controller:
                     else:
                         if current is None or not current["State"]["Running"]:
                             raise Refused("Windows start failed; no active guest was established")
-                        self.owned(current)
+                        try:
+                            self.owned(current)
+                        except Refused:
+                            if not self.start_attempted:
+                                raise
+                            # Ownership may change between a successful engine
+                            # start and its confirmation. Never stop the stranger,
+                            # but retain our lifetime lock while state is uncertain.
                     print("Reconciliation failed; retaining lifetime ownership until guest exit", file=sys.stderr, flush=True)
                     result = {"running": None, "pending": True, "blocked": True}
                 print(json.dumps(result), flush=True)
-                if not result.get("blocked"): notify_ready()
+                if not result.get("blocked"):
+                    try: notify_ready()
+                    except OSError:
+                        print("Readiness notification unavailable; retaining lifetime ownership", file=sys.stderr, flush=True)
                 while True:
                     # On query failure keep the lock: a missing monitor is not a stopped VM.
                     owned_now = False
+                    current = None
                     try:
                         current = self.inspect(self.m["container"])
-                        if current is None or not current["State"]["Running"]: break
+                        if current is None: break
                         self.owned(current)
+                        if not current["State"]["Running"]:
+                            if current["State"].get("ExitCode", 0) != 0:
+                                raise Refused("Windows guest exited unsuccessfully")
+                            break
                         owned_now = True
                     except Refused:
+                        if current is not None and isinstance(current, dict) and current.get("State", {}).get("Running") is False:
+                            raise
                         print("Windows state query failed; retaining supervisor lock", file=sys.stderr, flush=True)
-                    if self.stopping and owned_now and stopper is None:
-                        stopper = subprocess.Popen([self.m["commands"]["podman"], "stop", "--time=-1", self.m["container"]], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    now = time.monotonic()
+                    if stopper is not None and stopper.poll() is not None:
+                        code = stopper.wait()
+                        stopper = None
+                        retry_at = now + stop_backoff
+                        stop_backoff = min(stop_backoff * 2, 15.0)
+                        print("Windows stop request ended (exit " + str(code) + "); retry if guest is still running", file=sys.stderr, flush=True)
+                    if self.stopping and owned_now and stopper is None and now >= retry_at:
+                        if stop_started is None: stop_started = now
+                        try:
+                            stopper = subprocess.Popen([self.m["commands"]["podman"], "stop", "--time=-1", self.m["container"]], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        except OSError:
+                            retry_at = now + stop_backoff
+                            stop_backoff = min(stop_backoff * 2, 15.0)
+                            print("Windows stop invocation failed; retry pending", file=sys.stderr, flush=True)
+                    if stop_started is not None and not warned and now - stop_started >= 120:
+                        print("Windows graceful stop exceeds two minutes; still waiting, no forced kill", file=sys.stderr, flush=True)
+                        warned = True
                     time.sleep(0.25)
             finally:
                 signal.signal(signal.SIGTERM, old_term)
@@ -331,7 +411,7 @@ class Controller:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True)
-    parser.add_argument("action", choices=["preflight", "supervise", "stop", "status"])
+    parser.add_argument("action", choices=["preflight", "supervise", "stop", "status", "started"])
     args = parser.parse_args(argv)
     try:
         controller = Controller(json.loads(Path(args.manifest).read_text()))

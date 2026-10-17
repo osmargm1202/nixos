@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """No real VM/devices: sysfs fixtures and an actual isolated fake Podman process."""
-import copy, importlib.util, json, os, subprocess, sys, tempfile, time, unittest, unittest.mock
+import fcntl, socket, copy, importlib.util, json, os, subprocess, sys, tempfile, time, unittest, unittest.mock
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 SCRIPT=ROOT/"nixos/hosts/envy/windows-runtime.py"
@@ -15,7 +15,7 @@ def save():p.write_text(json.dumps(s))
 if '--podman-path' in a:
  if s.get('fail_before_create'):sys.exit(125)
  files=[a[i+1] for i,x in enumerate(a) if x=='-f']; h=json.loads(Path(files[-1]).read_text())['services']['windows']
- s['containers']['envy-windows']={'Id':'envy-windows','State':{'Running':True},'Config':{'Labels':h['labels']},'Mounts':[{'Source':s['storage'],'Destination':'/storage'}]};save();sys.exit(125 if s.get('fail_after_create') else 0)
+ s['containers']['envy-windows']={'Id':'envy-windows','State':{'Running':not s.get('exit_after_create',False),'ExitCode':s.get('exit_code',0)},'Config':{'Labels':h['labels']},'Mounts':[{'Source':s['storage'],'Destination':'/storage'}]};save();sys.exit(125 if s.get('fail_after_create') else 0)
 if a[:2]==['container','exists']:sys.exit(0 if a[-1] in s['containers'] else 1)
 if a[:2]==['image','exists']:sys.exit(0 if s.get('image',True) else 1)
 if a[0]=='inspect':
@@ -28,12 +28,81 @@ if a[0]=='rm':
  del s['containers'][a[-1]];save();sys.exit(0)
 if a[0]=='start':s['containers'][a[-1]]['State']['Running']=True;save();sys.exit(0)
 if a[0]=='stop':
+ if s.get('stop_fails'):sys.exit(125)
  if s.get('stop_hangs'):time.sleep(60)
  s['containers'][a[-1]]['State']['Running']=False;save();sys.exit(0)
 sys.exit(125)
 '''
 
 class Runtime(unittest.TestCase):
+ def spawn_supervisor(self):
+  manifest=self.root/'manifest.json';manifest.write_text(json.dumps(self.m))
+  p=subprocess.Popen([sys.executable,str(SCRIPT),'--manifest',str(manifest),'supervise'],env=self.env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+  self.addCleanup(lambda:p.poll() is not None or p.kill())
+  return p
+ def wait_created(self):
+  deadline=time.monotonic()+5
+  while time.monotonic()<deadline and not self.data()['containers']:time.sleep(.05)
+  self.assertTrue(self.data()['containers'])
+ def test_start_readiness_requires_a_live_owned_guest(self):
+  notify=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM);self.addCleanup(notify.close)
+  address=self.root/'notify';notify.bind(str(address));notify.settimeout(.1)
+  self.env['NOTIFY_SOCKET']=str(address);self.update(exit_after_create=True,exit_code=7)
+  p=self.spawn_supervisor();out,err=p.communicate(timeout=5)
+  self.assertNotEqual(p.returncode,0,err)
+  with self.assertRaises(socket.timeout):notify.recv(1024)
+ def test_failed_readiness_notification_retains_live_guest_ownership(self):
+  self.env['NOTIFY_SOCKET']=str(self.root/'missing-notify')
+  p=self.spawn_supervisor();self.wait_created();time.sleep(.3);self.assertIsNone(p.poll())
+  state=self.data();state['containers']['envy-windows']['State']['Running']=False;self.update(containers=state['containers'])
+  p.communicate(timeout=5)
+ def test_malformed_mount_retains_lock_until_state_recovers(self):
+  p=self.spawn_supervisor();self.wait_created();time.sleep(.3)
+  state=self.data();state['containers']['envy-windows']['Mounts'][0]['Source']=None;self.update(containers=state['containers'])
+  time.sleep(.5);self.assertIsNone(p.poll(),'malformed mount dropped supervision')
+  second=self.spawn_supervisor();second.communicate(timeout=5);self.assertNotEqual(second.returncode,0)
+  state['containers']['envy-windows']['Mounts'][0]['Source']=str(self.storage/'storage');state['containers']['envy-windows']['State']['Running']=False;self.update(containers=state['containers'])
+  p.communicate(timeout=5)
+ def test_invalid_identity_and_mount_fields_are_refused(self):
+  for field,value in [('Id',None),('Id',''),('Source',None),('Destination',None)]:
+   with self.subTest(field=field,value=value):
+    self.seed_container();state=self.data();row=state['containers']['envy-windows']
+    if field=='Id':row[field]=value
+    else:row['Mounts'][0][field]=value
+    self.update(containers=state['containers'])
+    with self.assertRaises(self.mod.Refused):self.c.inspect('envy-windows')
+ def test_engine_invocation_errors_are_conservative_refusals(self):
+  self.m['commands']['podman']=str(self.root/'missing-engine')
+  with self.assertRaises(self.mod.Refused):self.c.inspect('envy-windows')
+ def test_overlapping_disk_mounts_refused(self):
+  for source in [self.storage,self.storage/'storage/windows.img',self.storage/'storage']:
+   with self.subTest(source=source):
+    self.update(containers={'alien':{'Id':'alien','State':{'Running':True},'Config':{'Labels':{}},'Mounts':[{'Source':str(source),'Destination':'/data'}]}})
+    with self.assertRaises(self.mod.Refused):self.c.reconcile()
+ def test_transient_stop_error_retries_without_dropping_ownership(self):
+  p=self.spawn_supervisor();self.wait_created();time.sleep(.3);self.update(stop_fails=True)
+  p.terminate();time.sleep(.7);self.assertIsNone(p.poll());self.assertIn('"stop"',self.log.read_text())
+  self.update(stop_fails=False)
+  out,err=p.communicate(timeout=10)
+  self.assertEqual(p.returncode,0,err);self.assertFalse(self.data()['containers']['envy-windows']['State']['Running'])
+  self.assertGreaterEqual(self.log.read_text().count('"stop"'),2)
+  self.assertIn('retry',err.lower());self.assertNotIn(self.password.read_text(),err)
+ def test_guest_failure_after_readiness_is_service_failure(self):
+  p=self.spawn_supervisor();self.wait_created();time.sleep(.3)
+  state=self.data();state['containers']['envy-windows']['State'].update(Running=False,ExitCode=9);self.update(containers=state['containers'])
+  p.communicate(timeout=5);self.assertNotEqual(p.returncode,0)
+ def test_orphan_stop_uses_lifetime_lock(self):
+  import fcntl
+  directory=Path(self.m['runtimeDir']);directory.mkdir(mode=0o700)
+  with (directory/'supervisor.lock').open('a') as lock:
+   fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+   self.seed_container()
+   with self.assertRaises(self.mod.Refused):self.c.stop()
+   self.assertTrue(self.data()['containers']['envy-windows']['State']['Running'])
+ def test_preflight_refuses_cow_image_inside_nocow_directory(self):
+  (self.storage/'storage/windows.img').write_text('existing')
+  probe=self.root/'probe';probe.write_text(probe.read_text().replace('else: print(', 'elif a[-1].endswith("windows.img"): print("---------------- path")\nelse: print('))
+  with self.assertRaises(self.mod.Refused):self.c.preflight()
  def test_malformed_engine_metadata_is_a_safe_refusal(self):
   state=json.loads(self.state.read_text());state['malformed_inspect']=True
   state['containers']['envy-windows']={'State':{'Running':True}}
@@ -246,6 +315,10 @@ class Storage(unittest.TestCase):
  def test_symlink_storage_is_preserved(self):
   outside=self.root/'outside';outside.mkdir();(self.mount/'storage').symlink_to(outside)
   self.assertNotEqual(self.run_helper().returncode,0);self.assertEqual(list(outside.iterdir()),[])
+ def test_nocow_directory_does_not_make_cow_image_safe(self):
+  d=self.mount/'storage';d.mkdir();(d/'disk.img').write_text('disk');self.flags.write_text('C')
+  (self.bin/'lsattr').write_text('#!/bin/bash\nif [[ "$3" == *.img ]]; then echo "---------------- $3"; else echo "C $3"; fi\n')
+  r=self.run_helper();self.assertNotEqual(r.returncode,0);self.assertEqual((d/'disk.img').read_text(),'disk')
  def test_prepared_nonempty_storage_preserves_disk(self):
   d=self.mount/'storage';d.mkdir();(d/'disk.img').write_text('disk');self.flags.write_text('C')
   r=self.run_helper();self.assertEqual(r.returncode,0,r.stderr);self.assertEqual((d/'disk.img').read_text(),'disk')

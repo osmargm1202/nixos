@@ -52,7 +52,7 @@ let
         for ((i=0; i<120; i++)); do
           state="$(${pkgs.systemd}/bin/systemctl --user show -p ActiveState --value envy-windows.service)"
           case "$state" in
-            active) exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} status ;;
+            active) exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} started ;;
             failed|inactive) echo 'Envy Windows blocked: journalctl --user -u envy-windows' >&2; exit 1 ;;
           esac
           sleep 0.25
@@ -60,7 +60,10 @@ let
         echo 'Windows not ready; supervisor retains ownership if a guest exists. Check journalctl --user -u envy-windows' >&2
         exit 1
         ;;
-      stop) exec ${pkgs.systemd}/bin/systemctl --user stop envy-windows.service ;;
+      stop)
+        ${pkgs.systemd}/bin/systemctl --user stop envy-windows.service
+        exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} stop ;;
+
       status|preflight) exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} "''${1:-status}" ;;
       *) echo 'Usage: envy-windows {start|stop|status|preflight}' >&2; exit 2 ;;
     esac
@@ -77,7 +80,7 @@ in {
     memoryMiB = lib.mkOption { type = lib.types.ints.between 2048 8192; default = 4096; };
     cpus = lib.mkOption { type = lib.types.ints.between 1 8; default = 4; };
     diskGiB = lib.mkOption { type = lib.types.ints.between 32 256; default = 96; };
-    vramMiB = lib.mkOption { type = lib.types.ints.between 256 4096; default = 1024; };
+    vramMiB = lib.mkOption { type = lib.types.enum [ 256 512 1024 2048 4096 ]; default = 1024; };
   };
   config = {
   system.build = { envyWindowsController = controller; envyWindowsManifest = manifest; envyWindowsCompose = compose; };
@@ -107,7 +110,7 @@ in {
     serviceConfig = {
       Type = "notify"; NotifyAccess = "main";
       ExecStart = "${controller}/libexec/envy-windows-supervise";
-      RuntimeDirectory = "envy-windows"; RuntimeDirectoryMode = "0700";
+      RuntimeDirectory = "envy-windows"; RuntimeDirectoryMode = "0700"; RuntimeDirectoryPreserve = "yes";
       TimeoutStartSec = "infinity"; TimeoutStopSec = "infinity";
       KillMode = "process"; SendSIGKILL = false;
       Restart = "no";

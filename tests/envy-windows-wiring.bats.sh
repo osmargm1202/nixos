@@ -27,6 +27,7 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert c["linger"] and {"kvm","render","video","podman"}.issubset(c["groups"])
  assert not c["restart"] and not c["stop"]
  s=c["service"]
+ assert s["RuntimeDirectoryPreserve"]=="yes"
  assert s["Type"]=="notify" and s["TimeoutStopSec"]=="infinity" and s["KillMode"]=="process"
  assert s["ExecStart"].startswith(c["controller"]+"/libexec/")
  assert c["mount"]=="/var/lib/windows" and c["prep"]["Type"]=="oneshot"
@@ -35,3 +36,9 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert "PASSWORD" not in c["env"] and "WINDOWS_PASSWORD" not in c["env"]
 print("PASS: Envy immutable Windows wiring and safe user lifecycle in all modes")
 '
+
+RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
+let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
+ t=f.nixosConfigurations.envy.options.orgm.envy.windows.vramMiB.type;
+in {valid=map t.check [256 512 1024 2048 4096]; invalid=t.check 768;}
+' | python3 -c 'import json,sys; v=json.load(sys.stdin); assert all(v["valid"]) and not v["invalid"], "renderer requires power-of-two VRAM"'
