@@ -1,0 +1,33 @@
+# Envy only. Public configuration; password supplied privately by the controller.
+services:
+  windows:
+    image: "docker.io/dockurr/windows@sha256:59f8bed19cfd49cf1701debe34f9df6311e61a4e2ae68aa9f41206e2184e31cc"
+    pull_policy: never
+    container_name: envy-windows
+    restart: "no"
+    environment:
+      VERSION: "11"
+      RAM_SIZE: "4G"
+      CPU_CORES: "4"
+      DISK_SIZE: "96G"
+      USERNAME: "osmarg"
+      PASSWORD: "${WINDOWS_PASSWORD:?provision the private Envy Windows password first}"
+      LANGUAGE: "English"
+      REGION: "es-DO"
+      KEYBOARD: "es-US"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 127.0.0.1:8006:8006
+      - 127.0.0.1:3389:3389/tcp
+      - 127.0.0.1:3389:3389/udp
+    volumes:
+      - /var/lib/windows/storage:/storage
+      - /var/lib/windows/shared:/shared
+      - /var/lib/windows/oem:/oem
+    group_add:
+      - keep-groups
+    stop_grace_period: 2m

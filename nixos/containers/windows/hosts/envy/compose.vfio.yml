@@ -1,0 +1,8 @@
+services:
+  windows:
+    environment:
+      GPU: "N"
+      ARGUMENTS: >-
+        -machine q35,kernel_irqchip=split
+        -device vfio-pci,host=02:00.0
+# /dev/vfio group is identity-derived by the controller, never hard-coded.
