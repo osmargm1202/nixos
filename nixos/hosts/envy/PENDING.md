@@ -1,6 +1,6 @@
 # Memoria del host: pendientes de Envy
 
-Actualizado: 2026-10-16. Estado: **abierto, sin diagnóstico ni corrección visual confirmados**.
+Actualizado: 2026-10-16. Estado: **abierto; defecto DPMS identificado en el proveedor, sin corrección aplicada ni validación visual**.
 Este archivo es seguimiento versionado; no ejecuta acciones al desplegar.
 
 ## ENVY-DISPLAY-001 — Parpadeo y apagado tras lock/sleep
@@ -8,7 +8,8 @@ Este archivo es seguimiento versionado; no ejecuta acciones al desplegar.
 ### Petición y síntomas
 
 El usuario pide conservar para la siguiente sesión el parpadeo y el apagado de
-la pantalla después de bloquear (`lock`) y suspender/reanudar (`sleep`). Antes
+la pantalla después de bloquear (`lock`) y suspender/reanudar (`sleep`); aclara
+que el monitor **no vuelve a encender después de sleep**. Antes
 había descrito varios ciclos de apagado/encendido al despertar y problemas al
 llevar la imagen al LG. No dar este tema por resuelto porque los servicios de
 resume estén activos o una compilación termine correctamente.
@@ -36,6 +37,28 @@ Separar en el diagnóstico:
   `hyprctl` fijado. Eso no demuestra que DPMS/resume funcione visualmente.
 - La versión fijada de Ryoku y sus acciones de encendido/DPMS deben inspeccionarse
   al diagnosticar; ninguna causa (driver, cable, escala, lock o DPMS) está confirmada.
+
+### Hallazgo del 2026-10-16: orden de encendido convertida en toggle
+
+Inspección solo lectura en Envy: el proveedor Hyprland activo es el original
+`h0g4b6d…-ryoku-wm-hyprland-unstable`, y la política real de hypridle usa
+`ryoku wm act output.power on` en `on-resume` y `after_sleep_cmd`.
+
+Se comprobó en las fuentes fijadas que ese proveedor emite
+`hl.dsp.dpms({ state = "on" })`, pero la API Lua de Hyprland 0.56.2 lee **action**;
+cuando falta, aplica **toggle**. Por tanto, una orden “on” repetida puede apagar
+una salida que ya estaba encendida. El defecto fue reproducido con el binario
+de esa misma versión, un socket de sesión simulado y un `hyprctl` de prueba:
+`on/on/off/off` emitió siempre el campo incorrecto `state`, sin tocar monitores
+reales. [Incidencia del proyecto](https://github.com/Ryoku-dev/ryoku/issues/258).
+
+**Todavía no está corregido ni desplegado en esta investigación.** Se propone
+corregir el proveedor en el límite de paquetes ya existente, no cambiar drivers
+ni desactivar lock/sleep. Sigue pendiente confirmar físicamente si resuelve el
+síntoma completo; HDMI y el recorte de la LG se diagnostican por separado.
+La sesión observada estaba encendida en eDP-1, con DP-1 fantasma deshabilitado y
+sin LG conectada; no hubo una suspensión registrada en ese arranque que permitiese
+reproducir aquí el fallo real. No se forzó lock, DPMS-off ni sleep.
 
 ### Próxima sesión: evidencia y pruebas no destructivas
 
