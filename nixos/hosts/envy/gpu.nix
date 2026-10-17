@@ -29,5 +29,11 @@ in {
     SUBSYSTEM=="vfio", KERNEL=="[0-9]*", GROUP="kvm", MODE="0660"
   '';
   security.pam.loginLimits = lib.mkIf vfio [{ domain = "osmarg"; type = "-"; item = "memlock"; value = "unlimited"; }];
+  # The lingering user manager starts outside a PAM login; its inherited hard
+  # limit must permit VFIO, not merely the limits of interactive shells.
+  systemd.services."user@1000" = lib.mkIf vfio {
+    overrideStrategy = "asDropin";
+    serviceConfig.LimitMEMLOCK = "infinity";
+  };
   systemd.user.extraConfig = lib.mkIf vfio "DefaultLimitMEMLOCK=infinity";
 }

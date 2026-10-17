@@ -19,6 +19,7 @@ if '--podman-path' in a:
 if a[:2]==['container','exists']:sys.exit(0 if a[-1] in s['containers'] else 1)
 if a[:2]==['image','exists']:sys.exit(0 if s.get('image',True) else 1)
 if a[0]=='inspect':
+ if s.get('malformed_inspect'):print('not-json');sys.exit(0)
  if a[-1] not in s['containers']:sys.exit(125)
  print(json.dumps(s['containers'][a[-1]]));sys.exit(0)
 if a[0]=='ps':print('\n'.join(s['containers']));sys.exit(0)
@@ -33,6 +34,11 @@ sys.exit(125)
 '''
 
 class Runtime(unittest.TestCase):
+ def test_malformed_engine_metadata_is_a_safe_refusal(self):
+  state=json.loads(self.state.read_text());state['malformed_inspect']=True
+  state['containers']['envy-windows']={'State':{'Running':True}}
+  self.state.write_text(json.dumps(state))
+  with self.assertRaises(self.mod.Refused):self.c.inspect('envy-windows')
  def test_readiness_notification(self):
   import socket
   sock=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM);self.addCleanup(sock.close)

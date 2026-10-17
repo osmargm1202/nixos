@@ -137,9 +137,16 @@ class Controller:
             return None
         # Never request/print the container environment or logs.
         template = '{"Id":{{json .Id}},"State":{{json .State}},"Config":{"Labels":{{json .Config.Labels}}},"Mounts":{{json .Mounts}}}'
-        value = json.loads(self.command("podman", "inspect", "--format", template, name).stdout)
-        if not isinstance(value, dict) or type(value.get("State", {}).get("Running")) is not bool:
-            raise Refused("cannot determine container state; refusing to guess")
+        try:
+            value = json.loads(self.command("podman", "inspect", "--format", template, name).stdout)
+            if (not isinstance(value, dict) or type(value.get("State", {}).get("Running")) is not bool
+                or not isinstance(value.get("Config"), dict)
+                or not isinstance(value["Config"].get("Labels") or {}, dict)
+                or not isinstance(value.get("Mounts"), list)
+                or not all(isinstance(row, dict) for row in value["Mounts"])):
+                raise ValueError()
+        except (ValueError, AttributeError, TypeError):
+            raise Refused("cannot determine container state; refusing to guess") from None
         return value
 
     def owned(self, container):

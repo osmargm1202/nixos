@@ -4,7 +4,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '''
 let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
  describe = c:  {
-   mode=c.orgm.envy.mode or "missing"; vfio=c.orgm.envy.windowsVfio.enable or false;
+   managerMemlock=c.systemd.services."user@1000".serviceConfig.LimitMEMLOCK or "unset"; mode=c.orgm.envy.mode or "missing"; vfio=c.orgm.envy.windowsVfio.enable or false;
    kernel=c.boot.kernelPackages.kernel.version; driver=c.hardware.nvidia.package.version;
    video=c.services.xserver.videoDrivers; initrd=c.boot.initrd.kernelModules; params=c.boot.kernelParams;
    blacklist=c.boot.blacklistedKernelModules; offload=c.hardware.nvidia.prime.offload.enable;
@@ -40,6 +40,7 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  vfio=name in ("windows-vfio","server")
  assert c["vfio"]==vfio and c["offload"]== (not vfio) and c["cdi"]== (not vfio),name
  if vfio:
+  assert c["managerMemlock"]=="infinity",name
   assert "vfio-pci.ids=10de:1d13" in c["params"] and "intel_iommu=on" in c["params"],name
   assert "nvidia" not in c["video"] and "nvidia" in c["blacklist"] and "vfio_pci" in c["initrd"],name
  else: assert not any(p.startswith("vfio-pci.ids=") for p in c["params"]),name
