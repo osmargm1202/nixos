@@ -75,10 +75,10 @@
 
 **Interfaces:** document seed inventory, editable paths/import boundaries, explicit migration exception, known live validation limits and self-switch flow.
 
-- [ ] Evaluate all five canonical hosts and internal mode isolation; build complete Envy, then cached Ryoku host builds if feasible. Run actual Niri/Hypr config validators, all focused regressions and diff check. Expect PASS for focused suites; list pre-existing broad-suite failures separately.
-- [ ] Verify source-only behavior: no Envy private data changed or pushed; no deployment. Update pending DPMS state to corrected source/build but still awaiting physical user validation; HDMI/LG clipping stay open.
-- [ ] Fresh whole-branch review per requesting-code-review; fix Critical/Important findings with RED→GREEN and rerun focused suite. Commit tested fixes and docs.
-- [ ] Push feature branch; integrate to master via the standing user-authorized merge/commit/push workflow if clean, preserving user work and backup stashes; no switch. Provide commit, self-update/switch/reopen instructions and physical sleep validation request.
+- [x] Evaluate all five canonical hosts and internal mode isolation; build complete Envy, then cached Ryoku host builds if feasible. Run actual Niri/Hypr config validators, all focused regressions and diff check. Expect PASS for focused suites; list pre-existing broad-suite failures separately.
+- [x] Verify source-only behavior: no Envy private data changed or pushed; no deployment. Update pending DPMS state to corrected source/build but still awaiting physical user validation; HDMI/LG clipping stay open.
+- [x] Fresh whole-branch review per requesting-code-review; fix Critical/Important findings with RED→GREEN and rerun focused suite. Commit tested fixes and docs.
+- [x] Push feature branch; integrate to master via the standing user-authorized merge/commit/push workflow if clean, preserving user work and backup stashes; no switch. Provide commit, self-update/switch/reopen instructions and physical sleep validation request.
 
 ## Self-review
 

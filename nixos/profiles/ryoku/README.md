@@ -296,8 +296,11 @@ un archivo existente no lo restaura.
 
 La migración sustituye únicamente bootstraps antiguos de Home Manager
 comprobados y separa sus módulos personales del Store. Guarda bytes y procedencia
-en `~/.local/state/orgm-ryoku/seeds-v1/` (privado). Los enlaces ajenos, incluidos
-los colgantes, se conservan. Si una `.bashrc` personal no importa Ryoku, se avisa
+en `~/.local/state/orgm-ryoku/seeds-v1/` (privado). Los directorios antiguos se
+reconocen mediante un registro destino→fuentes del mismo usuario/host, incluidas
+sus generaciones anteriores. Se guardan contenido y enlace/resolución original
+en `legacy-directories-v1/` antes de retirarlos, no por el mero nombre del Store.
+Los enlaces ajenos, incluidos los colgantes, se conservan. Si una `.bashrc` personal no importa Ryoku, se avisa
 sin modificarla: el import normal es `. ~/.config/bash/ryoku.bash`. Un directorio
 personal enlazado que bloquearía la materialización se conserva y se informa
 antes de escribir a través de él; no se elimina silenciosamente.
@@ -342,3 +345,14 @@ terminal nueva después del switch y guarda un cambio de Fastfetch desde el Hub.
 Comprueba después lock/unlock y sleep/resume, primero solo con eDP y luego con
 la LG por USB-C. HDMI sin señal y contenido recortado continúan pendientes;
 esta corrección del proveedor no demuestra que sus causas sean las mismas.
+
+La recuperación automática cubre los modos de consola/servidor de esta revisión.
+Un `rollback` a una generación antigua ejecuta su propio script histórico:
+no se puede modificar retroactivamente; podría requerir restaurar manualmente
+el snapshot privado `orgm-ryoku/return-*` ante un conflicto de Home Manager.
+La biblioteca de aliases antigua no se reescribe: alguno que nombre variantes
+retiradas todavía requiere actualizarse al host canónico.
+
+Limitación menor conocida: un comentario que mencione `ryoku.bash` puede ocultar
+el aviso de import ausente. El archivo se conserva igualmente; para usar el
+arranque nativo debe existir un import activo, no solo comentado.
