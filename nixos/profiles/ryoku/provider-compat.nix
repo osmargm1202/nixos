@@ -4,23 +4,38 @@ let
   upstream = inputs.ryoku;
   system = pkgs.stdenv.hostPlatform.system;
   original = upstream.packages.${system};
+  hyprland = original.ryoku-wm-hyprland.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace ryoku/wm/hyprland/act.go \
+        --replace-fail 'hl.dsp.dpms({ state = ' 'hl.dsp.dpms({ action = '
+    '';
+  });
   niri = original.ryoku-wm-niri.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       substituteInPlace ryoku/wm/niri/config_rules.go \
         --replace-fail 'kdlNum(parseFloat(r.Value, 0.5))' 'kdlFloat(parseFloat(r.Value, 0.5))'
     '';
   });
+  replacements = [
+    { before = original.ryoku-wm-hyprland; after = hyprland; }
+    { before = original.ryoku-wm-niri; after = niri; }
+  ];
+  replacePackage = p: lib.foldl' (result: replacement:
+    if toString p == toString replacement.before then replacement.after else result
+  ) p replacements;
   materializer = original.ryoku-materialize.overrideAttrs (old:
-    assert lib.hasInfix (builtins.unsafeDiscardStringContext
-      (toString original.ryoku-wm-niri)) old.text;
+    assert builtins.all (r: lib.hasInfix
+      (builtins.unsafeDiscardStringContext (toString r.before)) old.text) replacements;
     {
       text = builtins.replaceStrings
-        [ (toString original.ryoku-wm-niri) ] [ (toString niri) ] old.text;
+        (map (r: toString r.before) replacements)
+        (map (r: toString r.after) replacements) old.text;
     });
-  bundle = original.ryoku-bundle.overrideAttrs (old:
-    assert builtins.any (p: toString p == toString original.ryoku-wm-niri) old.paths;
-    { paths = map (p: if toString p == toString original.ryoku-wm-niri then niri else p) old.paths; });
+  bundle = original.ryoku-bundle.overrideAttrs (old: {
+    paths = map replacePackage old.paths;
+  });
   packages = original // {
+    ryoku-wm-hyprland = hyprland;
     ryoku-wm-niri = niri;
     ryoku-materialize = materializer;
     ryoku-bundle = bundle;
