@@ -7,7 +7,7 @@ HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 `envy` es la única salida pública de este host y conserva Ryoku de `osmarg`
 mientras se prueba `orgm-dot`, con sus preferencias y aplicaciones compartidas. Las fuentes preparan
 normal (base), gaming, windows-vfio y server; **todavía no desplegados**.
-Normal conserva Steam, emuladores y Sunshine. El menú de
+Normal conserva Steam y emuladores. Sunshine se reserva para ORGM. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
 Kernel seleccionado por el usuario: 6.12 LTS actualizado, NVIDIA propietario
@@ -146,7 +146,7 @@ ver el informe de entrega enlazado más abajo.
 ## Juegos en normal
 
 Steam, GameMode, MangoHud, Gamescope y ProtonUp-Qt; emuladores declarados vía
-Flathub y Sunshine para streaming. Intel sigue renderizando el escritorio;
+Flathub. Sunshine solo se habilita en ORGM. Intel sigue renderizando el escritorio;
 Steam configura PRIME para sus juegos y `nvidia-game programa` invoca
 `nvidia-offload`, rechazando fallback silencioso si falta el helper. No hay
 autologin GamescopeTTY1 en normal; solo gaming lo habilita. Instalar las

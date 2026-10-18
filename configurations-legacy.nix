@@ -69,7 +69,6 @@ let
     ./nixos/apps/deskflow.nix
     ./nixos/gaming/steam.nix
     ./nixos/gaming/emulators.nix
-    ./nixos/gaming/sunshine.nix
   ];
   orgmDesktopModules = [
     ./nixos/apps/deskflow.nix
@@ -77,13 +76,11 @@ let
   ];
   jarqDesktopModules = [
     ./nixos/apps/deskflow.nix
-    ./nixos/gaming/sunshine.nix
   ];
   lenovoDesktopModules = [
     ./nixos/hosts/lenovo/p14s-gen2i.nix
     ./nixos/gaming/steam.nix
     ./nixos/gaming/emulators.nix
-    ./nixos/gaming/sunshine.nix
   ];
 in
 {

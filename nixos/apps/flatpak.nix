@@ -28,7 +28,24 @@ in
       inherit packages;
     };
 
-    home-manager.users.${userName} = lib.mkIf discordEnabled {
+    # Retire only the replaced client, including copies not recorded in the
+    # nix-flatpak state. Other manually installed applications remain managed
+    # by their existing owner.
+    systemd.services.flatpak-managed-install.postStart = ''
+      if ${pkgs.flatpak}/bin/flatpak info --system com.spotify.Client >/dev/null 2>&1 \
+        && ${pkgs.flatpak}/bin/flatpak info --system rocks.fastpotify.Fastpotify >/dev/null 2>&1; then
+        ${pkgs.flatpak}/bin/flatpak uninstall --system --noninteractive --assumeyes rocks.fastpotify.Fastpotify
+      fi
+    '';
+
+    home-manager.users.${userName} = { lib, ... }: {
+      config = lib.mkMerge [ {
+      home.activation.removeFastpotify = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if ${pkgs.flatpak}/bin/flatpak info --user rocks.fastpotify.Fastpotify >/dev/null 2>&1; then
+          $DRY_RUN_CMD ${pkgs.flatpak}/bin/flatpak uninstall --user --noninteractive --assumeyes rocks.fastpotify.Fastpotify
+        fi
+      '';
+    } (lib.mkIf discordEnabled {
       xdg.desktopEntries."com.discordapp.Discord" = {
         name = "Discord";
         genericName = "Internet Messenger";
@@ -47,6 +64,7 @@ in
           X-Flatpak = "com.discordapp.Discord";
         };
       };
+      }) ];
     };
   };
 }

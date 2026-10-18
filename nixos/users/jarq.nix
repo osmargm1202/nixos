@@ -16,7 +16,6 @@
       "personal-development"
       "nextcloud"
       "syncthing"
-      "sunshine"
       "openrgb"
       "containers"
       "orgm"
@@ -33,6 +32,7 @@
     flatpakPackages = [
       "com.anydesk.Anydesk"
       "io.dbeaver.DBeaverCommunity"
+      "com.spotify.Client"
       "org.mozilla.Thunderbird"
       "io.github.intoolswetrust.JSignPdf"
       "org.gnome.SimpleScan"

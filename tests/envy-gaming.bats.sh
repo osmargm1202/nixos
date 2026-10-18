@@ -15,7 +15,7 @@ assert lib.assertMsg (c.programs.steam.enable && c.programs.gamemode.enable)
 assert lib.assertMsg (builtins.all (id: builtins.elem id apps)
  [ "org.libretro.RetroArch" "org.DolphinEmu.dolphin-emu" "net.pcsx2.PCSX2" ])
  "envy must include the shared Lenovo emulators";
-assert lib.assertMsg c.services.sunshine.enable "envy must include Sunshine";
+assert lib.assertMsg (!c.services.sunshine.enable) "Sunshine must remain exclusive to ORGM";
 assert lib.assertMsg (builtins.elem "nvidia-game" packages)
  "PRIME gaming must supply its NVIDIA-only launcher";
 assert lib.assertMsg (!c.orgm.gaming.gamescopeTty1.enable && builtins.attrNames c.specialisation == [ "gaming" "server" "windows-vfio" ] && !c.services.displayManager.autoLogin.enable)

@@ -22,7 +22,6 @@
       "syncthing"
       "discord"
       "steam"
-      "sunshine"
       "openrgb"
       "containers"
       "orgm"
@@ -36,10 +35,11 @@
       "sops"
       "flatpak"
       "deskflow"
-    ] ++ lib.optional (hostName != "envy") "nextcloud";
+    ] ++ lib.optional (hostName == "orgm") "sunshine"
+      ++ lib.optional (hostName != "envy") "nextcloud";
 
     # Preserve Osmarg's explicit existing startup choices, not host defaults.
-    # Background services do not need trays. Sunshine already has its own unit.
+    # Background services do not need trays. ORGM's Sunshine has its own unit.
     autostart = lib.optional (hostName != "envy") "nextcloud --background" ++ [
       "kdeconnect-indicator"
       "firefox"
