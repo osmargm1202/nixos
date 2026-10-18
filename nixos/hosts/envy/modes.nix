@@ -2,6 +2,7 @@
 let
   console = {
     programs.hyprland.enable = lib.mkForce false;
+    programs.sway.enable = lib.mkForce false;
     programs.niri.enable = lib.mkForce false;
     programs.labwc.enable = lib.mkForce false;
     services.displayManager.sddm.enable = lib.mkForce false;

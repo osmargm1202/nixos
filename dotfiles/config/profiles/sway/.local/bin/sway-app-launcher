@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lib="${SWAY_ROFI_LIB:-$HOME/.local/bin/sway-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+sway_rofi_drun

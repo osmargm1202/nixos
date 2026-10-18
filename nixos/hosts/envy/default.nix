@@ -1,6 +1,6 @@
 { config, lib, pkgs, userName, ... }:
 {
-  imports = [ ./recovery.nix ./audio.nix ./options.nix ./gpu.nix ./modes.nix ./windows.nix ];
+  imports = [ ../../sddm/qylock/forest.nix ./recovery.nix ./audio.nix ./keyboard.nix ./fingerprint.nix ./options.nix ./gpu.nix ./modes.nix ./windows.nix ];
   # Keep the user-selected 6.12 LTS across modes; render preflight guards newer requirements.
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   boot.initrd.kernelModules = [ "i915" ];

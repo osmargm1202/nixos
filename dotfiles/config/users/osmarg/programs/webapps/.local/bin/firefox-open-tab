@@ -80,6 +80,17 @@ focus_firefox() {
       [[ -n "$address" ]] || return 1
       hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" || return 2
       ;;
+    *sway*|*Sway*)
+      command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 2
+      tree="$(swaymsg -t get_tree)" || return 2
+      id="$(jq -r 'first(.. | objects | select(
+        ((.app_id // "") | test("^(firefox|org.mozilla.firefox|navigator)$"; "i")) or
+        ((.window_properties.class // "") | test("^(firefox|navigator)$"; "i"))
+      ) | .id) // empty' <<<"$tree")" || return 2
+      [[ -n "$id" ]] || return 1
+      [[ "$id" =~ ^[0-9]+$ ]] || return 2
+      swaymsg "[con_id=$id] focus" || return 2
+      ;;
     *i3*)
       command -v i3-msg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 2
       tree="$(i3-msg -t get_tree)" || return 2

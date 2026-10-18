@@ -1,5 +1,4 @@
-# One public system per physical host. Alternative desktop files remain available
-# internally, but selecting a host must not merge those alternative profiles.
+# Canonical systems select one desktop per physical host.
 let
   historical = import ./configurations-legacy.nix;
 in
@@ -7,7 +6,7 @@ in
   inherit (historical) profiles;
   aliases = { };
   configurations = {
-    envy = historical.configurations.envy-ryoku;
+    envy = historical.configurations.envy;
     lenovo = historical.configurations.lenovo-ryoku;
     orgm = historical.configurations.orgm-ryoku;
     ero = historical.configurations.ero-i3;

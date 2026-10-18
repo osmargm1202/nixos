@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HELPER="$ROOT/dotfiles/config/users/osmarg/programs/webapps/.local/bin/firefox-open-tab"
+HELPER="${FIREFOX_OPEN_TAB_HELPER:-$ROOT/dotfiles/config/users/osmarg/programs/webapps/.local/bin/firefox-open-tab}"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -58,6 +58,14 @@ if [[ "$*" == '-t get_tree' ]]; then
 fi
 printf 'i3-msg %s\n' "$*" >>"${FOCUS_ARGS:?}"
 exit "${I3_DISPATCH_STATUS:-0}"
+EOF
+cat >"$tmp/bin/swaymsg" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == '-t get_tree' ]]; then
+  printf '%s\n' "$SWAY_TREE"
+  exit 0
+fi
+printf 'swaymsg %s\n' "$*" >>"${FOCUS_ARGS:?}"
 EOF
 cat >"$tmp/bin/wlrctl" <<'EOF'
 #!/usr/bin/env bash
@@ -227,6 +235,23 @@ for invalid in '--restore-or-focus --new' '--restore-or-focus --new-tab' '--rest
   fi
   [[ "$status" == 2 ]] || fail "invalid restore-or-focus combination returned $status: $invalid"
   [[ ! -e "$tmp/firefox-args" && ! -e "$tmp/focus-args" ]] || fail "invalid restore-or-focus combination had side effects: $invalid"
+done
+
+for tree in \
+  '{"nodes":[{"id":95,"app_id":"firefox","name":"Native browser"}]}' \
+  '{"floating_nodes":[{"id":95,"window_properties":{"class":"firefox"}}]}'; do
+  reset_logs
+  FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" \
+    SWAY_TREE="$tree" XDG_CURRENT_DESKTOP=sway PATH="$tmp/bin:$PATH" "$HELPER" --restore-or-focus
+  wait_for_line "$tmp/focus-args" 'swaymsg [con_id=95] focus'
+  wait_for_file "$tmp/firefox-args"
+  [[ "$(<"$tmp/firefox-args")" == '<--new-tab about:blank>' ]] || fail 'Sway must open a blank tab in the existing session, like Hyprland'
+
+  reset_logs
+  FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" \
+    SWAY_TREE="$tree" XDG_CURRENT_DESKTOP=sway PATH="$tmp/bin:$PATH" "$HELPER" --focus
+  wait_for_line "$tmp/focus-args" 'swaymsg [con_id=95] focus'
+  [[ ! -e "$tmp/firefox-args" ]] || fail 'Sway focus-only mode must not create a tab'
 done
 
 printf 'PASS: Firefox launcher restores sessions or focuses existing windows\n'

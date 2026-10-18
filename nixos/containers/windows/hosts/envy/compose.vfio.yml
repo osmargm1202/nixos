@@ -2,7 +2,22 @@ services:
   windows:
     environment:
       GPU: "N"
+      # Keep the virtual display/web console for initial Windows setup.
+      # Keep USB: the pinned entrypoint attaches fresh setup.img as usb-storage.
+      # Replace only the tablet, not the controller needed by Windows setup.
+      USB: "yes"
+      MOUSE: "virtio-mouse-pci"
       ARGUMENTS: >-
         -machine q35,kernel_irqchip=split
+        -object memory-backend-file,id=looking-glass,mem-path=/dev/kvmfr0,size=134217728,share=on
+        -device ivshmem-plain,memdev=looking-glass
         -device vfio-pci,host=02:00.0
-# /dev/vfio group is identity-derived by the controller, never hard-coded.
+        -spice port=5901,addr=0.0.0.0,disable-ticketing=on
+        -audiodev spice,id=spice-audio
+        -device ich9-intel-hda
+        -device hda-duplex,audiodev=spice-audio
+        -device virtio-keyboard-pci
+    ports:
+      - 127.0.0.1:5901:5901
+# The controller supplies the pinned-base SPICE image, VirtIO input ISO,
+# /dev/kvmfr0 and the identity-derived /dev/vfio group; never launch directly.

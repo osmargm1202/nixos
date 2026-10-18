@@ -15,8 +15,11 @@ orgmai program         # cambiar programa, usado por Super+Ctrl+Shift+A
 Los atajos existentes abren Kitty con clases que el escritorio coloca flotantes
 y centradas. El lanzador no abre otra terminal dentro de Kitty.
 
-Pi siempre recibe `-ne` (sin extensiones). Usa sus propios modelos, credenciales,
-ajustes, temas y sesiones. El lanzador no implementa RPC, peticiones de IA, un
+Pi recibe `-ne --no-mcp --no-skills --no-themes --use-theme dark`. Usa sus propios modelos,
+credenciales y sesiones, con la interfaz nativa y sin recursos externos.
+La preferencia nativa `quietStartup: true` oculta el encabezado y los detalles
+de inicio; el tema interno oscuro evita cargar el tema personalizado durante
+el arranque de OrgM AI, sin cambiar el tema guardado. La preferencia se guarda en `~/.pi/agent/settings.json` (app `pi` de orgm-dot). El lanzador no implementa RPC, peticiones de IA, un
 prompt, un selector de modelos ni conversaciones propias. Se ignoran los campos
 antiguos `provider`, `model` y `thinking`; no se eliminan archivos de historial
 antiguos ni se modifican los ajustes del cliente.
@@ -30,5 +33,5 @@ y encuentra instalaciones de Bun, npm, FNM, PNPM y `~/.opencode/bin`, además de
 PATH. Los shortcuts personales de Claude/Codex no cuentan como una instalación.
 
 `go test ./...` y `go vet ./...` verifican selección/cancelación, compatibilidad
-de la elección guardada, ejecución real con stdin, Pi sin extensiones y sin los
+de la elección guardada, ejecución real con stdin, Pi sin extensiones/MCP/skills/temas y sin los
 overrides antiguos, intérpretes FNM y conservación de credenciales/configuración.

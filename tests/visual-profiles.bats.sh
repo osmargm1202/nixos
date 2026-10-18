@@ -51,6 +51,26 @@ esac
 mkdir -p "$XDG_STATE_HOME/i3"
 printf '%s\n' "$selected" >"$XDG_STATE_HOME/i3/wallpaper"
 EOF
+cat >"$TMP/bin/orgm-sway" <<'EOF'
+#!/usr/bin/env bash
+printf 'orgm-sway <%s> <%s>\n' "$1" "${2:-}" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+[[ "${ORGM_VISUAL_PROFILE_TEST_BACKEND_FAIL:-0}" != 1 ]] || exit 1
+case "$1" in
+  wallpaper-set) selected="${2:?}" ;;
+  wallpaper-random) selected="$(find "${2:?}" -type f -print -quit)" ;;
+  *) exit 2 ;;
+esac
+mkdir -p "$XDG_CONFIG_HOME/sway"
+printf '%s\n' "$selected" >"$XDG_CONFIG_HOME/sway/wallpaper"
+EOF
+cat >"$TMP/bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+printf 'systemctl %s\n' "$*" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+EOF
+cat >"$TMP/bin/dconf" <<'EOF'
+#!/usr/bin/env bash
+printf 'dconf %s\n' "$*" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+EOF
 cat >"$TMP/bin/gsettings" <<'EOF'
 #!/usr/bin/env bash
 printf 'gsettings' >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
@@ -86,6 +106,10 @@ cat >"$TMP/bin/dunstctl" <<'EOF'
 printf 'dunstctl' >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
 printf ' <%s>' "$@" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
 printf '\n' >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+EOF
+cat >"$TMP/bin/swaync-client" <<'EOF'
+#!/usr/bin/env bash
+printf 'swaync-client %s\n' "$*" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
 EOF
 cat >"$TMP/bin/pgrep" <<'EOF'
 #!/usr/bin/env bash
@@ -186,13 +210,16 @@ run_profile set slc
   fail 'selecting slc did not restore its recorded wallpaper through Hyprland'
 
 # Switching repeatedly must preserve each target's wallpaper, not replace it
-# with the previously active profile's wallpaper. Exercise both backends.
+# with the previously active profile's wallpaper. Exercise all three backends.
 osmar_wallpaper="$PICTURES/osmar/osmar.png"
 printf 'osmar' >"$osmar_wallpaper"
-for backend in hyprland i3; do
+mkdir -p "$XDG_CONFIG_HOME/nwg-dock"
+printf 'transparent dock\n' >"$XDG_CONFIG_HOME/nwg-dock/current-theme.css"
+for backend in hyprland i3 sway; do
   case "$backend" in
     hyprland) wallpaper_state="$XDG_STATE_HOME/hypr-wallpaper/current" ;;
     i3) wallpaper_state="$XDG_STATE_HOME/i3/wallpaper" ;;
+    sway) wallpaper_state="$XDG_CONFIG_HOME/sway/wallpaper" ;;
   esac
   for id in osmar orgm slc osmar orgm slc; do
     ORGM_VISUAL_PROFILE_BACKEND="$backend" run_profile set "$id"
@@ -205,6 +232,27 @@ for backend in hyprland i3; do
     done
   done
 done
+
+# Sway writes its own palette and never overwrites the transparent dock style.
+grep -Fq 'rgba(7, 20, 34, 0.82)' "$XDG_CONFIG_HOME/waybar/orgm-current.css" ||
+  fail 'Sway did not restore the SLC palette with transparency'
+[[ "$(<"$XDG_CONFIG_HOME/nwg-dock/current-theme.css")" == 'transparent dock' ]] ||
+  fail 'Sway visual profile overwrote the transparent dock'
+grep -Fq 'systemctl --user try-restart orgm-sway-waybar.service' "$CALLS" ||
+  fail 'Sway did not reload the palette consumer'
+for gtk in gtk-3.0 gtk-4.0; do
+  grep -Fxq 'gtk-icon-theme-name=Colloid-Dark' "$XDG_CONFIG_HOME/$gtk/settings.ini" ||
+    fail 'Sway profile reset the icon theme'
+done
+grep -Fq "dconf write /org/gnome/desktop/interface/icon-theme 'Colloid-Dark'" "$CALLS" ||
+  fail 'Sway did not apply the icon theme to Nautilus/GTK4'
+
+[[ -s "$XDG_CONFIG_HOME/swaync/orgm-current.css" ]] || fail 'Swaync palette missing'
+! grep -Fq 'window#waybar' "$XDG_CONFIG_HOME/swaync/orgm-current.css" || fail 'Swaync palette contains Waybar selectors'
+: >"$CALLS"
+ORGM_VISUAL_PROFILE_BACKEND=sway run_profile apply
+grep -Fq 'swaync-client --reload-css --skip-wait' "$CALLS" || fail 'Sway profile must reload Swaync CSS'
+! grep -Fq 'dunstctl' "$CALLS" || fail 'Sway profile must never activate Dunst'
 
 # i3bar must follow the persisted selection made by the real profile helper,
 # not a mocked return value or a fixed display label.
@@ -271,8 +319,8 @@ state_after="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec c
 
 
 # Backend failure must leave current and every saved wallpaper unchanged.
-# Exercise the same transaction boundary on Hyprland and i3.
-for backend in hyprland i3; do
+# Exercise the same transaction boundary on Hyprland, i3 and Sway.
+for backend in hyprland i3 sway; do
   state_before="$(find "$XDG_STATE_HOME/orgm-visual-profile" -type f -print -exec cat {} \;)"
   if ORGM_VISUAL_PROFILE_BACKEND="$backend" ORGM_VISUAL_PROFILE_TEST_BACKEND_FAIL=1 run_profile set orgm >/dev/null 2>&1; then
     fail "$backend profile selection unexpectedly succeeded after wallpaper backend failure"

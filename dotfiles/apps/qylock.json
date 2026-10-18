@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "qylock",
+  "paths": [
+    ".local/bin/orgm-qylock",
+    ".config/quickshell/orgm-lock",
+    ".config/quickshell/orgm-locks"
+  ]
+}

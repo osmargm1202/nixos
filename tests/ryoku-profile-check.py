@@ -13,7 +13,7 @@ def pam_rules(policies, service, phase):
 
 with open(sys.argv[1]) as source:
     inventory = json.load(source)
-for host in ("envy", "lenovo", "orgm"):
+for host in ("lenovo", "orgm"):
     systems = inventory[host]
     normal = systems["normal"]
     assert normal["ryoku"] and normal["hyprland"] and normal["niri"], host

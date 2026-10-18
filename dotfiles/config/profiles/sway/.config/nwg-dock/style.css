@@ -1,0 +1,23 @@
+@import "current-theme.css";
+
+
+#box {
+  padding: 4px;
+}
+
+button,
+image {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+button {
+  margin: 3px 0;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+button:hover {
+  background: rgba(138, 180, 248, 0.16);
+}

@@ -1,13 +1,15 @@
-# Envy: configuración única y modos internos
+# Envy: configuración única con Sway
 
 HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 ## Configuración activa
 
-`envy` es la única salida pública de este host y conserva Ryoku de `osmarg`
-mientras se prueba `orgm-dot`, con sus preferencias y aplicaciones compartidas. Las fuentes preparan
-normal (base), gaming, windows-vfio y server; **todavía no desplegados**.
-Normal conserva Steam y emuladores. Sunshine se reserva para ORGM. El menú de
+`envy` es la única salida pública de este host y usa SwayFX de `osmarg`
+como único perfil de escritorio, con sus preferencias y aplicaciones compartidas.
+Se conservan
+las especializaciones gaming, windows-vfio y server; normal y windows-vfio
+usan Sway, mientras gaming y server mantienen sus funciones de consola.
+La configuración conserva Steam y emuladores. Sunshine se reserva para ORGM. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
 
 Kernel seleccionado por el usuario: 6.12 LTS actualizado, NVIDIA propietario
@@ -23,14 +25,44 @@ con subvolúmenes `@root`, `@home`, `@nix`, `@log`, `@windows`. El último queda
 vacío, reservado, sin Windows instalado. Discos VM futuros se crearán sin CoW.
 Se usa zram del 50% de RAM, no Optane como swap ni hibernación.
 
+## Flecha arriba del teclado integrado averiada
+
+Se comprobó que la tecla ↑ del AT integrado permanecía pulsada incluso sin
+utilizarla. Además de desplazamientos/repeticiones, esa tecla extra puede impedir
+que Sway reconozca combinaciones como Super+Shift+Espacio. El inalámbrico no
+presentó ese estado.
+
+`keyboard.nix` asigna el scan code `c8` a `reserved` mediante hwdb. Coincide solo
+con el teclado AT de **HP ENVY Laptop 17m-ce1xxx**, no con los USB ni con otros
+modelos. Se ignora en el kernel, antes del compositor: no se cambia el layout,
+no se bloquea todo el teclado y los otros cursores siguen disponibles. Afecta
+a todas las aplicaciones/escritorios/TTY de este host, no solo Sway.
+
+El cambio se aplicó en vivo con el helper acotado y reversible, sin reiniciar
+ni sudo (el usuario ya pertenece a `input`):
+
+```sh
+python3 nixos/hosts/envy/keyboard-up.py status
+python3 nixos/hosts/envy/keyboard-up.py disable
+# Restaurar temporalmente la tecla, por ejemplo después de repararla:
+python3 nixos/hosts/envy/keyboard-up.py restore
+```
+
+El helper verifica modelo, dispositivo y mapa antes de escribir; solo permite
+alternar `c8` entre Up (`103`) y Reserved (`0`). Comprueba además que el kernel
+ya no registre Up pulsada. No captura texto ni intercepta eventos del teclado.
+El cambio manual dura hasta reiniciar/reinicializar el dispositivo; el hwdb se
+incorpora al reconstruir la generación con `path:.#envy`.
+Para volver a habilitarla permanentemente, retirar el registro de `keyboard.nix`
+y reconstruir/reiniciar; `restore` por sí solo no modifica la regla persistente.
+
 ## Pantalla fantasma detectada
 
 Con solo el panel interno conectado, el kernel presenta además `DP-1` como
 conectado, sin EDID, a 800×600. Ryoku asignaba allí el workspace2 y el cursor.
-El seed exclusivo de Envy `.config/orgm-ryoku/monitors_user.lua` desactiva esa
-salida. Se copia desde el checkout y la preparación de Ryoku lo instala solo
-si no hay override personal en `~/.config/hypr/monitors_user.lua`. Mantiene eDP
-y los otros conectores; el Hub conserva el control del layout.
+La configuración Sway de Envy desactiva esa salida en su archivo
+`outputs.conf`, manteniendo el panel eDP y los otros conectores. El seed antiguo
+de Ryoku queda fuera del perfil activo.
 
 ## Dotfiles y escritorio
 
@@ -40,28 +72,29 @@ las ediciones locales; `diff`, `pull` y `push` trabajan por aplicación. `ryoku-
 permite guardar los ajustes `desktop.json` y `shell.json` del Hub sin copiar su
 runtime completo. Véase [la guía](../../../dotfiles/README.md).
 
-Envy mantiene Ryoku; esta migración no cambia el escritorio ni sustituye sus
-configuraciones por las de Hyprland. El perfil Hyprland alternativo queda
-preparado con Hyprland, portal, Waybar, nwg-dock y mpvpaper oficiales de NixOS.
-El cambio de escritorio queda pendiente de la decisión del usuario. Véase
-[el perfil Hyprland](../../profiles/hyprland/README.md).
+Envy usa Sway de forma permanente. La salida `envy` selecciona el perfil
+`nixos/profiles/sway/sway.nix`; no existen alternativas Envy para Ryoku o
+Hyprland ni una salida separada `envy-sway`. Véase [la guía de Sway](../../../docs/envy-sway.md).
 
 ## Plugins y huella
 
 El cierre observado el 17 de octubre dejó un callback de Image borders activo
 tras descargar el plugin; el watchdog arrancó Hyprland con `--safe-mode`.
 Se corrigió la retirada de callbacks en Image borders y Glass en el perfil
-Ryoku compartido de Envy, Lenovo y ORGM.
+Ryoku compartido. Envy ya no carga esos plugins al usar Sway.
 
 `fprintd` sigue habilitado. El lector USB de este equipo es Synaptics
 `06cb:00c9`: `fprintd-list osmarg` responde `No devices available` con el
 controlador instalado. No figura en la
 [lista de dispositivos de libfprint](https://fprint.freedesktop.org/supported-devices.html).
 Existe un [controlador experimental](https://github.com/vojtapl/synaTudorMiS)
-que incluye ese ID, pero no está integrado aquí: requiere cambios adicionales
-en libfprint/fprintd y su autor advierte de incompatibilidad con el emparejamiento
-de Windows. El desbloqueo por huella de este lector queda pendiente de un
-controlador validado; instalar o activar el servicio no basta.
+que marca ese ID como probado. Se prepararon paquetes de libfprint/fprintd y un
+módulo opcional **desactivado por defecto**; no se activó ni probó en el sensor.
+Su autor advierte de incompatibilidad con el emparejamiento de Windows, y abrir
+el lector puede iniciar un nuevo emparejamiento. El desbloqueo queda pendiente
+de validación física y de PAM; compilar o activar el servicio no basta.
+Véase [la guía de huella](../../../docs/envy-fingerprint.md) para compilar sin
+activar, riesgos y requisitos antes de una prueba física.
 
 ## Estado de salidas externas (2026-10-15)
 
@@ -112,7 +145,7 @@ Si el usuario mueve el repo o publica cambios, conservar sus modificaciones
 preexistentes; no dar por hecho que todo está ya enviado al remoto.
 
 Envy usa Online Accounts/GVfs en lugar del cliente de sincronización Nextcloud.
-Ryoku controla la UI de red, Bluetooth y audio; Tailscale y Syncthing siguen
+Sway integra Rofi, nmtui, bluetui y Pavucontrol para red, Bluetooth y audio; Tailscale y Syncthing siguen
 conectados mediante sus servicios, sin lanzar sus bandejas.
 Tailscale, Syncthing, cuentas y secretos SOPS necesitan sus identidades/login;
 no copiar claves privadas indiscriminadamente. Una integración pendiente no
@@ -138,10 +171,9 @@ pruebas pendientes del usuario.
 
 Diseño completo: `docs/superpowers/specs/2026-10-15-envy-design.md`.
 Plan fase normal: `docs/superpowers/plans/2026-10-15-envy-normal.md`.
-Tras validar la base: perfil gaming dedicado, Windows render virtual/Pascal,
-VFIO e IOMMU, server y Compose por host declarativo. Las aplicaciones de juegos
-ya pertenecen a normal. Los modos avanzados están preparados sin activación;
-ver el informe de entrega enlazado más abajo.
+Se conservan gaming dedicado, Windows VFIO y server como especializaciones
+internas de `envy`. Las aplicaciones de juegos siguen disponibles en Sway.
+Ver el informe de entrega enlazado más abajo para sus requisitos y validaciones.
 
 ## Juegos en normal
 
@@ -206,6 +238,14 @@ backup independiente ante fallo/robo del SSD; el respaldo externo necesita un
 destino acordado. Los snapshots pueden conservar archivos privados hasta que
 expire su retención, aunque se borren en el sistema activo.
 
+## Tema SDDM
+
+Forest de Qylock se selecciona mediante `../../sddm/qylock/forest.nix` en
+`default.nix`. Se hereda en normal y windows-vfio; gaming y server conservan SDDM
+deshabilitado. El greeter de Sway mantiene Wayland. La selección declarativa tiene prioridad sobre
+el tema SDDM de RyoStore. Véanse [los nueve módulos disponibles](../../sddm/README.md).
+Este cambio queda preparado en las fuentes hasta reconstruir la generación.
+
 ## Inicio: menú y Num Lock
 
 Menú systemd-boot declarado a1segundo y comprobado en loader.conf del sistema
@@ -215,12 +255,9 @@ ahora el host declara autoNumlock=true y General.Numlock=on, con contrato Nix
 RED/GREEN. Esta modificación aún NO se ha desplegado ni se ha reiniciado SDDM;
 el greeter activo no se declara corregido hasta aplicar y comprobar un login.
 
-Los modos avanzados futuros pertenecen a specialisations dentro de `envy`, no
-a salidas flake independientes; pueden validarse con eval/build --no-link sin
-switch/test/boot. Ya están preparados y autorizados como fuentes: no se ha
-aplicado ningún cambio vivo. Normal continúa predeterminado; instalar entradas
-en el menú requiere la acción posterior del usuario. Windows/server arrancan
-la VM solo si existen imagen, contraseña y hardware elegible.
+Por decisión del usuario, Envy tiene un solo perfil de escritorio con Sway.
+Se conservan gaming, windows-vfio y server dentro de la salida `envy`;
+no se publican salidas alternativas de escritorio para este host.
 
 
 ## Volumen inicial de audio y micrófono
@@ -249,15 +286,18 @@ qsbar y `ryoku-volume` admiten150%; sin ese indicador las teclas vuelven a100%.
 Las elecciones posteriores del Hub se respetan, sin forzar el toggle cada rebuild.
 
 
-## Windows y modos avanzados: entrega sin despliegue
+## Windows y modos avanzados
 
-Informe y procedimiento completo: [2026-10-17-envy-modes](../../../docs/superpowers/reports/2026-10-17-envy-modes.md).
+Informe original: [2026-10-17-envy-modes](../../../docs/superpowers/reports/2026-10-17-envy-modes.md).
+Procedimiento actualizado: **[Windows por web y Looking Glass](../../../docs/envy-looking-glass.md)**.
+Looking Glass se configura en `windows-vfio` y `server`, no en normal/gaming;
+la instalación inicial se hace por web conservando la pantalla virtual.
 
 | Entrada | Sesión | MX250 | Windows |
 |---|---|---|---|
-| normal (base) | Ryoku/Intel | PRIME | Render virtual manual |
+| normal (base) | Sway/Intel | PRIME | Render virtual manual |
 | gaming | Gamescope/Steam TTY1 | NVIDIA para juegos | Bloqueado |
-| windows-vfio | Ryoku/Intel | VFIO | Automático condicionado |
+| windows-vfio | Sway/Intel | VFIO | Automático condicionado |
 | server | Consola/SSH, sin DM/WM | VFIO | Automático condicionado |
 
 Un solo `envy-windows`, disco en `/var/lib/windows/storage`; Compose declarado en
@@ -268,10 +308,13 @@ las guardas y el bloqueo de vida completa. No se ha creado ni descargado una VM.
 ```sh
 envy-windows status
 envy-windows preflight
+envy-windows prepare-image # provisión explícita SPICE sobre imagen base fijada; requiere red
 envy-windows start   # manual en normal, prohibido en gaming
 envy-windows stop    # espera apagado limpio; nunca fuerza kill
 journalctl --user -u envy-windows --no-pager
-windows-rdp connect # conserva selector RDP/web y credenciales específicas de Envy
+windows-rdp connect # selector RDP/web/Looking Glass y credenciales específicas de Envy
+windows-rdp web     # instalación inicial sin depender de RDP/Looking Glass Host
+windows-rdp looking-glass # solo VFIO; requiere Host/IVSHMEM compatibles dentro de Windows
 ```
 
 Asignaciones declarativas en `orgm.envy.windows`: memoryMiB=4096, cpus=4,

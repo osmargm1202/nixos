@@ -1,0 +1,84 @@
+/* Hyprland's layout/palette, with native Sway modules and SwayFX blur. */
+@import "orgm-current.css";
+
+* {
+  border: none;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Noto Color Emoji", sans-serif;
+  font-size: 13px;
+}
+
+window#waybar {
+  background: @panel_bg;
+  color: @text;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.modules-left, .modules-center, .modules-right {
+  background: transparent;
+  padding: 2px 8px;
+}
+.modules-left { padding-left: 10px; }
+.modules-center { font-weight: bold; padding: 0 10px; }
+.modules-right { padding-left: 10px; padding-right: 6px; }
+
+#workspaces button {
+  background: transparent;
+  color: @text;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 0 4px;
+  margin: 2px 1px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+#workspaces button.persistent, #workspaces button.empty { color: @overlay0; }
+#workspaces button.focused { color: @blue; }
+#workspaces button.urgent { color: @red; }
+#workspaces button:hover { background: rgba(138, 180, 248, 0.15); }
+
+#custom-launcher { font-size: 16px; padding: 0 8px 0 4px; }
+#custom-visual-profile {
+  color: @blue;
+  font-size: 11px;
+  padding: 0 6px;
+}
+#scratchpad, #mode, #idle_inhibitor, #custom-keybindings_help {
+  padding: 0 8px;
+  border-radius: 12px;
+}
+#backlight, #battery, #pulseaudio, #language, #custom-wallpaper,
+#mpris, #tray, #custom-notifications { padding: 0 5px; }
+#custom-notifications.notification { color: @blue; }
+#custom-notifications.dnd-notification, #custom-notifications.dnd-none { color: @overlay0; }
+/* Compact radio icons, with enough room to keep the glyphs distinct. */
+#network, #bluetooth {
+  min-width: 16px;
+  padding: 0 5px;
+  margin: 0;
+}
+#pulseaudio { color: @blue; font-size: 15px; }
+#pulseaudio.muted, #pulseaudio.microphone.source-muted,
+#battery.critical, #custom-power { color: @red; }
+#battery.charging, #idle_inhibitor.activated { color: @blue; }
+#idle_inhibitor.deactivated, #bluetooth.disabled, #mpris.paused { color: @overlay0; }
+#language, #custom-keybindings_help { font-weight: bold; }
+#custom-power { font-weight: bold; padding: 0 10px; }
+#window { padding: 0 8px; }
+window#waybar.empty #window { padding: 0; }
+
+#clock.day_month, #clock.date { padding: 0 6px; margin: 2px 1px; }
+#clock:not(.day_month):not(.date) {
+  font-size: 18px;
+  font-weight: 800;
+  padding: 0 7px;
+  margin: 0 2px;
+}
+
+tooltip {
+  background: rgba(8, 8, 8, 0.95);
+  color: @text;
+  border: 1px solid @blue;
+  border-radius: 8px;
+}

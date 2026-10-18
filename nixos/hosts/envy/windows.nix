@@ -5,6 +5,19 @@ let
   home = config.users.users.${userName}.home;
   allocation = config.orgm.envy.windows;
   image = builtins.fromJSON (builtins.readFile ../../containers/windows/hosts/envy/image.json);
+  vfio = runtimeMode == "vfio";
+  lookingGlassClient = pkgs.callPackage ../../containers/windows/looking-glass-idd-client.nix {};
+  # Provision explicitly, never build/pull while starting the guest. Unlike the
+  # historical Lenovo recipe, this context cannot silently move to :latest.
+  spiceRecipe = lib.replaceStrings [ "FROM dockurr/windows:latest" ] [ "FROM ${image.image}" ]
+    (builtins.readFile ../../containers/windows/Containerfile.spice);
+  spiceContext = pkgs.writeTextDir "Containerfile" spiceRecipe;
+  vfioImage = "localhost/envy-windows-spice:${builtins.hashString "sha256" spiceRecipe}";
+  inputIso = pkgs.runCommand "envy-virtio-input.iso" { nativeBuildInputs = [ pkgs.xorriso ]; } ''
+    mkdir -p "$out"
+    xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
+      vioinput/w11/amd64=${pkgs.virtio-win}/vioinput/w11/amd64
+  '';
   compose = pkgs.runCommand "envy-windows-compose" {} ''
     mkdir -p "$out"
     cp ${../../containers/windows/hosts/envy/compose.yml} "$out/compose.yml"
@@ -13,6 +26,8 @@ let
   '';
   public = {
     inherit (image) image;
+    inherit vfioImage;
+    inputIso = "${inputIso}/virtio-input.iso";
     mode = runtimeMode;
     container = "envy-windows";
     bdf = "0000:02:00.0"; vendor = "0x10de"; device = "0x1d13";
@@ -31,45 +46,19 @@ let
     };
   };
   manifest = pkgs.writeText "envy-windows-manifest.json" (builtins.toJSON (public // {
-    generation = builtins.hashString "sha256" (builtins.toJSON public + builtins.readFile ./windows-runtime.py);
+    generation = builtins.hashString "sha256" (builtins.toJSON public + builtins.readFile ./windows-runtime.py
+      + builtins.readFile ../../containers/windows/windows_runtime.py);
   }));
-  controller = pkgs.runCommand "envy-windows-controller" {} ''
-    mkdir -p "$out/bin" "$out/libexec"
-    cp ${./windows-runtime.py} "$out/libexec/runtime.py"
-    cat > "$out/libexec/envy-windows-supervise" <<'EOF'
-    #!${pkgs.runtimeShell}
-    export PATH=/run/wrappers/bin:${lib.makeBinPath [ config.virtualisation.podman.package pkgs.slirp4netns pkgs.fuse-overlayfs pkgs.coreutils ]}:$PATH
-    exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} supervise
-    EOF
-    cat > "$out/bin/envy-windows" <<'EOF'
-    #!${pkgs.runtimeShell}
-    set -euo pipefail
-    export PATH=/run/wrappers/bin:${lib.makeBinPath [ config.virtualisation.podman.package pkgs.slirp4netns pkgs.fuse-overlayfs pkgs.coreutils ]}:$PATH
-    case "''${1:-status}" in
-      start)
-        ${lib.optionalString (runtimeMode == "disabled") "echo 'Windows is disabled in gaming mode' >&2; exit 1"}
-        ${pkgs.systemd}/bin/systemctl --user start --no-block envy-windows.service
-        for ((i=0; i<120; i++)); do
-          state="$(${pkgs.systemd}/bin/systemctl --user show -p ActiveState --value envy-windows.service)"
-          case "$state" in
-            active) exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} started ;;
-            failed|inactive) echo 'Envy Windows blocked: journalctl --user -u envy-windows' >&2; exit 1 ;;
-          esac
-          sleep 0.25
-        done
-        echo 'Windows not ready; supervisor retains ownership if a guest exists. Check journalctl --user -u envy-windows' >&2
-        exit 1
-        ;;
-      stop)
-        ${pkgs.systemd}/bin/systemctl --user stop envy-windows.service
-        exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} stop ;;
-
-      status|preflight) exec ${pkgs.python3}/bin/python3 ${./windows-runtime.py} --manifest ${manifest} "''${1:-status}" ;;
-      *) echo 'Usage: envy-windows {start|stop|status|preflight}' >&2; exit 2 ;;
-    esac
-    EOF
-    chmod +x "$out/bin/envy-windows" "$out/libexec/envy-windows-supervise"
-  '';
+  controller = import ../../containers/windows/controller.nix {
+    inherit pkgs lib manifest;
+    host = "envy";
+    adapter = ./windows-runtime.py;
+    podman = config.virtualisation.podman.package;
+    serviceName = "envy-windows";
+    image = vfioImage;
+    buildContext = spiceContext;
+    aliases = [ "envy-windows" ];
+  };
   prepare = pkgs.writeShellApplication {
     name = "envy-windows-storage";
     runtimeInputs = [ pkgs.util-linux pkgs.e2fsprogs pkgs.findutils pkgs.coreutils ];
@@ -83,10 +72,19 @@ in {
     vramMiB = lib.mkOption { type = lib.types.enum [ 256 512 1024 2048 4096 ]; default = 1024; };
   };
   config = {
-  system.build = { envyWindowsController = controller; envyWindowsManifest = manifest; envyWindowsCompose = compose; };
+  system.build = {
+    envyWindowsController = controller; envyWindowsManifest = manifest; envyWindowsCompose = compose;
+    windowsVmController = controller; windowsVmManifest = manifest;
+  };
   virtualisation.podman.enable = true;
   users.users.${userName} = { linger = true; extraGroups = [ "podman" "kvm" "render" "video" ]; };
-  environment.systemPackages = [ controller ];
+  environment.systemPackages = [ controller ] ++ lib.optionals vfio [ lookingGlassClient ];
+  boot.extraModulePackages = lib.mkIf vfio [ config.boot.kernelPackages.kvmfr ];
+  boot.kernelModules = lib.mkIf vfio [ "kvmfr" ];
+  boot.extraModprobeConfig = lib.mkIf vfio "options kvmfr static_size_mb=128";
+  services.udev.extraRules = lib.mkIf vfio ''
+    KERNEL=="kvmfr0", GROUP="kvm", MODE="0660"
+  '';
   environment.etc."orgm/windows-vm-profile".text = "envy-${if runtimeMode == "render" then "render-node" else runtimeMode}\n";
   systemd.services.envy-windows-storage = {
     description = "Prepare Envy mounted Windows storage without creating an image";
@@ -109,7 +107,7 @@ in {
     path = [ config.virtualisation.podman.package pkgs.slirp4netns pkgs.fuse-overlayfs ];
     serviceConfig = {
       Type = "notify"; NotifyAccess = "main";
-      ExecStart = "${controller}/libexec/envy-windows-supervise";
+      ExecStart = "${controller}/libexec/windows-vm-supervise";
       RuntimeDirectory = "envy-windows"; RuntimeDirectoryMode = "0700"; RuntimeDirectoryPreserve = "yes";
       TimeoutStartSec = "infinity"; TimeoutStopSec = "infinity";
       KillMode = "process"; SendSIGKILL = false;

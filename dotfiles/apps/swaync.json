@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "swaync",
+  "paths": [
+    ".config/swaync"
+  ]
+}

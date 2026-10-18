@@ -168,7 +168,7 @@ in {
       };
 
       # Lenovo has no G213; avoid starting a detector that can only exit.
-      systemd.user.services.openrgb-notify = lib.mkIf (programEnabled "openrgb" && hostName != "lenovo" && profileName != "ryoku") {
+      systemd.user.services.openrgb-notify = lib.mkIf (programEnabled "openrgb" && hostName != "lenovo" && !builtins.elem profileName [ "ryoku" "sway" ]) {
         Unit.Description = "Blink G213 keyboard zones on app notifications";
         Service = {
           ExecStart = "${lg213PythonEnv}/bin/python3 %h/.config/openrgb/lg213/main.py";

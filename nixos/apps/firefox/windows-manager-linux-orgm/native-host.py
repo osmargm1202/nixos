@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import fcntl
 import hashlib
 import http.client
 import ipaddress
@@ -982,12 +983,53 @@ class NativeHost:
         self.buffers = {}
         self.listener = None
         self.path = socket_path()
+        self.socket_lock_fd = None
+        self.socket_identity = None
         self.favicon_cache = FaviconCache()
 
     def start_listener(self):
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # Keep this lock inode across restarts. Unlinking a lock file would let
+        # two hosts acquire locks on different inodes and race to replace sockets.
+        self.socket_lock_fd = os.open(
+            str(self.path) + '.lock', os.O_CREAT | os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600
+        )
+        lock_stat = os.fstat(self.socket_lock_fd)
+        if not stat.S_ISREG(lock_stat.st_mode) or lock_stat.st_uid != os.getuid():
+            raise RuntimeError('browser bridge lock must be a regular file owned by this user')
+        fcntl.flock(self.socket_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        os.fchmod(self.socket_lock_fd, 0o600)
+        try:
+            existing = self.path.lstat()
+        except FileNotFoundError:
+            existing = None
+        if existing is not None:
+            if not stat.S_ISSOCK(existing.st_mode) or existing.st_uid != os.getuid():
+                raise RuntimeError('refusing to replace a non-owned browser bridge socket')
+            # Old generations have no lock. A live bound socket can refuse
+            # connections before listen(), so ECONNREFUSED alone is insufficient.
+            with open('/proc/net/unix', encoding='utf-8', errors='surrogateescape') as sockets:
+                for line in sockets:
+                    fields = line.rstrip('\n').split(maxsplit=7)
+                    if len(fields) == 8 and fields[7] == str(self.path):
+                        raise RuntimeError('browser bridge socket still has a kernel owner')
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+                probe.settimeout(1)
+                try:
+                    probe.connect(str(self.path))
+                except ConnectionRefusedError:
+                    current = self.path.lstat()
+                    if (current.st_dev, current.st_ino) != (existing.st_dev, existing.st_ino):
+                        raise RuntimeError('browser bridge socket changed while probing')
+                    self.path.unlink()
+                except FileNotFoundError:
+                    pass
+                else:
+                    raise RuntimeError('browser tab bridge is already running')
         self.listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.listener.bind(str(self.path))
+        bound = self.path.lstat()
+        self.socket_identity = (bound.st_dev, bound.st_ino)
         self.path.chmod(0o600)
         self.listener.listen()
         self.listener.setblocking(False)
@@ -1067,8 +1109,8 @@ class NativeHost:
             self.close_client(connection)
 
     def run(self):
-        self.start_listener()
         try:
+            self.start_listener()
             while True:
                 for key, _ in self.selector.select():
                     key.data(key.fileobj)
@@ -1080,9 +1122,15 @@ class NativeHost:
                 self.listener.close()
             self.favicon_cache.close()
             try:
-                self.path.unlink()
+                if self.socket_identity is not None:
+                    current = self.path.lstat()
+                    if (current.st_dev, current.st_ino) == self.socket_identity:
+                        self.path.unlink()
             except FileNotFoundError:
                 pass
+            finally:
+                if self.socket_lock_fd is not None:
+                    os.close(self.socket_lock_fd)
 
 
 def main():

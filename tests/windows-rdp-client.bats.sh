@@ -7,6 +7,9 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 bin="$tmp/bin"
 mkdir -p "$bin" "$tmp/home/Apps/windows"
+# Never inherit the workstation's active /etc/orgm/windows-vm-profile.
+export WINDOWS_VM_PROFILE_FILE="$tmp/default-profile"
+printf '%s\n' render-node >"$WINDOWS_VM_PROFILE_FILE"
 ln -s "$repo_dir/nixos/containers/windows/compose.yml" "$tmp/home/Apps/windows/compose.yml"
 ln -s "$repo_dir/nixos/containers/windows/hosts/lenovo-windows/compose.yml" "$tmp/home/Apps/windows/compose.lenovo-vfio.yml"
 ln -s "$BASH" "$bin/bash"
@@ -17,7 +20,7 @@ cat >"$bin/nc" <<'EOF'
 if [[ -n "${NC_LOG:-}" ]]; then
   printf '%q\n' "$@" >>"$NC_LOG"
 fi
-exit 0
+exit "${NC_FAIL:-0}"
 EOF
 cat >"$bin/docker" <<'EOF'
 #!/usr/bin/env bash
@@ -89,7 +92,10 @@ cat >"$bin/jq" <<'EOF'
 EOF
 cat >"$bin/rofi" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' 0
+if [[ -n "${ROFI_TARGETS_LOG:-}" ]]; then
+  while IFS= read -r line; do printf '%s\n' "$line" >>"$ROFI_TARGETS_LOG"; done
+fi
+printf '%s\n' "${ROFI_INDEX:-0}"
 EOF
 chmod +x "$bin/nc" "$bin/docker" "$bin/podman" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
 rdp_password_file="$tmp/rdp-password"
@@ -166,10 +172,10 @@ grep -Fqx 'podman stop lenovo-windows' "$engine_log"
 lg_log="$tmp/looking-glass.log"
 if [[ -e /dev/kvmfr0 ]]; then
   HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true LG_LOG="$lg_log" "$helper" looking-glass
-  [[ "$(<"$lg_log")" == "-m 88 -p 5901" ]]
+  [[ "$(<"$lg_log")" == "-m 88 -f /dev/kvmfr0 -s 127.0.0.1 -p 5901" ]]
 else
   lg_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true "$helper" looking-glass 2>&1 || true)"
-  [[ "$lg_output" == *"Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled."* ]]
+  [[ "$lg_output" == *"Error: /dev/kvmfr0 is unavailable; boot a VFIO Windows profile with Looking Glass enabled."* ]]
 fi
 vfio_start_docker_log="$tmp/vfio-start-docker.log"
 if [[ -e /dev/vfio/16 && -e /dev/kvmfr0 && "$(ulimit -Hl)" == unlimited ]]; then
@@ -191,7 +197,7 @@ fi
 non_vfio_profile="$tmp/non-vfio-profile"
 printf '%s\n' render-node >"$non_vfio_profile"
 non_vfio_lg_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$non_vfio_profile" "$helper" looking-glass 2>&1 || true)"
-[[ "$non_vfio_lg_output" == *"Looking Glass is available only for the Lenovo VFIO Windows profile."* ]]
+[[ "$non_vfio_lg_output" == *"Looking Glass requires the Lenovo or Envy VFIO Windows profile."* ]]
 
 web_profile="$tmp/web-vm-profile"
 printf '%s\n' lenovo-vfio >"$web_profile"
@@ -280,7 +286,7 @@ cat >"$bin/envy-windows" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$1" >>"$ENVY_LOG"
 [[ "${ENVY_FAIL:-0}" == 0 ]] || exit 125
-[[ "$1" != status ]] || printf '%s\n' '{"running":true,"mode":"render","pending":false}'
+[[ "$1" != status ]] || printf '{"running":%s,"mode":"vfio","pending":false}\n' "${ENVY_RUNNING:-true}"
 EOF
 chmod +x "$bin/envy-windows"
 ln -s "$(command -v python3)" "$bin/python3"
@@ -333,4 +339,20 @@ for profile in envy-render-node envy-vfio; do
   fi
  done
 done
+# Looking Glass works without RDP, delegates start to the guarded controller,
+# and is offered for Envy in the target picker. /dev/null is a fixture only.
+printf '%s\n' envy-vfio >"$tmp/envy-profile"
+for running in true false; do
+ : >"$tmp/envy-log"; : >"$tmp/lg-nc-log"
+ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
+  WINDOWS_LOOKING_GLASS_DEVICE=/dev/null ENVY_LOG="$tmp/envy-log" ENVY_RUNNING="$running" \
+  LG_LOG="$lg_log" NC_FAIL=1 NC_LOG="$tmp/lg-nc-log" "$helper" looking-glass
+ [[ "$(<"$lg_log")" == '-m 88 -f /dev/null -s 127.0.0.1 -p 5901' ]]
+ [[ ! -s "$tmp/lg-nc-log" ]]
+ if [[ "$running" == false ]]; then grep -qx start "$tmp/envy-log"; else ! grep -qx start "$tmp/envy-log"; fi
+done
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
+ WINDOWS_LOOKING_GLASS_DEVICE=/dev/null ENVY_LOG="$tmp/envy-log" LG_LOG="$lg_log" \
+ ROFI_INDEX=3 ROFI_TARGETS_LOG="$tmp/lg-targets" "$helper" connect
+grep -Fq 'Local | envy-windows | Looking Glass' "$tmp/lg-targets"
 printf '%s\n' 'windows-rdp-client: ok'

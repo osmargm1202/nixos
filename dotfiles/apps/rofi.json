@@ -12,6 +12,7 @@
     ".local/bin/hypr-rofi-ssh-host",
     ".local/bin/hypr-rofi-window",
     ".local/bin/rofi-menu-lib",
-    ".local/bin/rofi-symbols"
+    ".local/bin/rofi-symbols",
+    ".config/rofi-sway"
   ]
 }

@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Shared Rofi helpers for Sway menus. Source this file; do not execute it.
+
+sway_rofi_load_env() {
+  SWAY_ROFI_THEME="${SWAY_ROFI_THEME:-$HOME/.config/rofi-sway/sway-menu.rasi}"
+  SWAY_ROFI_ENV="${SWAY_ROFI_ENV:-$HOME/.config/rofi-sway/sway-menu.env}"
+
+  if [ -f "$SWAY_ROFI_ENV" ]; then
+    # shellcheck disable=SC1090
+    . "$SWAY_ROFI_ENV"
+  fi
+
+  SWAY_ROFI_SCALE="${SWAY_ROFI_SCALE:-1.00}"
+  SWAY_ROFI_WIDTH="${SWAY_ROFI_WIDTH:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 600 * s }')}"
+  SWAY_ROFI_LINES="${SWAY_ROFI_LINES:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%d", 13 * s }')}"
+  SWAY_ROFI_FONT_SIZE="${SWAY_ROFI_FONT_SIZE:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%d", 12 * s }')}"
+  SWAY_ROFI_ICON_SIZE="${SWAY_ROFI_ICON_SIZE:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 32 * s }')}"
+  SWAY_ROFI_ELEMENT_PADDING="${SWAY_ROFI_ELEMENT_PADDING:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 8 * s }')}"
+}
+
+sway_rofi_need() {
+  if ! command -v rofi >/dev/null 2>&1; then
+    notify-send "Rofi" "rofi no está instalado." 2>/dev/null || true
+    return 1
+  fi
+}
+
+sway_rofi_theme_str() {
+  local lines="${1:-$SWAY_ROFI_LINES}"
+  local width="${2:-$SWAY_ROFI_WIDTH}"
+  cat <<EOF
+configuration {
+  font: "JetBrainsMono Nerd Font ${SWAY_ROFI_FONT_SIZE}";
+  hover-select: true;
+  me-select-entry: "";
+  me-accept-entry: "MousePrimary";
+}
+window { width: ${width}; }
+listview { lines: ${lines}; }
+element { padding: ${SWAY_ROFI_ELEMENT_PADDING}; cursor: pointer; }
+element-icon { size: ${SWAY_ROFI_ICON_SIZE}; }
+EOF
+}
+
+sway_rofi_dmenu() {
+  local prompt="$1"
+  local lines="${2:-$SWAY_ROFI_LINES}"
+  local width="${3:-$SWAY_ROFI_WIDTH}"
+  sway_rofi_need || return 1
+  rofi -no-config -dmenu -i -show-icons -p "$prompt" -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str "$lines" "$width")"
+}
+
+sway_rofi_markup_dmenu() {
+  local prompt="$1"
+  local lines="${2:-$SWAY_ROFI_LINES}"
+  local width="${3:-$SWAY_ROFI_WIDTH}"
+  sway_rofi_need || return 1
+  rofi -no-config -dmenu -i -markup-rows -p "$prompt" -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str "$lines" "$width")"
+}
+
+sway_rofi_drun() {
+  sway_rofi_need || return 1
+  rofi -no-config -show drun -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str)"
+}
+
+sway_rofi_load_env

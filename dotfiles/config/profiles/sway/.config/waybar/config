@@ -1,0 +1,175 @@
+{
+  "name": "top_bar",
+  "layer": "top",
+  "position": "top",
+  "exclusive": true,
+  "height": 30,
+  "spacing": 4,
+  "reload_style_on_change": true,
+  "modules-left": [
+    "custom/launcher", "custom/visual-profile", "sway/workspaces", "sway/scratchpad", "sway/mode",
+    "backlight", "battery", "pulseaudio", "pulseaudio#microphone",
+    "idle_inhibitor", "sway/language", "custom/wallpaper", "custom/keybindings_help"
+  ],
+  "modules-center": ["clock#day_month", "clock", "clock#date"],
+  "modules-right": ["sway/window", "mpris", "network", "bluetooth", "custom/notifications", "custom/power", "tray"],
+  "custom/launcher": {
+    "format": "",
+    "on-click": "sway-app-launcher",
+    "on-click-right": "orgm-sway menu",
+    "tooltip-format": "Aplicaciones · Super+Space\nClic derecho: centro de control"
+  },
+  "custom/visual-profile": {
+    "exec": "orgm-visual-profile waybar",
+    "return-type": "json",
+    "interval": 5,
+    "on-click": "orgm-sway profiles",
+    "on-click-right": "env ORGM_VISUAL_PROFILE_BACKEND=sway orgm-visual-profile toggle-mode"
+  },
+  "sway/workspaces": {
+    "disable-scroll": false,
+    "all-outputs": false,
+    "format": "{name}",
+    "persistent-workspaces": {
+      "1": [], "2": [], "3": [], "4": [], "5": [],
+      "6": [], "7": [], "8": [], "9": [], "10": []
+    }
+  },
+  "sway/scratchpad": {
+    "format": "󰋊 {count}",
+    "show-empty": false,
+    "on-click": "swaymsg scratchpad show",
+    "tooltip-format": "{app}: {title}"
+  },
+  "sway/mode": { "format": "{}" },
+  "sway/language": {
+    "format": "{short}",
+    "tooltip-format": "{long} · Ctrl+Space",
+    "on-click": "swaymsg input type:keyboard xkb_switch_layout next"
+  },
+  "sway/window": {
+    "format": "{}",
+    "max-length": 30,
+    "separate-outputs": true
+  },
+  "clock#day_month": {
+    "format": "{:%A - %B}",
+    "locale": "es_DO.UTF-8",
+    "interval": 60,
+    "tooltip": false
+  },
+  "clock": {
+    "format": "{:%I:%M %p}",
+    "locale": "C",
+    "interval": 1,
+    "tooltip-format": "{:%Y-%m-%d}"
+  },
+  "clock#date": {
+    "format": "{:%d/%m/%Y}",
+    "interval": 60,
+    "tooltip": false
+  },
+  "backlight": {
+    "format": "{icon} {percent}%",
+    "format-icons": ["󰃞", "󰃟", "󰃠"],
+    "on-scroll-up": "sway-brightness-osd up",
+    "on-scroll-down": "sway-brightness-osd down"
+  },
+  "battery": {
+    "states": { "warning": 30, "critical": 15 },
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}% ",
+    "format-plugged": "󰚥 {capacity}%",
+    "format-full": "󰁹 {capacity}%",
+    "tooltip-format": "{capacity}% {timeTo} {power}W",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+  },
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": "󰝟",
+    "format-icons": { "default": ["", "", ""] },
+    "tooltip-format": "Audio: {volume}% · {desc}",
+    "on-click": "sway-volume-osd mute",
+    "on-click-middle": "kitty -e pulsemixer",
+    "on-click-right": "pavucontrol",
+    "on-scroll-up": "sway-volume-osd up",
+    "on-scroll-down": "sway-volume-osd down",
+    "max-volume": 150
+  },
+  "pulseaudio#microphone": {
+    "target": "source",
+    "format": "{format_source}",
+    "format-source": "󰍬",
+    "format-source-muted": "󰍭",
+    "tooltip-format": "Micrófono · clic: silenciar\nClic derecho: configurar audio",
+    "on-click": "sway-mic-volume-osd mute",
+    "on-click-right": "pavucontrol",
+    "on-scroll-up": "sway-mic-volume-osd up",
+    "on-scroll-down": "sway-mic-volume-osd down",
+    "max-volume": 150
+  },
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "tooltip-format": "Caffeine: mantener pantalla activa",
+    "format-icons": { "activated": "󰅶", "deactivated": "󰾪" }
+  },
+  "custom/wallpaper": {
+    "format": "",
+    "tooltip-format": "Fondo aleatorio del perfil · Super+Alt+W\nClic derecho: elegir fondo",
+    "on-click": "env ORGM_VISUAL_PROFILE_BACKEND=sway orgm-visual-profile random-wallpaper",
+    "on-click-right": "orgm-sway wallpaper-pick"
+  },
+  "custom/keybindings_help": {
+    "format": "?",
+    "tooltip-format": "Atajos Sway · Super+/",
+    "on-click": "orgm-sway help"
+  },
+  "mpris": {
+    "format": " 󰐊",
+    "format-paused": " 󰏤",
+    "format-stopped": "",
+    "tooltip-format": "{dynamic}",
+    "on-click": "playerctl play-pause",
+    "on-click-right": "playerctl next",
+    "on-click-middle": "playerctl previous"
+  },
+  "network": {
+    "format-wifi": "",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤭",
+    "tooltip-format": "{ifname}: {ipaddr}",
+    "tooltip-format-wifi": "{essid} · {signalStrength}%\n{ipaddr}",
+    "on-click": "kitty --class nmtui -e nmtui"
+  },
+  "bluetooth": {
+    "format": "",
+    "format-connected": " {num_connections}",
+    "tooltip-format": "Bluetooth: {status}",
+    "on-click": "kitty --class bluetui -e bluetui"
+  },
+  "custom/notifications": {
+    "exec": "swaync-client --subscribe-waybar",
+    "restart-interval": 2,
+    "return-type": "json",
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "󱅫",
+      "none": "󰂚",
+      "dnd-notification": "󰂛",
+      "dnd-none": "󰂛",
+      "inhibited-notification": "󰂛",
+      "inhibited-none": "󰂛",
+      "dnd-inhibited-notification": "󰂛",
+      "dnd-inhibited-none": "󰂛"
+    },
+    "on-click": "swaync-client --toggle-panel --skip-wait",
+    "on-click-right": "swaync-client --toggle-dnd --skip-wait",
+    "escape": true
+  },
+  "custom/power": {
+    "format": "󰐥",
+    "on-click": "orgm-sway power",
+    "tooltip-format": "Bloquear, suspender o apagar"
+  },
+  "tray": { "icon-size": 16, "spacing": 8 }
+}

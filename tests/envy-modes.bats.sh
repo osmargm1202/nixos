@@ -9,7 +9,7 @@ let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
    video=c.services.xserver.videoDrivers; initrd=c.boot.initrd.kernelModules; params=c.boot.kernelParams;
    blacklist=c.boot.blacklistedKernelModules; offload=c.hardware.nvidia.prime.offload.enable;
    cdi=c.hardware.nvidia-container-toolkit.enable; ryoku=c.programs.ryoku.enable or false;
-   hypr=c.programs.hyprland.enable; niri=c.programs.niri.enable;
+   sway=c.programs.sway.enable; hypr=c.programs.hyprland.enable; niri=c.programs.niri.enable;
    sddm=c.services.displayManager.sddm.enable; autologin=c.services.displayManager.autoLogin.enable;
    gaming=c.orgm.gaming.gamescopeTty1.enable; target=c.systemd.defaultUnit;
    ssh=c.services.openssh.enable; network=c.networking.networkmanager.enable;
@@ -36,7 +36,8 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert not any("acs_override" in p or "unsafe_interrupts" in p or "10de:1fbb" in p for p in c["params"]),name
  assert "set-server-boot-default" not in c["extraInstall"],name
  graphics=name in ("normal","windows-vfio")
- assert c["ryoku"]==graphics and c["sddm"]==graphics and c["hypr"]==graphics and c["niri"]==graphics,name
+ assert c["sway"]==graphics and c["sddm"]==graphics,name
+ assert not c["ryoku"] and not c["hypr"] and not c["niri"],name
  assert not c["autologin"],name
  vfio=name in ("windows-vfio","server")
  assert c["vfio"]==vfio and c["offload"]== (not vfio) and c["cdi"]== (not vfio),name
@@ -49,5 +50,5 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  if name=="gaming": assert "nvidia-game gamescope" in c["login"] and "steam -gamepadui" in c["login"]
  if name=="server": assert c["target"]=="multi-user.target" and not c["sunshine"]
 assert v["normal"]["mode"]=="normal" and v["normal"]["sort"]=="nixos-00-normal"
-print("PASS: Envy mode GPU ownership, console isolation, preserved recovery and normal default")
+print("PASS: Envy Sway mode GPU ownership, console isolation and preserved recovery")
 '''

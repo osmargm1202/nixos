@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "nwg-dock",
+  "paths": [
+    ".config/nwg-dock",
+    ".local/share/nwg-dock"
+  ]
+}

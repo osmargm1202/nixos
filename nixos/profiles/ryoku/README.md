@@ -1,10 +1,11 @@
 # Ryoku para Osmarg
 
-Hosts Ryoku: `envy`, `orgm` y `lenovo`; cada host tiene una única salida pública. Se usa el módulo oficial
+Hosts Ryoku: `orgm` y `lenovo`; cada host tiene una única salida pública. Se usa el módulo oficial
 de [Ryoku on NixOS](https://github.com/aethctl/Ryoku-on-NixOS), fijado en
 `28c5207586babb136aecf8568ce3ed873fa8f8fd`. Su nixpkgs se conserva separado:
 Hyprland, plugins, portales y Quickshell deben usar el mismo conjunto compatible.
-Envy conserva Ryoku para probar los dotfiles; el cambio a Hyprland queda pendiente de la decisión del usuario.
+Envy usa únicamente [Sway](../../../docs/envy-sway.md) bajo la salida `envy`;
+este perfil Ryoku ya no forma parte de su configuración.
 
 Desde la raíz del repo:
 
@@ -352,8 +353,9 @@ los enlaces antiguos al Store se convierten en copias con respaldo. Véase
 ### Fastfetch y Bash
 
 El paquete Nix entrega ahora los recursos Bash/entorno/Rashin que faltaban.
-El bootstrap inicial entra en Bash nativo de Ryoku, que lanza `ryoku-fastfetch`
-con el mismo `config.jsonc` que guarda el Hub. Se importa la biblioteca personal
+El bootstrap inicial entra en Bash nativo de Ryoku. Los overrides editables de
+`ryoku-terminal` desactivan Fastfetch automático tanto en Bash como en Fish;
+el comando permanece disponible para ejecutarlo manualmente. Se importa la biblioteca personal
 sin volver a iniciar prompt/Starship, zoxide, fzf o un banner paralelo. Quitar un
 import de `~/.config/bash/user.bash` se respeta en el próximo switch.
 
@@ -418,14 +420,16 @@ Seguimiento: [pendientes Envy](../../hosts/envy/PENDING.md).
 
 ### Aplicación manual y comprobación física
 
-No se ha activado esta revisión en Envy. Actualiza el checkout de ese host y aplica:
+Esta revisión se aplica a los hosts que conservan Ryoku, por ejemplo Lenovo.
+La investigación de Envy se conserva como antecedente; Envy usa ahora Sway.
+Actualiza el checkout del host Ryoku y aplica:
 
 ```bash
 cd ~/Hobby/nixos
 git fetch origin
 git switch master
 git pull --ff-only
-nh os switch . -H envy
+nh os switch . -H lenovo
 ```
 
 Revisa cualquier error de activación; la ausencia de la identidad privada SOPS

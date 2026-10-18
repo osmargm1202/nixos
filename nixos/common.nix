@@ -123,7 +123,7 @@ let
     ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]
     ++ lib.optionals (hasProgram "containers") [ pkgs.podman-compose ]
-    ++ lib.optionals (!builtins.elem profileName [ "hyprland" "i3" "ryoku" ]) [ pkgs.thunar ];
+    ++ lib.optionals (!builtins.elem profileName [ "hyprland" "i3" "ryoku" "sway" ]) [ pkgs.thunar ];
 in
 {
   # Boot menu shows "Generation N <label>, built on <date>" -- date is
@@ -397,7 +397,7 @@ in
     enable = true;
     defaultApplications = {
       "inode/directory" = lib.mkForce [
-        (if builtins.elem profileName [ "hyprland" "ryoku" ] then "org.gnome.Nautilus.desktop" else "thunar.desktop")
+        (if builtins.elem profileName [ "hyprland" "ryoku" "sway" ] then "org.gnome.Nautilus.desktop" else "thunar.desktop")
       ];
       "text/plain" = lib.mkDefault [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = lib.mkDefault [ "org.gnome.TextEditor.desktop" ];
@@ -413,6 +413,12 @@ in
   };
 
   programs.dconf.enable = true;
+
+  # Run downloaded AppImages directly, including the ArtCraft applications.
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
 
   # Third-party AI CLIs use dynamic loaders and hard-coded Bash shebangs.
   programs.nix-ld.enable = hasProgram "ai";

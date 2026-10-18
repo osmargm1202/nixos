@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "sway",
+  "paths": [
+    ".config/sway",
+    ".local/bin/orgm-sway"
+  ]
+}

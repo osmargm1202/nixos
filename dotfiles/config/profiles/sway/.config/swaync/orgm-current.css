@@ -1,0 +1,9 @@
+/* Fallback; orgm-visual-profile restores the selected palette on Sway login. */
+@define-color base #080808;
+@define-color surface0 #202020;
+@define-color surface1 #303030;
+@define-color overlay0 #b8b8b8;
+@define-color text #f5f5f5;
+@define-color blue #8ab4f8;
+@define-color red #ff8a8a;
+@define-color panel_bg rgba(8, 8, 8, 0.82);

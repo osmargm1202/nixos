@@ -9,7 +9,7 @@ if [[ "${1:-}" == "--backend" ]]; then
 fi
 
 case "$backend" in
-  hyprland|i3|labwc) ;;
+  hyprland|i3|labwc|sway) ;;
   *) exit 2 ;;
 esac
 
@@ -106,6 +106,9 @@ focus_previous() {
   case "$backend" in
     hyprland)
       hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
+      ;;
+    sway)
+      swaymsg workspace back_and_forth
       ;;
     i3)
       i3-msg 'workspace back_and_forth'

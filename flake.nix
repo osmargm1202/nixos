@@ -113,6 +113,7 @@
           braveOrigin = pkgs.callPackage ./nixos/apps/brave-origin.nix { };
           engram = pkgs.callPackage ./nixos/apps/engram.nix { };
           orgmPackages = import ./nixos/orgm/packages.nix { inherit pkgs; };
+          fingerprintPackages = import ./nixos/hardware/fingerprint/synatudor.nix { inherit pkgs; };
         in
         {
           formatter = pkgs.nixfmt-rfc-style;
@@ -123,6 +124,9 @@
               braveOrigin
               ;
             "brave-origin" = braveOrigin;
+            # Build-only outputs; not installed on Envy unless explicitly enabled.
+            libfprint-synatudor = fingerprintPackages.libfprint;
+            fprintd-synatudor = fingerprintPackages.fprintd;
             default = braveOrigin;
           };
 

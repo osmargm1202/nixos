@@ -1,0 +1,37 @@
+# The subprocess helper constructs GLib.GError with bytes, but PyGObject
+# expects text when formatting it. Decode the error without weakening any
+# assertions or changing the daemon. This also affects stock fprintd 1.94.5.
+diff --git a/tests/fprintd.py b/tests/fprintd.py
+--- a/tests/fprintd.py
++++ b/tests/fprintd.py
+@@ -592,10 +592,10 @@ class FPrintdTest(dbusmock.DBusTestCase):
+             proc = self.gdbus_device_method_call_process(method, args)
+             proc.wait(timeout=5)
+             if proc.returncode != 0:
+-                raise GLib.GError(proc.stdout.read())
++                raise GLib.GError(proc.stdout.read().decode('utf-8', 'replace'))
+             return proc.stdout.read()
+         except subprocess.TimeoutExpired as e:
+-            raise GLib.GError(e.output)
++            raise GLib.GError((e.output or b'').decode('utf-8', 'replace'))
+ 
+ 
+ class FPrintdVirtualImageDeviceBaseTests(FPrintdTest):
+@@ -2991,7 +2991,7 @@ class FPrindConcurrentPolkitRequestsTest(FPrintdVirtualDeviceStorageClaimedTest):
+         gdbus.wait()
+         with self.assertFprintError('AlreadyInUse'):
+-            raise GLib.GError(gdbus.stdout.read())
++            raise GLib.GError(gdbus.stdout.read().decode('utf-8', 'replace'))
+ 
+         self.device.Release()
+ 
+     def test_hanging_claim_does_not_block_new_claim(self):
+@@ -3033,7 +3033,7 @@ class FPrindConcurrentPolkitRequestsTest(FPrintdVirtualDeviceStorageClaimedTest):
+         gdbus.wait()
+         with self.assertFprintError('AlreadyInUse'):
+-            raise GLib.GError(gdbus.stdout.read())
++            raise GLib.GError(gdbus.stdout.read().decode('utf-8', 'replace'))
+ 
+         self.device.Release()
+ 
+     def test_hanging_claim_does_not_block_new_release(self):

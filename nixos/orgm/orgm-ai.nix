@@ -7,7 +7,7 @@
 
 buildGoModule {
   pname = "orgmai";
-  version = "0.4.0";
+  version = "0.4.1";
   # Thin native client launcher; no AI transport, model or credential handling.
   src = ./orgmai-src;
   vendorHash = null;

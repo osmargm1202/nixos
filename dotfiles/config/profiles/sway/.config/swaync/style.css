@@ -1,0 +1,50 @@
+/* Keep the packaged GTK4 layout; override colors/sizes with the visual profile. */
+@import "orgm-current.css";
+
+:root {
+  --cc-bg: @panel_bg;
+  --noti-bg-hover: @surface0;
+  --noti-bg-focus: @surface1;
+  --noti-close-bg: @surface0;
+  --noti-close-bg-hover: @surface1;
+  --text-color: @text;
+  --text-color-disabled: @overlay0;
+  --bg-selected: @blue;
+  --border: none;
+  --border-radius: 12px;
+  --font-size-body: 13px;
+  --font-size-summary: 14px;
+  --notification-icon-size: 40px;
+  --notification-group-icon-size: 24px;
+}
+
+* {
+  font-family: "JetBrainsMono Nerd Font", "Noto Sans", "Noto Color Emoji", sans-serif;
+  font-size: 13px;
+}
+
+.control-center {
+  background: @panel_bg;
+  color: @text;
+  border: none;
+  box-shadow: none;
+}
+
+.notification-row .notification-background .notification,
+.notification-group.collapsed .notification-row .notification {
+  background: @base;
+  border: none;
+}
+
+/* The dock does not reserve an exclusive zone: leave its right-hand strip free. */
+.floating-notifications .notification-row .notification-background {
+  padding: 6px 68px 6px 8px;
+}
+
+.widget-title > label { font-size: 16px; font-weight: bold; }
+.widget-title > button { padding: 4px 10px; }
+.widget-dnd label { font-size: 13px; }
+
+progressbar trough { background: @surface0; min-height: 6px; border: none; }
+progressbar progress { background: @blue; min-height: 6px; border: none; }
+switch:checked { background: @blue; }

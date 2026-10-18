@@ -1,0 +1,6 @@
+/* Fallback palette; orgm-visual-profile apply restores the saved selection. */
+@define-color panel_bg rgba(8, 8, 8, 0.82);
+@define-color text #f5f5f5;
+@define-color overlay0 #b8b8b8;
+@define-color blue #8ab4f8;
+@define-color red #ff8a8a;

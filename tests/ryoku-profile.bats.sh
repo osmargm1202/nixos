@@ -44,7 +44,6 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
       specialisations = builtins.mapAttrs (_: s: describe s.configuration) c.specialisation;
     };
   in {
-    envy = host "envy";
     lenovo = host "lenovo";
     orgm = host "orgm";
     legacyNotifications = builtins.mapAttrs (_: name:

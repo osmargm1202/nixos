@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Profile-aware swaylock-effects launcher, with a plain swaylock fallback."""
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+def config_home():
+    return Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config'))
+
+
+def locker_binary():
+    system = shutil.which('swaylock')
+    fallback = Path(os.environ.get('XDG_STATE_HOME', Path.home() / '.local/state')) / 'orgm-swaylock-effects-package/bin/swaylock'
+    candidates = [p for p in (system, str(fallback)) if p and os.access(p, os.X_OK)]
+    for candidate in candidates:
+        try:
+            help_result = subprocess.run([candidate, '--help'], capture_output=True, text=True, timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if '--effect-blur' in help_result.stdout + help_result.stderr:
+            return str(Path(candidate).resolve()), True
+    if candidates:
+        # Keep locking functional if only vanilla swaylock is available.
+        return str(Path(candidates[0]).resolve()), False
+    raise RuntimeError('No swaylock binary available')
+
+
+def effects_arguments(path):
+    if not path.is_file():
+        return []
+    args = []
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        key, separator, value = line.partition('=')
+        if not re.fullmatch(r'[a-z][a-z0-9-]*', key):
+            raise ValueError(f'Invalid swaylock option: {key}')
+        args.append('--' + key)
+        if separator:
+            args.append(value)
+    return args
+
+
+def palette_arguments(path):
+    if not path.is_file():
+        return []
+    colors = dict(re.findall(r'^@define-color\s+(\w+)\s+#([0-9a-fA-F]{6});\s*$', path.read_text(), re.MULTILINE))
+    if not all(key in colors for key in ('base', 'text', 'blue', 'green', 'red', 'yellow')):
+        return []
+    options = {'color': colors['base'], 'ring-color': colors['blue'] + '99',
+               'ring-clear-color': colors['green'], 'ring-ver-color': colors['blue'],
+               'ring-wrong-color': colors['red'], 'ring-caps-lock-color': colors['yellow'],
+               'key-hl-color': colors['green'], 'bs-hl-color': colors['red'],
+               'caps-lock-key-hl-color': colors['yellow'], 'caps-lock-bs-hl-color': colors['red'],
+               'layout-bg-color': colors['base'] + 'dd', 'layout-border-color': colors['blue'] + '55',
+               'layout-text-color': colors['text']}
+    for state in ('', '-clear', '-ver', '-wrong', '-caps-lock'):
+        options['inside' + state + '-color'] = colors['base'] + 'b8'
+        options['text' + state + '-color'] = colors['text']
+    options['text-wrong-color'] = colors['red']
+    options['text-caps-lock-color'] = colors['yellow']
+    return [argument for key, value in options.items() for argument in ('--' + key, value)]
+
+
+def wallpaper():
+    state = config_home() / 'sway/wallpaper'
+    if state.is_file():
+        value = state.read_text().strip()
+        if value:
+            path = Path(value).expanduser()
+            if path.is_file():
+                if path.suffix.lower() in ('.mp4', '.mkv', '.webm', '.mov', '.m4v', '.avi'):
+                    # Backend stores the extracted frame, never pass video bytes
+                    # to swaylock. Missing cache safely falls back to solid color.
+                    preview = config_home() / 'sway/wallpaper-preview'
+                    if preview.is_file():
+                        image = Path(preview.read_text().strip())
+                        if image.is_file() and image.suffix.lower() == '.png':
+                            return image.resolve()
+                    return None
+                return path.resolve()
+    return None
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv:
+        raise ValueError('usage: orgm-sway-lock')
+    config = config_home()
+    binary, effects = locker_binary()
+    args = [binary, '--config', str((config / 'swaylock/config').resolve())]
+    if effects:
+        args += effects_arguments(config / 'swaylock/effects.conf')
+        # No grace period, even if a style snippet accidentally requests one.
+        args += ['--grace', '0']
+    args += palette_arguments(config / 'waybar/orgm-current.css')
+    image = wallpaper()
+    # swaylock expands image paths with wordexp(). A fixed relative symlink
+    # prevents spaces, colons or shell syntax in wallpaper filenames being parsed.
+    with tempfile.TemporaryDirectory(prefix='orgm-sway-lock-') as directory:
+        if image is not None:
+            (Path(directory) / 'background').symlink_to(image)
+            args += ['--image', ':background']
+        # The parent returns only once the compositor lock is established.
+        subprocess.run([*args, '--daemonize'], cwd=directory, check=True)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+        print(f'orgm-sway-lock: {error}', file=sys.stderr)
+        sys.exit(1)

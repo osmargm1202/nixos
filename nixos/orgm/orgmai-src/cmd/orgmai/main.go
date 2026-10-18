@@ -37,7 +37,7 @@ func (a *app) run(args []string) error {
 			printHelp()
 			return nil
 		case "--version":
-			fmt.Println("orgmai 0.4.0")
+			fmt.Println("orgmai 0.4.1")
 			return nil
 		case "config", "program":
 			_, _, err := a.chooseProgram(true)
@@ -63,7 +63,7 @@ func printHelp() {
 
 Programas: Claude, Codex, OpenCode, OMP y Pi.
 La primera ejecución pregunta qué programa usar y guarda solo esa elección en
-$XDG_CONFIG_HOME/orgmai/config.json. Pi se ejecuta con -ne (sin extensiones).
+$XDG_CONFIG_HOME/orgmai/config.json. Pi se ejecuta sin extensiones, MCP, skills ni temas externos.
 Cada programa usa sus propios modelos, credenciales, interfaz e historial.
 Los atajos del escritorio lo abren en una terminal Kitty flotante.
 `)

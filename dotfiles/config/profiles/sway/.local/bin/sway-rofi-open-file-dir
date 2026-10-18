@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+lib="${SWAY_ROFI_LIB:-$HOME/.local/bin/sway-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+cd "$HOME"
+selection="$({
+  find . -type f \
+    -not -path '*/.*/*' \
+    -not -path './.*' \
+    -not -path './go/*' \
+    -not -path './paru/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/target/*' \
+    -printf '%T@\t%P\n' 2>/dev/null \
+    | sort -rn \
+    | cut -f2-
+} | sway_rofi_dmenu 'Dir' "${SWAY_ROFI_FILE_LINES:-18}" "${SWAY_ROFI_FILE_WIDTH:-$SWAY_ROFI_WIDTH}" || true)"
+
+[ -n "${selection:-}" ] || exit 0
+dir="$(dirname "$HOME/$selection")"
+exec nautilus --new-window "$dir"

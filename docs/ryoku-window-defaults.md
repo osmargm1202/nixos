@@ -42,13 +42,14 @@ fullscreen; véase su [documentación del layout scrolling](https://wiki.hypr.la
 La configuración generada se valida además con los binarios Hyprland y Niri
 fijados por el flake, no solamente contra documentación de versiones recientes.
 
-## Aplicar en envy
+## Aplicar en un host Ryoku
 
+Envy usa ahora Sway; esta configuración solo se aplica a Lenovo y ORGM.
 No se realiza activación remota como parte de este cambio. Tras actualizar el
 checkout en `~/Hobby/nixos`, ejecuta allí:
 
 ```sh
-nh os switch . -H envy
+nh os switch . -H lenovo
 ```
 
 Reabre las aplicaciones para comprobar las reglas iniciales. No se redimensionan
@@ -64,5 +65,5 @@ La comprobación visual en el hardware queda pendiente de esa activación.
   selectores/terminales/Bitwarden, y callbacks auxiliares conservados.
 - Prueba del cableado de paquetes, bundle, PATH del servicio, Home Manager y
   wrapper transaccional del materializador.
-- Build completo de Envy aprobado. No sustituye la comprobación visual al abrir
+- Build histórico de Envy con su anterior perfil Ryoku aprobado. No sustituye la comprobación visual al abrir
   aplicaciones después del switch del usuario.

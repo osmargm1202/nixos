@@ -187,12 +187,12 @@ func TestNativeConversationArguments(t *testing.T) {
 		{"opencode", []string{"prev"}, []string{"--continue"}},
 		{"opencode", []string{"new", "literal $(payload)"}, []string{"literal $(payload)"}},
 		{"claude", []string{"new", "a question"}, []string{"a question"}},
-		{"pi", nil, []string{"-ne"}},
-		{"pi", []string{"new"}, []string{"-ne"}},
-		{"pi", []string{"chat"}, []string{"-ne"}},
-		{"pi", []string{"prev"}, []string{"-ne", "--resume"}},
-		{"pi", []string{"--continue"}, []string{"-ne", "--continue"}},
-		{"pi", []string{"new", "--model", "own-model", "literal $(payload)"}, []string{"-ne", "--model", "own-model", "literal $(payload)"}},
+		{"pi", nil, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark"}},
+		{"pi", []string{"new"}, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark"}},
+		{"pi", []string{"chat"}, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark"}},
+		{"pi", []string{"prev"}, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark", "--resume"}},
+		{"pi", []string{"--continue"}, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark", "--continue"}},
+		{"pi", []string{"new", "--model", "own-model", "literal $(payload)"}, []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark", "--model", "own-model", "literal $(payload)"}},
 	} {
 		actual, err := programArguments(item.program, item.input)
 		if err != nil || !reflect.DeepEqual(actual, item.expected) {

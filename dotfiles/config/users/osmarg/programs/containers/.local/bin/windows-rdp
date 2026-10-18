@@ -9,6 +9,7 @@ INACTIVE_CONTAINER=""
 WINDOWS_VM_PROFILE_FILE="${WINDOWS_VM_PROFILE_FILE:-/etc/orgm/windows-vm-profile}"
 WINDOWS_VM_PROFILE="render-node"
 WINDOWS_COMPOSE_DIR="${WINDOWS_COMPOSE_DIR:-$HOME/Apps/windows}"
+LOOKING_GLASS_DEVICE="${WINDOWS_LOOKING_GLASS_DEVICE:-/dev/kvmfr0}"
 COMPOSE_FILES=()
 RDP_HOST="localhost"
 RDP_PORT="3389"
@@ -392,7 +393,7 @@ build_targets() {
   append_target "Local | $LOCAL_WINDOWS_NAME | RDP" "rdp-local" "$LOCAL_WINDOWS_NAME" "localhost"
   append_target "Local | $LOCAL_WINDOWS_NAME | Iniciar contenedor" "local-start" "$LOCAL_WINDOWS_NAME" "localhost"
   append_target "Local | $LOCAL_WINDOWS_NAME | Consola web" "local-web" "$LOCAL_WINDOWS_NAME" "localhost"
-  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio && -e /dev/kvmfr0 ]]; then
+  if [[ ( "$WINDOWS_VM_PROFILE" == lenovo-vfio || "$WINDOWS_VM_PROFILE" == envy-vfio ) && -c "$LOOKING_GLASS_DEVICE" && -r "$LOOKING_GLASS_DEVICE" && -w "$LOOKING_GLASS_DEVICE" ]]; then
     append_target "Local | $LOCAL_WINDOWS_NAME | Looking Glass" "looking-glass" "$LOCAL_WINDOWS_NAME" "localhost"
   fi
   append_target "Custom | RDP" "rdp-custom" "" ""
@@ -672,23 +673,26 @@ require_vfio_memlock() {
 
 do_looking_glass() {
   if [[ "$WINDOWS_VM_PROFILE" != lenovo-vfio && "$WINDOWS_VM_PROFILE" != envy-vfio ]]; then
-    echo "Error: Looking Glass is available only for the Lenovo VFIO Windows profile." >&2
+    echo "Error: Looking Glass requires the Lenovo or Envy VFIO Windows profile." >&2
     return 1
   fi
 
-  if [[ ! -e /dev/kvmfr0 ]]; then
-    echo "Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled." >&2
+  if [[ ! -c "$LOOKING_GLASS_DEVICE" || ! -r "$LOOKING_GLASS_DEVICE" || ! -w "$LOOKING_GLASS_DEVICE" ]]; then
+    echo "Error: $LOOKING_GLASS_DEVICE is unavailable; boot a VFIO Windows profile with Looking Glass enabled." >&2
     return 1
   fi
+  command -v looking-glass-client &>/dev/null || {
+    echo "Error: looking-glass-client is not installed in this system generation." >&2
+    return 1
+  }
 
   if ! container_is_running; then
     echo "Windows is not running. Starting '$CONTAINER'..."
-    do_start || return 1
-  else
-    wait_rdp || return 1
+    # SPICE/Looking Glass does not depend on RDP being installed or enabled.
+    do_start 0 || return 1
   fi
 
-  exec looking-glass-client -m 88 -p 5901
+  exec looking-glass-client -m 88 -f "$LOOKING_GLASS_DEVICE" -s 127.0.0.1 -p 5901
 }
 
 # ============================================================
@@ -879,7 +883,7 @@ Commands:
              Prompt for credentials in a terminal and connect to a known host
   web        Start the selected local container if needed and open its Web Console
   looking-glass
-             Start the Lenovo VFIO Windows VM if needed and open Looking Glass
+             Start the Lenovo/Envy VFIO Windows VM if needed and open Looking Glass
   status     Show the selected VM profile and RDP client
   install    Install script, icon and the single desktop launcher
 

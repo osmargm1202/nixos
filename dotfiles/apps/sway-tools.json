@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "name": "sway-tools",
+  "paths": [
+    ".local/bin/sway-app-launcher",
+    ".local/bin/orgm-sway-lock",
+    ".local/bin/sway-brightness-osd",
+    ".local/bin/sway-firefox-open-tab",
+    ".local/bin/sway-firefox-tabs",
+    ".local/bin/sway-menu-lib",
+    ".local/bin/sway-mic-volume-osd",
+    ".local/bin/sway-rofi-calc",
+    ".local/bin/sway-rofi-clipboard",
+    ".local/bin/sway-rofi-lib",
+    ".local/bin/sway-rofi-open-file-dir",
+    ".local/bin/sway-rofi-open-file-terminal",
+    ".local/bin/sway-rofi-ssh-host",
+    ".local/bin/sway-symbols",
+    ".local/bin/sway-video-timer",
+    ".local/bin/sway-volume-osd"
+  ]
+}

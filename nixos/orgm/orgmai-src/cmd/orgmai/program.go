@@ -131,7 +131,7 @@ func programArguments(program string, args []string) ([]string, error) {
 	}
 	var result []string
 	if program == "pi" {
-		result = []string{"-ne"}
+		result = []string{"-ne", "--no-mcp", "--no-skills", "--no-themes", "--use-theme", "dark"}
 	}
 	if mode == "prev" {
 		switch program {

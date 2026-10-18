@@ -484,18 +484,66 @@ environment = {
     "XDG_RUNTIME_DIR": str(runtime_dir),
     "XDG_CACHE_HOME": str(native_cache_home),
 }
-host = subprocess.Popen(
-    [sys.executable, host_path],
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    env=environment,
-)
-try:
+def spawn_host():
+    return subprocess.Popen(
+        [sys.executable, host_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, env=environment,
+    )
+
+
+def wait_for_listener(process):
     for _ in range(100):
-        if socket_path.exists():
-            break
-        time.sleep(0.01)
-    assert socket_path.exists(), "native host did not create its socket"
+        assert process.poll() is None, process.stderr.read().decode() if process.poll() is not None else ''
+        try:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+                probe.settimeout(0.1)
+                probe.connect(str(socket_path))
+            return
+        except (FileNotFoundError, ConnectionRefusedError):
+            time.sleep(0.01)
+    raise AssertionError('native host did not start listening')
+
+
+# Refuse to overwrite arbitrary files or follow a socket-path symlink.
+socket_path.write_text('keep this file')
+failed = subprocess.run([sys.executable, host_path], input=b'', capture_output=True, env=environment, timeout=3)
+assert failed.returncode != 0
+assert socket_path.read_text() == 'keep this file'
+socket_path.unlink()
+protected = runtime_dir / 'protected'
+protected.write_text('keep symlink target')
+socket_path.symlink_to(protected)
+failed = subprocess.run([sys.executable, host_path], input=b'', capture_output=True, env=environment, timeout=3)
+assert failed.returncode != 0
+assert socket_path.is_symlink() and protected.read_text() == 'keep symlink target'
+socket_path.unlink()
+
+# Old hosts have no lock. Protect them both before and after listen(): a live
+# socket between bind/listen also returns ECONNREFUSED, but is not abandoned.
+for listening in (False, True):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as legacy:
+        legacy.bind(str(socket_path))
+        if listening:
+            legacy.listen()
+        legacy_inode = socket_path.stat().st_ino
+        failed = subprocess.run([sys.executable, host_path], input=b'', capture_output=True, env=environment, timeout=3)
+        assert failed.returncode != 0
+        assert socket_path.stat().st_ino == legacy_inode
+    socket_path.unlink()
+
+# A dead socket is recoverable, rather than causing an endless reconnect loop.
+with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stale:
+    stale.bind(str(socket_path))
+assert socket_path.exists()
+host = spawn_host()
+try:
+    wait_for_listener(host)
+    live_inode = socket_path.stat().st_ino
+    duplicate = subprocess.run([sys.executable, host_path], input=b'', capture_output=True, env=environment, timeout=3)
+    assert duplicate.returncode != 0, 'second bridge must not replace the first'
+    assert host.poll() is None and socket_path.stat().st_ino == live_inode
+    assert socket_path.stat().st_mode & 0o777 == 0o600
+    assert Path(str(socket_path) + '.lock').stat().st_mode & 0o777 == 0o600
     client = subprocess.Popen(
         [sys.executable, host_path, "--client", "https://example.com/"],
         stdout=subprocess.PIPE,
@@ -629,6 +677,25 @@ try:
 finally:
     host.stdin.close()
     host.wait(timeout=3)
+assert not socket_path.exists(), 'graceful shutdown must remove its own socket'
+
+# SIGKILL skips finally, but releases the lock. The next extension retry heals it.
+crashed = spawn_host()
+try:
+    wait_for_listener(crashed)
+finally:
+    crashed.kill()
+    crashed.wait(timeout=3)
+    crashed.stdin.close()
+assert socket_path.exists(), 'crash fixture should leave a stale socket'
+recovered = spawn_host()
+try:
+    wait_for_listener(recovered)
+finally:
+    recovered.stdin.close()
+    recovered.wait(timeout=3)
+assert not socket_path.exists()
+assert Path(str(socket_path) + '.lock').exists(), 'lock inode must persist across restarts'
 PY
 
-printf 'PASS: Firefox webapp tab bridge is packaged and its client protocol works\n'
+printf 'PASS: Firefox tab bridge protocol, stale socket recovery and active host protection\n'

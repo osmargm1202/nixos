@@ -9,6 +9,7 @@ let
     ryoku = ./nixos/profiles/ryoku/ryoku.nix;
     i3 = ./nixos/profiles/i3/i3.nix;
     labwc = ./nixos/profiles/labwc.nix;
+    sway = ./nixos/profiles/sway/sway.nix;
   };
 
   desktop =
@@ -87,25 +88,16 @@ in
   inherit profiles;
 
   aliases = {
-    envy = "envy-ryoku";
-    envy-normal = "envy-ryoku";
     orgm = "orgm-hyprland";
     lenovo = "lenovo-hyprland";
     jarq = "jarq-i3";
   };
 
   configurations = {
-    envy-ryoku = desktop {
+    envy = desktop {
       hostName = "envy";
       hardware = ./nixos/hosts/envy/hardware-configuration.nix;
-      profileName = "ryoku";
-      userName = "osmarg";
-      extraModules = envyDesktopModules;
-    };
-    envy-hyprland = desktop {
-      hostName = "envy";
-      hardware = ./nixos/hosts/envy/hardware-configuration.nix;
-      profileName = "hyprland";
+      profileName = "sway";
       userName = "osmarg";
       extraModules = envyDesktopModules;
     };

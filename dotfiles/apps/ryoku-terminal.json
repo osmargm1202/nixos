@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "ryoku-terminal",
+  "paths": [
+    ".config/ryoku/user_edits/bash/ryoku.bash",
+    ".config/ryoku/user_edits/fish/config.fish"
+  ]
+}

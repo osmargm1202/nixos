@@ -27,7 +27,7 @@ func TestSavedPiExecutesNativeInterfaceWithoutLegacyOverrides(t *testing.T) {
 		}
 	}
 	launcherScript(t, bin, "pi", shell, `
-[ "$#" -eq 1 ] && [ "$1" = '-ne' ] || exit 21
+[ "$#" -eq 6 ] && [ "$1" = '-ne' ] && [ "$2" = '--no-mcp' ] && [ "$3" = '--no-skills' ] && [ "$4" = '--no-themes' ] && [ "$5" = '--use-theme' ] && [ "$6" = 'dark' ] || exit 21
 [ -z "${PI_PACKAGE_DIR-}" ] || exit 22
 IFS= read -r settings < "$HOME/.pi/agent/settings.json"
 IFS= read -r auth < "$HOME/.pi/agent/auth.json"
@@ -92,7 +92,7 @@ func TestPiFindsFNMInterpreterWithoutShellInitialization(t *testing.T) {
 	a, _, shell := launcherFixture(t)
 	bin := filepath.Join(os.Getenv("XDG_DATA_HOME"), "fnm/aliases/default/bin")
 	launcherScript(t, bin, "pi", envPath+" node", "")
-	launcherScript(t, bin, "node", shell, "[ \"$#\" -eq 2 ] && [ \"$2\" = '-ne' ] || exit 21\nprintf 'native interpreter\\n'\n")
+	launcherScript(t, bin, "node", shell, "[ \"$#\" -eq 7 ] && [ \"$2\" = '-ne' ] && [ \"$3\" = '--no-mcp' ] && [ \"$4\" = '--no-skills' ] && [ \"$5\" = '--no-themes' ] && [ \"$6\" = '--use-theme' ] && [ \"$7\" = 'dark' ] || exit 21\nprintf 'native interpreter\\n'\n")
 	if err := a.saveConfig(config{Program: "pi"}); err != nil {
 		t.Fatal(err)
 	}

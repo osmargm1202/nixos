@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+lib="${SWAY_ROFI_LIB:-$HOME/.local/bin/sway-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+selection="$(cliphist list | sway_rofi_dmenu 'Clipboard' "${SWAY_ROFI_CLIPBOARD_LINES:-16}" "${SWAY_ROFI_CLIPBOARD_WIDTH:-$SWAY_ROFI_WIDTH}" || true)"
+[ -n "${selection:-}" ] || exit 0
+printf '%s' "$selection" | cliphist decode | wl-copy

@@ -83,8 +83,13 @@ backend() {
   case "${ORGM_VISUAL_PROFILE_BACKEND:-}" in
     hypr|hyprland) printf '%s\n' hypr ;;
     i3) printf '%s\n' i3 ;;
+    sway) printf '%s\n' sway ;;
     '')
-      if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" || "${XDG_CURRENT_DESKTOP:-}" == *Hyprland* ]]; then printf '%s\n' hypr; else printf '%s\n' i3; fi ;;
+      case "${XDG_CURRENT_DESKTOP:-}" in
+        *sway*|*Sway*) printf '%s\n' sway ;;
+        *Hyprland*) printf '%s\n' hypr ;;
+        *) if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then printf '%s\n' hypr; else printf '%s\n' i3; fi ;;
+      esac ;;
     *) printf '%s\n' 'orgm-visual-profile: backend no válido' >&2; return 2 ;;
   esac
 }
@@ -94,6 +99,7 @@ current_wallpaper() {
   case "$(backend)" in
     hypr) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ;;
     i3) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ;;
+    sway) [[ -r "$config_home/sway/wallpaper" ]] && IFS= read -r selected <"$config_home/sway/wallpaper" ;;
     *) return 2 ;;
   esac
   valid_wallpaper "$selected" && printf '%s\n' "$(readlink -f -- "$selected")"
@@ -104,6 +110,7 @@ set_wallpaper() {
   case "$(backend)" in
     hypr) hypr-wallpaper set "$wallpaper" ;;
     i3) i3-wallpaper --set "$wallpaper" ;;
+    sway) orgm-sway wallpaper-set "$wallpaper" ;;
     *) return 2 ;;
   esac
 }
@@ -130,23 +137,40 @@ write_runtime_palette() {
       dock='#box { background: #202124; border: none; border-radius: 12px; box-shadow: none; } button:hover { background: #3a3b40; }'
       ;;
   esac
-  atomic_write "$config_home/waybar-hypr/orgm-current.css" "$(printf '%b' "$css")"
+  if [[ "$(backend)" == sway ]]; then
+    # Same selected palette, without restoring Hyprland's opaque dock surface.
+    css="${css//0.94/0.82}"
+    atomic_write "$config_home/waybar/orgm-current.css" "$(printf '%b' "$css")"
+    # GTK4 swaync consumes only colors, not Waybar-specific selectors.
+    atomic_write "$config_home/swaync/orgm-current.css" "$(printf '%b' "$css" | grep '^@define-color ')"
+  else
+    atomic_write "$config_home/waybar-hypr/orgm-current.css" "$(printf '%b' "$css")"
+    atomic_write "$config_home/nwg-dock-hyprland/current-theme.css" "$(printf '%b' "$dock")"
+    atomic_write "$config_home/dunst/dunstrc.d/90-visual-profile.conf" "$(printf '%b' "$dunst")"
+  fi
   atomic_write "$config_home/kitty/current-theme.conf" "$(printf '%b' "$kitty")"
-  atomic_write "$config_home/nwg-dock-hyprland/current-theme.css" "$(printf '%b' "$dock")"
-  atomic_write "$config_home/dunst/dunstrc.d/90-visual-profile.conf" "$(printf '%b' "$dunst")"
 }
 
 apply_gtk() {
-  local mode="$1" theme scheme
+  local mode="$1" theme scheme icon_theme=Adwaita
   if [[ "$mode" == light ]]; then theme=Adwaita; scheme=prefer-light; else theme=Adwaita-dark; scheme=prefer-dark; fi
+  if [[ "$(backend)" == sway ]]; then
+    icon_theme=Colloid-Dark
+    # Nautilus/GTK4 reads dconf, not just settings.ini. SDDM may lack gsettings.
+    if command -v dconf >/dev/null 2>&1; then
+      dconf write /org/gnome/desktop/interface/color-scheme "'$scheme'"
+      dconf write /org/gnome/desktop/interface/gtk-theme "'$theme'"
+      dconf write /org/gnome/desktop/interface/icon-theme "'$icon_theme'"
+    fi
+  fi
   atomic_write "$config_home/gtk-3.0/settings.ini" "[Settings]
 gtk-theme-name=$theme
-gtk-icon-theme-name=Adwaita
+gtk-icon-theme-name=$icon_theme
 gtk-font-name=Sans 11
 gtk-application-prefer-dark-theme=$([[ "$mode" == dark ]] && printf 1 || printf 0)"
   atomic_write "$config_home/gtk-4.0/settings.ini" "[Settings]
 gtk-theme-name=$theme
-gtk-icon-theme-name=Adwaita
+gtk-icon-theme-name=$icon_theme
 gtk-font-name=Sans 11
 gtk-application-prefer-dark-theme=$([[ "$mode" == dark ]] && printf 1 || printf 0)"
   if command -v gsettings >/dev/null 2>&1; then
@@ -162,7 +186,12 @@ refresh_surfaces() {
       kill -USR1 "$pid" 2>/dev/null || true
     done < <(pgrep -u "$(id -u)" -x "$process_pattern" 2>/dev/null || true)
   done
-  command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
+  if [[ "$(backend)" == sway ]]; then
+    # Reload CSS only: keep notification history and the user's DND selection.
+    command -v swaync-client >/dev/null 2>&1 && swaync-client --reload-css --skip-wait >/dev/null 2>&1 || true
+  else
+    command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
+  fi
   if [[ "$(backend)" == hypr ]] && command -v hypr-nwg-dock-reload >/dev/null 2>&1; then
     (
       [[ -n "${profile_lock_fd:-}" ]] && exec {profile_lock_fd}>&-
@@ -171,6 +200,9 @@ refresh_surfaces() {
     ) >/dev/null 2>&1 &
   elif [[ "$(backend)" == i3 ]] && command -v i3-msg >/dev/null 2>&1; then
     i3-msg reload >/dev/null 2>&1 || true
+  elif [[ "$(backend)" == sway ]] && command -v systemctl >/dev/null 2>&1; then
+    # Atomic palette replacement can invalidate the CSS file watcher.
+    systemctl --user try-restart orgm-sway-waybar.service >/dev/null 2>&1 || true
   fi
 }
 
@@ -210,6 +242,7 @@ random_wallpaper() {
   case "$(backend)" in
     hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
     i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+    sway) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 orgm-sway wallpaper-random "$directory" ;;
     *) return 2 ;;
   esac
   local wallpaper
@@ -232,10 +265,11 @@ set_profile() {
     selected="$target_wallpaper"
   else
     directory="$pictures_root/$target"
-    if [[ -d "$directory" ]] && find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print -quit | grep -q .; then
+    if [[ -d "$directory" ]] && find -L "$directory" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.m4v' -o -iname '*.avi' \) -print -quit | grep -q .; then
       case "$(backend)" in
         hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
         i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+        sway) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 orgm-sway wallpaper-random "$directory" ;;
         *) return 2 ;;
       esac
       selected="$(current_wallpaper || true)"

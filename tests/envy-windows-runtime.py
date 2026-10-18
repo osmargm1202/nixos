@@ -16,6 +16,7 @@ if '--podman-path' in a:
  if s.get('fail_before_create'):sys.exit(125)
  files=[a[i+1] for i,x in enumerate(a) if x=='-f']; h=json.loads(Path(files[-1]).read_text())['services']['windows']
  s['containers']['envy-windows']={'Id':'envy-windows','State':{'Running':not s.get('exit_after_create',False),'ExitCode':s.get('exit_code',0)},'Config':{'Labels':h['labels']},'Mounts':[{'Source':s['storage'],'Destination':'/storage'}]};save();sys.exit(125 if s.get('fail_after_create') else 0)
+if a[0]=='build':sys.exit(s.get('build_exit',0))
 if a[:2]==['container','exists']:sys.exit(0 if a[-1] in s['containers'] else 1)
 if a[:2]==['image','exists']:sys.exit(0 if s.get('image',True) else 1)
 if a[0]=='inspect':
@@ -142,6 +143,8 @@ class Runtime(unittest.TestCase):
   self.mounts=[{'target':str(self.storage),'fstype':'btrfs','fsroot':'/@windows','label':'ENVY_ROOT'}]
   helper=self.root/'probe';helper.write_text('#!/usr/bin/env python3\nimport json,sys\na=sys.argv[1:]\nif a and a[0]=="--json": print('+repr(json.dumps({'filesystems':self.mounts}))+')\nelse: print("---------------C------ path")\n');helper.chmod(0o755)
   self.m={'mode':'render','container':'envy-windows','bdf':'0000:02:00.0','vendor':'0x10de','device':'0x1d13','storageRoot':str(self.storage),'passwordFile':str(self.password),'runtimeDir':str(self.root/'runtime'),'sysfsRoot':str(self.sys),'devRoot':str(self.dev),'kernelFile':str(self.proc/'kernel'),'cpuinfo':str(self.proc/'cpuinfo'),'cdiFile':str(self.cdi),'image':'docker.io/dockurr/windows@sha256:'+'a'*64,'generation':'one','compose':[str(ROOT/'nixos/containers/windows/hosts/envy/compose.yml'),str(ROOT/'nixos/containers/windows/hosts/envy/compose.render.yml')],'commands':{'podman':str(self.engine),'compose':str(self.engine),'findmnt':str(helper),'lsattr':str(helper)}}
+  self.m['vfioImage']='localhost/envy-windows-spice:'+'b'*64
+  iso=self.root/'virtio-input.iso';iso.write_text('fixture ISO');self.m['inputIso']=str(iso)
   self.c=self.mod.Controller(self.m)
  def data(self):return json.loads(self.state.read_text())
  def update(self,**kw):s=self.data();s.update(kw);self.state.write_text(json.dumps(s))
@@ -149,6 +152,7 @@ class Runtime(unittest.TestCase):
   self.m['mode']='vfio';(self.gpu/'driver').unlink();d=self.sys/'bus/pci/drivers/vfio-pci';d.mkdir();(self.gpu/'driver').symlink_to(d)
   g=self.sys/'kernel/iommu_groups/71';(g/'devices').mkdir(parents=True);(g/'devices/0000:02:00.0').symlink_to(self.gpu);(self.gpu/'iommu_group').symlink_to(g)
   (self.dev/'vfio').mkdir();(self.dev/'vfio/71').symlink_to('/dev/null');(self.dev/'vfio/vfio').symlink_to('/dev/null')
+  (self.dev/'kvmfr0').symlink_to('/dev/null')
   return g
  def seed_container(self,running=True,generation='old',mode='render',owner='envy'):
   labels={'org.orgm.windows.owner':owner,'org.orgm.windows.mode':mode,'org.orgm.windows.generation':generation}
@@ -157,6 +161,32 @@ class Runtime(unittest.TestCase):
   h=self.c.preflight();self.assertEqual(h['render'],str(self.dev/'dri/renderD173'));self.assertEqual(h['mode'],'render')
  def test_vfio_group_is_dynamic_and_host_gpu_not_claimed(self):
   self.vfio();h=self.c.preflight();self.assertEqual(h['group'],'71')
+ def test_vfio_requires_accessible_kvmfr_before_creating_guest(self):
+  self.vfio();(self.dev/'kvmfr0').unlink()
+  with self.assertRaisesRegex(self.mod.Refused,'kvmfr0'):self.c.reconcile()
+  self.assertFalse(self.data()['containers'])
+  (self.dev/'kvmfr0').write_text('not a character device')
+  with self.assertRaisesRegex(self.mod.Refused,'kvmfr0'):self.c.preflight()
+ def test_vfio_overlay_maps_dynamic_group_shared_memory_and_drivers(self):
+  self.vfio();self.c.reconcile()
+  s=json.loads((Path(self.m['runtimeDir'])/'hardware.json').read_text())['services']['windows']
+  self.assertIn(str(self.dev/'vfio/71')+':/dev/vfio/71',s['devices'])
+  self.assertIn(str(self.dev/'kvmfr0')+':/dev/kvmfr0',s['devices'])
+  self.assertIn(self.m['inputIso']+':/drivers.iso:ro',s['volumes'])
+  self.assertEqual(s['image'],self.m['vfioImage'])
+  self.assertNotIn('pull',self.log.read_text());self.assertNotIn('build',self.log.read_text().replace('--no-build',''))
+ def test_vfio_uses_spice_image_and_never_implicitly_builds_it(self):
+  self.vfio();self.update(image=False)
+  with self.assertRaisesRegex(self.mod.Refused,'prepare-image'):self.c.reconcile()
+  calls=[json.loads(line) for line in self.log.read_text().splitlines()]
+  self.assertIn(['image','exists',self.m['vfioImage']],calls)
+  self.assertFalse(any(call[0] in ('build','pull','start') or '--podman-path' in call for call in calls))
+  self.assertFalse(self.data()['containers'])
+ def test_render_overlay_has_no_looking_glass_devices_or_image(self):
+  self.c.reconcile()
+  s=json.loads((Path(self.m['runtimeDir'])/'hardware.json').read_text())['services']['windows']
+  self.assertNotIn('image',s);self.assertFalse(any('kvmfr' in d for d in s['devices']))
+  self.assertFalse(any('/drivers.iso' in v for v in s['volumes']))
  def test_wrong_device_and_driver_refused(self):
   (self.gpu/'device').write_text('0x1fbb')
   with self.assertRaises(self.mod.Refused):self.c.preflight()

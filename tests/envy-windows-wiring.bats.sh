@@ -5,6 +5,9 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
 let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
  describe = c: let u=c.systemd.user.services.envy-windows; in {
   alloc=c.orgm.envy.windows; mode=c.orgm.envy.mode; marker=c.environment.etc."orgm/windows-vm-profile".text;
+  modules=c.boot.kernelModules; modulePackages=map (p: p.name) c.boot.extraModulePackages;
+  modprobe=c.boot.extraModprobeConfig; udev=c.services.udev.extraRules;
+  packages=map (p: p.name) c.environment.systemPackages;
   manifest=c.system.build.envyWindowsManifest; compose=c.system.build.envyWindowsCompose;
   controller=c.system.build.envyWindowsController; service=u.serviceConfig;
   wanted=u.wantedBy; restart=u.restartIfChanged; stop=u.stopIfChanged;
@@ -24,6 +27,12 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert c["wanted"]==(["default.target"] if auto else []),name
  assert c["marker"].strip()==("envy-vfio" if auto else "envy-disabled" if name=="gaming" else "envy-render-node")
  assert c["alloc"]=={"memoryMiB":4096,"cpus":4,"diskGiB":96,"vramMiB":1024}
+ assert ("kvmfr" in c["modules"])==auto,name
+ assert any("kvmfr" in p for p in c["modulePackages"])==auto,name
+ assert any(p.startswith("looking-glass-client-B7-544") for p in c["packages"])==auto,name
+ if auto:
+  assert "options kvmfr static_size_mb=128" in c["modprobe"],name
+  assert "KERNEL==\"kvmfr0\", GROUP=\"kvm\", MODE=\"0660\"" in c["udev"],name
  assert c["linger"] and {"kvm","render","video","podman"}.issubset(c["groups"])
  assert not c["restart"] and not c["stop"]
  s=c["service"]

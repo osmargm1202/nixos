@@ -5,6 +5,14 @@ Fecha de trabajo: 2026-10-17. Diseño y plan aprobados por Osmarg. El checkpoint
 `feat/envy-modes` para permitir cambios paralelos. Este informe no autoriza ni
 ejecuta switch, reboot, VM, descarga de imagen o transición GPU en vivo.
 
+**Actualización posterior:** se añadió Looking Glass para Envy VFIO. El procedimiento
+vigente está en [Windows por web y Looking Glass](../../envy-looking-glass.md):
+kvmfr/IVSHMEM de 128MiB, SPICE solo loopback5901 e imagen derivada de la base
+fijada, preparada explícitamente con `envy-windows prepare-image`. La consola web
+se conserva para instalar Windows antes del Host de Looking Glass. Las evidencias
+y decisiones que siguen describen la entrega original, no una validación física
+de esta ampliación.
+
 ## Implementado
 
 - Una salida `envy`, usuario `osmarg`. Normal predeterminado, menú1segundo;
@@ -104,8 +112,10 @@ Ventanas/VFIO y server autoarrancan si sus prerrequisitos están presentes;
 sin imagen/password/aislamiento muestran fallo de servicio, no bloquean SSH.
 Usar `journalctl --user -u envy-windows` para diagnóstico; no publicar inspect
 completo, env, configs interpolados o logs guest que puedan incluir datos privados.
-No hay SPICE/kvmfr/Looking Glass obligatorio. Para acceso remoto, túnel SSH
-explícito a los puertos loopback; no abrirlos al0.0.0.0 por comodidad.
+La entrega original no configuraba SPICE/kvmfr/Looking Glass. La ampliación
+posterior sí los declara en VFIO; seguir el procedimiento enlazado arriba y
+preparar la imagen SPICE explícitamente antes de iniciar ese modo. Para acceso
+remoto, túnel SSH explícito a los puertos loopback; no abrirlos al0.0.0.0.
 
 ## Validación VFIO posterior y operación
 

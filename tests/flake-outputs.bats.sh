@@ -26,14 +26,14 @@ nix eval --impure --raw --expr '
   let
     f = builtins.getFlake ("path:" + toString ./.);
     expected = {
-      envy = { host = "envy"; user = "osmarg"; desktop = "ryoku"; modes = []; };
+      envy = { host = "envy"; user = "osmarg"; desktop = "sway"; modes = ["gaming" "server" "windows-vfio"]; };
       lenovo = { host = "lenovo"; user = "osmarg"; desktop = "ryoku"; modes = ["battery" "gaming" "server" "windows-vfio"]; };
       orgm = { host = "orgm"; user = "osmarg"; desktop = "ryoku"; modes = ["server"]; };
       ero = { host = "ero"; user = "osmarg"; desktop = "i3"; modes = []; };
       jarq = { host = "jarq"; user = "jarq"; desktop = "i3"; modes = []; };
     };
     historical = import ./tests/fixtures/legacy-configurations.nix;
-    selected = { envy = "envy-ryoku"; lenovo = "lenovo-ryoku"; orgm = "orgm-ryoku"; ero = "ero-i3"; jarq = "jarq-i3"; };
+    selected = { envy = "envy"; lenovo = "lenovo-ryoku"; orgm = "orgm-ryoku"; ero = "ero-i3"; jarq = "jarq-i3"; };
     # Compare boot, graphics and VM boundaries against the preferred existing
     # descriptor, not an alternative desktop or the old host alias.
     mode = c: {
@@ -52,6 +52,7 @@ nix eval --impure --raw --expr '
       } else null;
       inherit (c.services.displayManager) defaultSession;
       sddm = c.services.displayManager.sddm.enable;
+      sway = c.programs.sway.enable;
       hyprland = c.programs.hyprland.enable;
       niri = c.programs.niri.enable;
       i3 = c.services.xserver.windowManager.i3.enable;
