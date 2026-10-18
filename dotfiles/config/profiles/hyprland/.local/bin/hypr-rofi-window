@@ -24,4 +24,4 @@ selection="$(cut -f2- "$tmp" | hypr_rofi_dmenu 'Window' "${HYPR_ROFI_WINDOW_LINE
 [ -n "${selection:-}" ] || exit 0
 addr="$(awk -F'\t' -v label="$selection" '$2 == label { print $1; exit }' "$tmp")"
 [ -n "${addr:-}" ] || exit 1
-hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })"
+hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"address:$addr\" }))"

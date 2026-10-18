@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "xlogout",
+  "paths": [
+    ".config/xlogout"
+  ]
+}

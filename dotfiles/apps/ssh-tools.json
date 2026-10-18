@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "ssh-tools",
+  "paths": [
+    ".local/bin/ssh-host-lib",
+    ".local/bin/sshgo"
+  ]
+}

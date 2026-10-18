@@ -1,6 +1,6 @@
 # Ventanas iniciales de Osmarg en Ryoku
 
-En los hosts Ryoku de Osmarg (`envy`, `lenovo`, `orgm`), las ventanas nuevas de
+En los hosts Ryoku de Osmarg (`lenovo`, `orgm`), las ventanas nuevas de
 navegadores y webapps usan una columna del **100 % del ancho disponible**, sin
 ocultar la barra. Es ancho de columna, no fullscreen: conserva márgenes y
 espacio reservado del monitor. En Hyprland esto corresponde al layout scrolling;

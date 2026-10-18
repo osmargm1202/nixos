@@ -15,6 +15,13 @@ _orgm_path_with() {
   printf '%s' "$new"
 }
 export PATH="$(_orgm_path_with /run/wrappers/bin "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/.npm-global/bin" "$HOME/.bun/bin" "$HOME/.local/share/pnpm")"
+# Preserve an explicitly installed fnm without installing a second version manager.
+if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then
+  export PATH="$(_orgm_path_with "$HOME/.local/share/fnm")"
+fi
+if command -v fnm >/dev/null; then
+  eval "$(fnm env --shell bash)"
+fi
 if command -v sops-shared-env >/dev/null; then
   alias claude='sops-shared-env claude'
   alias opencode='sops-shared-env opencode'
@@ -22,6 +29,27 @@ if command -v sops-shared-env >/dev/null; then
   alias pypi-publish='sops-shared-env --with UV_PUBLISH_TOKEN -- uv publish dist/*'
 fi
 unset -f _orgm_path_with
+
+# Native Ryoku initializes Zoxide once as cd/cdi. Retain the personal z/zi API
+# without another initialization or a cd alias that would defeat Mise's hooks.
+if declare -F __zoxide_z >/dev/null; then
+  z() { __zoxide_z "$@"; }
+  zi() { __zoxide_zi "$@"; }
+fi
+
+# The native fzf setup supplies completion; Blesh needs its own editing widgets.
+# These imports follow Ryoku's setup, retaining the user's five Emacs shortcuts.
+if command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
+  ble-import contrib/integration/fzf-key-bindings
+  _orgm_widgets=${XDG_CONFIG_HOME:-$HOME/.config}/orgm-shell/fzf-widgets.bash
+  [[ -r $_orgm_widgets ]] && . "$_orgm_widgets"
+  unset _orgm_widgets
+  # FZF's Blesh import also claims Ctrl+R. Keep the existing Atuin integration
+  # there when enabled; the user's Alt+R remains the FZF history shortcut.
+  if declare -F atuin-bind >/dev/null && [[ ${__atuin_bind_ctrl_r:-false} == true ]]; then
+    atuin-bind -m emacs '\C-r' atuin-search-emacs
+  fi
+fi
 
 _orgm_sudo() {
   if [[ -x /run/wrappers/bin/sudo ]]; then

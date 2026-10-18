@@ -29,8 +29,11 @@ RYOKU_TEST_REPO="$ROOT" nix eval --impure --json --expr '
       helpers = builtins.filter (name: f.inputs.nixpkgs.lib.hasPrefix ".local/bin/hypr-" name)
         (builtins.attrNames h.home.file);
       oldWallpaperInstaller = h.home.activation ? installHyprlandNautilusScript;
+      fzfWidgets = !(h.home.file ? ".config/orgm-shell/fzf-widgets.bash") && h.home.activation ? orgmDotBootstrap;
+      remoteInput = c.xdg.portal.config.hyprland."org.freedesktop.impl.portal.RemoteDesktop";
+      miracast = builtins.elem 7236 c.networking.firewall.allowedTCPPorts;
     };
-    userEmpty = f.nixosConfigurations.envy.extendModules { modules = [
+    userEmpty = f.nixosConfigurations.lenovo.extendModules { modules = [
       ({ lib, ... }: { orgm.user.autostart = lib.mkForce []; })
     ]; };
   in {
@@ -61,9 +64,10 @@ for host, c in x["hosts"].items():
     assert "--automount" in c["automount"] and "--tray" not in c["automount"], host
     assert "syncthingtray" not in c["packages"] and "syncthingtray-minimal" not in c["packages"], host
     assert not c["oldWallpaperInstaller"], host
-    assert set(c["helpers"]) == {".local/bin/" + name for name in (
-        "hypr-obsidian-open-or-focus", "hypr-pi-prompt", "hypr-rofi-ssh-host",
-        "hypr-rofi-lib", "hypr-video-timer")}, (host, c["helpers"])
+    assert c["fzfWidgets"] and c["remoteInput"] == "hypr-kdeconnect" and c["miracast"], host
+    assert {"aichat", "lsd", "chafa", "ouch", "gnome-system-monitor", "gnome-network-displays",
+            "sushi", "totem", "pamixer", "pulsemixer"} <= set(c["packages"]), host
+    assert c["helpers"] == [], (host, "helper copies must not be Home Manager links", c["helpers"])
     nextcloud = host != "envy"
     assert ("nextcloud" in c["programs"]) == nextcloud, host
     assert ("nextcloud-client" in c["packages"]) == nextcloud, host
@@ -72,5 +76,5 @@ assert x["empty"]["session"]["optional"] == []
 assert x["empty"]["session"]["required"] == []
 assert not x["serverHasSeed"]
 assert "syncthing serve --no-browser --no-restart" in x["serverSyncthing"]
-print("PASS: Ryoku removes duplicate UI, keeps backends/shortcuts, and excludes Nextcloud only on Envy")
+print("PASS: Ryoku removes duplicate UI, keeps backends/shortcuts, and keeps selected Nextcloud on Ryoku hosts")
 CHECK

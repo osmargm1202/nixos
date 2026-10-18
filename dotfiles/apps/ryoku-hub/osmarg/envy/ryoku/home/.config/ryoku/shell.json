@@ -1,0 +1,247 @@
+{
+  "barStyle": "sumi",
+  "bars": {
+    "bottom_bar": {
+      "center_widgets": [],
+      "left_widgets": [],
+      "minimum_height": 0,
+      "reveal_by_default": true,
+      "right_widgets": []
+    },
+    "frame": {
+      "enable_frame": true,
+      "monitor_filter": []
+    },
+    "left_bar": {
+      "bottom_widgets": [
+        "RecordingIndicator",
+        "Tray",
+        "Screenshot",
+        "Wallpaper",
+        "Clipboard",
+        "Notifications",
+        "AudioInput",
+        "AudioOutput",
+        "Bluetooth",
+        "Network",
+        "Battery",
+        "Clock"
+      ],
+      "center_widgets": [
+        "HyprlandDock"
+      ],
+      "minimum_width": 0,
+      "reveal_by_default": true,
+      "top_widgets": [
+        "QuickSettings",
+        "HyprlandWorkspaces"
+      ]
+    },
+    "right_bar": {
+      "bottom_widgets": [],
+      "center_widgets": [],
+      "minimum_width": 0,
+      "reveal_by_default": true,
+      "top_widgets": []
+    },
+    "top_bar": {
+      "center_widgets": [],
+      "left_widgets": [],
+      "minimum_height": 0,
+      "reveal_by_default": true,
+      "right_widgets": []
+    },
+    "widgets": {
+      "quick_settings": {
+        "icon": "Arch"
+      }
+    }
+  },
+  "frameCorner": 8,
+  "frameEnabled": true,
+  "frameThickness": 5,
+  "general": {
+    "clock_format_24_h": false,
+    "temperature_unit": "Metric",
+    "weather_location_query": {
+      "country": "",
+      "lat": 0,
+      "lon": 0,
+      "name": "",
+      "type": "Coordinates"
+    }
+  },
+  "menus": {
+    "clipboard_menu": {
+      "minimum_width": 410,
+      "position": "Left",
+      "widgets": [
+        {
+          "type": "Clipboard"
+        }
+      ]
+    },
+    "clock_menu": {
+      "minimum_width": 410,
+      "position": "Left",
+      "widgets": [
+        {
+          "type": "Calendar"
+        },
+        {
+          "size": 20,
+          "type": "Spacer"
+        },
+        {
+          "type": "Weather"
+        }
+      ]
+    },
+    "left_menu_expansion_type": "AlwaysExpanded",
+    "notification_menu": {
+      "minimum_width": 410,
+      "position": "Left",
+      "widgets": [
+        {
+          "type": "Notifications"
+        }
+      ]
+    },
+    "quick_settings_menu": {
+      "minimum_width": 410,
+      "position": "Left",
+      "widgets": [
+        {
+          "type": "Clock"
+        },
+        {
+          "type": "Network"
+        },
+        {
+          "type": "Bluetooth"
+        },
+        {
+          "type": "AudioOutput"
+        },
+        {
+          "type": "AudioInput"
+        },
+        {
+          "type": "PowerProfiles"
+        },
+        {
+          "type": "MediaPlayer"
+        },
+        {
+          "size": 20,
+          "type": "Spacer"
+        },
+        {
+          "actions": [
+            "AirplaneMode",
+            "NightLight",
+            "ColorPicker",
+            "Settings"
+          ],
+          "type": "QuickActions"
+        },
+        {
+          "size": 20,
+          "type": "Spacer"
+        },
+        {
+          "actions": [
+            "Logout",
+            "Lock",
+            "Reboot",
+            "Shutdown"
+          ],
+          "type": "QuickActions"
+        }
+      ]
+    },
+    "right_menu_expansion_type": "AlwaysExpanded",
+    "wallpaper_menu": {
+      "minimum_width": 1200,
+      "position": "Bottom",
+      "widgets": [
+        {
+          "type": "ThemePicker"
+        },
+        {
+          "type": "Wallpaper"
+        }
+      ]
+    }
+  },
+  "notifications": {
+    "notification_position": "Right",
+    "popup_window_margins": 0
+  },
+  "qsbar": {
+    "audioBoost": true,
+    "layout": {
+      "center": [
+        "clock"
+      ],
+      "left": [
+        "launcher",
+        "workspaces",
+        "status",
+        "cpu",
+        "volume",
+        "memory",
+        "ai"
+      ],
+      "right": [
+        "media",
+        "quick",
+        "network",
+        "power",
+        "battery",
+        "brightness",
+        "cputemp",
+        "storage",
+        "gpu",
+        "bluetooth",
+        "layout"
+      ],
+      "version": 1
+    }
+  },
+  "theme": {
+    "attributes": {
+      "font": {
+        "primary": "",
+        "secondary": "",
+        "tertiary": ""
+      },
+      "sizing": {
+        "border_width": 2,
+        "radius_widget": 8,
+        "radius_window": 8
+      },
+      "window_opacity": 1
+    },
+    "matugen": {
+      "contrast": 0,
+      "mode": "Dark",
+      "preference": "Darkness",
+      "scheme_type": "TonalSpot"
+    },
+    "motion": {
+      "reduce": false,
+      "scale": 1
+    },
+    "theme": "Default"
+  },
+  "wallpaper": {
+    "content_fit": "Cover",
+    "transition_preset": "random",
+    "video_enabled": true,
+    "video_engine": "ryogami",
+    "video_transcode": false,
+    "video_transcode_fps": 24,
+    "video_transcode_width": 1920
+  }
+}

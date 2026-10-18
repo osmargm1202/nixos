@@ -183,7 +183,7 @@ strip_jsonc() {
 
 waybar_config_cmd() {
   [ "$#" -eq 1 ] || usage
-  local config_dir="$1" profile out_dir source_config generated outputs mode
+  local config_dir="$1" profile out_dir source_config generated outputs mode caffeine temporary
   ensure_cmd
   profile="$(basename "$config_dir")"
   out_dir="$cache_root/$profile"
@@ -197,6 +197,17 @@ waybar_config_cmd() {
   else
     strip_jsonc "$source_config" | jq --argjson outs "$outputs" '[ $outs[] as $out | .[] | . + {output: $out} ]' >"$generated"
   fi
+  # Stock Waybar restores the inhibitor through its supported startup setting.
+  # Do not send an RT signal: unpatched idle_inhibitor has no signal handler.
+  caffeine=false
+  if [ "$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/waybar/caffeine" 2>/dev/null || true)" = activated ]; then
+    caffeine=true
+  fi
+  temporary="$(mktemp "$generated.XXXXXX")"
+  jq --argjson active "$caffeine" \
+    'map(if has("idle_inhibitor") then .idle_inhibitor["start-activated"] = $active | del(.idle_inhibitor.signal) else . end)' \
+    "$generated" >"$temporary"
+  mv "$temporary" "$generated"
   printf '%s\n' "$generated"
 }
 

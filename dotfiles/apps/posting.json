@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "posting",
+  "paths": [
+    ".config/posting",
+    ".local/share/posting"
+  ]
+}

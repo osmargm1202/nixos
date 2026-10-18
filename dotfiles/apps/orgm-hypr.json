@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "orgm-hypr",
+  "paths": [
+    ".config/orgm-hypr"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "name": "development-tools",
+  "paths": [
+    ".local/bin/archive-preview",
+    ".local/bin/clear-op",
+    ".local/bin/dir-preview",
+    ".local/bin/file-preview",
+    ".local/bin/flakeinit",
+    ".local/bin/image-preview",
+    ".local/bin/list-op",
+    ".local/bin/memclean-dev",
+    ".local/bin/nixclean",
+    ".local/bin/switch-preview"
+  ]
+}

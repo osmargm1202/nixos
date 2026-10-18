@@ -106,16 +106,4 @@
   };
 }
 
-  # The identity is user-local. Servers that do not load Home Manager keep no
-  # implicit Git identity.
-// lib.optionalAttrs (role != "server") {
-    home-manager.users.${userName} = {
-      programs.git = {
-        enable = true;
-        settings.user = {
-          name = "osmar";
-          email = "osmargm1202@gmail.com";
-        };
-      };
-    };
-}
+  # Git identity is an editable user dotfile, copied by orgm-dot.

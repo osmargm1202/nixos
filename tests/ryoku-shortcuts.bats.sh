@@ -34,12 +34,12 @@ HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/state" \
   bash "$ROOT/nixos/profiles/ryoku/prepare.sh"
 for backend in hyprland niri; do
   provider="$(RYOKU_TEST_REPO="$ROOT" RYOKU_TEST_BACKEND="$backend" nix eval --impure --raw --expr \
-    'let f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO"); in (import (builtins.getEnv "RYOKU_TEST_REPO" + "/nixos/profiles/ryoku/provider-compat.nix") { inputs=f.inputs; pkgs=f.nixosConfigurations.envy.pkgs; lib=f.inputs.nixpkgs.lib; }).packages.${"ryoku-wm-" + builtins.getEnv "RYOKU_TEST_BACKEND"}.outPath')"
+    'let f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO"); in (import (builtins.getEnv "RYOKU_TEST_REPO" + "/nixos/profiles/ryoku/provider-compat.nix") { inputs=f.inputs; pkgs=f.nixosConfigurations.lenovo.pkgs; lib=f.inputs.nixpkgs.lib; }).packages.${"ryoku-wm-" + builtins.getEnv "RYOKU_TEST_BACKEND"}.outPath')"
   env -u HYPRLAND_INSTANCE_SIGNATURE -u WAYLAND_DISPLAY -u DISPLAY \
     HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" \
     "$provider/bin/ryoku-wm-$backend" apply "$tmp/config/ryoku/desktop.json" > "$tmp/$backend-report.json"
 done
-niri="${RYOKU_NIRI:-$(nix eval --raw "$ROOT#nixosConfigurations.envy.config.programs.niri.package.outPath")/bin/niri}"
+niri="${RYOKU_NIRI:-$(nix eval --raw "$ROOT#nixosConfigurations.lenovo.config.programs.niri.package.outPath")/bin/niri}"
 "$niri" validate --config "$tmp/config/niri/settings.kdl"
 python3 - "$tmp" "$ROOT" <<'CHECK'
 import json

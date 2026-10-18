@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Regression: missing host seed or disabling the internal panel would send
 # workspace focus/cursor onto the phantom DP-1 output on this laptop.
-source=$(nix eval --raw "path:$ROOT#nixosConfigurations.envy.config.home-manager.users.osmarg.home.file" --apply 'files: toString (files.".config/orgm-ryoku/monitors_user.lua".source or "")')
+source="$ROOT/dotfiles/config/hosts/envy/profiles/ryoku/.config/orgm-ryoku/monitors_user.lua"
 if [[ -z "$source" ]]; then
   echo "FAIL: envy has no persistent phantom-output policy" >&2
   exit 1

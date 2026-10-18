@@ -7,13 +7,18 @@ nix eval --impure --raw --expr '
   let
     f = builtins.getFlake ("path:" + toString ./.);
     lib = f.inputs.nixpkgs.lib;
+    pkgs = f.nixosConfigurations.envy.pkgs;
     inventory = import ./configurations.nix;
     c = f.nixosConfigurations.envy.config;
+    native = (import ./tests/fixtures/legacy-configurations.nix).envy-hyprland.config;
     check = message: condition: lib.assertMsg condition message;
     fs = c.fileSystems;
+    stock = name: let packages = builtins.filter (p: lib.getName p == name) native.environment.systemPackages;
+      in packages != [] && builtins.all (p: toString p == toString pkgs.${name}) packages;
   in
-  assert check "envy normal must use Ryoku with a one-second boot menu"
-    (c.boot.loader.timeout == 1 && c.programs.ryoku.enable);
+  assert check "envy normal must retain Ryoku while testing editable dotfile copies"
+    (c.boot.loader.timeout == 1 && c.programs.hyprland.enable
+      && c.programs.ryoku.enable && c.programs.niri.enable);
   assert check "envy SDDM must enable Num Lock from the greeter"
     (c.services.displayManager.sddm.autoNumlock
       && c.services.displayManager.sddm.settings.General.Numlock == "on");
@@ -22,6 +27,27 @@ nix eval --impure --raw --expr '
       && inventory.configurations.envy.profileName == "ryoku"
       && !(f.nixosConfigurations ? envy-normal)
       && !(f.nixosConfigurations ? envy-ryoku));
+  assert check "Envy must retain its Ryoku session and materializer"
+    (c.systemd.user.services ? ryoku-shell
+      && c.systemd.user.services ? ryoku-materialize
+      && (builtins.fromJSON c.environment.etc."orgm-dot/context.json".text).profile == "ryoku");
+  assert check "Hyprland must use the official NixOS desktop packages without source overrides"
+    (toString native.programs.hyprland.package == toString pkgs.hyprland
+      && toString native.programs.hyprland.portalPackage == toString pkgs.xdg-desktop-portal-hyprland
+      && builtins.all stock [ "hyprland" "waybar" "nwg-dock-hyprland" "mpvpaper" ]
+      && !(native.environment.etc ? "scrolloverview.so")
+      && !(native.environment.etc ? "hyprglass.so")
+      && !(native.environment.etc ? "HyprWindowShade.so"));
+  assert check "Envy must preserve selected apps and Ryoku tray cleanup"
+    (!(builtins.any (p: builtins.elem (lib.getName p) [ "syncthingtray" "syncthingtray-minimal" "nextcloud-client" ]) c.environment.systemPackages)
+      && builtins.elem "syncthing" c.orgm.user.programs
+      && lib.hasInfix "syncthing serve --no-browser --no-restart"
+        (builtins.toString c.home-manager.users.osmarg.systemd.user.services.syncthing.Service.ExecStart)
+      && lib.hasInfix "Hidden=true" c.home-manager.users.osmarg.xdg.configFile."autostart/syncthingtray.desktop".text
+      && lib.hasInfix "Hidden=true" c.home-manager.users.osmarg.xdg.configFile."autostart/tailscale-systray.desktop".text
+      && !(c.home-manager.users.osmarg.home.file ? ".local/bin/hypr-tray-applets")
+      && (builtins.fromJSON c.environment.etc."orgm-dot/context.json".text).profile == "ryoku"
+      && !(builtins.any (cmd: lib.hasInfix "tailscale systray" cmd || lib.hasInfix "syncthingtray" cmd) c.orgm.user.autostart));
   assert check "envy must inherit osmarg desktop configuration"
     (c.networking.hostName == "envy" && c.users.users.osmarg.uid == 1000
       && c.home-manager.users.osmarg.home.homeDirectory == "/home/osmarg"

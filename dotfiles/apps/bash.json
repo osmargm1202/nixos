@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "bash",
+  "paths": [
+    ".bashrc",
+    ".blerc",
+    ".config/bash",
+    ".local/bin/external-lid-inhibit",
+    ".local/bin/timer"
+  ]
+}

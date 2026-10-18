@@ -148,3 +148,10 @@ OSC52 y atajos Kitty disponibles; no se ha confirmado una corrección funcional.
 Distinguir selección del terminal (Shift+arrastrar si tmux captura el ratón),
 Ctrl+Shift+C/V y OSC52 de una sincronización automática de portapapeles entre PCs.
 No leer contenidos del portapapeles, buffers de terminal o secretos para probarlo.
+
+## Cambio de perfil (2026-10-17)
+
+Envy conserva Ryoku mientras se prueban las copias con `orgm-dot`. El perfil
+Hyprland alternativo queda preparado con paquetes oficiales, sin activarlo;
+el usuario decidirá después si cambia. El recorte, HDMI y reanudación siguen
+pendientes de validación física.

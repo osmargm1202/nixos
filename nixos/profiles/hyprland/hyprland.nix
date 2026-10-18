@@ -2,78 +2,14 @@
   config,
   lib,
   pkgs,
-  inputs,
   userName ? "osmarg",
   ...
 }:
 let
-  hyprlandPackages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
-  # Hyprland's locked nixpkgs has Glaze 8.x; pass this flake's compatible 7.x package.
-  hyprlandPackage = hyprlandPackages.hyprland.override {
-    glaze-hyprland = pkgs.glaze;
-  };
-  hyprlandPortalPackage = hyprlandPackages.xdg-desktop-portal-hyprland.override {
-    hyprland = hyprlandPackage;
-  };
-  nwgDockHyprland = pkgs.nwg-dock-hyprland.overrideAttrs (_: {
-    version = "0.4.11";
-    src = pkgs.fetchFromGitHub {
-      owner = "nwg-piotr";
-      repo = "nwg-dock-hyprland";
-      tag = "v0.4.11";
-      hash = "sha256-bd/FLQJFn1NERjPvz/wCgjUC88gK+QumIk11vdmjPkY=";
-    };
-    vendorHash = "sha256-AJGyBCTWtgTpn+e4HLlX/8EgWITw25py4UJJJDLhoOM=";
-  });
-  mpvpaper19 = pkgs.mpvpaper.overrideAttrs (_: {
-    version = "1.9";
-    src = pkgs.fetchFromGitHub {
-      owner = "GhostNaN";
-      repo = "mpvpaper";
-      rev = "1.9";
-      hash = "sha256-FpwMhzYmbjwvbpJd6xDRka6h2bvgsqdopqP5deQKXSA=";
-    };
-  });
-
-  waybarWithCaffeineSignal = pkgs.waybar.overrideAttrs (old: {
-    postPatch = (old.postPatch or "") + ''
-      substituteInPlace include/modules/idle_inhibitor.hpp \
-        --replace-fail \
-        'auto update() -> void override;' \
-        $'auto update() -> void override;\n  auto refresh(int) -> void override;'
-      substituteInPlace src/modules/idle_inhibitor.cpp \
-        --replace-fail \
-        'void waybar::modules::IdleInhibitor::toggleStatus() {' \
-        $'auto waybar::modules::IdleInhibitor::refresh(int sig) -> void {\n#ifdef SIGRTMIN\n  if (config_["signal"].isInt() && sig == SIGRTMIN + config_["signal"].asInt()) {\n    toggleStatus();\n    for (auto const& module : IdleInhibitor::modules) {\n      module->update();\n    }\n  }\n#endif\n}\n\nvoid waybar::modules::IdleInhibitor::toggleStatus() {'
-    '';
-  });
-  scrollOverview =
-    (pkgs.callPackage ./hyprland-scroll-overview.nix {
-      hyprland = hyprlandPackage;
-    }).overrideAttrs
-      (_: {
-        src = inputs.scrollOverview;
-        version = inputs.scrollOverview.shortRev or inputs.scrollOverview.rev;
-      });
-  hyprGlass = pkgs.callPackage ./hyprglass.nix {
-    hyprland = hyprlandPackage;
-    src = inputs.hyprglass;
-  };
-  hyprWindowShade = pkgs.callPackage ./hyprwindowshade.nix {
-    hyprland = hyprlandPackage;
-    src = inputs.hyprWindowShade;
-    niriShaders = inputs.niriShaders;
-  };
+  # Use NixOS's released package set and its binary cache, without source overrides.
+  hyprlandPackage = pkgs.hyprland;
+  hyprlandPortalPackage = pkgs.xdg-desktop-portal-hyprland;
   hyprKdeconnectFix = pkgs.callPackage ./hypr-kdeconnect-fix.nix { };
-  scrollOverviewLibrary = pkgs.runCommand "scrolloverview.so" { } ''
-    ln -s ${scrollOverview}/lib/libscrolloverview.so "$out"
-  '';
-  hyprGlassLibrary = pkgs.runCommand "hyprglass.so" { } ''
-    ln -s ${hyprGlass}/lib/hyprglass.so "$out"
-  '';
-  hyprWindowShadeLibrary = pkgs.runCommand "HyprWindowShade.so" { } ''
-    ln -s ${hyprWindowShade}/lib/HyprWindowShade.so "$out"
-  '';
 in
 {
   imports = [
@@ -89,14 +25,6 @@ in
     package = hyprlandPackage;
     portalPackage = hyprlandPortalPackage;
   };
-
-  environment.etc."scrolloverview.so".source = scrollOverviewLibrary;
-  environment.etc."hyprglass.so".source = hyprGlassLibrary;
-  # Deliberately only expose the ABI-coupled plugin. After switching generations,
-  # unload any prior instance, then manually load /etc/HyprWindowShade.so; never replace it while loaded.
-  environment.etc."HyprWindowShade.so".source = hyprWindowShadeLibrary;
-  environment.etc."hyprwindowshade-shaders".source =
-    "${hyprWindowShade}/share/hyprwindowshade/shaders";
 
   security.polkit = {
     enable = true;
@@ -237,12 +165,11 @@ in
   networking.firewall.allowedTCPPorts = [ 7236 ];
 
   environment.systemPackages = with pkgs; [
-    # Upstream Hyprland v0.56.0 compositor and matching portal.
+    # Released compositor and matching portal from the selected NixOS channel.
     hyprlandPackage
     xwayland
-    hyprGlass
     hyprpaper
-    mpvpaper19
+    mpvpaper
     hyprpolkitagent
 
     # Portal / XDG
@@ -315,18 +242,10 @@ in
     bluetui
     blueman
     networkmanagerapplet
-    nextcloud-client
     nwg-displays
-    nwgDockHyprland
+    nwg-dock-hyprland
     pulsemixer
-    waybarWithCaffeineSignal
-  ];
-
-  assertions = [
-    {
-      assertion = lib.hasPrefix "0.56.2" hyprlandPackage.version;
-      message = "The selected upstream Hyprland platform requires the exact 0.56.2 release family; the flake input is the exact release pin.";
-    }
+    waybar
   ];
 
   security.pam.services.hyprlock = { };

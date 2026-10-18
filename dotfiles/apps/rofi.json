@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "name": "rofi",
+  "paths": [
+    ".config/rofi",
+    ".local/bin/hypr-rofi-calc",
+    ".local/bin/hypr-rofi-clipboard",
+    ".local/bin/hypr-rofi-lib",
+    ".local/bin/hypr-rofi-open-file",
+    ".local/bin/hypr-rofi-open-file-dir",
+    ".local/bin/hypr-rofi-open-file-terminal",
+    ".local/bin/hypr-rofi-ssh-host",
+    ".local/bin/hypr-rofi-window",
+    ".local/bin/rofi-menu-lib",
+    ".local/bin/rofi-symbols"
+  ]
+}

@@ -1,7 +1,6 @@
-{ lib, ... }:
+{ lib, options, ... }:
 let
   console = {
-    programs.ryoku.enable = lib.mkForce false;
     programs.hyprland.enable = lib.mkForce false;
     programs.niri.enable = lib.mkForce false;
     programs.labwc.enable = lib.mkForce false;
@@ -16,6 +15,8 @@ let
     };
     services.desktopManager.gnome.enable = lib.mkForce false;
     services.sunshine.enable = lib.mkForce false;
+  } // lib.optionalAttrs (options.programs ? ryoku) {
+    programs.ryoku.enable = lib.mkForce false;
   };
 in {
   boot.loader.systemd-boot.sortKey = "nixos-00-normal";

@@ -3,6 +3,7 @@ let
   enabled = config.programs.ryoku.enable;
   userAutostart = config.orgm.user.autostart;
   hasProgram = name: builtins.elem name config.orgm.user.programs;
+  kdeconnectPortal = pkgs.callPackage ../hyprland/hypr-kdeconnect-fix.nix { };
   nativeSession = {
     required = [];
     # Explicit retirement happens once; later Session edits remain user-owned.
@@ -11,8 +12,6 @@ let
       "blueman-applet" "nm-applet" "nm-applet --indicator" "print-applet" ]
       ++ lib.optional (!hasProgram "nextcloud") "nextcloud --background";
     optional = userAutostart;
-    desktop = builtins.fromJSON (builtins.readFile
-      ../../../dotfiles/config/profiles/ryoku/.config/orgm-ryoku/native-keybinds.json);
   };
   maskedAutostart = [
     "tailscale-systray.desktop" "syncthingtray.desktop" "blueman.desktop"
@@ -29,10 +28,7 @@ let
   cleanupManifest = pkgs.writeText "ryoku-desktop-cleanup.json" (builtins.toJSON {
     autostart = maskedAutostart;
     packageUnits = legacySyncthingUnits;
-    files = [ {
-      target = ".local/share/nautilus/scripts/Set as Hyprland Wallpaper";
-      sources = [ "${../../../dotfiles/config/profiles/hyprland/.local/share/nautilus/scripts}/Set as Hyprland Wallpaper" ];
-    } ];
+    files = [ ];
   });
   providerCompat = import ./provider-compat.nix { inherit inputs pkgs lib; };
   ryokuPackages = providerCompat.packages;
@@ -79,13 +75,6 @@ EOF
     runtimeInputs = [ pkgs.coreutils pkgs.jq ];
     text = builtins.readFile ./rofi-theme.sh;
   };
-  # These add personal focus/SSH/Pi workflows, rather than another desktop UI.
-  personalHelpers = [
-    "hypr-obsidian-open-or-focus" "hypr-pi-prompt" "hypr-rofi-ssh-host"
-  ];
-  helperFiles = root: names: lib.genAttrs (map (name: ".local/bin/${name}") names) (
-    target: { source = root + "/${builtins.baseNameOf target}"; executable = true; }
-  );
 in {
   imports = [ providerCompat.module ../../print/printer.nix ./runtime-path.nix ];
 
@@ -107,26 +96,7 @@ in {
       };
       # The selected sync backend also survives console/server specialisations.
       home-manager.users.${userName} = { lib, ... }: {
-        # Keep the daemon independent of the tray, with native state discovery.
-        # No generated folders, credentials, GUI address or peer overrides.
-        systemd.user.services.syncthing = lib.mkIf (hasProgram "syncthing") {
-          Unit = {
-            Description = "Syncthing background synchronization";
-            StartLimitIntervalSec = 60;
-            StartLimitBurst = 4;
-          };
-          Service = {
-            ExecStart = "${pkgs.syncthing}/bin/syncthing serve --no-browser --no-restart";
-            Restart = "on-failure";
-            RestartSec = 1;
-            SuccessExitStatus = [ 3 4 ];
-            RestartForceExitStatus = [ 3 4 ];
-            MemoryDenyWriteExecute = true;
-            NoNewPrivileges = true;
-            SystemCallArchitectures = "native";
-          };
-          Install.WantedBy = [ "default.target" ];
-        };
+        # Retire manual links before the shared synchronization unit is installed.
         home.activation.ryokuSyncthingUnitCleanup = lib.mkIf (hasProgram "syncthing") (
           lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
             $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./cleanup.py} "$HOME" \
@@ -173,6 +143,12 @@ in {
       ];
       xdg.mime.defaultApplications."inode/directory" = "org.gnome.Nautilus.desktop";
       services.gnome.gnome-online-accounts.enable = true;
+      # Keep the selected KDE Connect remote-input workflow on Hyprland.
+      # This adds a portal implementation, not another desktop's configuration.
+      xdg.portal = lib.mkIf (hasProgram "kdeconnect") {
+        extraPortals = [ kdeconnectPortal ];
+        config.hyprland."org.freedesktop.impl.portal.RemoteDesktop" = "hypr-kdeconnect";
+      };
       programs.nautilus-open-any-terminal = {
         enable = true;
         terminal = "kitty";
@@ -209,7 +185,6 @@ in {
         xdg.configFile."orgm-ryoku/native-session.py".source = ./native-session.py;
         services.dunst.enable = lib.mkForce false;
         services.mako.enable = lib.mkForce false;
-        home.file = helperFiles ../../../dotfiles/config/users/osmarg/profiles/hyprland/.local/bin personalHelpers;
         # Stable active-generation helper: the initial editable overlay must
         # not freeze a collectable package path or need reimposition on updates.
         xdg.configFile."orgm-ryoku/matugen-config.toml".text = builtins.replaceStrings

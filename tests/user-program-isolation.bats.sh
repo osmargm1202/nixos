@@ -95,7 +95,7 @@ assert not excluded & flatpaks, ("excluded Flatpaks installed", excluded & flatp
 assert "nextcloud-client" in jarq["packages"], "Nextcloud client missing"
 assert "nextcloud-client" not in inventory["withoutNextcloud"]["packages"], "disabling Nextcloud did not remove the client"
 assert "syncthing" in inventory["osmarg"]["packages"], "Osmarg lost Syncthing"
-assert "syncthingtray" in inventory["osmarg"]["packages"], "Osmarg lost Syncthing Tray"
+assert "syncthingtray" not in inventory["osmarg"]["packages"], "Ryoku must not install a duplicate Syncthing tray"
 assert inventory["osmarg"]["secrets"], "Osmarg lost its selected secrets"
 assert ".tmux.conf" not in inventory["withoutTmux"]["managedFiles"], "disabled tmux still deploys personal dotfiles"
 assert ".config/tmux/plugins.conf" not in inventory["withoutTmux"]["managedFiles"], "disabled tmux still deploys plugins"
@@ -104,5 +104,5 @@ for name in ("tailscalePeerMonitorService", "tailscalePeerMonitorTimer", "tailsc
     assert inventory["withPeerNotifications"][name], ("explicit peer notifications missing infrastructure", name)
     assert not inventory["withoutOrgm"][name], ("disabling orgm retained Tailscale peer infrastructure", name)
 assert inventory["withoutOrgm"]["tailscale"], "disabling orgm disabled Tailscale"
-print("PASS: Jarq work applications, exclusions, Tailscale, immutable dotfiles and independent program selection")
+print("PASS: Jarq work applications, exclusions, Tailscale, editable dotfile copies and independent program selection")
 PY

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "kitty",
+  "paths": [
+    ".config/kitty",
+    ".local/bin/kitty_launch"
+  ]
+}

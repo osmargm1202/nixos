@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "nvim",
+  "paths": [
+    ".config/nvim"
+  ]
+}

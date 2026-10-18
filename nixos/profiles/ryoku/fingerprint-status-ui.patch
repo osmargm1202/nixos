@@ -1,0 +1,57 @@
+--- a/ryoku/hub/quickshell/pages/LockscreenPage.qml
++++ b/ryoku/hub/quickshell/pages/LockscreenPage.qml
+@@ -397,9 +397,10 @@
+         var fm = t.match(/found\s+(\d+)\s+devices?/i);
+         var nDev = fm ? parseInt(fm[1], 10) : 0;
+         pg.fready = t.indexOf("Using device") !== -1 || t.indexOf("Device at") !== -1 || nDev > 0;
+-        pg.fdaemon = pg.fready && t.trim() !== "" && t.indexOf("no devices") === -1;
++        // No devices is a successful daemon reply, not a missing service.
++        pg.fdaemon = pg.fready || /no devices available|found\s+0\s+devices?/i.test(t);
+         pg.floading = false;
+-        if (pg.fdaemon && !pg.floading) {
++        if (pg.fready && !pg.floading) {
+             var stale = false;
+             for (var k in pg.fnames)
+                 if (fingers.indexOf(k) === -1) { delete pg.fnames[k]; stale = true; }
+@@ -772,16 +773,17 @@
+     }
+     Process {
+         id: flistProc
+-        command: ["fprintd-list", pg.fuser]
++        command: ["env", "LC_ALL=C", "fprintd-list", pg.fuser]
+         stdout: StdioCollector { id: flistOut }
++        stderr: StdioCollector { id: flistErr }
+         onExited: (code) => {
+             if (code !== 0 && flistOut.text.trim() === "") {
+                 pg.fdaemon = false; pg.fready = false; pg.ffingers = []; pg.floading = false; fpTimeout.stop();
+-                pg.ferr = I18n.tr("The fingerprint service is not running.");
++                pg.ferr = flistErr.text.trim() || I18n.tr("The fingerprint service is not responding.");
+                 return;
+             }
+             pg.ferr = "";
+-            pg.fparseList(flistOut.text);
++            pg.fparseList(flistOut.text + "\n" + flistErr.text);
+         }
+     }
+     // fprintd is D-Bus activated; a probe can hang if the service never comes
+@@ -1257,9 +1259,9 @@
+                                     if (pg.floading)
+                                         return "";
+                                     if (!pg.fdaemon)
+-                                        return I18n.tr("The fingerprint service is not running. Enroll anyway and it will start on demand.");
++                                        return I18n.tr("The fingerprint service is unavailable. Retry to start it on demand.");
+                                     if (!pg.fready)
+-                                        return I18n.tr("No sensor found. Check the USB connection, then retry.");
++                                        return I18n.tr("The fingerprint service is installed, but no supported reader was found. Check device and driver compatibility.");
+                                     if (pg.ffingers.length === 0)
+                                         return I18n.tr("Ready. Enroll a finger to unlock with a touch.");
+                                     return pg.ffpEnabled ? I18n.tr("Listening at the lock screen") : I18n.tr("Listening at the lock screen \u00b7 currently switched off");
+@@ -1297,7 +1299,7 @@
+                                 width: parent.width
+                                 text: !pg.ffpEnabled ? I18n.tr("Password only")
+                                     : (pg.fready ? I18n.tr("The lock screen listens for a touch before asking your password")
+-                                                 : I18n.tr("On, but no fingerprint sensor is connected"))
++                                                 : I18n.tr("On, but no supported fingerprint reader is available"))
+                                 color: Tokens.inkDim; font.family: Tokens.ui; font.pixelSize: Tokens.fSmall
+                                 wrapMode: Text.WordWrap
+                             }

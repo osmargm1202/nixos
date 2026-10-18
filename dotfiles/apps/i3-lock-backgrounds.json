@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "i3-lock-backgrounds",
+  "paths": [
+    ".local/share/i3-lock-backgrounds"
+  ]
+}

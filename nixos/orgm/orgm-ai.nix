@@ -7,8 +7,8 @@
 
 buildGoModule {
   pname = "orgmai";
-  version = "0.2.3";
-  # Snapshot of ~/Code/orgm-ai; no host-specific paths or network Go dependencies.
+  version = "0.4.0";
+  # Thin native client launcher; no AI transport, model or credential handling.
   src = ./orgmai-src;
   vendorHash = null;
   subPackages = [ "cmd/orgmai" ];
@@ -17,10 +17,11 @@ buildGoModule {
   postInstall = ''
     wrapProgram "$out/bin/orgmai" \
       --prefix PATH : ${lib.makeBinPath [ gum ]}
+    ln -s orgmai "$out/bin/ai-chat"
   '';
 
   meta = {
-    description = "Quick persistent Gum chat powered by extension-free Pi";
+    description = "Native launcher for Claude, Codex, OpenCode, OMP or Pi";
     homepage = "https://github.com/osmargm1202/orgmai";
     mainProgram = "orgmai";
     platforms = lib.platforms.linux;

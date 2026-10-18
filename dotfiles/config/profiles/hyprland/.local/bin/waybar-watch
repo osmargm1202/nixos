@@ -81,19 +81,6 @@ stop_waybar() {
   waybar_pid=""
 }
 
-restore_caffeine() {
-  [ "$("$HOME/.local/bin/waybar-caffeine-state" status 2>/dev/null)" = activated ] || return 0
-  caffeine_waybar_pid="$waybar_pid"
-
-  (
-    sleep 1
-    if kill -0 "$caffeine_waybar_pid" 2>/dev/null; then
-      # Waybar's "signal": 8 maps to Linux SIGRTMIN+8 (signal 42).
-      kill -s 42 "$caffeine_waybar_pid"
-    fi
-  ) &
-}
-
 start_waybar() {
   generated_config="${config_dir}/config"
   if command -v hypr-display-targets >/dev/null 2>&1; then
@@ -102,7 +89,6 @@ start_waybar() {
 
   waybar -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
   waybar_pid="$!"
-  restore_caffeine
 }
 
 

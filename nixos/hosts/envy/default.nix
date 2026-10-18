@@ -24,6 +24,7 @@
   services.fstrim.enable = true;
   services.btrfs.autoScrub.enable = true;
   services.smartd.enable = true;
+  services.fprintd.enable = true;
   networking.networkmanager.wifi.powersave = false;
 
   services.openssh.settings = {

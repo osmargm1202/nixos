@@ -8,7 +8,7 @@ let f=builtins.getFlake ("path:"+builtins.getEnv "RYOKU_TEST_REPO");
    kernel=c.boot.kernelPackages.kernel.version; driver=c.hardware.nvidia.package.version;
    video=c.services.xserver.videoDrivers; initrd=c.boot.initrd.kernelModules; params=c.boot.kernelParams;
    blacklist=c.boot.blacklistedKernelModules; offload=c.hardware.nvidia.prime.offload.enable;
-   cdi=c.hardware.nvidia-container-toolkit.enable; ryoku=c.programs.ryoku.enable;
+   cdi=c.hardware.nvidia-container-toolkit.enable; ryoku=c.programs.ryoku.enable or false;
    hypr=c.programs.hyprland.enable; niri=c.programs.niri.enable;
    sddm=c.services.displayManager.sddm.enable; autologin=c.services.displayManager.autoLogin.enable;
    gaming=c.orgm.gaming.gamescopeTty1.enable; target=c.systemd.defaultUnit;

@@ -92,6 +92,18 @@ let
     gnome-software
     localsend
     gh
+    # Personal preview scripts and the existing Alt+A AI widget use these CLIs.
+    lsd
+    chafa
+    ouch
+    aichat
+    # Standalone user applications must survive a change of desktop shell.
+    gnome-system-monitor
+    gnome-network-displays
+    sushi
+    totem
+    pamixer
+    pulsemixer
     (pkgs.writeShellApplication {
       name = "ns";
       runtimeInputs = with pkgs; [
@@ -105,7 +117,8 @@ let
   desktopUserPackages =
     lib.optionals (hasProgram "nextcloud") [ pkgs.nextcloud-client ]
     ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
-    ++ lib.optionals (hasProgram "syncthing" && profileName != "ryoku") [ pkgs.syncthingtray ]
+    ++ lib.optionals (hasProgram "syncthing" && profileName != "ryoku"
+      && config.networking.hostName != "envy") [ pkgs.syncthingtray ]
     ++ lib.optionals (hasProgram "development") developmentPackages
     ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]
@@ -248,7 +261,7 @@ in
   boot.loader.timeout = 1;
 
   # Nothing needed before login depends on network-online.target. Keep its
-  # wait service out of boot; dotfile activation uses immutable local sources.
+  # wait service out of boot; orgm-dot uses the local checkout without network.
   systemd.services.NetworkManager-wait-online.wantedBy = lib.mkForce [ ];
 
   hardware.uinput.enable = true;
@@ -443,7 +456,7 @@ in
     };
   };
 
-  # LocalSend and Deskflow are user-selected LAN integrations.
+  # LocalSend, Deskflow and the Roku TV's Miracast listener follow user tools.
   networking.firewall = {
     allowedTCPPorts =
       [
@@ -451,6 +464,7 @@ in
         443
       ]
       ++ lib.optionals (hasProgram "development") [ 53317 ]
+      ++ lib.optionals (hasProgram "personal-development") [ 7236 ]
       ++ lib.optionals (hasProgram "deskflow") [ 24800 ];
     allowedUDPPorts = lib.optionals (hasProgram "development") [ 53317 ];
   };

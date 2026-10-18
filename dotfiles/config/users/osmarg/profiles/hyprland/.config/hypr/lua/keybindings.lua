@@ -79,6 +79,8 @@ function M.setup(programs)
   hl.bind("ALT + Tab", function()
     if hl.plugin and hl.plugin.scrolloverview then
       hl.plugin.scrolloverview.overview("toggle")
+    else
+      hl.dispatch(hl.dsp.exec_cmd("hypr-rofi-window"))
     end
   end)
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())

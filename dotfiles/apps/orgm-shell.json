@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "orgm-shell",
+  "paths": [
+    ".config/orgm-shell"
+  ]
+}

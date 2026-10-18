@@ -1,0 +1,10 @@
+diff --git a/ryoku/apps/bash/ryoku.bash b/ryoku/apps/bash/ryoku.bash
+--- a/ryoku/apps/bash/ryoku.bash
++++ b/ryoku/apps/bash/ryoku.bash
+@@ -12,3 +12,2 @@
+ command -v ryoku-fastfetch >/dev/null 2>&1 && ryoku-fastfetch
+-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash --cmd cd)"
+ command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+@@ -41 +40,2 @@
+ command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
++command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash --cmd cd)"

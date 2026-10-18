@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "ryoku",
+  "paths": [
+    ".config/orgm-ryoku/audio-defaults.json",
+    ".config/orgm-ryoku/desktop-defaults.json",
+    ".config/orgm-ryoku/keyboard.lua",
+    ".config/orgm-ryoku/kitty.conf",
+    ".config/orgm-ryoku/monitors_user.lua",
+    ".config/orgm-ryoku/native-keybinds.json",
+    ".config/orgm-ryoku/osmarg-keybindings.lua",
+    ".config/orgm-ryoku/rebind.lua",
+    ".config/orgm-ryoku/rofi.rasi",
+    ".config/orgm-ryoku/shortcuts.lua",
+    ".config/orgm-ryoku/user.lua",
+    ".config/orgm-ryoku/window-defaults.json",
+    ".config/orgm-ryoku/window-rules.lua",
+    ".local/bin/dunstify",
+    ".local/bin/orgm-ryoku-shortcuts"
+  ]
+}

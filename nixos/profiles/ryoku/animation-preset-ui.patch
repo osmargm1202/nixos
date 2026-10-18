@@ -1,14 +1,49 @@
 --- a/ryoku/hub/quickshell/pages/AnimationsPage.qml
 +++ b/ryoku/hub/quickshell/pages/AnimationsPage.qml
-@@ -187,7 +187,28 @@
+@@ -179,15 +179,61 @@
+     readonly property var animPresetLabels: pg.animPresets.map(p => p.label)
+     function animPresetLabel(id) { for (var i = 0; i < pg.animPresets.length; i++) if (pg.animPresets[i].id === id) return pg.animPresets[i].label; return "Ryoku"; }
+     function animPresetId(label) { for (var i = 0; i < pg.animPresets.length; i++) if (pg.animPresets[i].label === label) return pg.animPresets[i].id; return "ryoku"; }
+-    function setAnimPreset(id) { pg.animPreset = id; animPresetSet.command = ["ryoku-hub", "desktop", "anim-preset", id]; animPresetSet.running = true; }
++    property string animPresetRequested: ""
++    property string animPresetApplying: ""
++    property string animPresetError: ""
++    function setAnimPreset(id) {
++        pg.animPresetRequested = id;
++        pg.animPresetError = "";
++        pg.applyNextAnimPreset();
++    }
++    function applyNextAnimPreset() {
++        if (pg.animPresetApplying !== "" || pg.animPresetRequested === "") return;
++        pg.animPresetApplying = pg.animPresetRequested;
++        pg.animPresetRequested = "";
++        animPresetSet.command = ["ryoku-hub", "desktop", "anim-preset", pg.animPresetApplying];
++        animPresetSet.running = true;
++    }
+ 
+     Process {
+         id: animPresetGet
+         command: ["ryoku-hub", "desktop", "anim-preset"]
          running: true
-         stdout: StdioCollector { onStreamFinished: { try { var d = JSON.parse(this.text); if (d && d.preset) pg.animPreset = d.preset; } catch (e) {} } }
-     }
+-        stdout: StdioCollector { onStreamFinished: { try { var d = JSON.parse(this.text); if (d && d.preset) pg.animPreset = d.preset; } catch (e) {} } }
+-    }
 -    Process { id: animPresetSet }
++        stdout: StdioCollector { onStreamFinished: { try { var d = JSON.parse(this.text); if (d && d.preset && pg.animPresetApplying === "") pg.animPreset = d.preset; } catch (e) {} } }
++    }
 +    Process {
 +        id: animPresetSet
++        stderr: StdioCollector { id: animPresetStderr }
 +        onExited: (exitCode, exitStatus) => {
-+            if (exitCode !== 0 || !pg.hub) return;
++            var applied = pg.animPresetApplying;
++            pg.animPresetApplying = "";
++            if (exitCode !== 0) {
++                pg.animPresetError = animPresetStderr.text.trim() || I18n.tr("Could not apply the animation preset");
++                pg.applyNextAnimPreset();
++                return;
++            }
++            pg.animPreset = applied;
++            pg.animPresetError = "";
++            if (!pg.hub) { pg.applyNextAnimPreset(); return; }
 +            // Mirror only the animation fields changed by the backend. Keep
 +            // unrelated staged edits, and do not resurrect the previous preset.
 +            pg.hub.hyprDrop("wm.hyprland.anim");
@@ -25,11 +60,29 @@
 +            }
 +            pg.hub.hyprDraft = draft;
 +            pg.hub.hyprCommitted = committed;
++            pg.applyNextAnimPreset();
 +        }
 +    }
  
      // ── curves model ────────────────────────────────────────────────────────
      function curvesArr() { var a = pg.hv("wm.hyprland.anim.curves"); return Array.isArray(a) ? a : []; }
+@@ -738,7 +784,7 @@
+                     width: parent.width
+                     leftPadding: Tokens.s4; rightPadding: Tokens.s4
+                     topPadding: Tokens.s3; bottomPadding: Tokens.s1
+-                    text: I18n.tr("The window animation personality: how windows, workspaces and layers move. Picking one reloads Hyprland; your curve tweaks below still apply on top.")
++                    text: I18n.tr("The window animation personality: how windows, workspaces and layers move. Picking one applies it immediately and replaces the previous animation tweaks. You can fine-tune it below afterward.")
+                     color: Tokens.inkMuted; font.family: Tokens.ui
+                     font.pixelSize: Tokens.fSmall; wrapMode: Text.WordWrap
+                 }
+@@ -747,6 +793,7 @@
+                     divider: true
+                     block: true
+                     label: I18n.tr("Preset")
++                    desc: pg.animPresetError !== "" ? pg.animPresetError : (pg.animPresetApplying !== "" ? I18n.tr("Applying…") : "")
+                     Chips {
+                         anchors.left: parent.left; anchors.right: parent.right
+                         anchors.verticalCenter: parent.verticalCenter
 --- a/ryoku/hub/quickshell/schema/WindowSettings.js
 +++ b/ryoku/hub/quickshell/schema/WindowSettings.js
 @@ -562,10 +562,11 @@

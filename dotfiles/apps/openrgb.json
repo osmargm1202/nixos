@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "openrgb",
+  "paths": [
+    ".config/openrgb",
+    ".local/bin/openrgb-autostart"
+  ]
+}

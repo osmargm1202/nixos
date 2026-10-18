@@ -103,6 +103,24 @@ dry_run() {
   done
 }
 
+restart_legacy_desktop() {
+  # A selected Ryoku session owns its shell, bars and widgets. Even if its shell
+  # is temporarily stopped, an installed unit must not resurrect the old UI.
+  if systemctl --user cat ryoku-shell.service >/dev/null 2>&1; then
+    return
+  fi
+  hyprctl reload >/dev/null 2>&1 || true
+  (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &)
+  ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true
+  sleep 0.3
+  pkill -x conky 2>/dev/null || true
+  sleep 0.3
+  conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
+  desktop_restarted=1
+}
+
 clean() {
   local pids=() line pid rss reason comm cmd count=0 total=0
   while IFS=$'\t' read -r pid rss reason comm cmd; do
@@ -138,20 +156,12 @@ clean() {
   # Sync filesystem
   sync
 
-  # Restart all desktop components
-  hyprctl reload >/dev/null 2>&1 || true
-  (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &)
-  ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true
-  sleep 0.3
-  pkill -x conky 2>/dev/null || true
-  sleep 0.3
-  conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
-  conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
-  conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
+  local desktop_restarted=0
+  restart_legacy_desktop
 
   local msg="Procesos: ${count} (~$((total / 1024)) MiB)"
   [[ "$containers_stopped" -eq 1 ]] && msg="$msg · contenedores detenidos"
-  msg="$msg · desktop reiniciado"
+  [[ "$desktop_restarted" -eq 1 ]] && msg="$msg · desktop reiniciado"
   command -v notify-send >/dev/null 2>&1 && notify-send "Memclean dev" "$msg" || true
   printf '%s\n' "$msg"
 }

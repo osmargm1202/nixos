@@ -4,6 +4,7 @@ Hosts Ryoku: `envy`, `orgm` y `lenovo`; cada host tiene una única salida públi
 de [Ryoku on NixOS](https://github.com/aethctl/Ryoku-on-NixOS), fijado en
 `28c5207586babb136aecf8568ce3ed873fa8f8fd`. Su nixpkgs se conserva separado:
 Hyprland, plugins, portales y Quickshell deben usar el mismo conjunto compatible.
+Envy conserva Ryoku para probar los dotfiles; el cambio a Hyprland queda pendiente de la decisión del usuario.
 
 Desde la raíz del repo:
 
@@ -39,10 +40,32 @@ solo de animación; la primera selección guarda una copia del escritorio en
 `~/.config/ryoku/desktop.json.before-animation-presets`. No se fuerza ningún
 preset durante la activación del perfil.
 
+Image borders y Glass liberan sus suscripciones a eventos al descargarse.
+Sin esa limpieza, abrir una ventana después de desactivarlos podía ejecutar
+callbacks sobre opciones ya retiradas y provocar un cierre con modo seguro.
+La prueba de sesión abre ventanas antes y después de descargar y recargar plugins.
+
+Los plugins incluidos aíslan sus símbolos internos: `PHANDLE` y
+`g_pGlobalState` no se comparten entre bibliotecas. Cursor motion adapta el
+hook de captura al API de Hyprland 0.56.2. Image borders convierte los tamaños
+del Hub a tablas Lua y no emite una opción `enabled` que ese plugin no admite.
+El archivo de imagen se elige desde el Hub; activar el plugin con esa ruta
+vacía no dibuja bordes.
+
+Glass aplica los deslizadores mediante un preset propio que hereda el elegido
+en Ryoku, para que el preset no anule blur, opacidad, tinte y brillo.
+Focus flash sigue el teclado y ofrece **Also animate mouse focus** para el
+ratón. Key sounds obtiene sus perfiles del paquete de Nix Store.
+Los presets de animación se aplican inmediatamente; el selector espera el
+resultado del backend, conserva la última selección si falla y muestra el
+error. Las selecciones rápidas se procesan en orden conservando la más reciente.
+
 El menú de ajustes rápidos incluye **Suspend**. El servicio `fprintd` está
 habilitado y el bloqueo conserva conversaciones PAM independientes para huella
 y contraseña. El registro de dedos y el interruptor de desbloqueo se manejan
-desde Ryoku Hub; no se registra ninguna huella automáticamente.
+desde Ryoku Hub; no se registra ninguna huella automáticamente. La página distingue
+un servicio inaccesible de una respuesta correcta sin lectores compatibles y
+conserva los nombres de dedos cuando el lector no está disponible.
 
 Quickshell es el único servidor de notificaciones del perfil Ryoku. La revisión
 oficial incluye Mako, cuya activación por D-Bus puede adelantarse a la shell;
@@ -54,6 +77,10 @@ API y no arranca Dunst. i3 y el perfil Hyprland habitual conservan Dunst.
 Windows/VFIO sigue usando Podman y su contenedor existente aunque Ryoku habilite
 también Docker. La imagen SPICE se construye desde un contexto mínimo en Nix Store
 con un `Containerfile.spice` regular, compatible con los enlaces de Home Manager.
+
+**Win+Shift+Espacio** alterna entre ventana flotante y mosaico. El modo seguro
+de Hyprland usa sus atajos de emergencia y omite la configuración personal;
+no debe confundirse con un cambio guardado por Ryoku.
 
 En modo scrolling, **Win+R** alterna el ancho de la columna activa entre
 **33 %, 50 % y 100 %** del área disponible, conservando la altura. Usa la acción
@@ -308,25 +335,19 @@ mediante imports y archivos de usuario, no mediante una segunda GUI inventada.
 | Recursos base Bash de Ryoku y entorno, Quickshell/proveedores | Runtime de la versión fijada, actualizable |
 | `native-window-widths.lua`, hints de propiedad de atajos | Derivados del store vigente; editar la fuente del Hub, no estos artefactos |
 
-El inventario inicial se genera desde las capas seleccionadas del usuario/host,
-sin mezclar escritorios antiguos. Está en el manifiesto Nix-owned
-`orgm-ryoku/seed-manifest.json`; no se publica como enlaces de preferencias activas.
-Se procesa antes de retirar los enlaces antiguos de Home Manager y antes del
-materializador. Un archivo nuevo añadido al inventario se puede sembrar aunque
-ya se haya inicializado el resto. Si borras un archivo completo que tenga seed,
-se podrá recrear en la siguiente preparación; borrar una regla/import dentro de
-un archivo existente no lo restaura.
+Los dotfiles personales se leen del checkout por `orgm-dot` y se copian una vez,
+antes del materializador. NixOS instala paquetes, servicios y metadatos de
+integración; no enlaza las preferencias del repo al Store. Los JSON por
+aplicación están en `dotfiles/apps/`. `orgm-dot diff`, `pull` y `push` permiten
+actualizar cada aplicación explícitamente, con respaldos restaurables en
+`~/.local/state/orgm-dot/backups/`. Las reconstrucciones respetan las ediciones
+y los archivos eliminados después de la primera copia.
 
-La migración sustituye únicamente bootstraps antiguos de Home Manager
-comprobados y separa sus módulos personales del Store. Guarda bytes y procedencia
-en `~/.local/state/orgm-ryoku/seeds-v1/` (privado). Los directorios antiguos se
-reconocen mediante un registro destino→fuentes del mismo usuario/host, incluidas
-sus generaciones anteriores. Se guardan contenido y enlace/resolución original
-en `legacy-directories-v1/` antes de retirarlos, no por el mero nombre del Store.
-Los enlaces ajenos, incluidos los colgantes, se conservan. Si una `.bashrc` personal no importa Ryoku, se avisa
-sin modificarla: el import normal es `. ~/.config/bash/ryoku.bash`. Un directorio
-personal enlazado que bloquearía la materialización se conserva y se informa
-antes de escribir a través de él; no se elimina silenciosamente.
+El helper conserva los límites del runtime de Ryoku: los imports personales de
+Bash/Kitty usan sus archivos de usuario y el Hub conserva los stores y recursos
+nativos. Los enlaces de directorio ajenos se conservan y bloquean la escritura;
+los enlaces antiguos al Store se convierten en copias con respaldo. Véase
+[la guía del helper](../../../dotfiles/README.md).
 
 ### Fastfetch y Bash
 
@@ -336,11 +357,56 @@ con el mismo `config.jsonc` que guarda el Hub. Se importa la biblioteca personal
 sin volver a iniciar prompt/Starship, zoxide, fzf o un banner paralelo. Quitar un
 import de `~/.config/bash/user.bash` se respeta en el próximo switch.
 
+Mise y Starship se inician antes de Zoxide: Mise reemplaza `cd` y Starship puede
+encapsular los hooks de prompt. El orden inverso anulaba los saltos de directorio
+y podía generar el aviso de inicialización de Zoxide. Ryoku sigue inicializando
+Zoxide una sola vez como `cd`/`cdi`; la biblioteca personal también conserva
+`z`/`zi`. Los datos de Zoxide y el historial no se borran ni se migran.
+La misma biblioteca restaura los cinco atajos FZF de Blesh (Alt+R/F/C/P/A),
+las funciones y completions personales y, si ya está instalado, el entorno fnm.
+Alt+R conserva el historial FZF personal; Rashin sigue disponible con `rashin`.
+Atuin conserva su integración de historial del sistema.
+
+Los scripts de preview conservan sus dependencias `lsd`, `chafa` y `ouch`;
+`aichat` respalda el widget Alt+A existente. Las aplicaciones personales
+GNOME System Monitor, Network Displays, Sushi, Videos, Pamixer y Pulsemixer
+pertenecen a la selección del usuario, independientemente del perfil gráfico.
+Miracast mantiene su puerto TCP 7236 y KDE Connect su portal de entrada remota
+en Hyprland. Estas herramientas no añaden bandejas ni arranques automáticos.
+`memclean-dev` tampoco reinicia Waybar, Conky ni el dock antiguo si está instalada
+la unidad de Ryoku, aunque esa unidad esté temporalmente detenida.
+
 Tras aplicar: **Hub → Fastfetch → Save**, abrir una terminal nueva y comparar.
 Una vista previa no guarda por sí sola ni cambia un banner ya impreso. No se
 reemplaza una configuración Fastfetch regular existente, incluida la actual de
 Envy. Los procesos Bash ya abiertos mantienen lo que cargaron: abre otra terminal
 para probar el nuevo arranque.
+
+### Lanzador de IA personal
+
+`Super+A` (`orgmai new`, también disponible como `ai-chat new`) pregunta en su
+primer lanzamiento qué programa usar: Claude, Codex, OpenCode, OMP o Pi. Guarda
+solo la elección con permisos 0600 en `~/.config/orgmai/config.json`. Si ya hay
+un programa elegido, lo conserva. La terminal Kitty usa la clase `orgmai-chat`,
+que tiene una regla flotante y centrada; el proceso se sustituye directamente
+por el programa nativo.
+
+`Super+Ctrl+Shift+A`, `ai-chat config` o `ai-chat program` permiten cambiar el
+programa. `Super+Shift+A` abre el historial nativo del elegido; OpenCode continúa
+la última conversación y permite navegar desde su propia interfaz.
+
+Pi se ejecuta como **`pi -ne`**, sin extensiones, con su modelo, autenticación,
+interfaz y conversaciones habituales. No se usa RPC, un prompt propio ni una
+capa de chat de OrgM. Las opciones antiguas de modelo/proveedor/razonamiento del
+lanzador se ignoran; los archivos históricos de OrgM se conservan sin importar
+ni mezclar conversaciones. Los argumentos adicionales se pasan al programa
+nativo como argumentos, sin interpretarlos en un shell.
+
+Los programas no instalados aparecen indicados y el selector muestra cómo
+instalarlos, sin elegir otro por su cuenta ni guardar una selección inválida.
+El lanzador reconoce Bun, npm, FNM y `~/.opencode/bin` aunque la sesión gráfica
+no haya iniciado un shell interactivo. No confunde nuestros wrappers `claude` y
+`codex` con una instalación real del cliente.
 
 ### DPMS al reanudar
 

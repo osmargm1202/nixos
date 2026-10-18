@@ -1,0 +1,44 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -72,6 +72,12 @@
+   }
+ }
+ 
++// Explicitly release listeners on unload: dlclose may keep the DSO resident.
++static CHyprSignalListener windowOpenHook;
++static CHyprSignalListener windowCloseHook;
++static CHyprSignalListener windowUpdateRulesHook;
++static CHyprSignalListener configReloadedHook;
++
+ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
+   PHANDLE = handle;
+ 
+@@ -120,13 +126,13 @@
+       Desktop::Rule::windowEffects()->registerEffect("imgborders:noimgborders");
+ 
+   // Register callbacks
+-  static auto windowOpenHook =
++  windowOpenHook =
+       Event::bus()->m_events.window.open.listen(onWindowOpen);
+-  static auto windowCloseHook =
++  windowCloseHook =
+       Event::bus()->m_events.window.close.listen(onWindowClose);
+-  static auto windowUpdateRulesHook =
++  windowUpdateRulesHook =
+       Event::bus()->m_events.window.updateRules.listen(onWindowUpdateRules);
+-  static auto configReloadedHook =
++  configReloadedHook =
+       Event::bus()->m_events.config.reloaded.listen(onConfigReloaded);
+ 
+   // Add to existing windows
+@@ -140,5 +146,10 @@
+ }
+ 
+ APICALL EXPORT void PLUGIN_EXIT() {
++    windowOpenHook.reset();
++    windowCloseHook.reset();
++    windowUpdateRulesHook.reset();
++    configReloadedHook.reset();
++
+   for (auto &m : State::monitorState()->monitors())
+     m->m_scheduledRecalc = true;

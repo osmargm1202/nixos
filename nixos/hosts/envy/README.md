@@ -4,8 +4,8 @@ HP ENVY 17m-ce1xxx, i7-10510U, 12 GiB RAM, Intel UHD y NVIDIA MX250 Pascal.
 
 ## Configuración activa
 
-`envy` es la única salida pública de este host y selecciona el escritorio Ryoku
-de `osmarg`, con sus preferencias y aplicaciones compartidas. Las fuentes preparan
+`envy` es la única salida pública de este host y conserva Ryoku de `osmarg`
+mientras se prueba `orgm-dot`, con sus preferencias y aplicaciones compartidas. Las fuentes preparan
 normal (base), gaming, windows-vfio y server; **todavía no desplegados**.
 Normal conserva Steam, emuladores y Sunshine. El menú de
 arranque está fijado a 1 segundo por preferencia explícita del usuario.
@@ -27,11 +27,41 @@ Se usa zram del 50% de RAM, no Optane como swap ni hibernación.
 
 Con solo el panel interno conectado, el kernel presenta además `DP-1` como
 conectado, sin EDID, a 800×600. Ryoku asignaba allí el workspace2 y el cursor.
-El seed exclusivo de envy `.config/orgm-ryoku/monitors_user.lua` desactiva esa
-salida; la preparación lo instala como `~/.config/hypr/monitors_user.lua` solo
-si no hay override personal. No desactiva eDP ni los otros conectores.
-Si un monitor real utiliza DP-1 más adelante, retirar la regla del override
-personal y revisar el seed declarado, recargar Hyprland y probar ese puerto.
+El seed exclusivo de Envy `.config/orgm-ryoku/monitors_user.lua` desactiva esa
+salida. Se copia desde el checkout y la preparación de Ryoku lo instala solo
+si no hay override personal en `~/.config/hypr/monitors_user.lua`. Mantiene eDP
+y los otros conectores; el Hub conserva el control del layout.
+
+## Dotfiles y escritorio
+
+`orgm-dot` migra los enlaces antiguos a copias editables con respaldo en
+`~/.local/state/orgm-dot/backups/`. Las reconstrucciones posteriores respetan
+las ediciones locales; `diff`, `pull` y `push` trabajan por aplicación. `ryoku-hub`
+permite guardar los ajustes `desktop.json` y `shell.json` del Hub sin copiar su
+runtime completo. Véase [la guía](../../../dotfiles/README.md).
+
+Envy mantiene Ryoku; esta migración no cambia el escritorio ni sustituye sus
+configuraciones por las de Hyprland. El perfil Hyprland alternativo queda
+preparado con Hyprland, portal, Waybar, nwg-dock y mpvpaper oficiales de NixOS.
+El cambio de escritorio queda pendiente de la decisión del usuario. Véase
+[el perfil Hyprland](../../profiles/hyprland/README.md).
+
+## Plugins y huella
+
+El cierre observado el 17 de octubre dejó un callback de Image borders activo
+tras descargar el plugin; el watchdog arrancó Hyprland con `--safe-mode`.
+Se corrigió la retirada de callbacks en Image borders y Glass en el perfil
+Ryoku compartido de Envy, Lenovo y ORGM.
+
+`fprintd` sigue habilitado. El lector USB de este equipo es Synaptics
+`06cb:00c9`: `fprintd-list osmarg` responde `No devices available` con el
+controlador instalado. No figura en la
+[lista de dispositivos de libfprint](https://fprint.freedesktop.org/supported-devices.html).
+Existe un [controlador experimental](https://github.com/vojtapl/synaTudorMiS)
+que incluye ese ID, pero no está integrado aquí: requiere cambios adicionales
+en libfprint/fprintd y su autor advierte de incompatibilidad con el emparejamiento
+de Windows. El desbloqueo por huella de este lector queda pendiente de un
+controlador validado; instalar o activar el servicio no basta.
 
 ## Estado de salidas externas (2026-10-15)
 
@@ -82,6 +112,8 @@ Si el usuario mueve el repo o publica cambios, conservar sus modificaciones
 preexistentes; no dar por hecho que todo está ya enviado al remoto.
 
 Envy usa Online Accounts/GVfs en lugar del cliente de sincronización Nextcloud.
+Ryoku controla la UI de red, Bluetooth y audio; Tailscale y Syncthing siguen
+conectados mediante sus servicios, sin lanzar sus bandejas.
 Tailscale, Syncthing, cuentas y secretos SOPS necesitan sus identidades/login;
 no copiar claves privadas indiscriminadamente. Una integración pendiente no
 debe confundirse con un fallo de Wi-Fi o de los controladores del hardware.

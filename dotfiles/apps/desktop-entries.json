@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "name": "desktop-entries",
+  "paths": [
+    ".local/share/applications/claude-code-url-handler.desktop",
+    ".local/share/applications/claude-code.desktop",
+    ".local/share/applications/codex.desktop",
+    ".local/share/applications/omp.desktop",
+    ".local/share/applications/opencode.desktop",
+    ".local/share/applications/pi.desktop",
+    ".local/share/applications/reddit.desktop",
+    ".local/share/applications/windows-rdp.desktop"
+  ]
+}

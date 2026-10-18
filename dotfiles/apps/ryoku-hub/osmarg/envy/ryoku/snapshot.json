@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "ryoku-hub",
+  "paths": [
+    ".config/ryoku/desktop.json",
+    ".config/ryoku/shell.json"
+  ],
+  "missing": [],
+  "directories": []
+}

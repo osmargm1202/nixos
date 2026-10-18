@@ -105,6 +105,13 @@ in
       userName = "osmarg";
       extraModules = envyDesktopModules;
     };
+    envy-hyprland = desktop {
+      hostName = "envy";
+      hardware = ./nixos/hosts/envy/hardware-configuration.nix;
+      profileName = "hyprland";
+      userName = "osmarg";
+      extraModules = envyDesktopModules;
+    };
     cinnamon = desktop { profileName = "cinnamon"; };
     gnome = desktop { profileName = "gnome"; };
     hyprland = desktop { profileName = "hyprland"; };

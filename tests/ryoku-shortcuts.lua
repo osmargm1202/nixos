@@ -68,6 +68,8 @@ assert(terminal.dispatcher == "dsp.exec_cmd" and terminal.arguments[1] == "ryoku
 assert(action("SUPER + CTRL + Return").arguments[1] == "ryoku-app terminal -- tmux -u new-session -A -s main")
 local launcher = action("SUPER + Space")
 assert(launcher.dispatcher == "dsp.global" and launcher.arguments[1] == "ryoku:launcher")
+local floating = action("SUPER + SHIFT + Space")
+assert(floating.dispatcher == "dsp.window.float" and floating.arguments[1].action == "toggle")
 local help = action("SUPER + slash")
 assert(help.dispatcher == "dsp.exec_cmd" and help.arguments[1] == "ryoku-shell hub open keybinds")
 local orgmai = action("SUPER + SHIFT + A")

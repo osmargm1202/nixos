@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "themes",
+  "paths": [
+    ".local/share/themes"
+  ]
+}

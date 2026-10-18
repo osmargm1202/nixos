@@ -17,12 +17,7 @@ for directory in hypr niri quickshell matugen qt6ct gtk-3.0 gtk-4.0 btop fastfet
 done
 mkdir -p "$state" "$config_home/hypr" "$config_home/ryoku/user_edits/hypr/modules"
 
-# HM calls this before withdrawing old links; session preparation also seeds
-# newly absent files. Only the manifest knows which legacy links we owned.
-if [[ -f "$config_home/orgm-ryoku/seed.py" && -f "$config_home/orgm-ryoku/seed-manifest.json" ]]; then
-  python3 "$config_home/orgm-ryoku/seed.py" "$config_home" "$state" "$HOME" \
-    "$config_home/orgm-ryoku/seed-manifest.json" || exit $?
-fi
+# Personal templates are writable copies seeded once by orgm-dot at activation.
 
 seed_override() {
   local source="$1" target="$2"

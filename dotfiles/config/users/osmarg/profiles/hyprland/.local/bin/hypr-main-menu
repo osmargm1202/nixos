@@ -7,18 +7,16 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 
 bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
 
-choice="$(printf '%s\n' \
-  '󰀻 Apps' \
-  '󰆧 Programas y ventanas' \
-  '󰖟 Set profile wallpaper' \
-  '󰎔 Shaders de apertura' \
-  '󰒓 Tools' \
-  '󰞅 Symbols and emoji' \
-  '󰖩 Devices' \
-  '󰒓 System' \
-  '󰌌 Help' \
-  '󰐥 Power' \
-  '󰅖 Quit' | hypr_rofi_dmenu 'Hyprland' || true)"
+menu_items=(
+  '󰀻 Apps'
+  '󰆧 Programas y ventanas'
+  '󰖟 Set profile wallpaper'
+)
+if [[ -d "${HYPR_SHADER_ROOT:-/etc/hyprwindowshade-shaders/open}" ]]; then
+  menu_items+=('󰎔 Shaders de apertura')
+fi
+menu_items+=('󰒓 Tools' '󰞅 Symbols and emoji' '󰖩 Devices' '󰒓 System' '󰌌 Help' '󰐥 Power' '󰅖 Quit')
+choice="$(printf '%s\n' "${menu_items[@]}" | hypr_rofi_dmenu 'Hyprland' || true)"
 
 case "$choice" in
   *'Apps') exec "$bin_dir/hypr-apps-menu" ;;

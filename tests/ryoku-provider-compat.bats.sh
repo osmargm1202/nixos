@@ -6,16 +6,18 @@ trap 'rm -f "$tmp"' EXIT
 inventory="$(RYOKU_TEST_REPO="$ROOT" nix build --impure --no-link --print-out-paths --expr '
 let
   f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO");
-  c = f.nixosConfigurations.envy.config;
+  c = f.nixosConfigurations.lenovo.config;
   lib = f.inputs.nixpkgs.lib;
   compat = import (builtins.getEnv "RYOKU_TEST_REPO" + "/nixos/profiles/ryoku/provider-compat.nix") {
-    inputs = f.inputs; pkgs = f.nixosConfigurations.envy.pkgs; inherit lib;
+    inputs = f.inputs; pkgs = f.nixosConfigurations.lenovo.pkgs; inherit lib;
   };
   original = f.inputs.ryoku.packages.x86_64-linux;
   fixed = compat.packages;
   has = p: paths: builtins.elem (toString p) (map toString paths);
-  hasDefaults = host: user: builtins.hasAttr ".config/orgm-ryoku/window-defaults.json"
-    f.nixosConfigurations.${host}.config.home-manager.users.${user}.home.file;
+  hasDefaults = host: user: let c=f.nixosConfigurations.${host}.config;
+    ctx=builtins.fromJSON c.environment.etc."orgm-dot/context.json".text;
+    in ctx.profile == "ryoku" && ctx.user == user
+      && !(c.home-manager.users.${user}.home.file ? ".config/orgm-ryoku/window-defaults.json");
   contains = p: text: lib.hasInfix (builtins.unsafeDiscardStringContext (toString p)) text;
 in
 assert builtins.all (host: hasDefaults host "osmarg") [ "envy" "lenovo" "orgm" ];
@@ -35,11 +37,12 @@ assert has fixed.ryoku-wm-hyprland c.environment.systemPackages;
 assert !(has original.ryoku-wm-hyprland c.environment.systemPackages);
 assert has fixed.ryoku-wm-hyprland c.systemd.user.services.ryoku-shell.path;
 assert toString c.programs.hyprland.package == toString original.ryoku-hyprland;
-f.nixosConfigurations.envy.pkgs.writeText "ryoku-compat-test-inventory.json" (builtins.toJSON {
+f.nixosConfigurations.lenovo.pkgs.writeText "ryoku-compat-test-inventory.json" (builtins.toJSON {
   hyprProvider = toString fixed.ryoku-wm-hyprland;
   oldHyprProvider = toString original.ryoku-wm-hyprland;
   hub = toString fixed.ryoku-hub;
-  plugins = toString original.ryoku-hypr-plugins;
+  plugins = toString fixed.ryoku-hypr-plugins;
+  readelf = "${f.nixosConfigurations.lenovo.pkgs.binutils}/bin/readelf";
   lockPam = map toString c.systemd.user.services.ryoku-materialize.serviceConfig.ExecStartPost;
   cli = toString fixed.ryoku-cli;
   data = toString fixed.ryoku-desktop-data;
@@ -60,6 +63,10 @@ import os
 import subprocess
 import tempfile
 v = json.loads(Path(sys.argv[1]).read_text())
+for plugin in (Path(v["plugins"]) / "lib/hyprland/plugins").glob("*.so"):
+    symbols = subprocess.check_output([v["readelf"], "--dyn-syms", "--wide", str(plugin)], text=True)
+    assert "pluginInit" in symbols and "pluginAPIVersion" in symbols, plugin
+    assert " PHANDLE" not in symbols and " g_pGlobalState" not in symbols, (plugin, symbols)
 materializer = (Path(v["materializer"]) / "bin/ryoku-materialize").read_text()
 assert v["cli"] + "/bin/ryoku materialize" in materializer
 assert v["data"] + "/share/ryoku/config" in materializer

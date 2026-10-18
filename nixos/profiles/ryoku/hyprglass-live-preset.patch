@@ -1,0 +1,37 @@
+--- a/src/PluginConfig.cpp
++++ b/src/PluginConfig.cpp
+@@ -29,6 +29,7 @@
+ 
+ // Forward declarations for Lua handlers (need access to file-static preset/layer data below)
+ static int handleLuaPreset(lua_State* L);
++static int handleLuaApplyPreset(lua_State* L);
+ static int handleLuaLayer(lua_State* L);
+ static int handleLuaConfig(lua_State* L);
+ 
+@@ -107,6 +108,7 @@
+     // Legacy config keyword plus Lua-config callbacks for custom presets and layers.
+     HyprlandAPI::addConfigKeyword(handle, ConfigKeys::PRESET_KEYWORD, handlePresetKeyword, Hyprlang::SHandlerOptions{});
+     HyprlandAPI::addLuaFunction(handle, "hyprglass", "preset", handleLuaPreset);
++    HyprlandAPI::addLuaFunction(handle, "hyprglass", "apply_preset", handleLuaApplyPreset);
+     HyprlandAPI::addLuaFunction(handle, "hyprglass", "layer", handleLuaLayer);
+     HyprlandAPI::addLuaFunction(handle, "hyprglass", "config", handleLuaConfig);
+ }
+@@ -481,6 +483,18 @@
+ 
+ static std::vector<SPendingLayer> s_pendingLayers;
+ 
++// A live Hub preview is not followed by configReloaded. Publish only its
++// preset, preserving all other custom presets and pending configuration.
++static int handleLuaApplyPreset(lua_State* L) {
++    const auto result = handleLuaPreset(L);
++    const auto name = stripDynamicTagMarker(lua_tostring(L, 1));
++    if (g_pGlobalState) {
++        if (const auto it = s_pendingPresets.find(name); it != s_pendingPresets.end())
++            g_pGlobalState->customPresets.insert_or_assign(name, it->second);
++    }
++    return result;
++}
++
+ static int handleLuaLayer(lua_State* L) {
+     if (lua_gettop(L) < 1 || !lua_isstring(L, 1))
+         return luaL_error(L, "hyprglass.layer: first argument must be a namespace string");

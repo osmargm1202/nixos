@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "ai-tools",
+  "paths": [
+    ".local/bin/aichat-rewrite",
+    ".local/bin/claude",
+    ".local/bin/codex"
+  ]
+}

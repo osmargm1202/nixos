@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "labwc",
+  "paths": [
+    ".config/labwc",
+    ".local/bin/labwc-kill-windows"
+  ]
+}

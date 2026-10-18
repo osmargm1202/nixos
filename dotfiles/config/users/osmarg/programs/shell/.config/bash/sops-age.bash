@@ -1,4 +1,5 @@
 # Shell-only Age identity selection for the SOPS CLI.
+# Keep a private local copy: online-account mounts are unavailable at login.
 # sops-nix uses ~/.config/sops/age/keys.txt through nixos/apps/sops.nix.
 _sops_age_default_key_file="$HOME/Nextcloud/Documentos/keys/age.txt"
 _sops_age_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/sops/age"
@@ -13,7 +14,7 @@ if [[ -z ${SOPS_AGE_KEY_FILE:-} ]]; then
 fi
 
 sops-age-key() {
-  local default_key_file config_dir configured_key_file key_file
+  local default_key_file config_dir configured_key_file key_file staged_key
 
   default_key_file="$HOME/Nextcloud/Documentos/keys/age.txt"
   config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/sops/age"
@@ -39,8 +40,19 @@ sops-age-key() {
       fi
       mkdir -p -- "$config_dir" || return
       chmod 700 -- "$config_dir" || return
-      ln -sfn -- "$key_file" "$configured_key_file" || return
+      staged_key=$(mktemp "$config_dir/.keys.XXXXXXXX") || return
+      if ! cat -- "$key_file" > "$staged_key" || ! chmod 600 -- "$staged_key"; then
+        rm -f -- "$staged_key"
+        return 1
+      fi
+      if ! mv -fT -- "$staged_key" "$configured_key_file"; then
+        rm -f -- "$staged_key"
+        return 1
+      fi
       export SOPS_AGE_KEY_FILE=$configured_key_file
+      if command -v systemctl >/dev/null && systemctl --user cat sops-nix.service >/dev/null 2>&1; then
+        systemctl --user restart sops-nix.service || return
+      fi
       ;;
     *)
       printf 'Usage: sops-age-key [PATH|--reset]\n' >&2

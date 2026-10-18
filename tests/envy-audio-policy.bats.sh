@@ -9,13 +9,12 @@ root = Path(sys.argv[1])
 expression = '''c: {
   policies = c.services.pipewire.wireplumber.extraConfig;
   package = toString c.services.pipewire.wireplumber.package;
-  audioDefaults = builtins.fromJSON (builtins.readFile
-    c.home-manager.users.osmarg.home.file.".config/orgm-ryoku/audio-defaults.json".source);
 }'''
 result = subprocess.run(['nix', 'eval', '--json',
     '.#nixosConfigurations.envy.config', '--apply', expression],
     text=True, capture_output=True, check=True)
 config = json.loads(result.stdout)
+config['audioDefaults'] = json.loads((root/'dotfiles/config/profiles/ryoku/.config/orgm-ryoku/audio-defaults.json').read_text())
 assert config['audioDefaults'] == {'audioBoost': True}, 'Ryoku UI/media-key limit must allow150%, not just PipeWire'
 policy = config['policies'].get('90-envy-audio-policy')
 assert policy is not None, 'Envy must declare persistent 150% integrated-audio defaults'

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "nwg-dock-hyprland",
+  "paths": [
+    ".config/nwg-dock-hyprland",
+    ".local/bin/hypr-nwg-dock",
+    ".local/bin/hypr-nwg-dock-reload"
+  ]
+}

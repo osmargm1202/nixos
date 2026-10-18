@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "icons",
+  "paths": [
+    ".icons/default",
+    ".local/share/icons/hicolor",
+    ".local/share/icons/nixos.svg",
+    ".local/share/icons/omp.svg",
+    ".local/share/icons/opencode.svg",
+    ".local/share/icons/reddit.svg",
+    ".local/share/icons/windows.png"
+  ]
+}

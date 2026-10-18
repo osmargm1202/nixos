@@ -15,7 +15,7 @@ grep -Fq 'include current-theme.conf' "$KITTY_CONF" ||
 home_files="$(nix eval --json \
   --impure --file "${ROOT}/tests/fixtures/legacy-configurations.nix" "orgm-hyprland.config.home-manager.users.osmarg.home.file")"
 jq -e '
-  has(".config/kitty/kitty.conf") and
+  (has(".config/kitty/kitty.conf") | not) and
   (has(".config/kitty/current-theme.conf") | not) and
   (has(".config/waybar-hypr/orgm-current.css") | not) and
   (has(".config/nwg-dock-hyprland/current-theme.css") | not) and
@@ -26,6 +26,6 @@ jq -e '
   (has(".config/yazi/package.toml") | not) and
   (has(".config/yazi/flavors") | not)
 ' <<<"$home_files" >/dev/null ||
-  fail 'Home Manager must deploy tracked Kitty config without owning visual-profile runtime outputs or obsolete Yazi files'
+  fail 'Home Manager must leave Kitty and visual-profile configuration writable'
 
 printf 'PASS: Kitty loads its runtime visual-profile theme without Home Manager ownership\n'

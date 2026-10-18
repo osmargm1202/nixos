@@ -181,7 +181,9 @@ def migrate(config, state):
     desktop["autostart"] = unique
 
     if not previous:
-        keys = defaults["desktop"]
+        # Personal shortcuts are editable checkout data, copied by orgm-dot.
+        keys = defaults.get("desktop") or json.loads(
+            (config / "orgm-ryoku/native-keybinds.json").read_text())
         existing = desktop.get("keybinds", [])
         rebinds = desktop.get("keybindRebinds", {})
         # An explicit H action/rebind target or H/S rebind belongs to the user.

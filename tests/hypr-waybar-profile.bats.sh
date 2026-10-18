@@ -4,30 +4,9 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
-attr="lenovo-hyprland.config.home-manager.users.osmarg.home.file"
-paths=(
-  '.config/waybar-hypr/config'
-  '.config/waybar-hypr/style.css'
-  '.local/bin/orgm-visual-profile'
-  '.local/bin/waybar-date-es'
-  '.local/bin/waybar-day-month-es'
-  '.local/bin/waybar-time-ampm'
-  '.local/bin/waybar-watch'
-  '.local/bin/waybar-caffeine-state'
-  '.local/bin/hypr-game-mode'
-  '.local/bin/hypr-reload-after-switch'
-  '.local/bin/hypr-session-refresh'
-)
-
-for path in "${paths[@]}"; do
-  source_layer='profiles/hyprland'
-  [[ "$path" == '.local/bin/orgm-visual-profile' ]] && source_layer='shared'
-  [[ -e "dotfiles/config/$source_layer/$path" ]]
-  nix eval --raw --impure --file "${repo_dir}/tests/fixtures/legacy-configurations.nix" "$attr.\"$path\".source" >/dev/null
-done
-
-home_files="$(nix eval --json --impure --file "${repo_dir}/tests/fixtures/legacy-configurations.nix" "$attr")"
-jq -e 'has(".config/waybar-hypr/orgm-current.css") | not' <<<"$home_files" >/dev/null
+# Sources are copied by orgm-dot at runtime, never linked by Home Manager.
+[[ -f dotfiles/apps/waybar.json ]]
+jq -e '.paths | index(".config/waybar-hypr") != null' dotfiles/apps/waybar.json >/dev/null
 grep -Fxq '@import "orgm-current.css";' \
   'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 
@@ -49,4 +28,22 @@ XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
 
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
 [[ "$(XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" status)" == deactivated ]]
+
+# Persist Caffeine through stock Waybar's supported startup option, not an
+# unhandled RT signal requiring a custom C++ build.
+mkdir -p "$tmp/config/waybar-hypr" "$tmp/home"
+printf '%s\n' '[{"name":"eDP-1","description":"Test panel","focused":true}]' > "$tmp/monitors.json"
+printf '%s\n' '[{"idle_inhibitor":{"signal":8},"modules-left":["idle_inhibitor"]}]' > "$tmp/config/waybar-hypr/config"
+generate_bar() {
+  env HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" \
+    XDG_STATE_HOME="$tmp/state" HYPR_DISPLAY_TARGETS_MONITORS_JSON="$tmp/monitors.json" \
+    DISPLAY= WAYLAND_DISPLAY= \
+    "$repo_dir/dotfiles/config/profiles/hyprland/.local/bin/hypr-display-targets" \
+    waybar-config "$tmp/config/waybar-hypr"
+}
+generated="$(generate_bar)"
+jq -e '.[0].idle_inhibitor["start-activated"] == false and (.[0].idle_inhibitor | has("signal") | not)' "$generated" >/dev/null
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
+generated="$(generate_bar)"
+jq -e '.[0].idle_inhibitor["start-activated"] == true' "$generated" >/dev/null
 printf '%s\n' 'hypr-waybar-profile: ok'

@@ -21,8 +21,7 @@ if hl.plugin and hl.plugin.hyprglass then
     default_preset = "glass",
     layers = { enabled = visual_effects },
   })
-  -- HyprGlass owns the visual blur for these surfaces. Hyprland's ordinary
-  -- decoration blur remains disabled below.
+  -- A manually loaded Glass plugin owns blur; otherwise use stock Hyprland.
   hg.layer("waybar", { preset = "glass", mask_threshold = 0.1 })
   hg.layer("rofi", { preset = "glass", mask_threshold = 0.1 })
   hg.layer("nwg-dock", { preset = "glass", mask_threshold = 0.1 })
@@ -77,7 +76,7 @@ hl.config({
       color = "rgba(00000070)",
     },
     blur = {
-      enabled = false,
+      enabled = visual_effects and not (hl.plugin and hl.plugin.hyprglass),
     },
   },
 

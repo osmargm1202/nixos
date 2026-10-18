@@ -12,9 +12,8 @@
     imports = [ inputs.sops-nix.homeManagerModules.sops ];
 
     sops = {
-      # This stable user-local path is a symlink managed by `sops-age-key`.
-      # The activation below seeds it from the shared recovery identity only
-      # when no local host override exists.
+      # A private local copy is available before online-account mounts.
+      # Seed from the recovery identity only when no host override exists.
       age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
       defaultSopsFile = ../../secrets/shared/api-keys.yaml;
 
@@ -95,7 +94,7 @@
       if [ ! -e "$key_file" ] && [ -r "$default_key_file" ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$key_file")"
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 700 "$(${pkgs.coreutils}/bin/dirname "$key_file")"
-        $DRY_RUN_CMD ${pkgs.coreutils}/bin/ln -s "$default_key_file" "$key_file"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 600 "$default_key_file" "$key_file"
       fi
     '';
   };

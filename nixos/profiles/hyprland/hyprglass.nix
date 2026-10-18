@@ -11,6 +11,8 @@ stdenv.mkDerivation {
   version = "0.7.0";
 
   inherit src;
+  # Release EventBus listeners when toggling this shared plugin off.
+  patches = [ ../ryoku/hyprglass-unload-listeners.patch ];
 
   nativeBuildInputs = hyprland.nativeBuildInputs ++ [
     pkg-config

@@ -13,7 +13,7 @@ def pam_rules(policies, service, phase):
 
 with open(sys.argv[1]) as source:
     inventory = json.load(source)
-for host in ("lenovo", "orgm"):
+for host in ("envy", "lenovo", "orgm"):
     systems = inventory[host]
     normal = systems["normal"]
     assert normal["ryoku"] and normal["hyprland"] and normal["niri"], host
@@ -30,7 +30,8 @@ for host in ("lenovo", "orgm"):
     conflicting = (".config/kitty/", ".config/nvim/", ".config/waybar-hypr/", ".config/hypr/lua/")
     assert not any(path.startswith(conflicting) for path in normal["userFiles"]), host
     assert ".config/orgm-ryoku/osmarg-keybindings.lua" not in normal["userFiles"], host
-    assert "/users/osmarg/profiles/ryoku/" in normal["personalBindingsSource"], host
+    assert normal["dotfilesContext"]["profile"] == "ryoku" and normal["dotfilesContext"]["user"] == "osmarg", host
+    assert normal["dotfilesBootstrap"], host
     assert normal["nautilusExtension"] and normal["nautilusTerminal"] == "kitty", host
     obsolete = {
         "night_mode_toggle", "night_mode_temp_up", "night_mode_temp_down", "check_night_mode",
@@ -42,12 +43,12 @@ for host in ("lenovo", "orgm"):
         "hypr-kill-windows",
     }
     assert not {".local/bin/" + name for name in obsolete} & set(normal["userFiles"]), host
-    assert {".local/bin/windows-rdp", ".local/bin/hypr-pi-prompt", ".local/bin/hypr-rofi-ssh-host",
-            ".local/bin/hypr-video-timer"} <= set(normal["userFiles"]), host
+    assert not {".local/bin/windows-rdp", ".local/bin/hypr-pi-prompt", ".local/bin/hypr-rofi-ssh-host",
+                ".local/bin/hypr-video-timer"} & set(normal["userFiles"]), (host, "helpers must be copies")
     assert not {"external-lid-inhibit", "openrgb-notify"} & set(normal["homeServices"]), host
     assert {"ryoku-shell", "ryoku-materialize", "hypridle"} <= set(normal["services"]), host
     assert not normal["notificationDaemons"] and not normal["homeDunst"] and not normal["homeMako"], host
-    assert ".local/bin/dunstify" in normal["userFiles"], host
+    assert ".local/bin/dunstify" not in normal["userFiles"], (host, "notification helper must be a copy")
     assert ".local/bin/dunst_pause" not in normal["userFiles"], host
     for name, configuration in systems["specialisations"].items():
         assert not configuration["failedAssertions"], (host, name, configuration["failedAssertions"])

@@ -1,0 +1,72 @@
+--- a/ryoku/wm/hyprland/config_plugins.go
++++ b/ryoku/wm/hyprland/config_plugins.go
+@@ -216,10 +216,9 @@
+ 
+ 	if ib := p.Imgborders; ib.Enabled {
+ 		opts := []string{
+-			"enabled = true",
+ 			fmt.Sprintf("image = %s", luaStr(ib.Image)),
+-			fmt.Sprintf("sizes = %s", luaStr(ib.Sizes)),
+-			fmt.Sprintf("insets = %s", luaStr(ib.Insets)),
++			fmt.Sprintf("sizes = %s", luaCSSGap(ib.Sizes)),
++			fmt.Sprintf("insets = %s", luaCSSGap(ib.Insets)),
+ 			fmt.Sprintf("scale = %s", luaNum(ib.Scale)),
+ 			fmt.Sprintf("smooth = %t", ib.Smooth),
+ 			fmt.Sprintf("blur = %t", ib.Blur),
+@@ -230,14 +229,14 @@
+ 	if hg := p.Hyprglass; hg.Enabled {
+ 		opts := []string{
+ 			"enabled = 1",
+-			fmt.Sprintf("default_preset = %s", luaStr(hg.Preset)),
++			`default_preset = "ryoku-hub"`,
+ 			fmt.Sprintf("blur_strength = %s", luaNum(hg.BlurStrength)),
+ 			fmt.Sprintf("glass_opacity = %s", luaNum(hg.Opacity)),
+ 			fmt.Sprintf("tint_color = 0x%s", luaHex8(hg.Tint)),
+ 			fmt.Sprintf("brightness = %s", luaNum(hg.Brightness)),
+ 			fmt.Sprintf("default_theme = %s", luaStr(hg.Theme)),
+ 		}
+-		out = append(out, typedBlock("hyprglass", "hyprglass", opts, ""))
++		out = append(out, typedBlock("hyprglass", "hyprglass", opts, hubGlassPreset(hg)))
+ 	}
+ 
+ 	if hf := p.Hyprfocus; hf.Enabled {
+@@ -250,7 +249,7 @@
+ 		opts := []string{
+ 			"enable = true",
+ 			fmt.Sprintf("keyboard_focus_animation = %s", luaStr(anim)),
+-			`mouse_focus_animation = "none"`,
++			fmt.Sprintf("mouse_focus_animation = %s", luaStr(focusMouseMode(hf))),
+ 			fmt.Sprintf("fade_opacity = %s", luaNum(hf.Opacity)),
+ 			fmt.Sprintf("shrink_percentage = %s", luaNum(hf.Bounce)),
+ 			fmt.Sprintf("slide_height = %s", luaNum(hf.Slide)),
+--- a/ryoku/wm/hyprland/config_store.go
++++ b/ryoku/wm/hyprland/config_store.go
+@@ -243,6 +243,7 @@
+ }
+ 
+ type Hyprfocus struct {
++	Mouse   bool    `json:"mouse"`
+ 	Enabled bool    `json:"enabled"`
+ 	Mode    string  `json:"mode"`
+ 	Opacity float64 `json:"opacity"`
+--- a/ryoku/wm/hyprland/schema.json
++++ b/ryoku/wm/hyprland/schema.json
+@@ -646,6 +646,18 @@
+     "ctl": "sw",
+     "src": "desktop.json",
+     "caps": "plugins",
++    "page": "plugins"
++  },
++  {
++    "tab": "Focus flash",
++    "group": "FOCUS FLASH",
++    "key": "wm.hyprland.plugins.hyprfocus.mouse",
++    "label": "Also animate mouse focus",
++    "desc": "The effect always follows keyboard focus; enable it for pointer focus too",
++    "ctl": "sw",
++    "src": "desktop.json",
++    "caps": "plugins",
++    "when": { "wm.hyprland.plugins.hyprfocus.enabled": [true] },
+     "page": "plugins"
+   },
+   {

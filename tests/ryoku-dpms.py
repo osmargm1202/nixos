@@ -17,7 +17,7 @@ class DisplayPower(unittest.TestCase):
     def setUpClass(cls):
         cls.provider = os.environ.get("RYOKU_DPMS_PROVIDER")
         if not cls.provider:
-            expr = 'let f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO"); in (import (builtins.getEnv "RYOKU_TEST_REPO" + "/nixos/profiles/ryoku/provider-compat.nix") { inputs=f.inputs; pkgs=f.nixosConfigurations.envy.pkgs; lib=f.inputs.nixpkgs.lib; }).packages.ryoku-wm-hyprland'
+            expr = 'let f = builtins.getFlake ("path:" + builtins.getEnv "RYOKU_TEST_REPO"); in (import (builtins.getEnv "RYOKU_TEST_REPO" + "/nixos/profiles/ryoku/provider-compat.nix") { inputs=f.inputs; pkgs=f.nixosConfigurations.lenovo.pkgs; lib=f.inputs.nixpkgs.lib; }).packages.ryoku-wm-hyprland'
             package = subprocess.check_output(["nix", "build", "--impure", "--no-link", "--print-out-paths", "--expr", expr],
                 env=dict(os.environ, RYOKU_TEST_REPO=str(ROOT)), text=True).strip()
             cls.provider = package + "/bin/ryoku-wm-hyprland"

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "nautilus-scripts",
+  "paths": [
+    ".local/share/nautilus/scripts/Set as Hyprland Wallpaper"
+  ]
+}

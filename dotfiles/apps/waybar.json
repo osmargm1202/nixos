@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "name": "waybar",
+  "paths": [
+    ".config/waybar",
+    ".config/waybar-hypr",
+    ".local/bin/waybar-caffeine-state",
+    ".local/bin/waybar-date-es",
+    ".local/bin/waybar-day-month-es",
+    ".local/bin/waybar-metric-widget",
+    ".local/bin/waybar-pi-status",
+    ".local/bin/waybar-power-profile",
+    ".local/bin/waybar-swap-usage",
+    ".local/bin/waybar-time-ampm",
+    ".local/bin/waybar-watch"
+  ]
+}

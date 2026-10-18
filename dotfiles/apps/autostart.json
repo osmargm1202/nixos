@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "autostart",
+  "paths": [
+    ".config/autostart/autorandr.desktop"
+  ]
+}

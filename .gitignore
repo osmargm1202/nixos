@@ -1,4 +1,6 @@
 .worktrees/
+.orgm-dot.lock
+.orgm-dot-stage-*/
 __pycache__/
 nixos/packages/windows-manager-linux-orgm-unsigned.xpi
 

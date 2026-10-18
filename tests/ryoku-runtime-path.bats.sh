@@ -4,7 +4,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 nix eval --impure --raw --expr '
 let
  f = builtins.getFlake ("path:" + toString ./.);
- c = f.nixosConfigurations.envy.config;
+ c = f.nixosConfigurations.lenovo.config;
  names = [ "hypridle" "ryoku-shell" "ryoku-materialize" "ryogami" "ryoku-rashin" "ryoku-ai-usage" "ryotunesd" ];
  hasClient = name: builtins.elem (toString c.programs.hyprland.package)
    (map toString c.systemd.user.services.${name}.path);
