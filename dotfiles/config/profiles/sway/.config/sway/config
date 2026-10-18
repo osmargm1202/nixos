@@ -101,6 +101,7 @@ bindsym $mod+Ctrl+s floating disable
 bindsym $mod+Shift+Tab $exec sway-video-timer --backend sway
 bindsym $mod+Tab focus prev
 bindsym Mod1+Tab $exec orgm-sway windows
+bindsym Mod1+Shift+Tab $exec orgm-sway windows prev
 bindsym $mod+q kill
 bindsym $mod+Shift+q $exec orgm-sway kill-window
 bindsym $mod+Shift+e $exec orgm-sway logout

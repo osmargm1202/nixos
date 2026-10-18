@@ -12,7 +12,12 @@
     "idle_inhibitor", "custom/game_mode", "sway/language", "custom/wallpaper", "custom/keybindings_help"
   ],
   "modules-center": ["clock#day_month", "clock", "clock#date"],
-  "modules-right": ["sway/window", "mpris", "network", "bluetooth", "custom/notifications", "custom/power", "tray"],
+  "modules-right": ["sway/window", "mpris", "network", "bluetooth", "custom/control", "custom/notifications", "custom/power", "tray"],
+  "custom/control": {
+    "format": "󰒓",
+    "on-click": "orgm-sway control",
+    "tooltip-format": "Centro de control"
+  },
   "custom/launcher": {
     "format": "",
     "on-click": "sway-app-launcher",
@@ -89,7 +94,7 @@
     "format-muted": "󰝟",
     "format-icons": { "default": ["", "", ""] },
     "tooltip-format": "Audio: {volume}% · {desc}",
-    "on-click": "sway-volume-osd mute",
+    "on-click": "orgm-sway audio",
     "on-click-middle": "kitty -e pulsemixer",
     "on-click-right": "pavucontrol",
     "on-scroll-up": "sway-volume-osd up",
@@ -101,8 +106,8 @@
     "format": "{format_source}",
     "format-source": "󰍬",
     "format-source-muted": "󰍭",
-    "tooltip-format": "Micrófono · clic: silenciar\nClic derecho: configurar audio",
-    "on-click": "sway-mic-volume-osd mute",
+    "tooltip-format": "Micrófono · clic: elegir dispositivo y volumen\nClic derecho: configurar audio",
+    "on-click": "orgm-sway audio",
     "on-click-right": "pavucontrol",
     "on-scroll-up": "sway-mic-volume-osd up",
     "on-scroll-down": "sway-mic-volume-osd down",

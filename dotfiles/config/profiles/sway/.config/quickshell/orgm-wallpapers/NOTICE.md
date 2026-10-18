@@ -4,7 +4,7 @@ Adapted from shadowofdominance/swaydots:
 https://github.com/shadowofdominance/swaydots
 
 Upstream revision: `4e61255e006de0f994ae21cfeab9bac5ccd58acc`.
-Source paths: `.config/quickshell/menus/modules/WallpaperPicker.qml`,
+Source paths: `.config/quickshell/menus/modules/{WallpaperPicker,PowerMenu}.qml`,
 `components/{MenuWindow,Surface}.qml`, `config/Style.qml`.
 
 The upstream README grants permission as follows:
@@ -16,5 +16,12 @@ is claimed here. Keep this attribution when redistributing these adaptations.
 
 Local adaptations: dedicated on-demand shell, profile palette/catalog,
 argument-vector Sway backend, current-monitor selection, Spanish labels,
-apply-error handling and process exit after closing. Other upstream menus,
-wallpaper process-management scripts and live-wallpaper support are excluded.
+apply-error handling and process exit after closing. `menus.qml` also hosts
+the adapted power menu and a local profile selector with saved-wallpaper
+previews, reusing the same components. Power actions are performed by the
+existing local backend after closing; logout/reboot/poweroff require an
+explicit confirmation. Network menus and upstream wallpaper scripts are excluded.
+
+The locally authored ControlMenu, AudioMenu, ClipboardMenu and WindowSwitcher
+reuse these primitives. They use the existing Sway/session backends, native
+Quickshell PipeWire bindings, cliphist and session-only window snapshots.

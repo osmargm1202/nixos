@@ -73,7 +73,7 @@ class SwayWorkflows(unittest.TestCase):
                     'org.gnome.FileRoller', 'pavucontrol', 'org.pulseaudio.pavucontrol',
                     'blueman-manager', 'nmtui', 'bluetui', 'nm-connection-editor',
                     'orgmai-chat', 'orgmai-config', 'swappy', 'com.gabm.satty',
-                    'Spotify', 'looking-glass-client', 'qemu-system-x86_64', 'spicy'):
+                    'ghosttype-app', 'ryotunes', 'looking-glass-client', 'qemu-system-x86_64', 'spicy'):
             for protocol in ('app_id', 'class'):
                 with self.subTest(app=app, protocol=protocol):
                     actions = self.window_actions(**{protocol: app})
@@ -86,6 +86,23 @@ class SwayWorkflows(unittest.TestCase):
         self.assertIn('resize set', tray)
         self.assertIn('floating enable', settings)
         self.assertNotIn('resize set', settings)
+
+    def test_main_music_and_whatsapp_windows_tile_but_their_dialogs_float(self):
+        for app in ('Spotify', 'spotify', 'com.spotify.Client', 'orgm-webapp-whatsapp',
+                    'chrome-web.whatsapp.com__-Default'):
+            for protocol in ('app_id', 'class'):
+                with self.subTest(app=app, protocol=protocol):
+                    properties = {protocol: app}
+                    if protocol == 'class':
+                        # Chromium --app uses pop-up even for its NORMAL main window.
+                        properties.update(window_type='normal', window_role='pop-up')
+                    self.assertNotIn('floating enable', self.window_actions(**properties))
+                    if protocol == 'class':
+                        properties['window_type'] = 'dialog'
+                        self.assertIn('floating enable', self.window_actions(**properties))
+        # A role alone cannot distinguish a PWA from a dialog.
+        self.assertNotIn('floating enable', self.window_actions(
+            window_type='normal', window_role='pop-up'))
 
     def test_bitwarden_popouts_do_not_float_regular_browser_tabs(self):
         for protocol in ('app_id', 'class'):
@@ -199,6 +216,7 @@ class SwayWorkflows(unittest.TestCase):
     def test_profile_selector_uses_sway_backend_and_ignores_custom_input(self):
         for selection in ('slc', 'cancelled', '../../bad'):
             with patch.dict(ENV, pick=lambda *a: selection,
+                            graphical_selection=lambda _: (False, ''), profile_catalog=lambda: {},
                             run=lambda *args, **kwargs: calls.append((args, kwargs))):
                 calls = []
                 MODULE['main'](['profiles'])

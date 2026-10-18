@@ -60,7 +60,12 @@ sway_rofi_markup_dmenu() {
 
 sway_rofi_drun() {
   sway_rofi_need || return 1
-  rofi -no-config -show drun -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str)"
+  local theme="${SWAY_ROFI_LAUNCHER_THEME:-$HOME/.config/rofi-sway/sway-launcher.rasi}" palette=''
+  if [ -x "$HOME/.local/bin/orgm-sway" ]; then
+    palette="$("$HOME/.local/bin/orgm-sway" launcher-theme)" || palette=''
+  fi
+  rofi -no-config -show drun -theme "$theme" -theme-str "$(sway_rofi_theme_str "${SWAY_ROFI_LAUNCHER_LINES:-8}" "${SWAY_ROFI_LAUNCHER_WIDTH:-640px}")
+$palette"
 }
 
 sway_rofi_load_env

@@ -146,13 +146,91 @@ Pruebas: `python3 tests/sway-game-mode.test.py` y
 SwayFX, D-Bus, configuración y clientes privados; compara capturas para validar
 opacidad, gaps y la restauración del fondo sin alterar la sesión real.
 
+## Menús de aplicaciones, sesión y perfiles
+
+- Super+Space, el icono de aplicaciones y el dock abren Rofi con el diseño de
+  `shadowofdominance/swaydots`: buscador, iconos Colloid y ocho resultados.
+  La paleta se lee del perfil activo al abrirlo. Los demás menús Rofi conservan
+  su tema. `sway-launcher.rasi` y su `NOTICE.md` viven en `~/.config/rofi-sway`.
+- El botón de apagado de Waybar, Super+Ctrl+P y Super+Alt+E abren el menú de
+  sesión con cinco botones: bloquear, suspender, cerrar sesión, reiniciar y
+  apagar. Cerrar sesión, reiniciar y apagar piden una segunda aceptación en
+  el propio menú. Suspender bloquea primero mediante Qylock.
+- El botón PERFIL de Waybar abre tres tarjetas con el último fondo guardado
+  de SLC, ORGM y OSMAR, incluido un fotograma para videos. El perfil actual
+  aparece marcado; un perfil sin un archivo válido muestra «Sin vista previa».
+  ←/→ o H/L cambian la selección; Enter o clic aplica; Esc o clic fuera cancela.
+
+`menus.qml`, `PowerMenu.qml` y `ProfilePicker.qml` reutilizan `MenuWindow`,
+`Surface` y `Style` del carrusel. Se abren en la pantalla activa, terminan al
+cerrarse y usan Rofi como fallback si falla Quickshell. El cambio de perfil
+conserva Waybar y el estado de Caffeine. No se ejecutan acciones al cancelar.
+
+Pruebas: `python3 tests/sway-menus.test.py` y
+`python3 tests/sway-menus-session.test.py`. La segunda usa Sway, Quickshell y
+Rofi reales en una sesión privada, con las acciones de sesión sustituidas por
+registros para comprobar confirmación, cancelación y orden de bloqueo/suspensión.
+
+## Centro de control, audio, ventanas y portapapeles
+
+El botón de ajustes de Waybar abre `orgm-sway control`. También lo abren el
+clic derecho sobre el launcher y Super+Alt+Space. El panel permite ajustar
+brillo y volumen, alternar gaming y No molestar, y acceder a audio, portapapeles,
+perfiles, bloqueo y sesión. Los accesos de Wi-Fi y Bluetooth abren los mismos
+programas existentes; los botones de red/Bluetooth y las capturas no cambian.
+Caffeine conserva su botón de Waybar y su funcionamiento independiente.
+
+El clic sobre altavoz o micrófono abre `orgm-sway audio`. Muestra los dispositivos
+de salida y entrada de PipeWire, permite elegir los predeterminados, silenciar
+y ajustar cada volumen entre 0 y 150%. Los cambios son inmediatos; cerrar no
+modifica los valores por sí solo. Rueda y teclas multimedia conservan sus OSD;
+el clic derecho sigue abriendo pavucontrol.
+
+Super+V abre el historial de `cliphist` con búsqueda, texto y miniaturas de
+imágenes recientes. ↑/↓ seleccionan, Enter o clic copia y Esc cancela. Supr,
+con la búsqueda vacía, borra la entrada seleccionada. La copia conserva los
+bytes originales y el tipo PNG; no simula pegar en otra aplicación. El servicio
+de historial existente sigue siendo el único que registra las copias.
+
+Alt+Tab abre una cuadrícula de escritorios con ventanas, en orden numérico
+ascendente. Dos escritorios muestran dos recuadros grandes; cinco se distribuyen
+en tres columnas y dos filas, sin un sexto recuadro vacío. Cada escritorio
+contiene sus ventanas con la última imagen capturada de su contenido visible.
+Pasar el mouse por un escritorio o una miniatura mueve y resalta la selección
+del menú; Enter o soltar Alt confirma la ventana resaltada.
+Clic en la cabecera o el fondo del recuadro abre ese escritorio; clic en una
+miniatura enfoca esa ventana concreta. Alt+Shift+Tab recorre en sentido
+contrario; más pulsaciones recorren las ventanas, ↑/↓ cambian de escritorio,
+Espacio abre el escritorio seleccionado, soltar Alt o Enter enfoca la ventana
+y Esc cancela. Si se suelta Alt antes de que el panel se abra, Enter o clic
+permite completar la selección. Super+Tab conserva `focus prev`.
+
+Sway 1.11 expone captura de salidas, pero no el protocolo de captura individual
+de ventanas utilizado por Quickshell. Por eso no se anuncian vistas en directo
+de ventanas ocultas: el servicio `orgm-sway-previews` actualiza una captura de
+la ventana enfocada como máximo cada tres segundos, y al abrir el selector
+se capturan las ventanas visibles. Una ventana todavía no capturada indica
+«Vista previa pendiente». No se recorren escritorios para generar imágenes.
+Las miniaturas viven en `$XDG_RUNTIME_DIR/orgm-sway-previews-<sesión>` con
+directorio 0700 y archivos 0600; se eliminan las de ventanas cerradas y el
+runtime desaparece al cerrar la sesión. La captura se pausa durante gaming,
+el bloqueo Qylock y los paneles que puedan tapar las ventanas.
+
+Los cuatro paneles son componentes de `menus.qml` y usan `orgm-sway-desktop`,
+registrado en sway-tools. Solo el recolector de miniaturas permanece activo.
+Pruebas: `python3 tests/sway-desktop.test.py` y
+`python3 tests/sway-desktop-session.test.py`. La integración usa un compositor,
+PipeWire/WirePlumber sin monitores de hardware, dispositivos sintéticos,
+clipboard y HOME privados. El menú de atajos y los demás paneles propuestos
+quedan anotados en memoria como pendientes de autorización futura.
+
 ## Carrusel de wallpapers con Quickshell
 
 El clic derecho sobre el icono de fondo de Waybar y `orgm-sway wallpaper-pick`
 abren un carrusel con tarjetas animadas. Clic izquierdo y Super+Alt+W siguen
 eligiendo un fondo aleatorio, sin abrir el selector.
 
-Se adaptaron únicamente el selector estático y sus componentes QML de
+Se adaptaron el selector de fondos, el menú de sesión y sus componentes QML de
 [shadowofdominance/swaydots](https://github.com/shadowofdominance/swaydots), revisión
 `4e61255e006de0f994ae21cfeab9bac5ccd58acc`. Son archivos locales versionados,
 **sin submódulo, dependencia del repositorio original ni instalador externo**.
@@ -167,8 +245,9 @@ La procedencia y el permiso del README original están en
 - Esc o clic fuera de las tarjetas: cancelar sin cambiar el fondo.
 - Se abre en la pantalla activa, selecciona el fondo guardado y usa la paleta
   actual de Waybar. No cambia el perfil visual.
-- Incluye imágenes y videos del perfil activo, las carpetas compartidas y el fondo
-  actual si está fuera de ellas; recorre subdirectorios y elimina duplicados.
+- Incluye imágenes y videos de `~/Pictures/<perfil>` y el último fondo guardado
+  de ese perfil, aunque esté fuera de esa carpeta. Recorre subdirectorios y
+  elimina duplicados; no mezcla la biblioteca compartida ni los otros perfiles.
 - WebP usa el decodificador de `qt6.qtimageformats`, añadido al wrapper privado
   de Quickshell en `nixos/profiles/sway/quickshell.nix` (sin cambiar Qt globalmente).
 - Videos admitidos: MP4, MKV, WebM, MOV, M4V y AVI, según los códecs de FFmpeg/mpv.
@@ -494,7 +573,8 @@ o integrar **Gradia**, que ya está instalado como Flatpak
 
 La revisión también distingue funciones que aún no son equivalentes:
 
-- Alt+Tab sigue siendo una lista Rofi, no un overview agrupado por escritorios.
+- Alt+Tab usa tarjetas Quickshell con miniaturas del último contenido visible;
+  Sway no permite aquí una vista en directo de cada ventana oculta.
 - Super+Tab usa `focus prev` del layout; no es el historial global de última
   ventana de Ryoku. El cursor ya acompaña los cambios efectivos de foco.
 - Super+Shift+F usa fullscreen global de Sway, no el maximizado de Hyprland.
@@ -529,12 +609,14 @@ para trasladar las reglas de ventanas.
 `~/.config/sway/appearance.ini` define el fallback oscuro mediante dconf.
 Después se aplica el perfil guardado por `orgm-visual-profile`, que ahora tiene
 backend Sway y restaura su paleta de Waybar/Swaync/Kitty, preferencia GTK y fondo
-estático. El selector de la barra cambia entre SLC, ORGM y OSMAR; clic derecho
+estático o video. El selector de la barra muestra tarjetas de SLC, ORGM y OSMAR
+con una vista previa del último fondo guardado de cada uno; clic derecho
 alterna GTK claro/oscuro por perfil. No se ejecutan los backends Hyprland o i3.
 El fondo sin imagen de un perfil nuevo conserva el fondo estático actual.
 El icono de fondo de Waybar y Super+Alt+W eligen un fondo aleatorio del perfil,
-sin menú; clic derecho sobre el icono abre el carrusel Quickshell descrito arriba. Si la carpeta
-del perfil está vacía, se usan las carpetas compartidas `~/Pictures/Wallpapers`,
+sin menú; clic derecho sobre el icono abre el carrusel Quickshell descrito arriba.
+El carrusel solo lista los fondos asociados al perfil activo. Para la selección
+aleatoria, si la carpeta del perfil está vacía, se usan las carpetas compartidas `~/Pictures/Wallpapers`,
 `~/Pictures/wallpapers`, `~/Wallpapers` o `~/.local/share/wallpapers`.
 Se evita repetir la imagen actual cuando hay alternativas.
 Los cambios de perfil no alteran el tamaño compacto de la barra ni la

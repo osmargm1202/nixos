@@ -282,7 +282,7 @@ MenuWindow {
         visible: root.count === 0
         anchors.centerIn: parent
         width: root.width - 64
-        text: "No hay fondos en el perfil ni en las carpetas compartidas."
+        text: "No hay fondos en la carpeta del perfil " + (root.catalog.profile || "").toUpperCase() + "."
         textFormat: Text.PlainText
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap

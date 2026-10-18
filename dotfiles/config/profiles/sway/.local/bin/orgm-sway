@@ -71,7 +71,13 @@ def choose_window(action="focus"):
         ipc(f"[con_id={int(items[int(selected)]['id'])}] {action}")
 
 
-def power(action=None):
+def power(action=None, *, confirmed=False):
+    if action is None:
+        handled, selected = graphical_selection(dict(kind='power', **menu_context()))
+        if handled:
+            if selected in ('Bloquear', 'Suspender', 'Cerrar sesión', 'Reiniciar', 'Apagar'):
+                power(selected, confirmed=True)
+            return
     action = action or pick("Sesión", ["Bloquear", "Suspender", "Cerrar sesión", "Reiniciar", "Apagar"])
     if action == "Bloquear":
         run("orgm-qylock", "lock")
@@ -79,7 +85,7 @@ def power(action=None):
         run("orgm-qylock", "lock")
         run("systemctl", "suspend")
     elif action in ("Cerrar sesión", "Reiniciar", "Apagar"):
-        if pick(action, ["Cancelar", "Confirmar"]) != "Confirmar":
+        if not confirmed and pick(action, ["Cancelar", "Confirmar"]) != "Confirmar":
             return
         if action == "Cerrar sesión":
             ipc("exit")
@@ -348,29 +354,28 @@ def random_wallpaper(directory):
     set_wallpaper(random.choice(alternatives or candidates))
 
 
-def wallpaper_catalog():
-    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))
-    state_root = Path(os.environ.get('ORGM_VISUAL_PROFILE_STATE_DIR',
-                      str(Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state')) / 'orgm-visual-profile')))
-    current_profile = state_root / 'current'
-    profile = current_profile.read_text().strip() if current_profile.is_file() else 'orgm'
-    if profile not in ('slc', 'orgm', 'osmar'):
-        profile = 'orgm'
-    pictures = Path(os.environ.get('ORGM_VISUAL_PROFILE_PICTURES_ROOT', Path.home()/'Pictures'))
-    directories = [pictures/profile, *wallpaper_directories()]
-    images = set()
-    for directory in directories:
-        try:
-            images.update(wallpaper_images(directory))
-        except OSError:
-            continue
-    state = config / 'sway/wallpaper'
-    current = state.read_text().strip() if state.is_file() else ''
-    # Keep the active image available even when it was chosen outside these folders.
-    if current:
-        path = Path(current).expanduser()
+def visual_profile_state():
+    return Path(os.environ.get('ORGM_VISUAL_PROFILE_STATE_DIR',
+                str(Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state')) / 'orgm-visual-profile')))
+
+
+def current_visual_profile():
+    current = visual_profile_state()/'current'
+    profile = current.read_text().strip() if current.is_file() else 'orgm'
+    return profile if profile in ('slc', 'orgm', 'osmar') else 'orgm'
+
+
+def saved_profile_wallpaper(profile):
+    saved = visual_profile_state()/'profiles'/profile/'wallpaper'
+    if saved.is_file() and (value := saved.read_text().strip()):
+        path = Path(value).expanduser()
         if path.is_file() and path.suffix.lower() in MEDIA_SUFFIXES:
-            images.add(path.resolve())
+            return path.resolve()
+    return None
+
+
+def menu_colors():
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))
     colors = dict(bg='#080808', surface='#202020', fg='#f5f5f5', muted='#b8b8b8',
                   accent='#8ab4f8', error='#ff8a8a')
     palette = config / 'waybar/orgm-current.css'
@@ -380,15 +385,72 @@ def wallpaper_catalog():
         for name, key in dict(bg='base', surface='surface0', fg='text', muted='overlay0',
                               accent='blue', error='red').items():
             colors[name] = definitions.get(key, colors[name])
+    return colors
+
+
+def menu_context():
     try:
         output = next((w.get('output', '') for w in query('get_workspaces') if w.get('focused')), '')
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError):
         output = ''
-    return dict(profile=profile, current=current, screen=output, colors=colors,
+    return dict(screen=output, colors=menu_colors())
+
+
+def wallpaper_catalog():
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))
+    profile = current_visual_profile()
+    pictures = Path(os.environ.get('ORGM_VISUAL_PROFILE_PICTURES_ROOT', Path.home()/'Pictures'))
+    directories = [pictures/profile]
+    images = set()
+    for directory in directories:
+        try:
+            images.update(wallpaper_images(directory))
+        except OSError:
+            continue
+    # A saved assignment belongs to this profile even when stored elsewhere.
+    if saved := saved_profile_wallpaper(profile):
+        images.add(saved)
+    state = config/'sway/wallpaper'
+    current = state.read_text().strip() if state.is_file() else ''
+    return dict(profile=profile, current=current, **menu_context(),
                 directories=[str(p) for p in directories], backend=str(Path(__file__).resolve()),
                 items=[dict(path=str(p), url=p.as_uri(), name=clean(p.name),
                             kind='video' if p.suffix.lower() in VIDEO_SUFFIXES else 'image')
                        for p in sorted(images, key=lambda p: (p.name.casefold(), str(p)))])
+
+
+def profile_catalog():
+    items = []
+    for profile in ('slc', 'orgm', 'osmar'):
+        path = saved_profile_wallpaper(profile)
+        preview = ''
+        if path:
+            try:
+                preview = wallpaper_preview(path).as_uri()
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+                pass
+        items.append(dict(id=profile, name=profile.upper(), preview=preview))
+    return dict(kind='profiles', current=current_visual_profile(), items=items, **menu_context())
+
+
+def profiles():
+    handled, selected = graphical_selection(profile_catalog())
+    if not handled:
+        selected = pick('Perfil visual', ['slc', 'orgm', 'osmar'])
+    if selected in ('slc', 'orgm', 'osmar'):
+        run(str(Path.home()/'.local/bin/orgm-visual-profile'), 'set', selected,
+            env=dict(os.environ, ORGM_VISUAL_PROFILE_BACKEND='sway', ORGM_VISUAL_PROFILE_KEEP_WAYBAR='1'))
+
+
+def launcher_theme():
+    colors = menu_colors()
+    values = dict(bg=colors['bg'], **{'bg-panel': colors['bg']+'eb',
+                  'surface-soft': colors['surface']+'99', 'fg': colors['fg'],
+                  'muted': colors['muted'], 'accent': colors['accent'],
+                  'accent-soft': colors['accent']+'2e', 'accent-line': colors['accent']+'99',
+                  'red': colors['error'], 'red-soft': colors['error']+'2e',
+                  'outline': colors['fg']+'1f'})
+    return '* {\n'+'\n'.join(f'    {key}: {value};' for key, value in values.items())+'\n}'
 
 
 def quickshell_binary():
@@ -399,19 +461,21 @@ def quickshell_binary():
     return str(fallback) if fallback.is_file() and os.access(fallback, os.X_OK) else None
 
 
-def graphical_wallpaper_picker(catalog):
+def graphical_menu(catalog, *, entry=None, result=None):
     binary = quickshell_binary()
     config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config')) / 'quickshell/orgm-wallpapers'
-    if not binary or not (config/'shell.qml').is_file():
+    target = config/entry if entry else config
+    if not binary or not (target if entry else config/'shell.qml').is_file():
         return False
     with tempfile.TemporaryDirectory(prefix='orgm-wallpapers-') as directory:
         data = Path(directory) / 'catalog.json'
         data.write_text(json.dumps(catalog, ensure_ascii=False))
         data.chmod(0o600)
         status = Path(directory) / 'status'
-        with subprocess.Popen([binary, '--no-duplicate', '--path', str(config)],
+        with subprocess.Popen([binary, '--no-duplicate', '--path', str(target)],
                               env=dict(os.environ, ORGM_WALLPAPER_DATA=str(data),
-                                       ORGM_WALLPAPER_STATUS=str(status))) as process:
+                                       ORGM_WALLPAPER_STATUS=str(status),
+                                       ORGM_MENU_RESULT=str(result) if result else '')) as process:
             deadline = time.monotonic() + 10
             while process.poll() is None and not status.exists() and time.monotonic() < deadline:
                 time.sleep(0.05)
@@ -429,6 +493,17 @@ def graphical_wallpaper_picker(catalog):
                     process.kill()
                     process.wait()
             return False
+
+
+def graphical_wallpaper_picker(catalog):
+    return graphical_menu(catalog)
+
+
+def graphical_selection(catalog):
+    with tempfile.TemporaryDirectory(prefix='orgm-menu-') as directory:
+        result = Path(directory)/'selection'
+        handled = graphical_menu(catalog, entry='menus.qml', result=result)
+        return handled, result.read_text().strip() if handled and result.is_file() else ''
 
 
 def wallpaper(choose=False):
@@ -494,7 +569,9 @@ def main(args):
     if command == "appearance":
         apply_appearance()
     elif command == "windows":
-        choose_window()
+        run(str(Path(__file__).with_name('orgm-sway-desktop')), 'windows', *args[1:])
+    elif command in ('audio', 'clipboard', 'control'):
+        run(str(Path(__file__).with_name('orgm-sway-desktop')), command)
     elif command == "kill-window":
         choose_window("kill")
     elif command == "obsidian":
@@ -512,10 +589,9 @@ def main(args):
     elif command in ("power", "logout"):
         power("Cerrar sesión" if command == "logout" else None)
     elif command == 'profiles':
-        selected = pick('Perfil visual', ['slc', 'orgm', 'osmar'])
-        if selected in ('slc', 'orgm', 'osmar'):
-            run(str(Path.home()/'.local/bin/orgm-visual-profile'), 'set', selected,
-                env=dict(os.environ, ORGM_VISUAL_PROFILE_BACKEND='sway'))
+        profiles()
+    elif command == 'launcher-theme':
+        print(launcher_theme())
     elif command == 'wallpaper-set':
         set_wallpaper(args[1])
     elif command == 'wallpaper-preview':
@@ -530,6 +606,8 @@ def main(args):
         config = Path.home() / ".config/sway/config"
         pick("Atajos", [line.removeprefix("bindsym ") for line in config.read_text().splitlines() if line.startswith("bindsym ")])
     elif command == "menu":
+        run(str(Path(__file__).with_name('orgm-sway-desktop')), 'control')
+    elif command == "menu-fallback":
         commands = {
             "Aplicaciones": ["sway-app-launcher"],
             "Wi-Fi / red": ["kitty", "--class", "nmtui", "-e", "nmtui"],

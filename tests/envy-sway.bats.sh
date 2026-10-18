@@ -77,6 +77,8 @@ print("PASS: Sway desktop, Intel rendering, modes, Swaync activation and portabl
 '
 python3 "$ROOT/tests/sway-tools.test.py"
 python3 "$ROOT/tests/sway-wallpapers.test.py"
+python3 "$ROOT/tests/sway-menus.test.py"
+python3 "$ROOT/tests/sway-desktop.test.py"
 python3 "$ROOT/tests/envy-keyboard.test.py"
 python3 "$ROOT/tests/sway-lock.test.py"
 python3 "$ROOT/tests/sway-keyring.test.py"

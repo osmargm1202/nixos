@@ -8,8 +8,10 @@ PanelWindow {
     id: win
     property bool open: false
     property bool busy: false
+    property string layerNamespace: "orgm-wallpapers"
     property real progress: open ? 1 : 0
     signal keyPressed(var event)
+    signal keyReleased(var event)
     signal dismissed()
 
     function show() { open = true }
@@ -32,10 +34,11 @@ PanelWindow {
     color: "transparent"
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "orgm-wallpapers"
+    WlrLayershell.namespace: win.layerNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     onOpenChanged: if (open) keys.forceActiveFocus()
+    Shortcut { sequence: "Escape"; enabled: win.open; onActivated: win.close() }
 
     Rectangle {
         anchors.fill: parent
@@ -55,5 +58,6 @@ PanelWindow {
                 win.keyPressed(event)
             }
         }
+        Keys.onReleased: event => win.keyReleased(event)
     }
 }

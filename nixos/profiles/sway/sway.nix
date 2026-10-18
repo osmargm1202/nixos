@@ -87,6 +87,7 @@ in
       orgm-sway-policy = { description = "Graphical authentication"; command = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"; };
       orgm-sway-idle = { description = "Lock before suspend and switch idle displays off"; command = "${pkgs.swayidle}/bin/swayidle -w -C %h/.config/swayidle/config"; };
       orgm-sway-clipboard = { description = "Clipboard history"; command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"; };
+      orgm-sway-previews = { description = "Session-local window thumbnails"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-desktop previews"; };
     }
   );
   environment.systemPackages = with pkgs; [

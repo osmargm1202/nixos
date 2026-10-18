@@ -38,7 +38,7 @@ class WallpaperTests(unittest.TestCase):
         path.write_text(text)
         return path
 
-    def test_catalog_profile_shared_current_and_deduplication(self):
+    def test_catalog_is_scoped_to_active_profile_and_deduplicates(self):
         self.file('.local/state/orgm-visual-profile/current', 'slc\n')
         active = self.file('Pictures/slc/nested/a.png')
         shared = self.file('Pictures/Wallpapers/b.JPG')
@@ -46,11 +46,11 @@ class WallpaperTests(unittest.TestCase):
         self.file('.config/sway/wallpaper', str(external)+'\n')
         self.file('Pictures/orgm/excluded.png')
         self.file('Pictures/slc/not-an-image.pdf')
-        (active.parent/'alias.png').symlink_to(shared)
+        (active.parent/'alias.png').symlink_to(active)
         data = MODULE['wallpaper_catalog']()
         self.assertEqual(data['profile'], 'slc')
         self.assertEqual(data['screen'], 'TEST-2')
-        self.assertEqual({p['path'] for p in data['items']}, {str(active), str(shared), str(external)})
+        self.assertEqual({p['path'] for p in data['items']}, {str(active)})
         self.assertEqual(data['current'], str(external))
         self.assertTrue(all(p['url'].startswith('file:///') for p in data['items']))
 
@@ -60,8 +60,17 @@ class WallpaperTests(unittest.TestCase):
         self.file('.config/sway/wallpaper', str(current)+'\n')
         with patch.dict(ENV, wallpaper_preview=lambda _: self.fail('Catalog must not decode videos')):
             data = MODULE['wallpaper_catalog']()
-        self.assertEqual({p['path'] for p in data['items']}, {str(p) for p in videos+[current]})
+        self.assertEqual({p['path'] for p in data['items']}, {str(p) for p in videos})
         self.assertTrue(all(p['kind'] == 'video' for p in data['items']))
+
+    def test_catalog_keeps_only_this_profiles_saved_external_assignment(self):
+        saved = self.file('shared/saved.png')
+        other = self.file('shared/other.png')
+        self.file('.local/state/orgm-visual-profile/profiles/orgm/wallpaper', str(saved)+'\n')
+        self.file('.local/state/orgm-visual-profile/profiles/slc/wallpaper', str(other)+'\n')
+        self.file('Pictures/Wallpapers/excluded.png')
+        data = MODULE['wallpaper_catalog']()
+        self.assertEqual({p['path'] for p in data['items']}, {str(saved)})
 
     def test_video_preview_cache_invalidation_and_literal_arguments(self):
         video = self.file('Pictures/orgm/ñ $(touch BAD)  #.mp4')
