@@ -6,11 +6,6 @@
   ...
 }:
 let
-  # BuildKit cannot follow a Home Manager Dockerfile link outside its context.
-  # Publish a small immutable context containing the actual file, not the VM data.
-  spiceBuildContext = pkgs.writeTextDir "Containerfile.spice" (
-    builtins.readFile ../../containers/windows/Containerfile.spice
-  );
   lookingGlassIddClient = pkgs.callPackage ../../containers/windows/looking-glass-idd-client.nix { };
   virtioInputIso =
     pkgs.runCommand "virtio-input.iso"
@@ -37,9 +32,7 @@ in
     home.file = {
       "Apps/windows/compose.yml".source = ../../containers/windows/compose.yml;
       "Apps/windows/compose.lenovo-vfio.yml".text =
-        lib.replaceStrings [ "context: .\n" ] [ "context: ${spiceBuildContext}\n" ]
-          (builtins.readFile ../../containers/windows/hosts/lenovo-windows/compose.yml);
-      "Apps/windows/Containerfile.spice".source = "${spiceBuildContext}/Containerfile.spice";
+        builtins.readFile ../../containers/windows/hosts/lenovo-windows/compose.yml;
       "Apps/windows/virtio-input.iso".source = "${virtioInputIso}/virtio-input.iso";
     };
   };
@@ -61,6 +54,13 @@ in
     SUBSYSTEM=="vfio", KERNEL=="[0-9]*", GROUP="podman", MODE="0660"
     KERNEL=="kvmfr0", GROUP="podman", MODE="0660"
   '';
+
+  # A lingering user manager starts outside PAM: allow the supervisor to inherit
+  # the same hard memlock limit as a fresh interactive login.
+  systemd.services."user@${toString config.users.users.${userName}.uid}" = {
+    overrideStrategy = "asDropin";
+    serviceConfig.LimitMEMLOCK = "infinity";
+  };
 
   # QEMU must lock guest RAM before the IOMMU can map it for the T500.
   # This takes effect for new login sessions and keeps rootless Podman viable.

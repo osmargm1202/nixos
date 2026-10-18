@@ -3,6 +3,11 @@
 Envy usa únicamente Sway como escritorio, bajo la salida `envy`. Los modos
 gaming, windows-vfio y server se conservan como especializaciones internas.
 
+El controlador público es ahora **`windows-vm`**, con interfaz común para Envy y
+Lenovo y reglas propias por host. `envy-windows`, usado en los ejemplos históricos
+de esta guía, sigue funcionando como alias del mismo comando. Ver
+[controlador común y compatibilidad](windows-vm.md).
+
 ## Configuración y límites
 
 La fuente está en `nixos/hosts/envy/windows.nix`, `windows-runtime.py` y

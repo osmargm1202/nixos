@@ -11,23 +11,38 @@ Solo `server` y `windows-vfio` reservan la NVIDIA T500 mediante VFIO y usan
 Intel para el host. Normal y gaming conservan PRIME; battery conserva NVIDIA
 deshabilitada y el gobernador de ahorro. `lenovo-terminal` conserva su GPU.
 
-`osmarg` tiene `linger` y el servicio de usuario `lenovo-windows-autostart`
-arranca con `default.target`, sin login. En server/windows arranca el contenedor
-Podman existente `lenovo-windows`. En los demás modos arranca `windows`, sin
-passthrough. Si ese runtime todavía no existe, lo crea al arrancar ese modo
-utilizando la imagen local de Windows y el mismo disco y `.env`, con acceso a
-`/dev/dri`. No recrea un contenedor existente ni tiene `ExecStop`. Si ya corre,
-no actúa. Si el runtime del otro perfil está activo, rechaza el arranque para
-proteger el disco compartido, sin detenerlo. No se ejecuta Compose durante la
-preparación o instalación de boot; solamente en el futuro arranque sin VFIO.
-Los fallos de arranque se reintentan cada 15 segundos; un runtime VFIO borrado
-requiere restaurarse manualmente. El servicio no vigila ni reinicia Windows
-después de un apagado manual. El helper `windows-rdp` usa Podman en ambos tipos
-de perfil Lenovo, incluso cuando Ryoku también instala Docker.
-El autoinicio utiliza el paquete Podman configurado por NixOS, que incluye
-los wrappers de `newuidmap` y `newgidmap` necesarios en un servicio rootless.
-Un error de Podman al consultar el contenedor aborta el intento; no se confunde
-con un contenedor ausente ni provoca la creación de otro runtime.
+El controlador público es **`windows-vm`**, compartido con Envy pero con política
+Lenovo propia. [Interfaz, provisión y migración](../../../docs/windows-vm.md).
+`windows-rdp` se encarga del acceso web/RDP/Looking Glass y delega el ciclo de vida:
+no borra el runtime alternativo, construye imágenes ni fija un grupo VFIO.
+
+`osmarg` conserva `linger` y `lenovo-windows-autostart` con `default.target`, sin
+login. La unidad ahora usa el supervisor común de vida completa: en server/windows
+selecciona `lenovo-windows`; en los demás modos, `windows` con render Intel.
+Adopta los contenedores existentes cuyo disco coincida con el `.env` privado.
+Nunca borra ni recrea un runtime existente, y rechaza cualquier otro contenedor
+activo que monte el disco compartido. Si un runtime falta, requiere imagen
+preparada, credenciales privadas y disco Windows existente antes de crearlo.
+Los dispositivos VFIO se derivan de la identidad de la T500 y su grupo actual,
+no de `/dev/vfio/16`. Un runtime antiguo con dispositivos obsoletos requiere
+revisión manual, no una recreación automática.
+
+`windows-vm prepare-image` es la provisión explícita de SPICE sobre una base
+fijada. Un `start` nunca construye ni descarga imágenes contenedor. No se ejecuta
+Compose, construye una imagen ni arranca una VM al preparar/instalar boot.
+La unidad conserva los wrappers rootless, reintenta fallos cada 15 segundos y
+no reinicia Windows después de un apagado limpio manual. Al detenerla solicita
+apagado limpio, sin force-kill; el apagado del host puede esperar si el huésped
+no responde. Un error del motor nunca se interpreta como contenedor ausente.
+
+```sh
+windows-vm status
+windows-vm preflight
+windows-vm start
+windows-vm stop
+windows-rdp web
+windows-rdp looking-glass # solo en VFIO, con Host compatible dentro de Windows
+```
 
 El kernel carga i915 temprano y desactiva el panel roto con `video=eDP-1:d`;
 esto también se aplica a la consola del modo server. El escritorio mantiene

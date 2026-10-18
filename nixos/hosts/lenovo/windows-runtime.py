@@ -1,4 +1,5 @@
 """Lenovo Windows adapter: preserve personal disks and existing containers."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,7 +17,14 @@ from windows_runtime import (
 )
 
 PATH_FIELDS = ("WINDOWS_STORAGE_DIR", "WINDOWS_SHARED_DIR", "WINDOWS_OEM_DIR")
-DISK_SUFFIXES = (".img", ".raw", ".qcow", ".qcow2", ".vhd", ".vhdx", ".vmdk", ".vdi")
+PRIMARY_DISKS = {"data.img": "raw", "data.qcow2": "qcow2"}
+SETTINGS = "org.orgm.windows.settings"
+# Match compose.yml's ${WINDOWS_*:-default}: unset and empty are equivalent.
+CREATION_DEFAULTS = {
+    "WINDOWS_RAM_SIZE": "4G", "WINDOWS_CPU_CORES": "6", "WINDOWS_DISK_SIZE": "64G",
+    "WINDOWS_USERNAME": "osmarg", "WINDOWS_LANGUAGE": "English", "WINDOWS_REGION": "es-DO",
+    "WINDOWS_KEYBOARD": "es-US", "WINDOWS_WEB_PORT": "8006", "WINDOWS_RDP_PORT": "3389",
+}
 
 
 def private_config(filename):
@@ -119,9 +127,17 @@ class Controller(Lifecycle):
     def container_mode(self, current):
         return (current["Config"]["Labels"] or {}).get(MODE, self.m["mode"])
 
+    def settings_digest(self):
+        # Whitelist effective public creation settings, never credentials or
+        # unknown dotenv fields (even their hashes must not reach labels).
+        public = {key: self.config.get(key) or default for key, default in CREATION_DEFAULTS.items()}
+        public.update({key: str(real_path(self.config[key])) for key in PATH_FIELDS})
+        return hashlib.sha256(json.dumps(public, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
     def pending(self, current):
         labels = current["Config"]["Labels"] or {}
-        return labels.get(OWNER) != "lenovo" or super().pending(current)
+        return (labels.get(OWNER) != "lenovo" or super().pending(current)
+                or labels.get(SETTINGS) != self.settings_digest())
 
     def private_password(self):
         value = self.config.get("WINDOWS_PASSWORD", "")
@@ -134,18 +150,28 @@ class Controller(Lifecycle):
             path = real_path(self.config[key])
             if not path.is_dir() or not os.access(path, os.R_OK | os.W_OK | os.X_OK):
                 raise Refused("configured Windows directories must already exist and be accessible")
-        disk_found = False
+        storage = self.storage_path()
+        primary = {}
         def fail(_):
             raise Refused("Windows disk directory cannot be checked safely")
-        for directory, dirs, files in os.walk(self.storage_path(), followlinks=False, onerror=fail):
-            for name in dirs + files:
-                path = Path(directory) / name
-                if path.is_symlink():
-                    raise Refused("preserved guest storage link; no writes through external images")
-                if path.is_file() and path.suffix.lower() in DISK_SUFFIXES and path.stat().st_size > 0:
-                    disk_found = True
-        if not disk_found:
-            raise Refused("existing Windows disk is required; automatic fresh OS installation is disabled")
+        try:
+            for directory, dirs, files in os.walk(storage, followlinks=False, onerror=fail):
+                for name in dirs + files:
+                    info = (Path(directory) / name).lstat()
+                    if stat.S_ISLNK(info.st_mode):
+                        raise Refused("preserved guest storage link; no writes through external images")
+                    if Path(directory) == storage and name in PRIMARY_DISKS:
+                        primary[name] = info
+        except OSError:
+            raise Refused("Windows disk directory cannot be checked safely") from None
+        # qemus/qemu7.50 defaults to basename data. Auxiliary images, backups
+        # and other formats cannot establish an existing primary Windows disk.
+        if len(primary) != 1:
+            raise Refused("exactly one existing Windows disk (data.img or data.qcow2) is required; automatic fresh OS installation is disabled")
+        name, info = next(iter(primary.items()))
+        if not stat.S_ISREG(info.st_mode) or info.st_size == 0:
+            raise Refused("existing Windows disk must be a nonempty regular data.img or data.qcow2 file")
+        return PRIMARY_DISKS[name]
 
     def preflight(self):
         if self.m["mode"] == "vfio":
@@ -195,6 +221,7 @@ class Controller(Lifecycle):
             raise Refused("existing VFIO device mappings are stale; manual review required, nothing recreated")
 
     def write_overlay(self, hardware):
+        disk_format = self.validate_storage()
         directory = real_path(self.m["runtimeDir"])
         directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         if directory.stat().st_uid != os.getuid() or stat.S_IMODE(directory.stat().st_mode) != 0o700:
@@ -202,7 +229,9 @@ class Controller(Lifecycle):
         target = real_path(directory / "hardware.json")
         dev = Path(self.m.get("devRoot", "/dev"))
         devices = [str(dev / "kvm") + ":/dev/kvm", str(dev / "net/tun") + ":/dev/net/tun"]
-        environment = {}
+        # Select the preserved primary explicitly; upstream must not convert it
+        # merely because its default DISK_FMT differs. Never migrate user disks.
+        environment = {"DISK_NAME": "data", "DISK_FMT": disk_format}
         volumes = [self.config[key] + ":/" + dest for key, dest in zip(PATH_FIELDS, ("storage", "shared", "oem"))]
         if hardware["mode"] == "vfio":
             devices += [str(dev / "vfio/vfio") + ":/dev/vfio/vfio",
@@ -215,7 +244,7 @@ class Controller(Lifecycle):
             environment["RENDERNODE"] = destination
         service = {"image": self.m["image"], "container_name": self.m["container"], "pull_policy": "never",
                    "labels": {OWNER: "lenovo", MODE: self.m["mode"], GENERATION: self.m["generation"],
-                              DIGEST: config_digest(self.m, hardware)},
+                              DIGEST: config_digest(self.m, hardware), SETTINGS: self.settings_digest()},
                    "devices": devices, "volumes": volumes, "environment": environment}
         fd, tmp = tempfile.mkstemp(dir=directory, prefix="hardware-")
         try:

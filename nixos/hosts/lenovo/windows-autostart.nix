@@ -3,10 +3,19 @@ let
   vfio = config.orgm.lenovo.windowsVfio.enable;
   home = config.users.users.${userName}.home;
   baseImage = (builtins.fromJSON (builtins.readFile ../../containers/windows/hosts/envy/image.json)).image;
+  installGuard = ../../containers/windows/refuse-install.py;
   spiceRecipe = lib.replaceStrings [ "FROM dockurr/windows:latest" ] [ "FROM ${baseImage}" ]
-    (builtins.readFile ../../containers/windows/Containerfile.spice);
-  spiceContext = pkgs.writeTextDir "Containerfile" spiceRecipe;
-  image = "localhost/lenovo-windows-spice:${builtins.hashString "sha256" spiceRecipe}";
+    (builtins.readFile ../../containers/windows/Containerfile.spice) + ''
+
+    COPY refuse-install.py /tmp/windows-vm-install-guard.py
+    RUN python3 /tmp/windows-vm-install-guard.py && rm /tmp/windows-vm-install-guard.py
+  '';
+  spiceContext = pkgs.runCommand "lenovo-windows-image-context" {} ''
+    mkdir -p "$out"
+    cp ${pkgs.writeText "Containerfile" spiceRecipe} "$out/Containerfile"
+    cp ${installGuard} "$out/refuse-install.py"
+  '';
+  image = "localhost/lenovo-windows-spice:${builtins.hashString "sha256" (spiceRecipe + builtins.readFile installGuard)}";
   inputIso = pkgs.runCommand "lenovo-virtio-input.iso" { nativeBuildInputs = [ pkgs.xorriso ]; } ''
     mkdir -p "$out"
     xorriso -as mkisofs -V virtio-win -o "$out/virtio-input.iso" -graft-points \
@@ -63,6 +72,13 @@ in {
   users.users.${userName} = {
     linger = true;
     extraGroups = [ "podman" "kvm" "render" "video" ];
+  };
+
+  # Protect the supervisor from the outer system user-manager stop deadline,
+  # including non-VFIO modes. A user-unit timeout alone does not cover shutdown.
+  systemd.services."user@${toString config.users.users.${userName}.uid}" = {
+    overrideStrategy = "asDropin";
+    serviceConfig = { TimeoutStopSec = "infinity"; SendSIGKILL = false; };
   };
 
   # Preserve the deployed unit name and autostart policy, but use the same

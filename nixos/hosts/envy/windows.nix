@@ -25,6 +25,7 @@ let
     cp ${../../containers/windows/hosts/envy/compose.vfio.yml} "$out/compose.vfio.yml"
   '';
   public = {
+    host = "envy";
     inherit (image) image;
     inherit vfioImage;
     inputIso = "${inputIso}/virtio-input.iso";
@@ -95,6 +96,12 @@ in {
       Type = "oneshot"; RemainAfterExit = true;
       ExecStart = "${prepare}/bin/envy-windows-storage /var/lib/windows ${userName} ${userName}";
     };
+  };
+  # The enclosing system unit otherwise kills the user manager after 120s,
+  # overriding an individual user service's infinite graceful-stop timeout.
+  systemd.services."user@${toString config.users.users.${userName}.uid}" = {
+    overrideStrategy = "asDropin";
+    serviceConfig = { TimeoutStopSec = "infinity"; SendSIGKILL = false; };
   };
   systemd.user.services.envy-windows = {
     description = "Guarded persistent Envy Windows supervisor";

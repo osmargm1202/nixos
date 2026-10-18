@@ -300,17 +300,19 @@ la instalación inicial se hace por web conservando la pantalla virtual.
 | windows-vfio | Sway/Intel | VFIO | Automático condicionado |
 | server | Consola/SSH, sin DM/WM | VFIO | Automático condicionado |
 
-Un solo `envy-windows`, disco en `/var/lib/windows/storage`; Compose declarado en
+El CLI común es **`windows-vm`** ([interfaz y políticas por host](../../../docs/windows-vm.md));
+`envy-windows` se conserva como alias de compatibilidad, no como otro controlador.
+Un solo contenedor `envy-windows`, disco en `/var/lib/windows/storage`; Compose declarado en
 `nixos/containers/windows/hosts/envy/`, publicado como referencia inmutable en
 `~/Apps/windows/envy/`. **No lanzar compose directamente**: el controlador aplica
 las guardas y el bloqueo de vida completa. No se ha creado ni descargado una VM.
 
 ```sh
-envy-windows status
-envy-windows preflight
-envy-windows prepare-image # provisión explícita SPICE sobre imagen base fijada; requiere red
-envy-windows start   # manual en normal, prohibido en gaming
-envy-windows stop    # espera apagado limpio; nunca fuerza kill
+windows-vm status
+windows-vm preflight
+windows-vm prepare-image # provisión explícita SPICE sobre imagen base fijada; requiere red
+windows-vm start   # manual en normal, prohibido en gaming
+windows-vm stop    # espera apagado limpio; nunca fuerza kill
 journalctl --user -u envy-windows --no-pager
 windows-rdp connect # selector RDP/web/Looking Glass y credenciales específicas de Envy
 windows-rdp web     # instalación inicial sin depender de RDP/Looking Glass Host

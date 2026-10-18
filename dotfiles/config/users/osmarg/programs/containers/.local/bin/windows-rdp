@@ -5,12 +5,9 @@
 # ============================================================
 
 CONTAINER="windows"
-INACTIVE_CONTAINER=""
 WINDOWS_VM_PROFILE_FILE="${WINDOWS_VM_PROFILE_FILE:-/etc/orgm/windows-vm-profile}"
 WINDOWS_VM_PROFILE="render-node"
-WINDOWS_COMPOSE_DIR="${WINDOWS_COMPOSE_DIR:-$HOME/Apps/windows}"
 LOOKING_GLASS_DEVICE="${WINDOWS_LOOKING_GLASS_DEVICE:-/dev/kvmfr0}"
-COMPOSE_FILES=()
 RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER=""
@@ -82,32 +79,20 @@ select_vm_profile() {
     envy-render-node|envy-vfio|envy-disabled)
       CONTAINER="envy-windows"
       LOCAL_WINDOWS_NAME="envy-windows"
-      COMPOSE_FILES=()
       ;;
     lenovo-vfio)
       CONTAINER="lenovo-windows"
-      INACTIVE_CONTAINER="windows"
-      COMPOSE_FILES=(-f compose.yml -f compose.lenovo-vfio.yml)
       LOCAL_WINDOWS_NAME="lenovo-windows"
       ;;
     lenovo-render-node)
       CONTAINER="windows"
-      INACTIVE_CONTAINER="lenovo-windows"
-      COMPOSE_FILES=()
       LOCAL_WINDOWS_NAME="lenovo-windows"
       ;;
     *)
       CONTAINER="windows"
-      COMPOSE_FILES=()
       LOCAL_WINDOWS_NAME="osmar-windows"
       ;;
   esac
-}
-
-compose_cmd() {
-  local engine
-  engine="$(container_engine)" || return 1
-  "$engine" compose "$@"
 }
 
 is_installed() {
@@ -175,23 +160,32 @@ move_next_rdp_window_to_workspace() {
   ) &
 }
 
-is_envy_profile() { [[ "$WINDOWS_VM_PROFILE" == envy-* ]]; }
+is_managed_profile() { [[ "$WINDOWS_VM_PROFILE" == envy-* || "$WINDOWS_VM_PROFILE" == lenovo-* ]]; }
 
-envy_controller() { "${ENVY_WINDOWS_CONTROLLER:-envy-windows}" "$@"; }
+vm_controller() {
+  # Keep the old Envy test/integration override, without a direct-engine fallback.
+  if [[ -n "${WINDOWS_VM_CONTROLLER:-}" ]]; then
+    "$WINDOWS_VM_CONTROLLER" "$@"
+  elif [[ "$WINDOWS_VM_PROFILE" == envy-* && -n "${ENVY_WINDOWS_CONTROLLER:-}" ]]; then
+    "$ENVY_WINDOWS_CONTROLLER" "$@"
+  else
+    windows-vm "$@"
+  fi
+}
 
-envy_running() {
+vm_running() {
   local state
-  state="$(envy_controller status)" || return 2
+  state="$(vm_controller status)" || return 2
   python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if s["running"] else 1)' <<<"$state"
 }
 
 container_is_running() {
-  if is_envy_profile; then envy_running; return; fi
+  if is_managed_profile; then vm_running; return; fi
   [[ "$(container_cmd inspect --format '{{.State.Running}}' "$CONTAINER")" == true ]]
 }
 
 report_container_failure() {
-  if is_envy_profile; then envy_controller status >&2; return 1; fi
+  if is_managed_profile; then vm_controller status >&2; return 1; fi
   local status
   status="$(container_cmd inspect --format '{{.State.Status}} (exit {{.State.ExitCode}})' "$CONTAINER" || true)"
   echo "Container '$CONTAINER' failed: ${status:-not found}." >&2
@@ -620,7 +614,7 @@ do_choose_connect() {
 
   case "$protocol" in
     local-start)
-      if is_envy_profile; then
+      if is_managed_profile; then
         do_start
       elif container_is_running; then
         echo "Local Windows container '$CONTAINER' is already running."
@@ -659,18 +653,6 @@ do_choose_connect() {
   esac
 }
 
-require_vfio_memlock() {
-  local hard_limit
-  hard_limit="$(ulimit -Hl)"
-
-  if [[ "$hard_limit" != unlimited ]]; then
-    echo "Error: VFIO requires an unlimited memlock limit; current hard limit is ${hard_limit} KiB." >&2
-    echo 'Run this in the same terminal, then retry: sudo prlimit --pid $$ --memlock=unlimited' >&2
-    notify_user "Windows VFIO error" "Ejecuta prlimit en la misma terminal antes de iniciar Windows."
-    return 1
-  fi
-}
-
 do_looking_glass() {
   if [[ "$WINDOWS_VM_PROFILE" != lenovo-vfio && "$WINDOWS_VM_PROFILE" != envy-vfio ]]; then
     echo "Error: Looking Glass requires the Lenovo or Envy VFIO Windows profile." >&2
@@ -702,32 +684,11 @@ do_looking_glass() {
 do_start() {
   # Pass 0 for callers that need a service other than RDP after startup.
   local wait_for_rdp="${1:-1}"
-  if [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
-    if [[ ! -e /dev/vfio/16 ]]; then
-      echo "Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first." >&2
-      return 1
-    fi
-    if [[ ! -e /dev/kvmfr0 ]]; then
-      echo "Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled." >&2
-      return 1
-    fi
-    require_vfio_memlock || return 1
-  fi
-
   notify_user "Windows iniciando!" "Iniciando contenedor '$CONTAINER'."
   echo "Starting container '$CONTAINER'..."
 
-  if is_envy_profile; then
-    envy_controller start || return 1
-  elif [[ "$WINDOWS_VM_PROFILE" == lenovo-vfio ]]; then
-    container_cmd rm -f "$INACTIVE_CONTAINER" || true
-    if ! (
-      cd "$WINDOWS_COMPOSE_DIR"
-      compose_cmd --env-file .env "${COMPOSE_FILES[@]}" up -d --build
-    ); then
-      report_container_failure
-      return 1
-    fi
+  if is_managed_profile; then
+    vm_controller start || return 1
   elif ! container_cmd start "$CONTAINER"; then
     report_container_failure
     return 1
@@ -742,7 +703,7 @@ do_start() {
 }
 
 do_stop() {
-  if is_envy_profile; then envy_controller stop; return; fi
+  if is_managed_profile; then vm_controller stop; return; fi
   notify_user "Windows apagando" "Deteniendo contenedor '$CONTAINER'."
   echo "Stopping container '$CONTAINER'..."
   if ! container_cmd stop "$CONTAINER"; then
@@ -754,9 +715,9 @@ do_stop() {
 }
 
 do_toggle() {
-  if is_envy_profile; then
+  if is_managed_profile; then
     local result=0
-    envy_running || result=$?
+    vm_running || result=$?
     case "$result" in 0) do_stop ;; 1) do_start ;; *) return "$result" ;; esac
     return
   fi
@@ -768,7 +729,7 @@ do_toggle() {
 }
 
 do_status() {
-  if is_envy_profile; then envy_controller status || return 1; fi
+  if is_managed_profile; then vm_controller status || return 1; fi
   local -a RDP_CMD
 
   rdp_command
@@ -778,7 +739,7 @@ do_status() {
 }
 
 do_connect() {
-  if is_envy_profile; then envy_controller start || return 1; fi
+  if is_managed_profile; then vm_controller start || return 1; fi
   local target_workspace=""
 
   RDP_HOST=localhost
@@ -812,8 +773,8 @@ open_web_console() {
 }
 
 do_web() {
-  if is_envy_profile; then
-    envy_controller start || return 1
+  if is_managed_profile; then
+    vm_controller start || return 1
   elif ! container_is_running; then
     echo "Windows Web Console is unavailable. Starting container '$CONTAINER'..."
     do_start 0 || return 1

@@ -9,11 +9,23 @@ bin="$tmp/bin"
 mkdir -p "$bin" "$tmp/home/Apps/windows"
 # Never inherit the workstation's active /etc/orgm/windows-vm-profile.
 export WINDOWS_VM_PROFILE_FILE="$tmp/default-profile"
+# Credential tests must not source the workstation's real HM/SOPS defaults.
+export USER=windows-fixture-test
+unset WINDOWS_RDP_LENOVO_WINDOWS_USER_FILE WINDOWS_RDP_ENVY_WINDOWS_USER_FILE
 printf '%s\n' render-node >"$WINDOWS_VM_PROFILE_FILE"
 ln -s "$repo_dir/nixos/containers/windows/compose.yml" "$tmp/home/Apps/windows/compose.yml"
 ln -s "$repo_dir/nixos/containers/windows/hosts/lenovo-windows/compose.yml" "$tmp/home/Apps/windows/compose.lenovo-vfio.yml"
 ln -s "$BASH" "$bin/bash"
 ln -s "$(command -v grep)" "$bin/grep"
+ln -s "$(command -v python3)" "$bin/python3"
+cat >"$bin/windows-vm" <<'EOF'
+#!/usr/bin/env bash
+log="${VM_CONTROLLER_LOG:-${ENVY_LOG:-}}"
+[[ -z "$log" ]] || printf '%s\n' "$1" >>"$log"
+[[ "${VM_CONTROLLER_FAIL:-${ENVY_FAIL:-0}}" == 0 ]] || exit 125
+[[ "$1" != status ]] || printf '{"running":%s,"mode":"vfio","pending":false}\n' "${VM_CONTROLLER_RUNNING:-${ENVY_RUNNING:-${WINDOWS_TEST_RUNNING:-true}}}"
+EOF
+chmod +x "$bin/windows-vm"
 
 cat >"$bin/nc" <<'EOF'
 #!/usr/bin/env bash
@@ -158,17 +170,16 @@ render_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_F
 grep -Fqx 'profile=lenovo-render-node' <<<"$render_status"
 grep -Fqx 'container=windows' <<<"$render_status"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_TEST_RUNNING=true WINDOWS_VM_PROFILE_FILE="$render_profile" ENGINE_LOG="$render_engine_log" "$helper" start >/dev/null
-grep -q '^podman ' "$render_engine_log"
-! grep -q '^docker ' "$render_engine_log"
+[[ ! -s "$render_engine_log" ]] # Managed profiles never query the engine directly.
 printf '%s\n' lenovo-vfio >"$profile_file"
 engine_log="$tmp/engines.log"
 vfio_status="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WAYLAND_DISPLAY= DISPLAY=:0 WINDOWS_VM_PROFILE_FILE="$profile_file" ENGINE_LOG="$engine_log" "$helper" status)"
 grep -Fqx 'profile=lenovo-vfio' <<<"$vfio_status"
 grep -Fqx 'container=lenovo-windows' <<<"$vfio_status"
 grep -Fqx 'client=xfreerdp ' <<<"$vfio_status"
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" ENGINE_LOG="$engine_log" "$helper" stop
-grep -Fqx 'podman stop lenovo-windows' "$engine_log"
-! grep -q '^docker ' "$engine_log"
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" VM_CONTROLLER_LOG="$tmp/lenovo-controller" ENGINE_LOG="$engine_log" "$helper" stop
+grep -Fqx stop "$tmp/lenovo-controller"
+[[ ! -s "$engine_log" ]]
 lg_log="$tmp/looking-glass.log"
 if [[ -e /dev/kvmfr0 ]]; then
   HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true LG_LOG="$lg_log" "$helper" looking-glass
@@ -178,21 +189,13 @@ else
   [[ "$lg_output" == *"Error: /dev/kvmfr0 is unavailable; boot a VFIO Windows profile with Looking Glass enabled."* ]]
 fi
 vfio_start_docker_log="$tmp/vfio-start-docker.log"
-if [[ -e /dev/vfio/16 && -e /dev/kvmfr0 && "$(ulimit -Hl)" == unlimited ]]; then
-  HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true DOCKER_LOG="$vfio_start_docker_log" ENGINE_LOG="$engine_log" "$helper" start
-  grep -Fqx 'compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$vfio_start_docker_log"
-  grep -Fqx 'podman compose --env-file .env -f compose.yml -f compose.lenovo-vfio.yml up -d --build' "$engine_log"
-  ! grep -q '^docker ' "$engine_log"
-else
-  vfio_start_output="$(HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" WINDOWS_TEST_RUNNING=true "$helper" start 2>&1 || true)"
-  if [[ ! -e /dev/vfio/16 ]]; then
-    [[ "$vfio_start_output" == *"Error: /dev/vfio/16 is unavailable; boot the Lenovo VFIO profile first."* ]]
-  elif [[ ! -e /dev/kvmfr0 ]]; then
-    [[ "$vfio_start_output" == *"Error: /dev/kvmfr0 is unavailable; boot a Lenovo Windows profile with Looking Glass enabled."* ]]
-  else
-    [[ "$vfio_start_output" == *"Error: VFIO requires an unlimited memlock limit;"* ]]
-  fi
-fi
+# The backend validates hardware; the client must not hard-code an IOMMU group,
+# build images or delete the alternate runtime, even for Lenovo VFIO.
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$profile_file" \
+ WINDOWS_TEST_RUNNING=true VM_CONTROLLER_LOG="$tmp/lenovo-controller" \
+ DOCKER_LOG="$vfio_start_docker_log" ENGINE_LOG="$engine_log" "$helper" start
+grep -Fqx start "$tmp/lenovo-controller"
+[[ ! -s "$vfio_start_docker_log" && ! -s "$engine_log" ]]
 
 non_vfio_profile="$tmp/non-vfio-profile"
 printf '%s\n' render-node >"$non_vfio_profile"
@@ -229,8 +232,7 @@ web_helper_output="$(HOME="$tmp/home" PATH="$web_helper_bin:$bin" WINDOWS_VM_PRO
 [[ "$web_helper_output" == *"Windows Web Console is ready."* ]]
 [[ "$(<"$web_helper_log")" == $'--new\nhttp://127.0.0.1:8006' ]]
 [[ "$(<"$web_helper_nc_log")" == $'-z\n127.0.0.1\n8006' ]]
-[[ "$(<"$web_helper_docker_log")" == *"inspect --format {{.State.Running}} lenovo-windows"* ]]
-[[ "$(<"$web_helper_docker_log")" != *"compose"* ]]
+[[ ! -s "$web_helper_docker_log" ]]
 
 web_firefox_bin="$tmp/web-firefox-bin"
 mkdir -p "$web_firefox_bin"
@@ -281,16 +283,8 @@ if web_no_browser_output="$(HOME="$tmp/home" PATH="$web_no_browser_bin:$bin" WIN
 fi
 [[ "$web_no_browser_output" == *"Error: Firefox tab helper and Firefox are unavailable."* ]]
 
-# Envy lifecycle is exclusively delegated; engine errors must never fall back.
-cat >"$bin/envy-windows" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$1" >>"$ENVY_LOG"
-[[ "${ENVY_FAIL:-0}" == 0 ]] || exit 125
-[[ "$1" != status ]] || printf '{"running":%s,"mode":"vfio","pending":false}\n' "${ENVY_RUNNING:-true}"
-EOF
-chmod +x "$bin/envy-windows"
-ln -s "$(command -v python3)" "$bin/python3"
-for profile in envy-render-node envy-vfio envy-disabled; do
+# Both hosts exclusively delegate lifecycle; backend errors never fall back.
+for profile in envy-render-node envy-vfio envy-disabled lenovo-render-node lenovo-vfio; do
  printf '%s\n' "$profile" >"$tmp/envy-profile"
  for action in start stop toggle status web connect; do
   : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"
@@ -317,7 +311,7 @@ printf '%s\n' offload >>"$ENVY_LOG"
 exec "$@"
 EOF
 chmod +x "$bin/nvidia-offload"
-for profile in envy-render-node envy-vfio; do
+for profile in envy-render-node envy-vfio lenovo-render-node lenovo-vfio; do
  printf '%s\n' "$profile" >"$tmp/envy-profile"
  for action in start stop toggle web run connect; do
   : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"
@@ -325,6 +319,7 @@ for profile in envy-render-node envy-vfio; do
    WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" ENVY_LOG="$tmp/envy-log" \
    DOCKER_LOG="$tmp/envy-engine-log" WEB_LOG="$tmp/envy-web" NOTIFY_LOG="$tmp/notify" RDP_LOG="$tmp/envy-rdp" \
    WINDOWS_RDP_ENVY_WINDOWS_USER=envy-user WINDOWS_RDP_ENVY_WINDOWS_PASSWORD_FILE="$rdp_password_file" \
+   WINDOWS_RDP_LENOVO_WINDOWS_USER=envy-user WINDOWS_RDP_LENOVO_WINDOWS_PASSWORD_FILE="$rdp_password_file" \
    WINDOWS_RDP_OSMAR_WINDOWS_USER=wrong-host WINDOWS_RDP_OSMAR_WINDOWS_PASSWORD_FILE=/missing \
    "$helper" "$action" >"$tmp/envy-output" 2>&1
   [[ ! -s "$tmp/envy-engine-log" ]]

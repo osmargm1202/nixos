@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Lenovo lifecycle fixtures: no VM, hardware changes, builds or real engine."""
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -105,6 +106,13 @@ class Runtime(unittest.TestCase):
             text += "\nWINDOWS_PASSWORD='" + self.password + "'\n"
         self.envfile.write_text(text)
         self.envfile.chmod(0o600)
+
+    def set_config(self, **values):
+        lines = [line for line in self.envfile.read_text().splitlines()
+                 if line.split("=", 1)[0] not in values]
+        lines += [key + "='" + value + "'" for key, value in values.items()]
+        self.envfile.write_text("\n".join(lines) + "\n")
+        self.reload()
 
     def pci(self, bdf, vendor, device, driver):
         gpu = self.sys / "devices" / bdf / bdf
@@ -261,6 +269,91 @@ class Runtime(unittest.TestCase):
         self.assertEqual(list(directory.iterdir()), [overlay])
         self.assertNotIn(self.password, overlay.read_text() + self.log.read_text())
 
+    def test_public_settings_digest_normalizes_compose_defaults_and_paths(self):
+        defaults = {"WINDOWS_RAM_SIZE": "4G", "WINDOWS_CPU_CORES": "6", "WINDOWS_DISK_SIZE": "64G",
+                    "WINDOWS_USERNAME": "osmarg", "WINDOWS_LANGUAGE": "English", "WINDOWS_REGION": "es-DO",
+                    "WINDOWS_KEYBOARD": "es-US", "WINDOWS_WEB_PORT": "8006", "WINDOWS_RDP_PORT": "3389"}
+        public = dict(defaults, **{key: str(self.storage / name)
+                                  for key, name in zip(MOD.PATH_FIELDS, ("storage", "shared", "oem"))})
+        expected = hashlib.sha256(json.dumps(public, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(self.c.settings_digest(), expected)
+        self.set_config(**defaults)
+        self.assertEqual(self.c.settings_digest(), expected)
+        self.set_config(**{key: "" for key in defaults})
+        self.assertEqual(self.c.settings_digest(), expected)
+        self.set_config(**{key: "${HOME}/windows/" + name + "/"
+                           for key, name in zip(MOD.PATH_FIELDS, ("storage", "shared", "oem"))})
+        self.assertEqual(self.c.settings_digest(), expected)
+        for key in defaults:
+            with self.subTest(key=key):
+                self.set_config(**{key: "changed"})
+                self.assertNotEqual(self.c.settings_digest(), expected)
+                self.set_config(**{key: ""})
+
+    def test_managed_settings_changes_are_pending_without_recreation(self):
+        self.c.reconcile()
+        before = copy.deepcopy(self.data()["containers"])
+        overlay = (Path(self.m["runtimeDir"]) / "hardware.json").read_bytes()
+        baseline = self.envfile.read_text()
+        self.assertEqual(self.c.status(), {"running": True, "mode": "render", "pending": False})
+        for name in ("shared-new", "oem-new"):
+            (self.storage / name).mkdir()
+        changes = {"WINDOWS_RAM_SIZE": "8G", "WINDOWS_CPU_CORES": "8",
+                   "WINDOWS_SHARED_DIR": str(self.storage / "shared-new"),
+                   "WINDOWS_OEM_DIR": str(self.storage / "oem-new")}
+        for key, value in changes.items():
+            with self.subTest(key=key):
+                self.envfile.write_text(baseline)
+                self.set_config(**{key: value})
+                self.assertEqual(self.c.status(), {"running": True, "mode": "render", "pending": True})
+                self.assertEqual(self.c.reconcile(), {"running": True, "pending": True})
+                self.assertEqual(self.data()["containers"], before)
+                stopped = copy.deepcopy(before)
+                stopped["windows"]["State"]["Running"] = False
+                self.update(containers=stopped)
+                self.assertEqual(self.c.status(), {"running": False, "mode": "render", "pending": True})
+                self.assertEqual(self.c.reconcile(), {"running": True, "pending": True})
+                self.assertEqual(self.data()["containers"], before)
+                self.assertEqual((Path(self.m["runtimeDir"]) / "hardware.json").read_bytes(), overlay)
+        self.assertEqual(sum("--podman-path" in a for a in self.calls()), 1)
+        self.assertEqual(sum(a[0] == "start" for a in self.calls()), len(changes))
+        self.no_destructive_calls()
+
+    def test_password_and_unknown_secret_changes_do_not_affect_public_labels(self):
+        self.c.reconcile()
+        before = copy.deepcopy(self.data()["containers"])
+        labels = self.overlay()["labels"]
+        self.assertRegex(labels[MOD.SETTINGS], r"^[0-9a-f]{64}$")
+        original = self.c.settings_digest()
+        self.set_config(WINDOWS_PASSWORD="changed-password-private-sentinel",
+                        WINDOWS_UNKNOWN_SECRET="unknown-private-sentinel", API_TOKEN="token-private-sentinel")
+        self.assertEqual(self.c.settings_digest(), original)
+        self.assertFalse(self.c.status()["pending"])
+        self.assertFalse(self.c.reconcile()["pending"])
+        stopped = copy.deepcopy(before)
+        stopped["windows"]["State"]["Running"] = False
+        self.update(containers=stopped)
+        self.assertFalse(self.c.reconcile()["pending"])
+        self.assertEqual(self.data()["containers"], before)
+        self.c.write_overlay(self.c.preflight())
+        self.assertEqual(self.overlay()["labels"], labels)
+        serialized = json.dumps(labels) + (Path(self.m["runtimeDir"]) / "hardware.json").read_text()
+        for secret in (self.password, "changed-password-private-sentinel", "unknown-private-sentinel", "token-private-sentinel"):
+            self.assertNotIn(secret, serialized)
+        self.assertEqual(sum("--podman-path" in a for a in self.calls()), 1)
+        self.no_destructive_calls()
+
+    def test_managed_container_without_settings_label_is_pending(self):
+        self.c.reconcile()
+        containers = self.data()["containers"]
+        del containers["windows"]["Config"]["Labels"][MOD.SETTINGS]
+        self.update(containers=containers)
+        self.assertTrue(self.c.status()["pending"])
+        self.assertTrue(self.c.reconcile()["pending"])
+        self.assertEqual(self.data()["containers"], containers)
+        self.assertEqual(sum("--podman-path" in a for a in self.calls()), 1)
+        self.no_destructive_calls()
+
     def test_active_legacy_adopted_without_password_or_hardware(self):
         self.seed(legacy=True)
         self.write_config(password=False)
@@ -398,11 +491,130 @@ class Runtime(unittest.TestCase):
         self.assertEqual(self.data()["containers"], {})
         self.no_destructive_calls()
 
-    def test_missing_disk_refuses_fresh_install(self):
+    def test_missing_disk_refuses_fresh_install_and_stopped_restart(self):
         self.disk.unlink()
-        with self.assertRaisesRegex(MOD.Refused, "existing Windows disk"): self.c.reconcile()
-        self.assertFalse(any("--podman-path" in a for a in self.calls()))
+        for stopped in (False, True):
+            with self.subTest(stopped=stopped):
+                if stopped:
+                    self.seed(running=False)
+                before = copy.deepcopy(self.data()["containers"])
+                with self.assertRaisesRegex(MOD.Refused, "existing Windows disk"): self.c.reconcile()
+                self.assertEqual(self.data()["containers"], before)
+        self.assertFalse(any(a[0] == "start" or "--podman-path" in a for a in self.calls()))
         self.assertEqual(list((self.storage / "storage").iterdir()), [])
+
+    def test_only_exact_root_primary_names_are_accepted_even_on_stopped_restart(self):
+        self.disk.unlink()
+        storage = self.storage / "storage"
+        # Every formerly accepted suffix, auxiliary media, nested primary names,
+        # case variants and unsupported data formats must not trigger creation.
+        names = ("setup.img", "boot.qcow2", "firmware.img", "OVMF_CODE.fd", "OVMF_VARS.fd",
+                 "backup/data.img", "backup/data.qcow2", "backup/old.vhdx",
+                 "other.img", "other.raw", "other.qcow", "other.qcow2", "other.vhd",
+                 "other.vhdx", "other.vmdk", "other.vdi", "data.raw", "data.qcow",
+                 "data.vhd", "data.vhdx", "data.vmdk", "data.vdi", "DATA.IMG", "data.IMG")
+        for name in names:
+            candidate = storage / name
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            candidate.write_text("preserved auxiliary or backup")
+            for stopped in (False, True):
+                with self.subTest(name=name, stopped=stopped):
+                    self.update(containers={})
+                    if stopped:
+                        self.seed(running=False, generation=self.m["generation"])
+                    before = copy.deepcopy(self.data()["containers"])
+                    with self.assertRaises(MOD.Refused): self.c.reconcile()
+                    self.assertEqual(self.data()["containers"], before)
+                    self.assertEqual(candidate.read_text(), "preserved auxiliary or backup")
+            candidate.unlink()
+        self.assertFalse(any(a[0] == "start" or "--podman-path" in a for a in self.calls()))
+        self.assertFalse(Path(self.m["runtimeDir"]).exists())
+
+    def test_empty_nonregular_and_ambiguous_primary_disks_refused(self):
+        self.disk.unlink()
+        storage = self.storage / "storage"
+        for primary in ("data.img", "data.qcow2"):
+            candidate = storage / primary
+            for kind in ("empty", "directory", "fifo"):
+                with self.subTest(primary=primary, kind=kind):
+                    if kind == "empty": candidate.touch()
+                    elif kind == "directory": candidate.mkdir()
+                    else: os.mkfifo(candidate)
+                    self.update(containers={})
+                    with self.assertRaises(MOD.Refused): self.c.reconcile()
+                    self.seed(running=False)
+                    before = copy.deepcopy(self.data()["containers"])
+                    with self.assertRaises(MOD.Refused): self.c.reconcile()
+                    self.assertEqual(self.data()["containers"], before)
+                    if kind == "directory": candidate.rmdir()
+                    else: candidate.unlink()
+        for raw, qcow in (("raw", "qcow"), ("raw", ""), ("", "qcow")):
+            with self.subTest(raw=raw, qcow=qcow):
+                self.disk.write_text(raw)
+                other = storage / "data.qcow2"
+                other.write_text(qcow)
+                self.update(containers={})
+                with self.assertRaises(MOD.Refused): self.c.reconcile()
+                self.seed(running=False)
+                before = copy.deepcopy(self.data()["containers"])
+                with self.assertRaises(MOD.Refused): self.c.reconcile()
+                self.assertEqual(self.data()["containers"], before)
+                self.assertEqual(self.disk.read_text(), raw)
+                self.assertEqual(other.read_text(), qcow)
+        self.assertFalse(any(a[0] == "start" or "--podman-path" in a for a in self.calls()))
+
+    def test_primary_format_is_explicit_and_disk_is_never_converted(self):
+        # Auxiliary and nested backup disks may coexist, but are never selected.
+        auxiliary = [self.disk.parent / name for name in ("setup.img", "boot.qcow2", "firmware.img", "backup/data.img")]
+        for path in auxiliary:
+            path.parent.mkdir(exist_ok=True)
+            path.write_text("untouched auxiliary")
+        for name, expected in (("data.img", "raw"), ("data.qcow2", "qcow2")):
+            with self.subTest(name=name):
+                if self.disk.name != name:
+                    self.disk = self.disk.rename(self.disk.with_name(name))
+                self.update(containers={})
+                before = self.disk.stat()
+                contents = self.disk.read_bytes()
+                self.assertEqual(self.c.reconcile(), {"running": True, "pending": False})
+                env = self.overlay()["environment"]
+                self.assertEqual(env["DISK_NAME"], "data")
+                self.assertEqual(env["DISK_FMT"], expected)
+                overlay = (Path(self.m["runtimeDir"]) / "hardware.json").read_bytes()
+                existing = copy.deepcopy(self.data()["containers"])
+                stopped = copy.deepcopy(existing)
+                stopped["windows"]["State"]["Running"] = False
+                self.update(containers=stopped)
+                self.assertEqual(self.c.reconcile(), {"running": True, "pending": False})
+                self.assertEqual(self.data()["containers"], existing)
+                self.assertEqual((Path(self.m["runtimeDir"]) / "hardware.json").read_bytes(), overlay)
+                self.assertEqual(self.disk.stat().st_ino, before.st_ino)
+                self.assertEqual(self.disk.stat().st_mtime_ns, before.st_mtime_ns)
+                self.assertEqual(self.disk.read_bytes(), contents)
+                self.assertEqual(set(self.disk.parent.iterdir()), {self.disk, *[p for p in auxiliary if p.parent == self.disk.parent], self.disk.parent / "backup"})
+                for path in auxiliary:
+                    self.assertEqual(path.read_text(), "untouched auxiliary")
+                self.no_destructive_calls()
+        self.assertEqual(sum("--podman-path" in a for a in self.calls()), 2)
+        self.assertEqual(sum(a[0] == "start" for a in self.calls()), 2)
+
+    def test_recursive_symlinks_refused_even_with_valid_primary(self):
+        backup = self.disk.parent / "backup"
+        backup.mkdir()
+        external = self.root / "external"
+        external.mkdir()
+        (external / "data.img").write_text("untouched")
+        for target in (external, external / "data.img", external / "missing.img"):
+            with self.subTest(target=target):
+                link = backup / "link"
+                link.symlink_to(target)
+                with self.assertRaises(MOD.Refused): self.c.preflight()
+                self.seed(running=False)
+                with self.assertRaises(MOD.Refused): self.c.reconcile()
+                self.assertEqual((external / "data.img").read_text(), "untouched")
+                link.unlink()
+        self.assertFalse(any(a[0] == "start" or "--podman-path" in a for a in self.calls()))
+        self.no_destructive_calls()
 
     def test_missing_directory_does_not_create_storage(self):
         (self.storage / "shared").rmdir()
