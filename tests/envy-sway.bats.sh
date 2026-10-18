@@ -56,9 +56,9 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
     assert "evdev:atkbd:dmi:*:svnHP:pnHPENVYLaptop17m-ce1xxx:*" in c["keyboardHwdb"],name
     assert "KEYBOARD_KEY_c8=reserved" in c["keyboardHwdb"],name
 assert v["normal"]["host"]=="envy" and v["normal"]["label"]=="sway"
-for package in ["swayfx","waybar","nwg-dock","swaylock-effects","wl-screenrec","rofi","nautilus","colloid-icon-theme","SwayNotificationCenter","quickshell"]:
+for package in ["swayfx","waybar","nwg-dock","orgm-qylock","wl-screenrec","rofi","nautilus","colloid-icon-theme","SwayNotificationCenter","quickshell"]:
     assert package in v["normal"]["packages"],package
-assert not {"hyprland","hypridle","nwg-dock-hyprland","dunst","swaylock"} & set(v["normal"]["packages"])
+assert not {"hyprland","hypridle","nwg-dock-hyprland","dunst","swaylock","swaylock-effects"} & set(v["normal"]["packages"])
 assert "readlink -f /dev/dri/by-path/pci-0000:00:02.0-card" in v["session"]
 assert "WLR_RENDER_DRM_DEVICE" in v["session"]
 assert "export PATH=\"$HOME/.local/bin:$PATH\"" in v["session"]
@@ -80,4 +80,5 @@ python3 "$ROOT/tests/sway-wallpapers.test.py"
 python3 "$ROOT/tests/envy-keyboard.test.py"
 python3 "$ROOT/tests/sway-lock.test.py"
 python3 "$ROOT/tests/sway-keyring.test.py"
+python3 "$ROOT/tests/sway-game-mode.test.py"
 bash "$ROOT/tests/sway-firefox-tabs.bats.sh"

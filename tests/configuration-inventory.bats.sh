@@ -25,7 +25,7 @@ jq -e '.aliases == {}' <<<"$inventory_json" >/dev/null \
 jq -e '
   [.configurations | to_entries[] | {key: .key, host: .value.hostName,
     user: .value.userName, desktop: .value.profileName}] == [
-    {key: "envy", host: "envy", user: "osmarg", desktop: "ryoku"},
+    {key: "envy", host: "envy", user: "osmarg", desktop: "sway"},
     {key: "ero", host: "ero", user: "osmarg", desktop: "i3"},
     {key: "jarq", host: "jarq", user: "jarq", desktop: "i3"},
     {key: "lenovo", host: "lenovo", user: "osmarg", desktop: "ryoku"},

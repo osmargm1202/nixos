@@ -13,6 +13,9 @@ Item {
     property bool submitting: false
     property string pendingPassword: ""
     property string feedback: ""
+    readonly property bool passwordWaiting: passwordPam.responseRequired
+    readonly property bool passwordActive: passwordPam.active
+    property int promptCount: 0
     signal accepted()
 
     readonly property var config: settings.config || ({})
@@ -60,7 +63,12 @@ Item {
             auth.pendingPassword = password
             auth.submitting = true
             auth.feedback = "Validando…"
-            passwordPam.start()
+            if (!passwordPam.start()) {
+                auth.pendingPassword = ""
+                auth.submitting = false
+                auth.feedback = "No se pudo iniciar la autenticación. Vuelve a intentarlo."
+                api.loginFailed()
+            }
         }
         function suspend() { if (auth.secure) Quickshell.execDetached(["systemctl", "suspend"]) }
         function reboot() { if (auth.secure) Quickshell.execDetached(["systemctl", "reboot"]) }
@@ -84,6 +92,7 @@ Item {
         config: "orgm-qylock-pw"
         configDirectory: auth.settings.pamDirectory || ""
         onResponseRequiredChanged: {
+            if (responseRequired) auth.promptCount += 1
             if (responseRequired && auth.pendingPassword !== "") {
                 const password = auth.pendingPassword
                 auth.pendingPassword = ""
@@ -130,7 +139,7 @@ Item {
         interval: 1500
         onTriggered: if (auth.secure && !auth.authenticated && auth.settings.fingerprint) {
             api.fingerprintState = "scanning"
-            fingerprintPam.start()
+            if (!fingerprintPam.start()) api.fingerprintState = "unavailable"
         }
     }
     onSecureChanged: {

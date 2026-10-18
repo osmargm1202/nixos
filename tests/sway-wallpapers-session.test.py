@@ -226,6 +226,12 @@ try:
                 'unit=next((a.removeprefix("--unit=") for a in sys.argv if a.startswith("--unit=")),sys.argv[-1])\n'
                 'assert re.fullmatch(r"orgm-sway-video-[0-9a-f]{32}\\.service",unit),sys.argv\n'
                 f'with open({str(HOME/"test-units")!r},"a") as f: f.write(unit+"\\n")\n'
+                'if os.path.basename(sys.argv[0]) == "systemd-run":\n'
+                ' from pathlib import Path\n'
+                ' import runpy\n'
+                f' module=runpy.run_path({str(ROOT/"dotfiles/config/profiles/sway/.local/bin/orgm-sway")!r})\n'
+                ' players=[p.name for p in Path("/proc").iterdir() if p.name.isdecimal() and module["is_session_wallpaper_process"](p)]\n'
+                ' assert not players,("old wallpaper still alive before new launch",players)\n'
                 f'os.environ["DBUS_SESSION_BUS_ADDRESS"]={os.environ.get("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/"+str(os.getuid())+"/bus")!r}\n'
                 f'os.environ["XDG_RUNTIME_DIR"]={os.environ["XDG_RUNTIME_DIR"]!r}\n'
                 f'os.execv({real!r},[{real!r}]+sys.argv[1:])\n')
@@ -249,9 +255,47 @@ try:
         assert Path((config/'sway/wallpaper-preview').read_text().strip()).is_file()
         time.sleep(1.5)  # longer than the clip: loop must keep the player alive
         command('systemctl', '--user', 'is-active', '--quiet', unit).check_returncode()
+        pid = command('systemctl', '--user', 'show', '--property=MainPID', '--value', unit).stdout.strip()
+        player_environment = (Path('/proc')/pid/'environ').read_bytes().split(b'\0')
+        if b'__NV_PRIME_RENDER_OFFLOAD=1' in player_environment:
+            import xml.etree.ElementTree as ET
+            report = command('nvidia-smi', '-q', '-x')
+            report.check_returncode()
+            gpu_pids = {p.text for p in ET.fromstring(report.stdout).findall('.//process_info/pid')}
+            assert pid in gpu_pids, ('offloaded player missing from NVIDIA process list', pid, gpu_pids)
+            print('PASS: nvidia-offload player is present in NVIDIA GPU process list', flush=True)
+        else:
+            print('INFO: private player uses default GPU (NVIDIA unavailable or offload fallback)', flush=True)
         layers = json.loads(command(real_swaymsg, '-r', '-t', 'get_outputs').stdout)
         assert all(any(l['namespace'] == 'mpvpaper' for l in o.get('layer_shell_surfaces', [])) for o in layers), layers
-        command(str(ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-sway'), 'wallpaper').check_returncode()
+        # Deliberately create an unrecorded duplicate in ONLY this compositor;
+        # the next selection must collect it, not just the saved systemd unit.
+        stray = subprocess.Popen([str(Path(tools)/'mpvpaper'), '-o', 'no-audio loop-file=inf', 'ALL', str(video)],
+            env=env, cwd=HOME, stdout=log, stderr=log, start_new_session=True)
+        children.append(stray)
+        time.sleep(.4)
+        assert stray.poll() is None
+        other_video = HOME/'other video.mp4'
+        shutil.copyfile(video, other_video)
+        backend_command = str(ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-sway')
+        for selection in (other_video, video, other_video, video):
+            command(backend_command, 'wallpaper-set', str(selection)).check_returncode()
+        assert stray.wait(timeout=3) is not None
+        # Race two setters; flock + pre-launch assertions must still permit no
+        # overlap, and the final compositor must have exactly one player.
+        setters = [subprocess.Popen([backend_command, 'wallpaper-set', str(video)], env=env,
+                   cwd=HOME, stdout=log, stderr=log, start_new_session=True) for _ in range(2)]
+        children.extend(setters)
+        assert all(process.wait(timeout=10) == 0 for process in setters)
+        def single_player_layers():
+            outputs = json.loads(command(real_swaymsg, '-r', '-t', 'get_outputs').stdout)
+            # Type=exec does not imply the first Wayland surface is committed.
+            return outputs if all(sum(l['namespace'] == 'mpvpaper' for l in o.get('layer_shell_surfaces', [])) == 1
+                                  for o in outputs) else None
+        layers = wait(single_player_layers, 'one player mapped on each output after concurrent setters')
+        assert all(not any(l['namespace'] == 'wallpaper' for l in o.get('layer_shell_surfaces', [])) for o in layers), layers
+        unit = (config/'sway/wallpaper-video-unit').read_text().strip()
+        command(backend_command, 'wallpaper').check_returncode()
         restored = (config/'sway/wallpaper-video-unit').read_text().strip()
         assert restored != unit
         assert command('systemctl', '--user', 'is-active', '--quiet', unit).returncode != 0
@@ -265,7 +309,7 @@ try:
         assert state.read_text().strip() == str(webp)
         assert command('systemctl', '--user', 'is-active', '--quiet', restored).returncode != 0
         assert not (HOME/'PWNED').exists()
-        print('PASS: real WebP, lazy video thumbnail, two-output looping mpvpaper, restore and image switch', flush=True)
+        print('PASS: WebP/video, stop-before-start, stray-player cleanup, concurrent setters, loop, restore and image switch', flush=True)
     # A missing executable must also release busy state and permit cancellation.
     backend = ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-sway'
     import runpy

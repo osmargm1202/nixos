@@ -40,7 +40,32 @@ let
       description = "Experimental fprintd with Synaptics Tudor persistent pairing storage";
     };
   });
+  probeSource = pkgs.replaceVars ./synatudor-probe.py {
+    python = pkgs.python3;
+    inherit fprintd;
+    dbus = pkgs.dbus;
+    # polkit's default output is "bin"; the daemon lives in "out".
+    polkit = pkgs.polkit.out;
+  };
+  probe = pkgs.runCommand "envy-fingerprint-test" { } ''
+    install -Dm755 ${probeSource} "$out/bin/envy-fingerprint-test"
+    # Validate the substituted paths, not just the source placeholders. Loading
+    # definitions does not invoke main(), D-Bus, polkit, or a fingerprint reader.
+    ${pkgs.python3}/bin/python3 - "$out/bin/envy-fingerprint-test" <<'PY'
+    import os, runpy, sys
+    config = runpy.run_path(sys.argv[1])
+    paths = [config['POLKIT'] / 'lib/polkit-1/polkitd',
+             config['DBUS'] / 'bin/dbus-daemon',
+             config['DBUS'] / 'bin/dbus-send',
+             config['FPRINTD'] / 'libexec/fprintd']
+    paths += [config['FPRINTD'] / 'bin' / name for name in
+              ['fprintd-list', 'fprintd-enroll', 'fprintd-verify']]
+    for path in paths:
+        assert path.is_file() and os.access(path, os.X_OK), str(path)
+    print('PASS: all private-probe runtime executables exist')
+    PY
+  '';
 in
 {
-  inherit libfprint fprintd;
+  inherit libfprint fprintd probe;
 }

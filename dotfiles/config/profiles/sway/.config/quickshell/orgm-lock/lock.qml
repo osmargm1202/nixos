@@ -11,6 +11,7 @@ ShellRoot {
     property bool authenticated: false
     property bool emergency: false
     property bool ending: false
+    property int surfaceCount: 0
     readonly property var sddm: backendAuth.sddm
     readonly property var config: backendAuth.config
     readonly property var userModel: backendAuth.userModel
@@ -37,6 +38,7 @@ ShellRoot {
         id: finish
         onTriggered: {
             if (!root.authenticated) return
+            if (ready.path) ready.setText("unlocked")
             session.locked = false
             root.ending = true
             Qt.callLater(Qt.quit)
@@ -52,7 +54,11 @@ ShellRoot {
         // Deliberately no IPC unlock/authenticate method.
         function status(): string {
             return JSON.stringify({secure: session.secure, authenticated: root.authenticated,
-                theme: root.settings.id || "", fallback: root.emergency, user: root.settings.user || ""})
+                theme: root.settings.id || "", fallback: root.emergency, user: root.settings.user || "",
+                surfaces: root.surfaceCount,
+                submitting: backendAuth.submitting, feedback: backendAuth.feedback,
+                passwordWaiting: backendAuth.passwordWaiting, passwordActive: backendAuth.passwordActive,
+                promptCount: backendAuth.promptCount})
         }
     }
     WlSessionLock {
@@ -63,6 +69,8 @@ ShellRoot {
         }
         surface: WlSessionLockSurface {
             color: "black"
+            Component.onCompleted: root.surfaceCount += 1
+            Component.onDestruction: root.surfaceCount -= 1
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.AllButtons
@@ -71,7 +79,9 @@ ShellRoot {
             Loader {
                 id: theme
                 anchors.fill: parent
-                active: root.configured && !root.emergency
+                // Acquire/paint the minimal secure surface before loading a
+                // potentially heavy skin/video; before-sleep must not wait on it.
+                active: session.secure && root.configured && !root.emergency
                 source: root.settings.themeUrl ? root.settings.themeUrl + "/Main.qml" : ""
                 onLoaded: item.forceActiveFocus()
             }

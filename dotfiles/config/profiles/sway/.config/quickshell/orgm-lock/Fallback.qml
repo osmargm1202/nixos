@@ -30,6 +30,7 @@ Rectangle {
                 echoMode: TextInput.Password
                 selectByMouse: false; focus: true
                 enabled: !fallback.auth.submitting
+                onEnabledChanged: if (enabled && fallback.visible) forceActiveFocus()
                 onAccepted: {
                     fallback.auth.sddm.login("", text, 0)
                     text = ""

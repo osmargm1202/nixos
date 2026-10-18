@@ -25,6 +25,10 @@
   services.btrfs.autoScrub.enable = true;
   services.smartd.enable = true;
   services.fprintd.enable = true;
+  # Physical enrollment/verification passed; retain its private pairing state.
+  orgm.envy.fingerprint.experimental.enable = true;
+  # Independent lock conversation only; managed PAM stays password-only.
+  orgm.sway.fingerprint.enable = true;
   networking.networkmanager.wifi.powersave = false;
 
   services.openssh.settings = {

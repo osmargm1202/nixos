@@ -38,7 +38,9 @@ nix eval --impure --raw --expr '
   assert check "Sway must use SwayFX and its wlroots portal"
     (c.programs.sway.package.pname == "swayfx"
       && c.xdg.portal.wlr.enable
-      && builtins.all stock [ "waybar" "swayidle" "swaylock-effects" ]
+      && builtins.all stock [ "waybar" "swayidle" ]
+      && builtins.any (p: lib.getName p == "orgm-qylock") c.environment.systemPackages
+      && !(builtins.any (p: builtins.elem (lib.getName p) [ "swaylock" "swaylock-effects" ]) c.environment.systemPackages)
       && !(c.environment.etc ? "scrolloverview.so")
       && !(c.environment.etc ? "hyprglass.so")
       && !(c.environment.etc ? "HyprWindowShade.so"));

@@ -1,165 +1,271 @@
 #!/usr/bin/env python3
-"""Exercise the lock launcher without ever locking the test runner's session."""
+"""Fast qylock/SDDM contracts. No compositor, PAM, Polkit or physical devices."""
+import fcntl
+import importlib.machinery
+import importlib.util
+import json
 import os
 from pathlib import Path
-import runpy
 import stat
 import subprocess
 import tempfile
+import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
-ROOT = Path(__file__).resolve().parent.parent
-MODULE = runpy.run_path(str(ROOT / 'dotfiles/config/profiles/sway/.local/bin/orgm-sway-lock'))
-ENV = MODULE['main'].__globals__
-PROFILE = ROOT / 'dotfiles/config/profiles/sway/.config/swaylock'
-
-
-class SwayLock(unittest.TestCase):
-    def test_effects_options_keep_values_and_order_without_shell_parsing(self):
-        with tempfile.TemporaryDirectory() as directory:
-            config = Path(directory) / 'effects.conf'
-            config.write_text('# comment\nclock\ntimestr=%I:%M %p\neffect-scale=0.5\neffect-scale=2\n')
-            self.assertEqual(MODULE['effects_arguments'](config),
-                             ['--clock', '--timestr', '%I:%M %p', '--effect-scale', '0.5', '--effect-scale', '2'])
-            config.write_text('bad option=1\n')
-            with self.assertRaises(ValueError):
-                MODULE['effects_arguments'](config)
-
-    def test_skin_has_effects_without_screenshots_or_grace(self):
-        args = MODULE['effects_arguments'](PROFILE / 'effects.conf')
-        self.assertIn('--clock', args)
-        self.assertIn('--indicator', args)
-        self.assertIn('--effect-blur', args)
-        self.assertEqual(args[args.index('--grace') + 1], '0')
-        self.assertNotIn('--screenshots', args)
-        self.assertNotIn('--effect-custom', args)
-        base = (PROFILE / 'config').read_text()
-        for option in ('clock', 'effect-blur', 'fade-in', 'grace'):
-            self.assertFalse(any(line.startswith(option) for line in base.splitlines()))
-
-    def test_selected_palette_is_used_and_invalid_colors_are_not_interpreted(self):
-        with tempfile.TemporaryDirectory() as directory:
-            palette = Path(directory) / 'palette.css'
-            palette.write_text('\n'.join(f'@define-color {name} #{color};' for name, color in {
-                'base': '071422', 'text': 'f4f8ff', 'blue': '71b7ff', 'green': '86efac',
-                'red': 'fda4af', 'yellow': 'fde68a'}.items()))
-            args = MODULE['palette_arguments'](palette)
-            self.assertEqual(args[args.index('--ring-color') + 1], '71b7ff99')
-            self.assertEqual(args[args.index('--inside-color') + 1], '071422b8')
-            palette.write_text('@define-color base #$(touch /tmp/bad);')
-            self.assertEqual(MODULE['palette_arguments'](palette), [])
-
-    def launch(self, effects=True, image=True, failure=False):
-        with tempfile.TemporaryDirectory() as directory:
-            home = Path(directory)
-            config = home / '.config'
-            (config / 'swaylock').mkdir(parents=True)
-            (config / 'sway').mkdir()
-            (config / 'swaylock/config').write_text((PROFILE / 'config').read_text())
-            (config / 'swaylock/effects.conf').write_text('clock\ngrace=99\n')
-            picture = home / "a  b:$(never-execute);'wallpaper.jpg"
-            picture.write_bytes(b'test image')
-            (config / 'sway/wallpaper').write_text(str(picture if image else home / 'missing.png') + '\n')
-            calls = []
-
-            def run(args, **kwargs):
-                calls.append((args, kwargs))
-                self.assertEqual(args[-1], '--daemonize')
-                self.assertTrue(kwargs['check'])
-                self.assertNotIn('shell', kwargs)
-                cwd = Path(kwargs['cwd'])
-                self.assertEqual(stat.S_IMODE(cwd.stat().st_mode), 0o700)
-                if image:
-                    self.assertEqual(args[args.index('--image') + 1], ':background')
-                    self.assertEqual((cwd / 'background').resolve(), picture)
-                    self.assertNotIn(str(picture), args)
-                else:
-                    self.assertNotIn('--image', args)
-                if failure:
-                    raise subprocess.CalledProcessError(1, args)
-                return subprocess.CompletedProcess(args, 0)
-
-            with patch.dict(os.environ, XDG_CONFIG_HOME=str(config)), \
-                 patch.dict(ENV, locker_binary=lambda: ('/bin/locker', effects)), \
-                 patch.object(ENV['subprocess'], 'run', side_effect=run):
-                if failure:
-                    with self.assertRaises(subprocess.CalledProcessError):
-                        MODULE['main']([])
-                else:
-                    MODULE['main']([])
-            self.assertEqual(len(calls), 1)
-            self.assertFalse(Path(calls[0][1]['cwd']).exists(), 'Temporary symlink must be cleaned up')
-            return calls[0][0]
-
-    def test_effects_launch_is_safe_with_arbitrary_wallpaper_filenames(self):
-        args = self.launch()
-        self.assertIn('--clock', args)
-        grace = [args[i + 1] for i, arg in enumerate(args) if arg == '--grace']
-        self.assertEqual(grace[-1], '0', 'Style snippets cannot enable an unlock grace period')
-
-    def test_plain_fallback_does_not_receive_unsupported_effects(self):
-        args = self.launch(effects=False)
-        self.assertNotIn('--clock', args)
-        self.assertNotIn('--grace', args)
-
-    def test_missing_wallpaper_keeps_a_solid_color_lock(self):
-        self.launch(image=False)
-
-    def test_video_wallpaper_uses_only_cached_png_or_solid_color(self):
-        with tempfile.TemporaryDirectory() as directory:
-            config = Path(directory)
-            (config/'sway').mkdir()
-            video = config/'video.mp4'
-            video.write_bytes(b'not an image')
-            frame = config/'frame.png'
-            frame.write_bytes(b'test frame')
-            (config/'sway/wallpaper').write_text(str(video)+'\n')
-            preview = config/'sway/wallpaper-preview'
-            with patch.dict(os.environ, XDG_CONFIG_HOME=str(config)):
-                self.assertIsNone(MODULE['wallpaper']())
-                preview.write_text(str(frame)+'\n')
-                self.assertEqual(MODULE['wallpaper'](), frame)
-                frame.unlink()
-                self.assertIsNone(MODULE['wallpaper']())
-                preview.write_text(str(video)+'\n')
-                self.assertIsNone(MODULE['wallpaper']())
-
-    def test_locker_failure_propagates_and_cleans_up(self):
-        self.launch(failure=True)
-
-    def test_effects_binary_is_preferred_but_plain_binary_remains_a_fallback(self):
-        with tempfile.TemporaryDirectory() as directory:
-            fallback = Path(directory) / 'orgm-swaylock-effects-package/bin/swaylock'
-            fallback.parent.mkdir(parents=True)
-            fallback.write_text('test')
-            fallback.chmod(0o755)
-            plain = Path(directory) / 'plain-swaylock'
-            plain.write_text('test')
-            plain.chmod(0o755)
-
-            def help_output(args, **kwargs):
-                return subprocess.CompletedProcess(args, 1, '', '--effect-blur' if args[0] == str(fallback) else 'plain')
-
-            with patch.dict(os.environ, XDG_STATE_HOME=directory), \
-                 patch.object(ENV['shutil'], 'which', return_value=str(plain)), \
-                 patch.object(ENV['subprocess'], 'run', side_effect=help_output):
-                self.assertEqual(MODULE['locker_binary'](), (str(fallback), True))
-                fallback.unlink()
-                self.assertEqual(MODULE['locker_binary'](), (str(plain), False))
-
-    def test_all_lock_entry_points_use_one_helper(self):
-        profile = ROOT / 'dotfiles/config/profiles/sway/.config'
-        config = (profile / 'sway/config').read_text()
-        idle = (profile / 'swayidle/config').read_text()
-        self.assertIn('bindsym $mod+Mod1+l $exec orgm-sway-lock', config)
-        self.assertEqual([line for line in config.splitlines() if line.startswith('bindsym $mod+l ')],
-                         ['bindsym $mod+l $exec orgm-sway-lock'])
-        self.assertIn('bindsym $mod+Right focus right', config)
-        self.assertIn("timeout 600 'orgm-sway-lock'", idle)
-        self.assertIn("before-sleep 'orgm-sway-lock'", idle)
-        self.assertNotIn('swaylock -f', idle)
+ROOT = Path(__file__).resolve().parents[1]
+loader = importlib.machinery.SourceFileLoader('orgm_qylock', str(ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-qylock'))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+client = importlib.util.module_from_spec(spec); loader.exec_module(client)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class Qylock(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='qylock-unit-')
+        self.root = Path(self.temp.name)
+        self.home = self.root/'home'; self.home.mkdir()
+        self.runtime = self.root/'runtime'; self.runtime.mkdir(mode=0o700)
+        self.environment = patch.dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home/'.config'),
+            XDG_STATE_HOME=str(self.home/'.local/state'), XDG_RUNTIME_DIR=str(self.runtime),
+            WAYLAND_DISPLAY='wayland-private-test', SWAYSOCK=str(self.runtime/'sway-ipc.test.sock'))
+        self.environment.start()
+        self.package = self.root/'package'
+        base = self.package/'share/orgm-qylock'; base.mkdir(parents=True)
+        for slug in ('winter','forest','clockwork/orbital'):
+            theme = base/'themes'/slug; theme.mkdir(parents=True)
+            (theme/'Main.qml').write_text('import QtQuick\nItem {}\n')
+        self.items = [dict(id=s,name=s,config={},preview=s.replace('/','--')+'.png')
+                      for s in ('winter','forest','clockwork/orbital')]
+        (base/'catalog.json').write_text(json.dumps(self.items))
+        self.metadata = dict(defaultTheme='forest', catalog=str(base/'catalog.json'), themes=str(base/'themes'),
+            previews=str(base/'previews'), qs='/nix/store/test/bin/qs', apply='/nix/store/test/bin/apply',
+            pamDirectory='/nix/store/test/pam', lockQml='/nix/store/test/lock.qml')
+        source = (ROOT/'nixos/profiles/sway/qylock-apply.py').read_text()
+        source = source.replace('@package@',str(self.package)).replace('@default_theme@','forest').replace('@qt_environment@','{"QML_XHR_ALLOW_FILE_READ":"1"}')
+        self.admin = types.ModuleType('qylock_admin_unit')
+        exec(compile(source,'qylock_admin_unit','exec'), self.admin.__dict__)
+        self.state = self.root/'state'
+        self.dropin = self.root/'etc/90-orgm-qylock.conf'
+
+    def tearDown(self):
+        self.environment.stop();self.temp.cleanup()
+
+    def apply(self, slug):
+        self.admin.apply_theme(slug,self.package,self.state,self.dropin)
+
+    def test_current_theme_migrates_legacy_and_validates(self):
+        self.assertEqual(client.current_theme(self.metadata),'forest')
+        legacy = client.config_home()/'qylock/theme';legacy.parent.mkdir(parents=True)
+        legacy.write_text('winter\n');self.assertEqual(client.current_theme(self.metadata),'winter')
+        legacy.write_text('../escape');self.assertEqual(client.current_theme(self.metadata),'forest')
+
+    def test_atomic_private_text(self):
+        path=self.home/'private/pref';client.atomic_text(path,'winter\n')
+        self.assertEqual(path.read_text(),'winter\n')
+        self.assertEqual(stat.S_IMODE(path.stat().st_mode),0o600)
+        self.assertEqual(list(path.parent.glob('.pref-*')),[])
+
+    def test_fingerprint_is_explicit_opt_in_no_default_probe(self):
+        with patch.object(client.subprocess,'run') as run:
+            self.assertFalse(client.fingerprint_available(dict(fingerprintList='/test/fprintd-list'),'test'))
+            run.assert_not_called()
+
+    def test_nix_fingerprint_opt_in_and_user_opt_out_do_not_probe(self):
+        enabled=dict(fingerprintEnabled=True)
+        with patch.object(client.subprocess,'run') as run:
+            self.assertTrue(client.fingerprint_available(enabled,'test'))
+            preference=client.config_home()/'orgm-qylock/fingerprint'
+            preference.parent.mkdir(parents=True);preference.write_text('off\n')
+            self.assertFalse(client.fingerprint_available(enabled,'test'))
+            run.assert_not_called()
+
+    def test_unknown_selection_never_invokes_polkit(self):
+        with patch.object(client.subprocess,'run') as run:
+            with self.assertRaises(ValueError):client.select_theme(self.metadata,'../../etc')
+            run.assert_not_called()
+
+    def test_cancelled_authorization_never_changes_selection(self):
+        legacy=client.config_home()/'qylock/theme';legacy.parent.mkdir(parents=True);legacy.write_text('winter\n')
+        with patch.object(Path,'resolve',return_value=Path('/nix/store/test/bin/apply')), \
+                patch.object(Path,'stat',return_value=types.SimpleNamespace(st_uid=0,st_mode=0o100555)), \
+                patch.object(client.subprocess,'run',return_value=subprocess.CompletedProcess([],126)) as run, \
+                patch.object(client,'atomic_text') as write:
+            with self.assertRaisesRegex(RuntimeError,'autorización cancelada'):
+                client.select_theme(self.metadata,'forest')
+            self.assertEqual(run.call_args.args[0],['/run/wrappers/bin/pkexec','/nix/store/test/bin/apply','select','forest'])
+            write.assert_not_called()
+        self.assertEqual(legacy.read_text(),'winter\n')
+
+    def test_picker_catalog_only_pinned_ids_and_static_previews(self):
+        with patch.object(client.subprocess,'run',side_effect=OSError):data=client.picker_catalog(self.metadata)
+        self.assertEqual(len(data['items']),3)
+        self.assertTrue(all(i['url'].startswith('file:///') and i['url'].endswith('.png') for i in data['items']))
+        self.assertEqual(data['items'][2]['id'],'clockwork/orbital')
+
+    def test_runtime_requires_private_real_directory(self):
+        self.runtime.chmod(0o755)
+        with self.assertRaises(ValueError):client.runtime_paths()
+        self.runtime.chmod(0o700)
+        runtime,lock,information=client.runtime_paths()
+        self.assertEqual(runtime,self.runtime)
+        self.assertRegex(lock.name,r'^orgm-qylock-[0-9a-f]{20}\.lock$')
+
+    def test_duplicate_lock_waits_for_real_secure_state(self):
+        _,lock,info=client.runtime_paths()
+        descriptor=os.open(lock,os.O_CREAT|os.O_RDWR,0o600)
+        try:
+            fcntl.flock(descriptor,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            with patch.object(client,'compositor_secure',return_value=True) as secure, patch.object(client.subprocess,'Popen') as popen:
+                self.assertEqual(client.lock(self.metadata),0)
+                secure.assert_called_once_with(self.metadata,info);popen.assert_not_called()
+        finally:os.close(descriptor)
+
+    def test_launcher_hands_lock_fd_to_supervisor_and_confirms_secure(self):
+        held=[]
+        def spawn(args,**kwargs):
+            instance=Path(args[-2]);(instance/'ready').write_text('secure')
+            held.extend(kwargs['pass_fds']);self.assertTrue(kwargs['start_new_session'])
+            self.assertTrue(stat.S_ISREG(os.fstat(held[0]).st_mode))
+            self.assertEqual(args[-3],'_supervise')
+            return types.SimpleNamespace(poll=lambda:None)
+        with patch.object(client,'lock_settings',return_value={'test':'private'}), \
+                patch.object(client,'compositor_secure',return_value=True), patch.object(client.subprocess,'Popen',side_effect=spawn):
+            self.assertEqual(client.lock(self.metadata),0)
+        with self.assertRaises(OSError):os.fstat(held[0])
+
+    def test_authenticated_exit_is_not_acknowledged_as_secure(self):
+        info=self.root/'instance.json';info.write_text('{"pid":123}')
+        response=subprocess.CompletedProcess([],0,'{"secure":true,"authenticated":true}')
+        with patch.object(client.subprocess,'run',return_value=response):
+            self.assertFalse(client.compositor_secure(self.metadata,info))
+
+    def test_before_sleep_relocks_after_authenticated_instance_exits(self):
+        _,path,info=client.runtime_paths();held=os.open(path,os.O_CREAT|os.O_RDWR,0o600)
+        fcntl.flock(held,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        checked=[]
+        def secure(*args):
+            checked.append(True)
+            if len(checked)==1:
+                fcntl.flock(held,fcntl.LOCK_UN)
+                return False
+            return True
+        def spawn(args,**kwargs):
+            (Path(args[-2])/'ready').write_text('secure')
+            return types.SimpleNamespace(poll=lambda:None)
+        try:
+            with patch.object(client,'compositor_secure',side_effect=secure), \
+                    patch.object(client,'lock_settings',return_value={'test':'private'}), \
+                    patch.object(client.subprocess,'Popen',side_effect=spawn) as popen:
+                self.assertEqual(client.lock(self.metadata),0)
+                popen.assert_called_once();self.assertEqual(len(checked),2)
+        finally:os.close(held)
+
+    def test_untrusted_lock_file_symlink_rejected(self):
+        _,lock,_=client.runtime_paths();target=self.root/'unrelated';target.write_text('keep')
+        lock.symlink_to(target)
+        with self.assertRaises(OSError):client.lock(self.metadata)
+        self.assertEqual(target.read_text(),'keep')
+
+    def test_root_helper_rejects_unknown_before_any_mutation(self):
+        with self.assertRaises(ValueError):self.apply('../escape')
+        self.assertFalse(self.state.exists());self.assertFalse(self.dropin.exists())
+
+    def test_root_helper_shared_atomic_selection(self):
+        self.apply('winter')
+        self.assertEqual((self.state/'sddm/current').resolve(),(self.package/'share/orgm-qylock/themes/winter').resolve())
+        self.assertEqual((self.state/'selection').read_text(),'winter\n')
+        self.assertIn('Current=current',self.dropin.read_text())
+        self.assertIn('QML_XHR_ALLOW_FILE_READ=1',self.dropin.read_text())
+        self.apply('clockwork/orbital')
+        self.assertEqual((self.state/'selection').read_text(),'clockwork/orbital\n')
+        self.assertFalse(list(self.state.rglob('.qylock-backup-*')))
+        self.assertFalse(list(self.dropin.parent.glob('.qylock-backup-*')))
+
+    def test_root_helper_never_restarts_services(self):
+        with patch.object(subprocess,'run',side_effect=AssertionError('No external commands')):
+            self.apply('forest')
+
+    def test_root_helper_preserves_unmanaged_dropin(self):
+        self.dropin.parent.mkdir();self.dropin.write_text('administrator configuration\n')
+        with self.assertRaises(ValueError):self.apply('forest')
+        self.assertEqual(self.dropin.read_text(),'administrator configuration\n')
+        self.assertFalse((self.state/'selection').exists())
+
+    def test_root_helper_rejects_writable_state(self):
+        self.state.mkdir(mode=0o777);self.state.chmod(0o777)
+        with self.assertRaises(ValueError):self.apply('forest')
+
+    def test_root_helper_rejects_symlink_and_nonlink_collisions(self):
+        self.state.mkdir();(self.state/'sddm').symlink_to(self.home,target_is_directory=True)
+        with self.assertRaises(ValueError):self.apply('winter')
+        (self.state/'sddm').unlink();(self.state/'sddm').mkdir()
+        (self.state/'sddm/current').write_text('preserve')
+        with self.assertRaises(ValueError):self.apply('winter')
+        self.assertEqual((self.state/'sddm/current').read_text(),'preserve')
+
+    def test_root_helper_rejects_catalog_path_escape(self):
+        outside=self.root/'outside';outside.mkdir();(outside/'Main.qml').touch()
+        theme=self.package/'share/orgm-qylock/themes/winter'
+        (theme/'Main.qml').unlink();theme.rmdir();theme.symlink_to(outside)
+        with self.assertRaises(ValueError):self.apply('winter')
+        self.assertFalse(self.state.exists())
+
+    def test_root_helper_rolls_back_partial_transaction(self):
+        self.apply('winter')
+        previous=self.dropin.read_bytes();old_link=os.readlink(self.state/'sddm/current')
+        original=self.admin.os.replace
+        def fail_commit(source,destination):
+            if Path(source).name.startswith('.current-'):raise OSError('injected commit failure')
+            return original(source,destination)
+        with patch.object(self.admin.os,'replace',side_effect=fail_commit):
+            with self.assertRaises(OSError):self.apply('forest')
+        self.assertEqual(self.dropin.read_bytes(),previous)
+        self.assertEqual(os.readlink(self.state/'sddm/current'),old_link)
+        self.assertEqual((self.state/'selection').read_text(),'winter\n')
+
+    def test_qml_security_contract(self):
+        base=ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock'
+        root=(base/'lock.qml').read_text();auth=(base/'Auth.qml').read_text()
+        self.assertIn('WlSessionLock {',root);self.assertIn('session.secure',root)
+        self.assertIn('Quickshell.watchFiles = false',root)
+        self.assertIn('if (!root.authenticated) return',root)
+        self.assertIn('PamResult.Success',auth)
+        self.assertNotIn('function unlock(',root)
+        self.assertNotIn('QS_TESTING',root)
+        self.assertNotIn('killall',root+auth)
+        self.assertNotIn('Screencopy',root+auth)
+        picker=(base.parent/'orgm-locks/components/MenuWindow.qml').read_text()
+        self.assertIn('&& !busy',picker)
+
+    def test_all_lock_entrypoints_use_qylock(self):
+        base=ROOT/'dotfiles/config/profiles/sway'
+        config=(base/'.config/sway/config').read_text()
+        self.assertEqual(config.count('bindsym $mod+l $exec orgm-qylock lock'),1)
+        self.assertIn('bindsym $mod+Right focus right',config)
+        idle=(base/'.config/swayidle/config').read_text()
+        self.assertIn("timeout 600 'orgm-qylock lock'",idle)
+        self.assertIn("before-sleep 'orgm-qylock lock'",idle)
+        self.assertIn('exec orgm-qylock lock', (base/'.local/bin/orgm-sway-lock').read_text())
+        self.assertFalse((ROOT/'dotfiles/apps/swaylock.json').exists())
+        self.assertTrue((ROOT/'dotfiles/apps/qylock.json').is_file())
+
+    def test_nix_declares_separate_pam_and_declarative_sddm(self):
+        package=(ROOT/'nixos/profiles/sway/qylock-runtime.nix').read_text()
+        module=(ROOT/'nixos/profiles/sway/qylock.nix').read_text()
+        self.assertIn('orgm-qylock-pw',package);self.assertIn('orgm-qylock-fp',package)
+        self.assertIn('pam_unix.so',package)
+        self.assertNotIn('pam_permit.so',package)
+        self.assertNotIn('qylock-test-pam',package)
+        self.assertIn('auth_admin_keep',package)
+        self.assertIn('quickshell-session-lock-hotplug.patch',package)
+        hotplug=(ROOT/'nixos/profiles/sway/quickshell-session-lock-hotplug.patch').read_text()
+        self.assertIn('delete surface->disownWindow()',hotplug)
+        self.assertIn('waylandScreen->isPlaceholder()',hotplug)
+        self.assertIn('environment.etc.',module)
+        # The HOME helper prefers /run/current-system/sw metadata. Without
+        # this export it silently keeps the provisional FP-disabled bridge.
+        self.assertIn('environment.pathsToLink = [ "/share/orgm-qylock" ];',module)
+        self.assertIn('deps = [ "etc" ]',module)
+
+
+if __name__=='__main__':unittest.main()

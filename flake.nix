@@ -127,6 +127,7 @@
             # Build-only outputs; not installed on Envy unless explicitly enabled.
             libfprint-synatudor = fingerprintPackages.libfprint;
             fprintd-synatudor = fingerprintPackages.fprintd;
+            envy-fingerprint-test = fingerprintPackages.probe;
             default = braveOrigin;
           };
 

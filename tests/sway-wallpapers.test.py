@@ -9,7 +9,7 @@ import stat
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE = runpy.run_path(str(ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-sway'))
@@ -100,34 +100,92 @@ class WallpaperTests(unittest.TestCase):
         unit = 'orgm-sway-video-' + 'a'*32 + '.service'
         calls = []
         with patch.dict(ENV, wallpaper_preview=lambda p: frame if p == video else p,
+                        wallpaper_tool=lambda name: '/tools/'+name,
                         start_wallpaper_video=lambda p: calls.append(('start', p)) or unit,
                         stop_wallpaper_video=lambda u: calls.append(('stop', u)),
+                        stop_session_wallpaper_players=lambda: calls.append(('clean',)),
                         ipc=lambda cmd: calls.append(('ipc', cmd))):
             MODULE['set_wallpaper'](video)
             self.assertEqual((self.config/'sway/wallpaper').read_text().strip(), str(video))
             self.assertEqual((self.config/'sway/wallpaper-preview').read_text().strip(), str(frame))
-            self.assertEqual(calls, [('start', video)])  # no swaybg over video
+            self.assertEqual(calls, [('clean',), ('start', video)])  # no swaybg over video
             MODULE['set_wallpaper'](image)
-        self.assertEqual(calls[-1], ('stop', unit))
-        self.assertEqual(calls[-2][0], 'ipc')
+        self.assertEqual(calls[-3:-1], [('stop', unit), ('clean',)])
+        self.assertEqual(calls[-1][0], 'ipc')
         self.assertEqual((self.config/'sway/wallpaper-video-unit').read_text().strip(), '')
         self.assertEqual((self.config/'sway/wallpaper').read_text().strip(), str(image))
 
-    def test_failed_video_start_preserves_previous_selection_and_player(self):
+    def test_failed_video_start_stops_first_then_restores_previous_without_overlap(self):
         video = self.file('movie.mp4')
+        old_video = self.file('previous.mp4')
         frame = self.file('frame.png')
         previous = 'orgm-sway-video-' + 'b'*32 + '.service'
-        state = self.file('.config/sway/wallpaper', 'previous.png\n')
+        restored = 'orgm-sway-video-' + 'c'*32 + '.service'
+        state = self.file('.config/sway/wallpaper', str(old_video)+'\n')
         self.file('.config/sway/wallpaper-video-unit', previous+'\n')
-        def fail(_):
-            raise RuntimeError('start failed')
-        with patch.dict(ENV, wallpaper_preview=lambda _: frame, start_wallpaper_video=fail,
-                        stop_wallpaper_video=lambda _: self.fail('Must keep previous video'),
-                        ipc=lambda _: self.fail('Must keep previous background')):
-            with self.assertRaises(RuntimeError):
+        calls = []
+        def start(path):
+            calls.append(('start', path))
+            if path == video:
+                raise RuntimeError('start failed')
+            return restored
+        with patch.dict(ENV, wallpaper_preview=lambda _: frame, wallpaper_tool=lambda name: name,
+                        start_wallpaper_video=start,
+                        stop_wallpaper_video=lambda unit: calls.append(('stop', unit)),
+                        stop_session_wallpaper_players=lambda: calls.append(('clean',))):
+            with self.assertRaisesRegex(RuntimeError, 'start failed'):
                 MODULE['set_wallpaper'](video)
-        self.assertEqual(state.read_text(), 'previous.png\n')
+        self.assertEqual(calls, [('stop', previous), ('clean',), ('start', video), ('clean',), ('start', old_video)])
+        self.assertEqual(state.read_text(), str(old_video)+'\n')
+        self.assertEqual((self.config/'sway/wallpaper-video-unit').read_text().strip(), restored)
+
+    def test_failure_to_stop_previous_player_never_starts_replacement(self):
+        video = self.file('movie.mp4')
+        previous = 'orgm-sway-video-' + 'b'*32 + '.service'
+        state = self.file('.config/sway/wallpaper', 'previous.mp4\n')
+        self.file('.config/sway/wallpaper-video-unit', previous+'\n')
+        with patch.dict(ENV, wallpaper_preview=lambda p: p, wallpaper_tool=lambda name: name,
+                        stop_wallpaper_video=MagicMock(side_effect=RuntimeError('still running')),
+                        start_wallpaper_video=MagicMock()) as env:
+            with self.assertRaisesRegex(RuntimeError, 'still running'):
+                MODULE['set_wallpaper'](video)
+            env['start_wallpaper_video'].assert_not_called()
+        self.assertEqual(state.read_text(), 'previous.mp4\n')
         self.assertEqual((self.config/'sway/wallpaper-video-unit').read_text().strip(), previous)
+
+    def test_session_player_matching_requires_executable_uid_and_wayland_endpoint(self):
+        process = self.home/'proc/123'
+        process.mkdir(parents=True)
+        executable = self.file('bin/.swaybg-wrapped')
+        (process/'exe').symlink_to(executable)
+        environment = process/'environ'
+        environment.write_bytes(b'WAYLAND_DISPLAY=wayland-private\0XDG_RUNTIME_DIR=/private\0')
+        with patch.dict(os.environ, WAYLAND_DISPLAY='wayland-private', XDG_RUNTIME_DIR='/private'):
+            self.assertTrue(MODULE['is_session_wallpaper_process'](process))
+            with patch('os.getuid', return_value=os.getuid()+1):
+                self.assertFalse(MODULE['is_session_wallpaper_process'](process))
+            with patch.dict(os.environ, WAYLAND_DISPLAY='wayland-other'):
+                self.assertFalse(MODULE['is_session_wallpaper_process'](process))
+            with patch.dict(os.environ, XDG_RUNTIME_DIR='/other'):
+                self.assertFalse(MODULE['is_session_wallpaper_process'](process))
+            (process/'exe').unlink()
+            (process/'exe').symlink_to(self.file('bin/unrelated-player'))
+            self.assertFalse(MODULE['is_session_wallpaper_process'](process))
+
+    def test_session_players_are_waited_for_and_stubborn_processes_are_killed_via_pidfd(self):
+        process = Path('/proc/123')
+        for responses, expected in (([[(17, 1)]], [call(17, ENV['signal'].SIGTERM)]),
+                                    ([[], [(17, 1)]], [call(17, ENV['signal'].SIGTERM), call(17, ENV['signal'].SIGKILL)])):
+            with patch.dict(os.environ, WAYLAND_DISPLAY='private', XDG_RUNTIME_DIR='/private'), \
+                 patch.object(Path, 'iterdir', return_value=iter([process])), \
+                 patch.dict(ENV, is_session_wallpaper_process=lambda _: True), \
+                 patch('os.pidfd_open', return_value=17) as opened, patch('os.close') as closed, \
+                 patch('signal.pidfd_send_signal') as sent, patch('select.poll') as poll:
+                poll.return_value.poll.side_effect = responses
+                MODULE['stop_session_wallpaper_players']()
+                opened.assert_called_once_with(123)
+                self.assertEqual(sent.call_args_list, expected)
+                closed.assert_called_once_with(17)
 
     def test_transient_player_is_session_owned_and_paths_are_not_shell(self):
         video = self.file('ñ ${HOME} $(touch BAD)  #.mp4')
@@ -138,10 +196,74 @@ class WallpaperTests(unittest.TestCase):
         launch = calls[0]
         self.assertIn('--property=PartOf=sway-session.target', launch)
         self.assertIn('--service-type=exec', launch)
+        self.assertIn('--property=KillMode=control-group', launch)
+        self.assertIn('--property=TimeoutStopSec=2s', launch)
         self.assertIn('--expand-environment=no', launch)
         self.assertEqual(launch[-3:], ('no-config no-audio loop-file=inf panscan=1', 'ALL', str(video)))
         self.assertEqual(calls[-1], ('systemctl', '--user', 'is-active', '--quiet', unit))
         self.assertFalse((self.home/'BAD').exists())
+
+    def test_offload_requires_wrapper_and_a_responsive_nvidia_driver(self):
+        for wrapper, probe, code, output, expected in (
+                (None, '/tools/nvidia-smi', 0, 'GPU 0: NVIDIA test', None),
+                ('/tools/nvidia-offload', None, 0, 'GPU 0: NVIDIA test', None),
+                ('/tools/nvidia-offload', '/tools/nvidia-smi', 9, '', None),
+                ('/tools/nvidia-offload', '/tools/nvidia-smi', 0, 'No devices were found', None),
+                ('/tools/nvidia-offload', '/tools/nvidia-smi', 0, 'GPU 0: NVIDIA test', '/tools/nvidia-offload')):
+            with self.subTest(wrapper=wrapper, probe=probe, code=code, output=output), \
+                 patch('shutil.which', side_effect=lambda name: wrapper if name == 'nvidia-offload' else probe), \
+                 patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], code, output, '')) as run:
+                self.assertEqual(MODULE['wallpaper_nvidia_offload'](), expected)
+                if wrapper and probe:
+                    self.assertEqual(run.call_args.kwargs['timeout'], 2)
+                else:
+                    run.assert_not_called()
+
+    def test_offload_probe_timeout_and_explicit_disable_use_default_gpu(self):
+        with patch('shutil.which', return_value='/tools/binary'), patch.object(
+                subprocess, 'run', side_effect=subprocess.TimeoutExpired('nvidia-smi', 2)):
+            self.assertIsNone(MODULE['wallpaper_nvidia_offload']())
+        with patch.dict(os.environ, ORGM_SWAY_WALLPAPER_OFFLOAD='0'), patch('shutil.which') as which:
+            self.assertIsNone(MODULE['wallpaper_nvidia_offload']())
+            which.assert_not_called()
+
+    def test_offload_launch_and_default_gpu_retry_never_overlap(self):
+        video = self.file('video.mp4')
+        calls = []
+        attempts = []
+        stopped = []
+        def run(*args, **kwargs):
+            calls.append(args)
+            if args[0] == 'systemd-run':
+                unit = next(a.removeprefix('--unit=') for a in args if a.startswith('--unit='))
+                if attempts:
+                    self.assertEqual(stopped, attempts)  # failed attempt must already be gone
+                attempts.append(unit)
+            elif len(attempts) == 1:
+                raise subprocess.CalledProcessError(1, args)
+        with patch.dict(ENV, wallpaper_tool=lambda _: '/tools/mpvpaper',
+                        wallpaper_nvidia_offload=lambda: '/tools/nvidia-offload',
+                        run=run, stop_wallpaper_video=stopped.append), patch('time.sleep'):
+            unit = MODULE['start_wallpaper_video'](video)
+        launches = [c for c in calls if c[0] == 'systemd-run']
+        first = launches[0][launches[0].index('--')+1:]
+        second = launches[1][launches[1].index('--')+1:]
+        self.assertEqual(first[:2], ('/tools/nvidia-offload', '/tools/mpvpaper'))
+        self.assertEqual(second[0], '/tools/mpvpaper')
+        self.assertEqual(unit, attempts[1])
+        self.assertNotEqual(attempts[0], attempts[1])
+        self.assertEqual(stopped, [attempts[0]])
+
+    def test_working_offload_does_not_launch_a_second_player(self):
+        calls = []
+        with patch.dict(ENV, wallpaper_tool=lambda _: '/tools/mpvpaper',
+                        wallpaper_nvidia_offload=lambda: '/tools/nvidia-offload',
+                        run=lambda *args, **kw: calls.append(args),
+                        stop_wallpaper_video=lambda _: self.fail('Successful player must stay running')), patch('time.sleep'):
+            MODULE['start_wallpaper_video'](self.file('video.mp4'))
+        launches = [c for c in calls if c[0] == 'systemd-run']
+        self.assertEqual(len(launches), 1)
+        self.assertIn('/tools/nvidia-offload', launches[0])
 
     def test_stop_rejects_arbitrary_units_and_accepts_collected_owner(self):
         with patch.object(subprocess, 'run') as command:

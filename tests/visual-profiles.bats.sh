@@ -253,6 +253,10 @@ grep -Fq "dconf write /org/gnome/desktop/interface/icon-theme 'Colloid-Dark'" "$
 ORGM_VISUAL_PROFILE_BACKEND=sway run_profile apply
 grep -Fq 'swaync-client --reload-css --skip-wait' "$CALLS" || fail 'Sway profile must reload Swaync CSS'
 ! grep -Fq 'dunstctl' "$CALLS" || fail 'Sway profile must never activate Dunst'
+: >"$CALLS"
+ORGM_VISUAL_PROFILE_BACKEND=sway ORGM_VISUAL_PROFILE_KEEP_WAYBAR=1 run_profile apply
+! grep -Fq 'orgm-sway-waybar.service' "$CALLS" || fail 'Sway reload must preserve Waybar and Caffeine'
+grep -Fq 'swaync-client --reload-css --skip-wait' "$CALLS" || fail 'Sway reload must still refresh CSS'
 
 # i3bar must follow the persisted selection made by the real profile helper,
 # not a mocked return value or a fixed display label.

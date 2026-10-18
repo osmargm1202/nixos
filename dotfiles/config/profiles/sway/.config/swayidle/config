@@ -1,4 +1,4 @@
 # Editable idle policy; swayidle -w waits until the lock is ready before sleep.
-timeout 600 'orgm-sway-lock'
+timeout 600 'orgm-qylock lock'
 timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'
-before-sleep 'orgm-sway-lock'
+before-sleep 'orgm-qylock lock'

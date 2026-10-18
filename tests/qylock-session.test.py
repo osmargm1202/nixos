@@ -23,13 +23,14 @@ runtime = HOME/'runtime'; runtime.mkdir(mode=0o700)
 policy = HOME/'pam'; policy.mkdir()
 for name in ('orgm-qylock-pw', 'orgm-qylock-fp'):
     (policy/name).write_text(f'auth required {PAM}\naccount required {PAM}\n')
-(HOME/'sway.conf').write_text('output HEADLESS-1 mode 1920x1080 pos 0 0\nfont pango:monospace 10\ndefault_border none\n')
+(HOME/'sway.conf').write_text('output HEADLESS-1 mode 1920x1080 pos 0 0\noutput HEADLESS-2 mode 1280x720 pos 1920 0\nfont pango:monospace 10\ndefault_border none\n')
 env = dict(os.environ, HOME=str(HOME), XDG_CONFIG_HOME=str(HOME/'.config'),
     XDG_STATE_HOME=str(HOME/'.local/state'), XDG_CACHE_HOME=str(HOME/'.cache'),
     XDG_DATA_HOME=str(HOME/'.local/share'), XDG_RUNTIME_DIR=str(runtime),
-    WLR_BACKENDS='headless', WLR_HEADLESS_OUTPUTS='1', WLR_RENDERER='gles2',
+    WLR_BACKENDS='headless', WLR_HEADLESS_OUTPUTS='2', WLR_RENDERER='gles2',
     WLR_RENDERER_ALLOW_SOFTWARE='1', QT_QPA_PLATFORM='wayland',
-    PULSE_SERVER='unix:'+str(runtime/'nonexistent-pulse'), QML_XHR_ALLOW_FILE_READ='1')
+    PULSE_SERVER='unix:'+str(runtime/'nonexistent-pulse'), QML_XHR_ALLOW_FILE_READ='1',
+    DBUS_SYSTEM_BUS_ADDRESS='unix:path='+str(runtime/'nonexistent-system-bus'))
 for key in ('DISPLAY','WAYLAND_DISPLAY','SWAYSOCK','DBUS_SESSION_BUS_ADDRESS','WAYLAND_SOCKET',
             'ORGM_VISUAL_PROFILE_STATE_DIR','QS_CONFIG_PATH','QS_CONFIG_NAME'):
     env.pop(key, None)
@@ -59,8 +60,12 @@ def ipc(process, target, method, *args):
     return result.stdout.strip() if result.returncode == 0 else ''
 
 def status(process, target):
+    assert process.poll() is None, f'{target} exited unexpectedly; logs {HOME}'
     text = ipc(process, target, 'status')
-    return json.loads(text) if text else None
+    try:
+        return json.loads(text) if text else None
+    except ValueError:
+        return None
 
 def launch(qml, data, ready=None):
     path = HOME/(f'data-{len(children)}.json')
@@ -81,19 +86,21 @@ try:
     env['DBUS_SESSION_BUS_ADDRESS'] = (HOME/'bus').read_text()
     env['WAYLAND_DISPLAY'] = wait(lambda:next((p.name for p in runtime.glob('wayland-*') if not p.name.endswith('.lock')),None),'Wayland')
     assert str(runtime) in env['SWAYSOCK']
+    command('swaymsg','focus','output','HEADLESS-1').check_returncode()
     keeper = subprocess.Popen(['wtype','-s','240000'], env=env, stdout=log, stderr=log, start_new_session=True)
     children.append(keeper)
     time.sleep(.15)
     items = json.loads(Path(META['catalog']).read_text())
     def settings(item):
         return dict(id=item['id'], config=item['config'], themeUrl=(Path(META['themes'])/item['id']).as_uri(),
-            pamDirectory=str(policy), user='qylock-private-test', realName='Private test', host='private-sway',
+            pamDirectory=str(policy), user=pwd.getpwuid(os.getuid()).pw_name, realName='Private test', host='private-sway',
             home=str(HOME), icon='', fingerprint=False)
     candidates = [settings(i) for i in items]
     preview = launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/preview.qml', dict(candidates=candidates))
     wait(lambda:status(preview,'lock-preview'),'preview IPC')
     failed = []
-    for item in items:
+    rendering = [] if os.environ.get('ORGM_TEST_QYLOCK_SKIP_CATALOG') else items
+    for item in rendering:
         ipc(preview,'lock-preview','load',item['id'])
         result = wait(lambda:(s if (s:=status(preview,'lock-preview')) and s['theme']==item['id'] and (s['ready'] or s['error']) else None), item['id'])
         if result['error']: failed.append(item['id'])
@@ -101,27 +108,129 @@ try:
             time.sleep(.5)
             command('grim','-l','1','-o','HEADLESS-1',str(HOME/(item['id'].replace('/','-')+'.png'))).check_returncode()
     assert not failed, ('QML themes that did not load',failed)
-    print(f'PASS: {len(items)} complete themes render with the local SDDM adapter, without Ryoku',flush=True)
+    print(f'PASS: {len(rendering)} theme rendering cases (debug skip={not bool(rendering)}), without Ryoku',flush=True)
     ipc(preview,'lock-preview','close')
     assert preview.wait(timeout=5)==0
+
+    # Real SDDM greeter, TEST MODE only: no daemon, login/PAM, root operation
+    # or physical device. Its compiled-in components differ from our shim.
+    greeter_themes=('winter','forest','clockwork/orbital')
+    for slug in greeter_themes:
+        output=HOME/('sddm-'+slug.replace('/','-')+'.log')
+        with output.open('w') as stream:
+            process=subprocess.Popen([META['greeter'],'--test-mode','--theme',str(Path(META['themes'])/slug)],
+                env=dict(env,**META['greeterEnvironment']),cwd=HOME,stdout=stream,stderr=stream,start_new_session=True)
+            children.append(process)
+            def mapped():
+                assert process.poll() is None, 'Test greeter exited: '+output.read_text()
+                tree=json.loads(command('swaymsg','-r','-t','get_tree').stdout)
+                def find(node):
+                    return node.get('pid')==process.pid or any(find(child) for key in ('nodes','floating_nodes') for child in node.get(key,[]))
+                return find(tree)
+            wait(mapped,'real SDDM test-mode '+slug)
+            time.sleep(.6)
+            text=output.read_text()
+            assert 'is not installed' not in text and 'is not a type' not in text,text
+            process.terminate();process.wait(timeout=5)
+    print('PASS: Winter, Forest and Clockwork load in the actual SDDM greeter test-mode, without restarting SDDM or invoking login',flush=True)
+
+    # The chooser must unmap/release its exclusive keyboard while Polkit
+    # authenticates. Exercise a cancelled prompt, restored focus and retry.
+    backend = HOME/'fake-select'
+    backend.write_text('#!'+shutil.which('python3')+'\nimport pathlib,sys,time\np=pathlib.Path(__file__).parent\n'
+        '(p/"select-called").write_text(repr(sys.argv[1:]))\n'
+        'time.sleep(2)\n'
+        'if not (p/"select-success").exists():\n print("Autorización de prueba cancelada",file=sys.stderr);sys.exit(126)\n')
+    backend.chmod(0o700)
+    chooser_data = HOME/'themes.json'
+    chooser_data.write_text(json.dumps(dict(current='winter', screen='HEADLESS-1', profile='qylock',
+        backend=str(backend), colors=dict(bg='#101020',surface='#222234',fg='#eeeeff',muted='#8899aa',accent='#88aaff',error='#ff8888'),
+        items=[dict(id=i['id'],path=i['id'],name=i['name'],url=(Path(META['previews'])/i['preview']).as_uri()) for i in items])))
+    def chooser():
+        process = subprocess.Popen([META['qs'],'--path',str(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-locks')],
+            env=dict(env,ORGM_WALLPAPER_DATA=str(chooser_data),ORGM_WALLPAPER_STATUS=str(HOME/'chooser-ready')),
+            cwd=HOME,stdout=log,stderr=log,start_new_session=True)
+        children.append(process)
+        wait(lambda:status(process,'lock-themes'),'theme chooser')
+        wait(lambda:layer_visible(),'chooser keyboard surface')
+        time.sleep(.15)
+        return process
+    def layer_visible():
+        outputs=json.loads(command('swaymsg','-r','-t','get_outputs').stdout)
+        return any(l['namespace']=='orgm-lock-themes' for o in outputs for l in o.get('layer_shell_surfaces',[]))
+    prompt=launch(ROOT/'tests/helpers/qylock-prompt.qml',{})
+    wait(lambda:ipc(prompt,'private-prompt','text')=='','prompt IPC')
+    first=chooser()
+    assert status(first,'lock-themes')['selected']=='winter'
+    key('-k','Escape')
+    assert first.wait(timeout=5)==0 and not (HOME/'select-called').exists()
+    second=chooser()
+    key('-k','Right'); selected=status(second,'lock-themes')['selected']
+    key('-k','Return')
+    wait(lambda:status(second,'lock-themes')['busy'],'authorization wait')
+    wait(lambda:not layer_visible(),'chooser hidden during authorization')
+    key('private-agent-can-type')
+    assert ipc(prompt,'private-prompt','text')=='private-agent-can-type'
+    wait(lambda:(s if (s:=status(second,'lock-themes')) and not s['busy'] and s['error'] else None),'cancel restores chooser')
+    assert status(second,'lock-themes')['selected']==selected
+    before=status(second,'lock-themes')['current']
+    key('-k','Left')
+    assert status(second,'lock-themes')['current']==before-1
+    (HOME/'select-success').touch()
+    key('-k','Return')
+    assert second.wait(timeout=5)==0
+    ipc(prompt,'private-prompt','close');prompt.wait(timeout=5)
+    print('PASS: 41-theme carousel, Escape cancellation, authentication prompt uncovered/typeable, cancelled selection retained, focus restored and retry exits',flush=True)
 
     winter = next(i for i in items if i['id']=='winter')
     ready = HOME/'secure-ready'
     locker = launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/lock.qml',settings(winter),ready)
-    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] else None),'ext-session-lock secure')
+    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==2 else None),'ext-session-lock secure on both monitors')
     assert ready.read_text()=='secure'
+    command('swaymsg','output','HEADLESS-2','disable').check_returncode()
+    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==1 else None),'disabled test monitor')
+    command('swaymsg','output','HEADLESS-2','enable').check_returncode()
+    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==2 else None),'hotplug while securely locked')
+    for mode in ('1280x720','1920x1080'):
+        command('swaymsg','output','HEADLESS-1','mode',mode).check_returncode()
+        time.sleep(.3)
+        assert status(locker,'orgm-lock')['secure']
+    for scale in ('1.25','1'):
+        command('swaymsg','output','HEADLESS-1','scale',scale).check_returncode()
+        time.sleep(.3)
+        assert status(locker,'orgm-lock')['secure']
+    for output in ('HEADLESS-2','HEADLESS-1'):
+        command('swaymsg','output',output,'disable').check_returncode()
+    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==0 else None),'all monitors off, secure lock survives placeholder screen')
+    for output in ('HEADLESS-1','HEADLESS-2'):
+        command('swaymsg','output',output,'enable').check_returncode()
+    wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==2 else None),'all monitors restored while locked')
+    command('swaymsg','focus','output','HEADLESS-1').check_returncode()
     key('-k','Escape')
     assert status(locker,'orgm-lock')['secure'] and not status(locker,'orgm-lock')['authenticated']
     key('-k','F2')
     wait(lambda:status(locker,'orgm-lock')['fallback'],'fallback UI')
     key('incorrect-test-token')
     key('-k','Return')
-    time.sleep(.4)
+    try:
+        wait(lambda:(s if (s:=status(locker,'orgm-lock')) and not s['submitting'] else None),'fake PAM rejection')
+    except AssertionError:
+        raise AssertionError('Fake PAM rejection stalled: '+str(status(locker,'orgm-lock')))
     assert status(locker,'orgm-lock')['secure'] and not status(locker,'orgm-lock')['authenticated']
     key('QYLOCK_TEST_ONLY_NOT_A_REAL_PASSWORD')
     key('-k','Return')
-    assert locker.wait(timeout=5)==0
-    print('PASS: real Wayland lock, Escape cannot unlock, fallback works, fake PAM rejects wrong token and unlocks only on success',flush=True)
+    try:
+        assert locker.wait(timeout=5)==0
+    except subprocess.TimeoutExpired:
+        raise AssertionError('Fake PAM did not unlock: '+str(status(locker,'orgm-lock')))
+    print('PASS: two-monitor Wayland lock, hotplug/all-off/restore, mode/scale changes, Escape rejection, fallback and fake-PAM negative/positive authentication',flush=True)
+
+    themed=launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/lock.qml',settings(winter),HOME/'theme-ready')
+    wait(lambda:(s if (s:=status(themed,'orgm-lock')) and s['secure'] else None),'winter real lock')
+    time.sleep(.6)
+    key('QYLOCK_TEST_ONLY_NOT_A_REAL_PASSWORD');key('-k','Return')
+    assert themed.wait(timeout=5)==0
+    print('PASS: normal Winter theme submits through the same real PAM adapter (test token only)',flush=True)
 
     # Now validate the real launcher's daemonize/duplicate contract WITHOUT
     # starting any real PAM conversation (no typing into that lock).
@@ -130,6 +239,8 @@ try:
     root.symlink_to(PACKAGE)
     (HOME/'.config/qylock').mkdir(parents=True)
     (HOME/'.config/qylock/theme').write_text('winter\n')
+    (HOME/'.config/orgm-qylock').mkdir()
+    (HOME/'.config/orgm-qylock/fingerprint').write_text('off\n')
     helper = ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-qylock'
     started = command(str(helper),'lock')
     assert started.returncode==0,started.stderr

@@ -5,7 +5,7 @@ let
   quickshellWithImages = import ./quickshell.nix { inherit pkgs; };
 in
 {
-  imports = [ ../../sddm/sddm.nix ../../print/printer.nix ];
+  imports = [ ../../sddm/sddm.nix ../../print/printer.nix ./qylock.nix ];
   services.xserver.enable = false;
   services.displayManager.defaultSession = "sway";
   programs.sway = {
@@ -32,7 +32,6 @@ in
     '';
   };
   security.polkit.enable = true;
-  security.pam.services.swaylock = { };
   security.pam.services.login.enableGnomeKeyring = true;
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gnome-online-accounts.enable = true;
@@ -91,7 +90,7 @@ in
     }
   );
   environment.systemPackages = with pkgs; [
-    waybar swayDock swaybg swayidle swaylock-effects quickshellWithImages mpvpaper ffmpeg
+    waybar swayDock swaybg swayidle quickshellWithImages mpvpaper ffmpeg
     rofi rofimoji libqalculate swaynotificationcenter libnotify
     grim slurp swappy wl-screenrec wl-clipboard cliphist wtype woomer
     brightnessctl pamixer playerctl pavucontrol pulsemixer

@@ -57,7 +57,7 @@ bus privado, con una contraseña y un llavero temporales.
 
 ### Atajos
 
-- Super+Space: Rofi; Super+Alt+Space: menú de red, Bluetooth, audio y pantallas.
+- Super+Space: Rofi; Super+Alt+Space: menú de red, Bluetooth, audio, pantallas e **Inicio y bloqueo**.
 - Super+Return: Kitty; Super+E: Nautilus; Super+W: restaurar Firefox o enfocar
   su ventana y abrir una pestaña vacía, como en Hyprland. Super+Shift+W:
   enfocar Firefox sin crear pestaña. Super+B: abrir Chromium.
@@ -118,6 +118,34 @@ Las curvas, shaders, plugins y agrupaciones específicas de Hyprland no se
 cargan. Sway usa divisiones, pestañas y scratchpad nativos. Super+G alterna
 pestañas/mosaico. El temporizador Super+Shift+Tab usa IPC de Sway.
 
+## Modo gaming de Waybar
+
+El botón de mando junto a Caffeine alterna el modo gaming nativo de SwayFX.
+Desactiva blur, sombras, esquinas redondeadas y dimming, deja las ventanas
+opacas, pone los gaps a cero y oculta el dock si estaba abierto. La barra
+permanece visible para poder desactivarlo con otro clic.
+También se libera la reserva derecha del dock. Un único ajuste de gaps al
+recargar respeta el modo activo; al salir vuelve el margen configurado.
+El cambio conserva el estado de Caffeine: la recarga aplica la apariencia
+sin reiniciar Waybar. Las reglas de opacidad sin ventanas coincidentes se
+omiten al restaurar, sin cancelar la salida de gaming.
+
+El fondo queda negro y se detienen los reproductores de video de esta sesión.
+El archivo de fondo y la selección del perfil se conservan. Cambiar de fondo
+o recargar Sway mientras gaming está activo mantiene el fondo negro; al salir
+se restaura el fondo seleccionado, incluido video, y los valores configurados
+de opacidad/gaps. El dock solo vuelve a iniciarse si estaba activo al entrar.
+
+El estado se guarda en `~/.local/state/orgm-sway/game-mode.json`. La inclusión
+final `~/.config/sway/game-mode.conf` aplica las mismas reglas a ventanas
+nuevas. `sway-game-mode on|off|toggle|status|sync` permite controlarlo por CLI.
+Este botón no cambia la especialización de arranque gaming.
+
+Pruebas: `python3 tests/sway-game-mode.test.py` y
+`python3 tests/sway-game-mode-session.test.py`. La segunda usa un compositor
+SwayFX, D-Bus, configuración y clientes privados; compara capturas para validar
+opacidad, gaps y la restauración del fondo sin alterar la sesión real.
+
 ## Carrusel de wallpapers con Quickshell
 
 El clic derecho sobre el icono de fondo de Waybar y `orgm-sway wallpaper-pick`
@@ -161,15 +189,36 @@ No se copian las imágenes originales ni se matan procesos globalmente.
 Las imágenes se aplican con swaybg. Los videos usan `mpvpaper ALL`, en bucle, sin
 sonido ni configuración personal de mpv, como unidad transitoria de usuario
 `orgm-sway-video-<uuid>.service`, ligada a `sway-session.target`. El reproductor
-anterior se detiene solo después de arrancar correctamente el nuevo. Al volver
-a una imagen se detiene únicamente la unidad registrada, nunca todos los mpv.
+anterior se detiene **antes** de arrancar el nuevo, esperando a que termine su
+cgroup. Después se limpian `swaybg` y `mpvpaper` residuales de la misma sesión
+(mismo UID, ejecutable y endpoint Wayland), incluidos duplicados sin unidad
+registrada. Se envía SIGTERM y se espera la salida; si no termina en 2 s, se usa
+SIGKILL y se vuelve a esperar. Los pidfds evitan matar un PID reutilizado.
+No se toca ningún reproductor de otra sesión ni se usa `pkill` global.
+El mismo orden se aplica al volver a una imagen: primero parar, luego aplicar.
+Si existen `nvidia-offload` y `nvidia-smi -L` detecta una GPU operativa (espera
+máxima de 2 s), mpvpaper arranca mediante `nvidia-offload`. Si NVIDIA está ausente,
+el driver no responde o está asignada a VFIO, usa el backend normal. Si falla el
+arranque offload, detiene completamente ese intento antes de reintentar sin
+offload. No cambia la GPU de Sway ni fuerza un decodificador de video concreto.
+Esto puede aumentar el consumo de batería al mantener la GPU dedicada activa.
+Para desactivarlo en una selección:
+
+```sh
+ORGM_SWAY_WALLPAPER_OFFLOAD=0 orgm-sway wallpaper-pick
+```
+
 `orgm-sway wallpaper` restaura también los videos al iniciar o recargar Sway.
 La selección y el perfil conservan la ruta original; `sway/wallpaper-preview`
 apunta al fotograma que utiliza el bloqueo. Si falta ese PNG, el bloqueo usa
 color sólido y nunca intenta cargar el video como imagen.
 
-Los cambios de fondo se serializan con `sway/wallpaper.lock`. Si falla la
-extracción o el arranque del reproductor no se reemplaza la selección guardada.
+Los cambios de fondo se serializan con `sway/wallpaper.lock`, también ante dos
+peticiones simultáneas, para no solapar reproductores. La extracción y la
+comprobación de dependencias ocurren antes de parar el fondo. Si falla el nuevo
+arranque se intenta restaurar el fondo anterior, sin grabar el perfil ni
+solapar procesos; la selección guardada se conserva aunque también falle esa
+restauración.
 Los errores del reproductor se consultan con
 `journalctl --user -u 'orgm-sway-video-*'`.
 
@@ -206,7 +255,12 @@ Guarda capturas sintéticas y logs en el directorio privado indicado al terminar
 
 Con `ORGM_TEST_VIDEO_TOOLS=/ruta/al/paquete/bin` habilita además fixtures WebP y
 MP4 sintéticos: decodificación real de miniaturas, reproducción en dos pantallas,
-bucle, restauración del video y retorno a imagen. Esta variante crea unidades
+bucle, cambios repetidos, limpieza de un reproductor duplicado, peticiones
+concurrentes, restauración del video y retorno a imagen. Antes de cada arranque
+comprueba que no queda ningún swaybg/mpvpaper anterior vivo. Si utiliza offload,
+verifica además que el PID aparezca en la lista real de procesos de NVIDIA.
+Se puede probar la ruta normal con `ORGM_SWAY_WALLPAPER_OFFLOAD=0`.
+Esta variante crea unidades
 transitorias UUID en el gestor de usuario real, conectadas **solo** al compositor
 privado, y las detiene en `finally`; no aplica fondos ni envía entrada al
 escritorio del usuario.
@@ -258,59 +312,116 @@ defecto, sin forzar sus diálogos a mosaico. `hardware-fastfetch` se aproxima co
 flotante grande: Sway no tiene el mismo estado maximizado. No se habilita tearing
 global ni se oculta el indicador de compartición de Chromium en el scratchpad.
 
-## Bloqueo con swaylock-effects
+## Inicio y bloqueo: catálogo Qylock
 
-El perfil instala **swaylock-effects 1.7.0.0**, del fork mantenido
-[jirutka/swaylock-effects](https://github.com/jirutka/swaylock-effects).
-El estilo se inspira en [Catppuccin/swaylock](https://github.com/catppuccin/swaylock),
-adaptado a los colores actuales de SLC/ORGM/OSMAR:
+**Qylock/Quickshell sustituye a swaylock-effects.** El paquete `orgm-qylock`
+usa la fuente completa de [Darkkal44/qylock](https://github.com/Darkkal44/qylock),
+fijada en `nixos/sddm/sddm-qylock.nix`, con **41 variantes**. Los vídeos,
+fuentes y demás assets permanecen en el store de Nix, no en los dotfiles. Las
+miniaturas del carrusel se generan durante la compilación a partir de los
+assets upstream; las variantes Clockwork comparten la preview de esa familia.
+No se ejecutan instaladores ni el lanzador upstream con `killall`.
 
-- Wallpaper estático actual con blur `7x5`, viñeta y entrada de 0,2 s.
-- Reloj de 12 horas y fecha centrados en un indicador fino de 140 px de radio.
-- Colores de escritura, error y Bloq Mayús; distribución visible al escribir.
-- Fondo sólido si falta el wallpaper, **sin capturar las ventanas del escritorio**.
-- Sin periodo de gracia: se fuerza `--grace 0`; se conserva PAM `swaylock`.
+**Super+Alt+Space → Inicio y bloqueo** abre un carrusel independiente:
 
-**Super+L**, **Super+Alt+L** y el menú de energía ejecutan `orgm-sway-lock`.
-Super+L sustituye el enfoque a la derecha de las teclas HJKL; Super+→ conserva
-esa acción y Super+Ctrl+L sigue moviendo la ventana hacia la derecha. El mismo helper
-se usa después de 10 minutos de inactividad y antes de suspender; las pantallas
-se apagan a los 15 minutos, como antes. La suspensión explícita solo se solicita
-si el helper devuelve éxito. `--daemonize` devuelve el control cuando el bloqueo
-está establecido, no al iniciar meramente el proceso.
+- ←/→, H/L, rueda, Home/End para recorrerlo; Enter o tarjeta central aplica.
+- Escape/clic exterior cancela sin cambiar nada.
+- Aplicar solicita autorización Polkit para modificar el **próximo greeter
+  SDDM**, no para autenticar el lock. Mientras se autoriza, el carrusel se oculta
+  y libera el teclado para no tapar el diálogo de contraseña del agente.
+- Si se cancela o falla la operación privilegiada, el tema anterior permanece
+  y vuelve el carrusel con el error. Si funciona, el mismo enlace atómico
+  root-owned selecciona tanto el siguiente SDDM como los próximos bloqueos.
+- **No reinicia SDDM ni cierra la sesión actual.** No descarga nada al abrirse.
+  La primera incorporación necesita que SDDM arranque una vez con el nuevo
+  drop-in (normalmente, en el próximo arranque del equipo tras reconstruir): el
+  daemon que ya estaba iniciado puede conservar `Current=GreenShift` en memoria.
+  Después usa siempre el alias `current`, y cambiar el enlace sirve para el
+  siguiente greeter sin volver a reiniciar el servicio.
 
-Archivos editables:
+SDDM y el lock **no son el mismo proceso**: SDDM muestra el tema QML al iniciar
+sesión; el adaptador Quickshell usa el mismo tema dentro de
+**`WlSessionLock` / `ext-session-lock-v1`** para proteger la sesión existente.
+No es una ventana fullscreen y Escape no desbloquea. Tampoco captura las
+ventanas privadas: el fondo, imágenes y animaciones pertenecen al tema Qylock,
+independientemente del wallpaper estático/vídeo del escritorio.
 
-- `~/.config/swaylock/config`: configuración base compatible también con swaylock normal.
-- `~/.config/swaylock/effects.conf`: reloj, formatos, blur, viñeta y textos de effects.
-- `~/.local/bin/orgm-sway-lock`: selección del binario, wallpaper y colores.
+**Super+L**, **Super+Alt+L**, el menú de energía, los 10 minutos de inactividad
+y `before-sleep` usan `orgm-qylock lock`. Super+→ conserva enfocar a la derecha
+y Super+Ctrl+L mueve la ventana. Las pantallas siguen apagándose a los 15 min.
+`orgm-sway-lock` queda únicamente como alias de compatibilidad para el
+swayidle que ya estaba en ejecución; no llama a swaylock. No hace falta
+reiniciar swayidle, Waybar ni reproducir de nuevo el wallpaper para migrarlo.
+El helper devuelve éxito **solo después de confirmar `secure` al compositor**,
+no al crear el proceso. Si otro bloqueo está terminando una autenticación,
+espera y vuelve a bloquear antes de dar por preparado `before-sleep`.
 
-El helper lee la paleta vigente de `~/.config/waybar/orgm-current.css` en cada
-bloqueo; no impone un perfil ni reinicia el escritorio al cambiarlo. Los nombres
-de wallpapers con espacios, dos puntos o sintaxis de shell se pasan mediante
-un symlink privado temporal, sin evaluar el nombre. Se elimina al confirmar el
-bloqueo. Si effects no está disponible, usa la base compatible con swaylock
-normal para no dejar de bloquear por faltar únicamente los efectos.
+La contraseña se verifica por PAM (`pam_unix` y su helper del sistema), con
+políticas privadas inmutables `orgm-qylock-pw`/`orgm-qylock-fp` dentro del paquete;
+no se modifica el PAM global ni se concede una vía IPC de desbloqueo. La huella
+requiere el opt-in **`orgm.sway.fingerprint.enable`** (false por defecto). Envy
+puede activarlo con su backend validado, usando `services.fprintd.package` y sin
+habilitar huella en sudo/SDDM. `~/.config/orgm-qylock/fingerprint` con `off` gana
+al valor de Nix. No se ejecuta `fprintd-list` ni se sondea el sensor al preparar
+el bloqueo: el PAM de huella empieza en paralelo solo dentro del lock seguro.
+Todos los tests privados fuerzan huella off; la validación física y activación
+del backend se documentan por separado en [envy-fingerprint.md](envy-fingerprint.md).
 
-La sesión actual usa el paquete protegido por el GC root
-`~/.local/state/orgm-swaylock-effects-package`; tras reconstruir NixOS se
-selecciona automáticamente el binario effects del sistema. Los cambios editables
-ya están instalados y no requieren cerrar sesión. Una vista previa generada en
-compositores privados está en `~/.local/state/orgm-sway-lock/preview.png`.
+**F2 abre una interfaz de contraseña de respaldo**, con el mismo PAM, si un
+skin no carga o presenta problemas. No hay periodo de gracia. Los QML del
+bloqueo real se cargan del paquete inmutable, con autorecarga desactivada:
+actualizar dotfiles no debe destruir un session-lock que ya esté activo.
+Se incluye un parche acotado de Quickshell para destruir a tiempo las ventanas
+de salidas retiradas antes de que Qt 6.11 las mueva a una salida de otro tamaño;
+sin él, esa transición viola el protocolo y deja el compositor bloqueado sin UI.
 
-Para probarlo manualmente cuando quieras bloquear:
+Archivos principales:
+
+- `~/.local/bin/orgm-qylock`: catálogo, selección privilegiada y supervisor.
+- `~/.config/quickshell/orgm-locks/`: carrusel editable y paleta del perfil.
+- `~/.config/quickshell/orgm-lock/`: copia de las fuentes del adaptador; para
+  cambiar el bloqueo real hay que recompilar `qylock-runtime.nix`.
+- `/var/lib/orgm-qylock/sddm/current`: selección compartida root-owned.
+- `/etc/sddm.conf.d/90-orgm-qylock.conf`: drop-in declarativo de NixOS; antes
+  del primer rebuild puede crearlo el helper tras autorizar. Solo sustituye
+  archivos con su propia marca, nunca configuraciones administrativas ajenas.
+- `~/.config/qylock/theme`: preferencia legacy, leída solo si todavía no existe
+  selección compartida. No se sobrescribe la configuración de Ryoku.
+
+Durante la migración el runtime está protegido por el GC root
+`~/.local/state/orgm-qylock-package`; tras reconstruir se prefiere el paquete
+del sistema. La configuración anterior de swaylock permanece respaldada en
+`~/.local/state/qylock-migration-backup.*`; sus paquetes de generaciones
+anteriores no desaparecen hasta reconstruir y eventualmente hacer GC.
 
 ```sh
-orgm-sway-lock
-# Equivale a Super+L o Super+Alt+L; escribir la contraseña y pulsar Enter.
+orgm-qylock themes             # carrusel, sin bloquear
+orgm-qylock catalog            # JSON, sin interfaz ni autenticación
+orgm-qylock lock               # bloqueo real: ejecutar solo cuando quieras
 ```
 
-Se verificaron el aspecto y el bloqueo real mediante `ext-session-lock-v1` en
-un Sway anidado dentro de otro Sway headless, con D-Bus privado. La captura de
-la vista previa se hizo desde ese compositor exterior de prueba, no desde tu
-escritorio. Escape no desbloqueó. **No se solicitó ni probó la contraseña real**;
-la autenticación conserva la misma configuración PAM y queda por comprobar
-interactivamente. No se instalaron temas que ejecuten scripts externos.
+Validación aislada: cargaron las 41 variantes; Winter, Forest y Clockwork también
+cargaron en el greeter real de SDDM **en test-mode**, sin autenticación. Se
+verificaron carrusel, cancelación, liberación/restauración del teclado durante
+un agente simulado y bloqueo Wayland en dos monitores 1920×1080/1280×720:
+desconexión, todas las salidas desactivadas/restauradas, cambio de resolución y
+escala fraccional. Se rechazaron Escape y token incorrecto; el token correcto
+funcionó con **PAM simulado**, tanto en F2 como en el formulario normal Winter.
+El supervisor confirmó `secure`, incluidos duplicados. HOME/runtime/D-Bus/Wayland
+privados y bus de sistema inaccesible en la prueba. **Estas pruebas no usaron
+la contraseña real, no accedieron al lector ni bloquearon el escritorio activo.**
+La prueba física del lector es independiente, documentada en la guía de huella.
+La autenticación real del nuevo locker y suspensión física quedan para
+la comprobación interactiva del usuario; cargar todos los skins no equivale a
+haber probado todos sus controles (hay warnings visuales upstream en algunos).
+
+Prueba nativa optativa, con el módulo PAM exclusivo de pruebas:
+
+```sh
+ORGM_TEST_QYLOCK_PACKAGE=/nix/store/…-orgm-qylock-1.0 \\
+ORGM_TEST_QYLOCK_PAM=/nix/store/…-qylock-private-test-pam/lib/qylock-test-pam.so \\
+python3 tests/qylock-session.test.py
+```
 
 ## Centro de notificaciones: SwayNotificationCenter
 
@@ -522,8 +633,8 @@ orgm-dot pull sway
 orgm-dot push sway
 ```
 
-Aplicaciones independientes: `sway`, `waybar`, `rofi`, `nwg-dock`, `swaylock`,
-`swayidle`, `sway-tools`, `swaync` y `desktop-tools`. Los archivos antiguos de
+Aplicaciones independientes: `sway`, `waybar`, `rofi`, `nwg-dock`, `qylock`,
+`swayidle`, `sway-tools`, `sway-wallpapers`, `swaync` y `desktop-tools`. Los archivos antiguos de
 Dunst se conservan como configuración inactiva; no se inicia su servidor. Rofi usa
 `~/.config/rofi-sway` y los helpers nuevos usan el prefijo `sway-`, para
 coexistir con los archivos de Ryoku sin depender de sobrescribirlos. El manifiesto de `nwg-dock` incluye

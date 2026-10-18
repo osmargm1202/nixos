@@ -189,7 +189,8 @@ class SwayWorkflows(unittest.TestCase):
         config = (profile / 'sway/config').read_text()
         self.assertIn('set $dock_gap 60', config)
         self.assertIn('gaps right $dock_gap', config)
-        self.assertIn('exec_always swaymsg gaps right all set $dock_gap', config)
+        self.assertIn('sway-game-mode sync', config)
+        self.assertNotIn('exec_always swaymsg gaps right', config)
         bar = json.loads((profile / 'waybar/config').read_text())
         self.assertTrue(bar['exclusive'])
         self.assertEqual(bar['position'], 'top')
@@ -218,7 +219,8 @@ class SwayWorkflows(unittest.TestCase):
             def fail(_):
                 raise RuntimeError('IPC failure')
             with patch.object(Path, 'home', return_value=home), patch.dict(
-                    os.environ, XDG_CONFIG_HOME=str(home / '.config')), patch.dict(ENV, ipc=fail):
+                    os.environ, XDG_CONFIG_HOME=str(home / '.config')), patch.dict(
+                    ENV, ipc=fail, stop_session_wallpaper_players=lambda: None):
                 with self.assertRaises(RuntimeError):
                     MODULE['set_wallpaper'](image)
             self.assertEqual(state.read_text(), 'previous wallpaper\n')
@@ -280,13 +282,16 @@ class SwayWorkflows(unittest.TestCase):
             for path in existing:
                 self.assertEqual(path.read_text(), "existing Ryoku file\n")
             self.assertTrue((home / ".config/rofi-sway/sway-menu.rasi").is_file())
-            for name in ["sway-app-launcher", "orgm-sway-lock", "sway-rofi-lib", "sway-volume-osd", "sway-firefox-open-tab", "sway-firefox-tabs", "sway-video-timer"]:
+            for name in ["sway-app-launcher", "orgm-sway-lock", "orgm-qylock", "sway-rofi-lib", "sway-volume-osd", "sway-firefox-open-tab", "sway-firefox-tabs", "sway-video-timer"]:
                 path = home / ".local/bin" / name
                 self.assertTrue(path.is_file() and os.access(path, os.X_OK), name)
                 self.assertFalse(path.is_symlink(), name)
             self.assertTrue((home / ".local/share/nwg-dock/images/grid.svg").is_file())
             self.assertTrue((home / '.config/swaync/config.json').is_file())
             self.assertTrue((home / '.config/quickshell/orgm-wallpapers/shell.qml').is_file())
+            self.assertTrue((home / '.config/quickshell/orgm-lock/lock.qml').is_file())
+            self.assertTrue((home / '.config/quickshell/orgm-locks/shell.qml').is_file())
+            self.assertFalse((home / '.config/swaylock').exists())
 
     def test_legacy_appearance_file_gets_default_icon_theme(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -302,6 +307,23 @@ class SwayWorkflows(unittest.TestCase):
                            '"Colloid-Dark"'), calls)
             self.assertIn(('dconf', 'write', '/org/gnome/nautilus/preferences/show-image-thumbnails',
                            '"always"'), calls)
+
+    def test_appearance_reload_preserves_waybar_and_caffeine(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            config = home/'.config/sway/appearance.ini'
+            config.parent.mkdir(parents=True)
+            config.write_text('[Appearance]\ncolor-scheme=prefer-dark\ngtk-theme=Adwaita-dark\n')
+            helper = home/'.local/bin/orgm-visual-profile'
+            helper.parent.mkdir(parents=True)
+            helper.touch()
+            calls = []
+            with patch.object(Path, 'home', return_value=home), patch.dict(
+                    ENV, run=lambda *args, **kwargs: calls.append((args, kwargs))):
+                MODULE['apply_appearance']()
+            args, kwargs = calls[-1]
+            self.assertEqual(args, (str(helper), 'apply'))
+            self.assertEqual(kwargs['env']['ORGM_VISUAL_PROFILE_KEEP_WAYBAR'], '1')
 
     def test_thumbnail_policy_is_editable_and_rejects_invalid_values(self):
         for mode in ('always', 'local-only', 'never', 'invalid'):
@@ -377,11 +399,11 @@ class SwayWorkflows(unittest.TestCase):
         with patch.dict(ENV, run=lambda *args, **kw: self.calls.append(args)):
             self.calls = []
             MODULE['power']('Suspender')
-        self.assertEqual(self.calls, [('orgm-sway-lock',), ('systemctl', 'suspend')])
+        self.assertEqual(self.calls, [('orgm-qylock', 'lock'), ('systemctl', 'suspend')])
 
     def test_lock_failure_prevents_suspend(self):
         def fail(*args, **kwargs):
-            self.assertEqual(args, ('orgm-sway-lock',))
+            self.assertEqual(args, ('orgm-qylock', 'lock'))
             raise subprocess.CalledProcessError(1, args)
         with patch.dict(ENV, run=fail), self.assertRaises(subprocess.CalledProcessError):
             MODULE['power']('Suspender')
@@ -431,7 +453,7 @@ class SwayWorkflows(unittest.TestCase):
             runtime.mkdir()
             with patch.object(Path, 'home', return_value=home), patch.dict(
                     os.environ, XDG_CONFIG_HOME=str(home/'.config'), XDG_RUNTIME_DIR=str(runtime)), patch.dict(
-                    ENV, ipc=(calls := []).append):
+                    ENV, ipc=(calls := []).append, stop_session_wallpaper_players=lambda: None):
                 MODULE['wallpaper']()
             alias = next(runtime.glob('orgm-sway-wallpapers-*/*'))
             self.assertEqual(alias.readlink(), wallpaper)

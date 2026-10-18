@@ -24,8 +24,10 @@ def config_home():
 
 
 def package_metadata():
-    roots = [Path('/run/current-system/sw'),
-             Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'orgm-qylock-package']
+    executable = Path(__file__).resolve()
+    roots = [executable.parent.parent] if executable.is_relative_to('/nix/store') and executable.parent.name == 'bin' else []
+    roots += [Path('/run/current-system/sw'),
+              Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'orgm-qylock-package']
     for root in roots:
         metadata = root/'share/orgm-qylock/runtime.json'
         if metadata.is_file():
@@ -44,6 +46,18 @@ def catalog(metadata):
 
 def current_theme(metadata, items=None):
     choices = {item['id'] for item in (items if items is not None else catalog(metadata))}
+    # The root-owned atomic theme symlink is shared with SDDM. Local/legacy
+    # preferences are migration fallbacks only, before the first shared choice.
+    if metadata.get('themeLink'):
+        link = Path(metadata['themeLink'])
+        try:
+            info = link.lstat()
+            if stat.S_ISLNK(info.st_mode) and info.st_uid == 0:
+                selected = link.resolve(strict=True).relative_to(Path(metadata['themes']).resolve()).as_posix()
+                if selected in choices:
+                    return selected
+        except (OSError, ValueError):
+            pass
     for path in (config_home()/'orgm-qylock/theme', config_home()/'qylock/theme'):
         if path.is_file():
             selected = path.read_text().strip()
@@ -78,7 +92,8 @@ def select_theme(metadata, slug):
     result = subprocess.run(['/run/wrappers/bin/pkexec', str(helper), 'select', slug])
     if result.returncode:
         raise RuntimeError('No se cambió el tema: autorización cancelada o fallo al actualizar SDDM')
-    atomic_text(config_home()/'orgm-qylock/theme', slug+'\n')
+    # The privileged helper atomically commits the shared symlink. Do not
+    # introduce a second, per-user selection which could diverge from SDDM.
 
 
 def picker_catalog(metadata):
@@ -127,19 +142,12 @@ def choose_theme(metadata):
 
 
 def fingerprint_available(metadata, user):
-    # Explicit opt-in only. Driver preparation in another task must not
-    # activate fprintd or touch the physical sensor during this migration.
+    # No probe: a Nix opt-in authorizes only the lock's parallel PAM service.
+    # A per-user off switch wins. Preparing a driver alone never enables it.
+    if not metadata.get('fingerprintEnabled', False):
+        return False
     preference = config_home()/'orgm-qylock/fingerprint'
-    if not preference.is_file() or preference.read_text().strip().lower() not in ('1', 'true', 'on', 'enabled'):
-        return False
-    binary = metadata.get('fingerprintList')
-    if not binary:
-        return False
-    try:
-        result = subprocess.run([binary, user], capture_output=True, text=True, timeout=2)
-        return result.returncode == 0 and bool(re.search(r'#\d+:\s+\S+', result.stdout))
-    except (OSError, subprocess.TimeoutExpired):
-        return False
+    return not (preference.is_file() and preference.read_text().strip().lower() in ('0', 'false', 'off', 'disabled'))
 
 
 def lock_settings(metadata):
@@ -168,7 +176,8 @@ def compositor_secure(metadata, information):
         info = json.loads(information.read_text())
         result = subprocess.run([metadata['qs'], 'ipc', '--pid', str(int(info['pid'])),
                                  'call', 'orgm-lock', 'status'], capture_output=True, text=True, timeout=1)
-        return result.returncode == 0 and json.loads(result.stdout).get('secure') is True
+        state = json.loads(result.stdout) if result.returncode == 0 else {}
+        return state.get('secure') is True and not state.get('authenticated')
     except (OSError, ValueError, KeyError, subprocess.TimeoutExpired):
         return False
 
@@ -181,7 +190,7 @@ def lock(metadata):
     supervisor = None
     try:
         info = os.fstat(fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
             raise ValueError('Archivo de exclusión de bloqueo no válido')
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -190,8 +199,16 @@ def lock(metadata):
             while time.monotonic() < deadline:
                 if compositor_secure(metadata, information):
                     return 0
-                time.sleep(.1)
-            raise RuntimeError('Otro bloqueo está arrancando pero no confirmó la seguridad')
+                # An authenticated lock may still be animating its exit. Wait
+                # for its supervisor to release ownership, then acquire a NEW
+                # secure lock before acknowledging before-sleep.
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    time.sleep(.1)
+            else:
+                raise RuntimeError('Otro bloqueo está arrancando pero no confirmó la seguridad')
         instance = Path(tempfile.mkdtemp(prefix='orgm-qylock-instance-', dir=runtime))
         atomic_text(instance/'data.json', json.dumps(lock_settings(metadata), ensure_ascii=False))
         atomic_text(instance/'metadata.json', json.dumps(metadata))
@@ -229,12 +246,14 @@ def supervise(instance, inherited_fd):
     if (held.st_dev, held.st_ino) != (expected.st_dev, expected.st_ino):
         raise ValueError('Descriptor de exclusión incorrecto')
     metadata = json.loads((instance/'metadata.json').read_text())
+    result = None
     try:
         with subprocess.Popen([metadata['qs'], '--path', metadata['lockQml']],
                 env=dict(os.environ, ORGM_LOCK_DATA=str(instance/'data.json'),
                          ORGM_LOCK_READY=str(instance/'ready'))) as child:
             atomic_text(information, json.dumps(dict(pid=child.pid, supervisor=os.getpid(), instance=str(instance))))
-            return child.wait()
+            result = child.wait()
+            return result
     finally:
         # Keep failure logs for diagnosis. A successful unlock normally exits 0.
         try:
@@ -244,6 +263,11 @@ def supervise(instance, inherited_fd):
         except (OSError, ValueError):
             pass
         os.close(inherited_fd)
+        try:
+            if result == 0 and (instance/'ready').read_text() == 'unlocked':
+                shutil.rmtree(instance)
+        except OSError:
+            pass
 
 
 def main(args):

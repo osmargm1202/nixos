@@ -9,7 +9,7 @@
   "modules-left": [
     "custom/launcher", "custom/visual-profile", "sway/workspaces", "sway/scratchpad", "sway/mode",
     "backlight", "battery", "pulseaudio", "pulseaudio#microphone",
-    "idle_inhibitor", "sway/language", "custom/wallpaper", "custom/keybindings_help"
+    "idle_inhibitor", "custom/game_mode", "sway/language", "custom/wallpaper", "custom/keybindings_help"
   ],
   "modules-center": ["clock#day_month", "clock", "clock#date"],
   "modules-right": ["sway/window", "mpris", "network", "bluetooth", "custom/notifications", "custom/power", "tray"],
@@ -112,6 +112,12 @@
     "format": "{icon}",
     "tooltip-format": "Caffeine: mantener pantalla activa",
     "format-icons": { "activated": "󰅶", "deactivated": "󰾪" }
+  },
+  "custom/game_mode": {
+    "exec": "sway-game-mode waybar",
+    "return-type": "json",
+    "interval": 2,
+    "on-click": "sway-game-mode toggle"
   },
   "custom/wallpaper": {
     "format": "",

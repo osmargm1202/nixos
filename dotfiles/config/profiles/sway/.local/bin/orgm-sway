@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 import random
 import re
+import select
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -72,9 +74,9 @@ def choose_window(action="focus"):
 def power(action=None):
     action = action or pick("Sesión", ["Bloquear", "Suspender", "Cerrar sesión", "Reiniciar", "Apagar"])
     if action == "Bloquear":
-        run("orgm-sway-lock")
+        run("orgm-qylock", "lock")
     elif action == "Suspender":
-        run("orgm-sway-lock")
+        run("orgm-qylock", "lock")
         run("systemctl", "suspend")
     elif action in ("Cerrar sesión", "Reiniciar", "Apagar"):
         if pick(action, ["Cancelar", "Confirmar"]) != "Confirmar":
@@ -155,24 +157,127 @@ def stop_wallpaper_video(unit):
             raise RuntimeError('No se pudo detener el fondo anterior: ' + result.stderr.strip())
 
 
+def is_session_wallpaper_process(process):
+    # Compare the real executable (Nix wrappers included), UID and Wayland
+    # endpoint. Never match command-line substrings or another compositor.
+    display = os.environ.get('WAYLAND_DISPLAY')
+    runtime = os.environ.get('XDG_RUNTIME_DIR')
+    if not display or not runtime:
+        return False
+    try:
+        if process.stat().st_uid != os.getuid():
+            return False
+        if (process/'exe').resolve(strict=True).name not in (
+                'swaybg', '.swaybg-wrapped', 'mpvpaper', '.mpvpaper-wrapped'):
+            return False
+        environment = dict(entry.split(b'=', 1) for entry in (process/'environ').read_bytes().split(b'\0') if b'=' in entry)
+        return (environment.get(b'WAYLAND_DISPLAY') == os.fsencode(display)
+                and environment.get(b'XDG_RUNTIME_DIR') == os.fsencode(runtime))
+    except (OSError, ValueError):
+        return False
+
+
+def stop_session_wallpaper_players():
+    # This also collects stale/manual duplicates not present in the unit file.
+    # pidfds prevent PID-reuse races, and waiting avoids transient overlap.
+    if not os.environ.get('WAYLAND_DISPLAY') or not os.environ.get('XDG_RUNTIME_DIR'):
+        return
+    for process in Path('/proc').iterdir():
+        if not process.name.isdecimal() or not is_session_wallpaper_process(process):
+            continue
+        try:
+            descriptor = os.pidfd_open(int(process.name))
+        except ProcessLookupError:
+            continue
+        try:
+            if not is_session_wallpaper_process(process):
+                continue
+            poller = select.poll()
+            poller.register(descriptor, select.POLLIN)
+            try:
+                signal.pidfd_send_signal(descriptor, signal.SIGTERM)
+                if not poller.poll(2000):
+                    signal.pidfd_send_signal(descriptor, signal.SIGKILL)
+                    if not poller.poll(2000):
+                        raise RuntimeError('El proceso de fondo anterior no termina: ' + process.name)
+            except ProcessLookupError:
+                pass
+        finally:
+            os.close(descriptor)
+
+
+def game_mode_active():
+    state = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state')) / 'orgm-sway/game-mode.json'
+    try:
+        return json.loads(state.read_text()).get('enabled') is True
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def hide_wallpaper():
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config')) / 'sway'
+    config.mkdir(parents=True, exist_ok=True)
+    with (config/'wallpaper.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        owner = config/'wallpaper-video-unit'
+        if owner.is_file():
+            stop_wallpaper_video(owner.read_text().strip())
+        stop_session_wallpaper_players()
+        ipc('output * bg #000000 solid_color')
+        owner.write_text('\n')
+
+
+def apply_wallpaper_backend(path, preview):
+    if game_mode_active():
+        ipc('output * bg #000000 solid_color')
+        return ''
+    if path.suffix.lower() in VIDEO_SUFFIXES:
+        return start_wallpaper_video(path)
+    ipc('output * bg ' + json.dumps(str(wallpaper_ipc_path(preview)), ensure_ascii=False) + ' fill')
+    return ''
+
+
+def wallpaper_nvidia_offload():
+    # The wrapper may exist while the GPU is powered off, absent or bound to
+    # VFIO. Probe the driver with a bounded wait, not just the executable name.
+    if os.environ.get('ORGM_SWAY_WALLPAPER_OFFLOAD') == '0':
+        return None
+    wrapper = shutil.which('nvidia-offload')
+    probe = shutil.which('nvidia-smi')
+    if not wrapper or not probe:
+        return None
+    try:
+        result = subprocess.run([probe, '-L'], capture_output=True, text=True, timeout=2)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return wrapper if result.returncode == 0 and result.stdout.startswith('GPU ') else None
+
+
 def start_wallpaper_video(path):
     binary = wallpaper_tool('mpvpaper')
-    unit = 'orgm-sway-video-' + uuid.uuid4().hex + '.service'
-    command = ['systemd-run', '--user', '--quiet', '--collect', '--service-type=exec',
-               '--expand-environment=no',
-               '--unit=' + unit, '--property=PartOf=sway-session.target']
-    for key in ('WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'):
-        if key in os.environ:
-            command.append('--setenv=' + key + '=' + os.environ[key])
-    try:
-        run(*command, '--', binary, '-o', 'no-config no-audio loop-file=inf panscan=1', 'ALL', str(path))
-        # Type=exec catches exec failures; catch immediate decoder/display failures too.
-        time.sleep(0.3)
-        run('systemctl', '--user', 'is-active', '--quiet', unit)
-    except (OSError, subprocess.CalledProcessError):
-        stop_wallpaper_video(unit)
-        raise RuntimeError('No se pudo iniciar mpvpaper; consulta journalctl --user -u ' + unit)
-    return unit
+    offload = wallpaper_nvidia_offload()
+    launchers = [[offload, binary], [binary]] if offload else [[binary]]
+    for launcher in launchers:
+        unit = 'orgm-sway-video-' + uuid.uuid4().hex + '.service'
+        command = ['systemd-run', '--user', '--quiet', '--collect', '--service-type=exec',
+                   '--expand-environment=no',
+                   '--unit=' + unit, '--property=PartOf=sway-session.target',
+                   '--property=KillMode=control-group', '--property=TimeoutStopSec=2s']
+        for key in ('WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'):
+            if key in os.environ:
+                command.append('--setenv=' + key + '=' + os.environ[key])
+        try:
+            run(*command, '--', *launcher, '-o', 'no-config no-audio loop-file=inf panscan=1', 'ALL', str(path))
+            # Type=exec catches exec failures; allow extra GPU initialization
+            # time for offload before checking immediate driver/display errors.
+            time.sleep(0.6 if len(launcher) == 2 else 0.3)
+            run('systemctl', '--user', 'is-active', '--quiet', unit)
+        except (OSError, subprocess.CalledProcessError):
+            # Fully stop the failed attempt before retrying on the default GPU.
+            stop_wallpaper_video(unit)
+            continue
+        return unit
+    raise RuntimeError('No se pudo iniciar mpvpaper; consulta journalctl --user -u ' + unit)
 
 
 def set_wallpaper(value, record=True):
@@ -180,6 +285,9 @@ def set_wallpaper(value, record=True):
     if not path.is_file() or path.suffix.lower() not in MEDIA_SUFFIXES:
         raise ValueError('Formato de fondo no admitido')
     preview = wallpaper_preview(path)
+    # Check dependencies before stopping a working background.
+    if path.suffix.lower() in VIDEO_SUFFIXES and not game_mode_active():
+        wallpaper_tool('mpvpaper')
     state = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config')) / 'sway/wallpaper'
     state.parent.mkdir(parents=True, exist_ok=True)
     # Serialize restore, profile changes and carousel requests, but release before
@@ -188,16 +296,23 @@ def set_wallpaper(value, record=True):
         fcntl.flock(lock, fcntl.LOCK_EX)
         owner = state.parent/'wallpaper-video-unit'
         previous = owner.read_text().strip() if owner.is_file() else ''
-        unit = start_wallpaper_video(path) if path.suffix.lower() in VIDEO_SUFFIXES else ''
+        previous_path = Path(state.read_text().strip()) if state.is_file() else None
+        if previous:
+            stop_wallpaper_video(previous)  # systemctl waits for the whole cgroup
+        stop_session_wallpaper_players()  # swaybg and any unrecorded mpvpaper
+        owner.write_text('\n')
         try:
-            # Do not create a new swaybg surface over the video layer.
-            if not unit:
-                ipc('output * bg ' + json.dumps(str(wallpaper_ipc_path(preview)), ensure_ascii=False) + ' fill')
-            if previous:
-                stop_wallpaper_video(previous)
-        except (OSError, RuntimeError, subprocess.CalledProcessError):
-            if unit:
-                stop_wallpaper_video(unit)
+            unit = apply_wallpaper_backend(path, preview)
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+            # Stop-before-start means a failed replacement needs an explicit
+            # rollback. Restore without recursion, profile recording or overlap.
+            if previous_path and previous_path.is_file() and previous_path.suffix.lower() in MEDIA_SUFFIXES:
+                try:
+                    stop_session_wallpaper_players()
+                    restored = apply_wallpaper_backend(previous_path, wallpaper_preview(previous_path))
+                    owner.write_text(restored + '\n')
+                except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as rollback:
+                    raise RuntimeError(f'{error}; tampoco se pudo restaurar el fondo anterior: {rollback}') from error
             raise
         # Keep original media for profiles; the locker receives only an image.
         for target, text in ((state, str(path)), (state.parent/'wallpaper-preview', str(preview)), (owner, unit)):
@@ -368,7 +483,10 @@ def apply_appearance():
         json.dumps(thumbnails))
     helper = Path.home()/'.local/bin/orgm-visual-profile'
     if helper.is_file():
-        run(str(helper), 'apply', env=dict(os.environ, ORGM_VISUAL_PROFILE_BACKEND='sway'))
+        # Reloading the compositor must preserve Caffeine and click processes
+        # owned by Waybar; its CSS watcher can refresh the palette in place.
+        run(str(helper), 'apply', env=dict(os.environ, ORGM_VISUAL_PROFILE_BACKEND='sway',
+                                         ORGM_VISUAL_PROFILE_KEEP_WAYBAR='1'))
 
 
 def main(args):
@@ -424,6 +542,7 @@ def main(args):
             "Archivos": ["nautilus", "--new-window"],
             "Perfil visual": ["orgm-sway", "profiles"],
             "Fondo de pantalla": ["orgm-sway", "wallpaper-pick"],
+            "Inicio y bloqueo": ["orgm-qylock", "themes"],
             "Sesión / suspender": ["orgm-sway", "power"],
         }
         selected = pick("Control", list(commands))

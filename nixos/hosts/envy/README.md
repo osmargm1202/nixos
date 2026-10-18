@@ -84,17 +84,30 @@ Se corrigió la retirada de callbacks en Image borders y Glass en el perfil
 Ryoku compartido. Envy ya no carga esos plugins al usar Sway.
 
 `fprintd` sigue habilitado. El lector USB de este equipo es Synaptics
-`06cb:00c9`: `fprintd-list osmarg` responde `No devices available` con el
-controlador instalado. No figura en la
+`06cb:00c9`: antes de integrar el backend experimental, `fprintd-list osmarg`
+respondía `No devices available` con el controlador estándar. No figura en la
 [lista de dispositivos de libfprint](https://fprint.freedesktop.org/supported-devices.html).
 Existe un [controlador experimental](https://github.com/vojtapl/synaTudorMiS)
 que marca ese ID como probado. Se prepararon paquetes de libfprint/fprintd y un
-módulo opcional **desactivado por defecto**; no se activó ni probó en el sensor.
+módulo opcional (desactivado por defecto en su definición). El usuario confirmó
+una prueba física aislada correcta: registro, coincidencia del índice derecho,
+rechazo de otro dedo y persistencia tras reiniciar el daemon privado. Después
+autorizó **backend permanente + desbloqueo Sway**, no sudo ni SDDM por huella.
+Envy habilita el backend y reutiliza el estado privado, con guard contra pairing
+ausente y PAM gestionado forzado a contraseña. **Generación permanente aplicada**
+tras autorización y dry-activate. Verificación sin sudo del servicio del sistema
+y **Win+L/huella confirmados por el usuario**. Se aplicó una excepción udev de
+energía únicamente para este lector. Tras cambiar a `material-you-dark` hubo
+intermitencia y luego volvió a funcionar; no se atribuye todavía al tema ni se
+declara estabilidad resuelta. Suspensión y reinicio quedan pendientes.
 Su autor advierte de incompatibilidad con el emparejamiento de Windows, y abrir
-el lector puede iniciar un nuevo emparejamiento. El desbloqueo queda pendiente
-de validación física y de PAM; compilar o activar el servicio no basta.
-Véase [la guía de huella](../../../docs/envy-fingerprint.md) para compilar sin
-activar, riesgos y requisitos antes de una prueba física.
+el lector sin sus datos persistentes puede iniciar un nuevo emparejamiento.
+**Conservar `/var/lib/fprint-synatudor-test/`**: la unidad preparada lo usa
+directamente; no enrolar de nuevo ni sobrescribir datos. La corrección de hotplug
+de Qylock y el delta conjunto se validaron antes de aplicar. Las pruebas físicas
+son manuales; el agente no bloquea ni suspende el escritorio automáticamente.
+Véase [la guía de huella](../../../docs/envy-fingerprint.md) para los resultados,
+los riesgos y el alcance pendiente de integración.
 
 ## Estado de salidas externas (2026-10-15)
 

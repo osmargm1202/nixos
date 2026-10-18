@@ -63,6 +63,9 @@ window#waybar {
 #battery.critical, #custom-power { color: @red; }
 #battery.charging, #idle_inhibitor.activated { color: @blue; }
 #idle_inhibitor.deactivated, #bluetooth.disabled, #mpris.paused { color: @overlay0; }
+#custom-game_mode { padding: 0 8px; }
+#custom-game_mode.activated { color: @blue; font-weight: bold; }
+#custom-game_mode.deactivated { color: @overlay0; }
 #language, #custom-keybindings_help { font-weight: bold; }
 #custom-power { font-weight: bold; padding: 0 10px; }
 #window { padding: 0 8px; }

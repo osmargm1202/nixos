@@ -202,7 +202,9 @@ refresh_surfaces() {
     i3-msg reload >/dev/null 2>&1 || true
   elif [[ "$(backend)" == sway ]] && command -v systemctl >/dev/null 2>&1; then
     # Atomic palette replacement can invalidate the CSS file watcher.
-    systemctl --user try-restart orgm-sway-waybar.service >/dev/null 2>&1 || true
+    if [[ "${ORGM_VISUAL_PROFILE_KEEP_WAYBAR:-0}" != 1 ]]; then
+      systemctl --user try-restart orgm-sway-waybar.service >/dev/null 2>&1 || true
+    fi
   fi
 }
 

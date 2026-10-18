@@ -1,0 +1,36 @@
+diff --git a/src/wayland/session_lock.cpp b/src/wayland/session_lock.cpp
+--- a/src/wayland/session_lock.cpp
++++ b/src/wayland/session_lock.cpp
+@@ -55,7 +55,8 @@ void WlSessionLock::updateSurfaces(bool show, WlSessionLock* old) {
+ 	auto screens = QGuiApplication::screens();
+ 
+ 	screens.removeIf([](QScreen* screen) {
+-		if (dynamic_cast<QtWaylandClient::QWaylandScreen*>(screen->handle()) == nullptr) {
++		auto* waylandScreen = dynamic_cast<QtWaylandClient::QWaylandScreen*>(screen->handle());
++		if (waylandScreen == nullptr || waylandScreen->isPlaceholder() || !waylandScreen->output()) {
+ 			qDebug() << "Not creating lock surface for screen" << screen
+ 			         << "as it is not backed by a wayland screen.";
+ 
+@@ -69,6 +70,11 @@ void WlSessionLock::updateSurfaces(bool show, WlSessionLock* old) {
+ 	for (auto& [screen, surface]: map) {
+ 		if (!screens.contains(screen)) {
+ 			this->surfaces.remove(screen);
++			// screenRemoved is the last chance to destroy this native window
++			// before Qt migrates it to the primary screen. Leaving it alive
++			// until deleteLater can commit a new-sized buffer to the OLD lock
++			// role, fatally violating ext-session-lock-v1 on mixed-size outputs.
++			delete surface->disownWindow();
+ 			surface->deleteLater();
+ 		}
+ 	}
+@@ -273,7 +279,9 @@ void WlSessionLockSurface::show() {
+ 
+ QQuickItem* WlSessionLockSurface::contentItem() const { return this->mContentItem; }
+ 
+-bool WlSessionLockSurface::isVisible() const { return this->window->isVisible(); }
++bool WlSessionLockSurface::isVisible() const {
++	return this->window != nullptr && this->window->isVisible();
++}
+ 
+ qint32 WlSessionLockSurface::width() const {
+ 	if (this->window == nullptr) return 0;

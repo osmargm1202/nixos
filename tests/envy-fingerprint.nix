@@ -17,7 +17,9 @@ let
           security.pam.services = {
             sudo = { };
             sddm = { };
+            polkit-1 = { };
             swaylock = { };
+            arbitrary-custom-service.fprintAuth = true;
           };
         }
       ]
@@ -34,11 +36,15 @@ let
       };
     }
   ];
-  pamUnchanged =
-    service:
-    enabled.security.pam.services.${service}.text
-    == builtins.replaceStrings [ "${pkgs.fprintd}" ] [ "${packages.fprintd}" ]
-      disabled.security.pam.services.${service}.text;
+  managedServices = [
+    "sudo"
+    "sddm"
+    "login"
+    "polkit-1"
+    "swaylock"
+    "arbitrary-custom-service"
+  ];
+  hasFingerprint = text: nixpkgs.lib.hasInfix "pam_fprintd.so" text;
 in
 assert !disabled.orgm.envy.fingerprint.experimental.enable;
 assert disabled.services.fprintd.package == pkgs.fprintd;
@@ -47,21 +53,26 @@ assert enabled.services.fprintd.enable;
 assert enabled.services.fprintd.package == packages.fprintd;
 assert builtins.elem packages.libfprint enabled.services.udev.packages;
 assert !enabled.services.fprintd.tod.enable;
-assert builtins.all
-  (
-    service:
-    pamUnchanged service
-    &&
-      nixpkgs.lib.hasInfix
-        (builtins.unsafeDiscardStringContext "${packages.fprintd}/lib/security/pam_fprintd.so")
-        enabled.security.pam.services.${service}.text
-    && nixpkgs.lib.hasInfix "pam_unix.so" enabled.security.pam.services.${service}.text
-  )
-  [
-    "sudo"
-    "sddm"
-    "swaylock"
+assert builtins.all (
+  service:
+  !enabled.security.pam.services.${service}.fprintAuth
+  && !hasFingerprint enabled.security.pam.services.${service}.text
+  && nixpkgs.lib.hasInfix "pam_unix.so" enabled.security.pam.services.${service}.text
+) managedServices;
+assert hasFingerprint disabled.security.pam.services.sudo.text;
+assert
+  enabled.systemd.services.fprintd.serviceConfig.StateDirectory == [
+    ""
+    "fprint-synatudor-test"
   ];
+assert nixpkgs.lib.hasInfix "0-persistent/synatlsmoc" enabled.systemd.services.fprintd.preStart;
+assert nixpkgs.lib.hasInfix "STATE_DIRECTORY" enabled.systemd.services.fprintd.preStart;
+assert nixpkgs.lib.hasInfix
+  ''ATTR{idVendor}=="06cb", ATTR{idProduct}=="00c9", TEST=="power/control", ATTR{power/control}="on"''
+  enabled.services.udev.extraRules;
+assert !(nixpkgs.lib.hasInfix ''ATTR{idProduct}=="00c9"'' disabled.services.udev.extraRules);
+assert nixpkgs.lib.hasInfix "StateDirectory=\nStateDirectory=fprint-synatudor-test"
+  enabled.systemd.units."fprintd.service".text;
 assert builtins.any (
   a: !a.assertion && a.message == "Envy synaTudorMiS uses native libfprint, not a TOD driver."
 ) conflict.assertions;
@@ -69,7 +80,13 @@ assert builtins.any (
   defaultDisabled = true;
   stockBackendWhenDisabled = true;
   customDaemonAndUdevWhenEnabled = true;
-  pamPolicyUnchanged = true;
+  fingerprintDisabledInAllManagedPamServices = true;
+  passwordRetained = true;
+  validatedPairingStateReused = true;
+  missingStateGuard = true;
+  upstreamStateDirectoryListReset = true;
+  sensorOnlyRuntimePowerQuirk = true;
+  preStartScript = enabled.systemd.services.fprintd.preStart;
   todConflictRejected = true;
   libfprint = packages.libfprint.drvPath;
   fprintd = packages.fprintd.drvPath;
