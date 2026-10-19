@@ -5,10 +5,10 @@ local game_mode = require("lua.game-mode").enabled()
 
 local light_mode = false
 local opaque = "1.0 override 1.0 override 1.0 override"
-local base_opacity = game_mode and opaque or (light_mode and opaque or "0.96 override 0.96 override 1.0 override")
-local file_opacity = game_mode and opaque or (light_mode and opaque or "0.88 override 0.88 override 1.0 override")
-local terminal_opacity = game_mode and opaque or (light_mode and opaque or "0.85 override 0.85 override 1.0 override")
-local browser_opacity = game_mode and opaque or (light_mode and opaque or "0.90 override 0.90 override 1.0 override")
+local base_opacity = opaque
+local file_opacity = opaque
+local terminal_opacity = game_mode and opaque or (light_mode and opaque or "0.94 override 0.94 override 1.0 override")
+local browser_opacity = opaque
 
 local opacity_rules = {
   { class = ".*", opacity = base_opacity },

@@ -145,6 +145,7 @@ write_runtime_palette() {
     atomic_write "$config_home/swaync/orgm-current.css" "$(printf '%b' "$css" | grep '^@define-color ')"
   else
     atomic_write "$config_home/waybar-hypr/orgm-current.css" "$(printf '%b' "$css")"
+    atomic_write "$config_home/swaync/orgm-current.css" "$(printf '%b' "$css" | grep '^@define-color ')"
     atomic_write "$config_home/nwg-dock-hyprland/current-theme.css" "$(printf '%b' "$dock")"
     atomic_write "$config_home/dunst/dunstrc.d/90-visual-profile.conf" "$(printf '%b' "$dunst")"
   fi
@@ -154,7 +155,7 @@ write_runtime_palette() {
 apply_gtk() {
   local mode="$1" theme scheme icon_theme=Adwaita
   if [[ "$mode" == light ]]; then theme=Adwaita; scheme=prefer-light; else theme=Adwaita-dark; scheme=prefer-dark; fi
-  if [[ "$(backend)" == sway ]]; then
+  if [[ "$(backend)" == sway || "$(backend)" == hypr ]]; then
     icon_theme=Colloid-Dark
     # Nautilus/GTK4 reads dconf, not just settings.ini. SDDM may lack gsettings.
     if command -v dconf >/dev/null 2>&1; then
@@ -186,7 +187,7 @@ refresh_surfaces() {
       kill -USR1 "$pid" 2>/dev/null || true
     done < <(pgrep -u "$(id -u)" -x "$process_pattern" 2>/dev/null || true)
   done
-  if [[ "$(backend)" == sway ]]; then
+  if [[ "$(backend)" == sway || "$(backend)" == hypr ]]; then
     # Reload CSS only: keep notification history and the user's DND selection.
     command -v swaync-client >/dev/null 2>&1 && swaync-client --reload-css --skip-wait >/dev/null 2>&1 || true
   else

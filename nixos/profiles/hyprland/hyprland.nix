@@ -15,6 +15,7 @@ in
   imports = [
     ../../sddm/sddm.nix
     ../../print/printer.nix
+    ./desktop-session.nix
   ];
   services.xserver.enable = false;
   services.displayManager.defaultSession = "hyprland";
@@ -238,7 +239,6 @@ in
     (rofi.override { plugins = [ rofi-calc ]; })
     rofimoji
     libqalculate
-    dunst
     bluetui
     blueman
     networkmanagerapplet

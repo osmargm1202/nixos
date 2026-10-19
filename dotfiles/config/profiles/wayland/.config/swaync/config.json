@@ -1,0 +1,41 @@
+{
+  "ignore-gtk-theme": true,
+  "positionX": "right",
+  "positionY": "top",
+  "layer": "overlay",
+  "control-center-layer": "overlay",
+  "control-center-exclusive-zone": true,
+  "control-center-margin-top": 8,
+  "control-center-margin-bottom": 8,
+  "control-center-margin-right": 68,
+  "control-center-margin-left": 8,
+  "control-center-width": 400,
+  "notification-window-width": 440,
+  "fit-to-screen": true,
+  "keyboard-shortcuts": true,
+  "notification-grouping": true,
+  "notification-2fa-action": false,
+  "timeout": 6,
+  "timeout-low": 3,
+  "timeout-critical": 0,
+  "transition-time": 150,
+  "hide-on-clear": false,
+  "hide-on-action": true,
+  "text-empty": "Sin notificaciones",
+  "notification-visibility": {
+    "osd": {
+      "app-name": "^osd-(volume|mic|brightness)$",
+      "state": "transient"
+    }
+  },
+  "widgets": ["title", "dnd", "notifications"],
+  "widget-config": {
+    "title": {
+      "text": "Notificaciones",
+      "clear-all-button": true,
+      "button-text": "Limpiar"
+    },
+    "dnd": { "text": "No molestar" },
+    "notifications": { "vexpand": true }
+  }
+}

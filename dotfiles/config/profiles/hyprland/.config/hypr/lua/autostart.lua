@@ -1,14 +1,10 @@
 local exec_once = {
   "hypr-tray-applets",
-  "hypr-session-refresh",
+  "orgm-hyprland-session",
   "hyprpolkitagent",
   -- Firefox's declarative startup policy restores the previous session.
   "firefox",
-  "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
-  "hypridle",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",
-  "wl-paste --type text --watch cliphist store",
-  "wl-paste --type image --watch cliphist store",
 }
 
 hl.on("hyprland.start", function()

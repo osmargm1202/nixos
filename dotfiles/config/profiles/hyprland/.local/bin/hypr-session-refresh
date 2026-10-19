@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-if ! dunstctl reload >/dev/null 2>&1; then
-  dunst_state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dunst"
-  mkdir -p "$dunst_state_dir"
-  dunst >>"$dunst_state_dir/dunst.log" 2>&1 &
-fi
-exec "$HOME/.local/bin/waybar-watch" "${XDG_CONFIG_HOME:-$HOME/.config}/waybar-hypr"
+#!/bin/sh
+set -eu
+exec systemctl --user restart orgm-hyprland-waybar.service orgm-hyprland-notifications.service

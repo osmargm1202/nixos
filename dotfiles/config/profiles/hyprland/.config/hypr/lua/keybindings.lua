@@ -36,9 +36,10 @@ function M.setup(programs)
   hl.bind(mainMod .. " + CTRL + period", hl.dsp.exec_cmd("rofi-symbols"))
   hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(program("power_menu", "wlogout_uniqe")))
   hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd(program("power_menu", "wlogout_uniqe")))
+  hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("orgm-qylock lock"))
   hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(program("lock", "hyprlock")))
-  hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("hypr-rofi-clipboard"))
-  hl.bind(mainMod .. " + F10", hl.dsp.exec_cmd("pavucontrol"))
+  hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("orgm-hyprland clipboard"))
+  hl.bind(mainMod .. " + F10", hl.dsp.exec_cmd("orgm-hyprland audio"))
   hl.bind("CTRL + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 
   -- Scratchpad equivalent: special workspace.
@@ -59,19 +60,17 @@ function M.setup(programs)
   hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
   hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightness-osd up"), { repeating = true, locked = true })
   hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightness-osd down"), { repeating = true, locked = true })
-  hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'))
-  hl.bind("CTRL + Print", hl.dsp.exec_cmd("grim - | swappy -f -"))
-  hl.bind("ALT + Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'))
+  hl.bind("Print", hl.dsp.exec_cmd("orgm-hyprland screenshot region"))
+  hl.bind("CTRL + Print", hl.dsp.exec_cmd("orgm-hyprland screenshot full"))
+  hl.bind("ALT + Print", hl.dsp.exec_cmd("orgm-hyprland screenshot region"))
+
+  hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("orgm-hyprland wallpaper-pick"))
+  hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("env ORGM_VISUAL_PROFILE_BACKEND=hyprland orgm-visual-profile random-wallpaper"))
 
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
-  hl.bind("ALT + Tab", function()
-    if hl.plugin and hl.plugin.scrolloverview then
-      hl.plugin.scrolloverview.overview("toggle")
-    else
-      hl.dispatch(hl.dsp.exec_cmd("hypr-rofi-window"))
-    end
-  end)
+  hl.bind("ALT + Tab", hl.dsp.exec_cmd("orgm-hyprland windows"))
+  hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("orgm-hyprland windows prev"))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("hypr-kill-windows"))
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())
@@ -97,7 +96,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + ALT + down", dispatch("resizeactive 0 40"), { repeating = true })
 
   -- Focus / move.
-  local dirs = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up", l = "right" }
+  local dirs = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up" }
   local moveDirs = { left = "l", down = "d", up = "u", right = "r", h = "l", j = "d", k = "u", l = "r" }
   for key, dir in pairs(dirs) do
     hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ direction = dir }))

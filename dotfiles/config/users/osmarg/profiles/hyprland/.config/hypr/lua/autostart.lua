@@ -3,7 +3,7 @@ local exec_once = {
   "hypr-tray-applets",
   -- Apply the visual profile before consumers start, then reassert persisted
   -- game-mode wallpaper visibility so an active game session stays hidden.
-  "hypr-session-refresh",
+  "orgm-hyprland-session",
   "hyprpolkitagent",
   "kdeconnect-indicator",
   -- Firefox's declarative startup policy restores the previous session.
@@ -12,12 +12,8 @@ local exec_once = {
   "hypr-start-discord",
   "sh -lc 'command -v steam >/dev/null 2>&1 && exec steam -silent || true'",
   "systemctl --user --quiet start sunshine.service || true",
-  "sh -lc 'exec \"$HOME/.local/bin/hypr-nwg-dock\"'",
   -- Lock and suspend on the established idle schedule.
-  "hypridle",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",
-  "wl-paste --type text --watch cliphist store",
-  "wl-paste --type image --watch cliphist store",
 }
 
 hl.on("hyprland.start", function()

@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Hyprland entrypoint using the Sway-based shared desktop UI."""
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+
+entry = Path(__file__).resolve()
+shared = entry.parent.parent/'lib/orgm-wayland'
+adapter = shared/'hyprland.py'
+if not (shared/'shell.py').is_file():
+    shared = entry.parents[3]/'wayland/.local/lib/orgm-wayland'
+if not adapter.is_file():
+    adapter = entry.parent.parent/'lib/orgm-wayland/hyprland.py'
+native = runpy.run_path(str(adapter))
+values = {'ENTRYPOINT': str(entry), 'COMPOSITOR': 'hyprland'}
+values['SHELL'] = runpy.run_path(str(entry.with_name('orgm-hyprland')))
+namespace = runpy.run_path(str(shared/'desktop.py'), init_globals=values)
+native['install_desktop'](namespace)
+globals().update({key: value for key, value in namespace.items() if not key.startswith('__')})
+if __name__ == '__main__':
+    try:
+        main(sys.argv[1:])
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+        print('orgm-hyprland-desktop:', error, file=sys.stderr)
+        sys.exit(1)

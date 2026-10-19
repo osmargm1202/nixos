@@ -22,7 +22,7 @@ let
 in
 {
   options.orgm.sway.fingerprint.enable = lib.mkEnableOption "parallel fingerprint authentication in the private Qylock PAM policy";
-  config = lib.mkIf config.programs.sway.enable {
+  config = lib.mkIf (config.programs.sway.enable || config.programs.hyprland.enable) {
     assertions = [ {
       assertion = !config.orgm.sway.fingerprint.enable || config.services.fprintd.enable;
       message = "Qylock fingerprint authentication requires services.fprintd.enable.";

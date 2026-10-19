@@ -30,8 +30,8 @@ end
 
 hl.config({
   general = {
-    gaps_in = game_mode and 0 or 12,
-    gaps_out = game_mode and 0 or 12,
+    gaps_in = game_mode and 0 or 5,
+    gaps_out = game_mode and 0 or { top = 5, right = 60, bottom = 5, left = 5 },
     border_size = 0,
     col = {
       active_border = { colors = { "rgba(8aadf4ee)", "rgba(f5a97fee)" }, angle = 45 },
@@ -64,10 +64,10 @@ hl.config({
   },
 
   decoration = {
-    rounding = game_mode and 0 or 12,
+    rounding = game_mode and 0 or 8,
     rounding_power = game_mode and 0 or 2,
-    active_opacity = game_mode and 1.0 or 0.96,
-    inactive_opacity = game_mode and 1.0 or 0.96,
+    active_opacity = game_mode and 1.0 or 1.0,
+    inactive_opacity = game_mode and 1.0 or 1.0,
     fullscreen_opacity = 1.0,
     shadow = {
       enabled = visual_effects,
@@ -81,7 +81,7 @@ hl.config({
   },
 
   animations = {
-    enabled = visual_effects,
+    enabled = false,
   },
 })
 

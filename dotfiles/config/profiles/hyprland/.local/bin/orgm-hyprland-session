@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Own the Sway-style session services until this Hyprland socket disconnects."""
+import fcntl
+import os
+from pathlib import Path
+import re
+import socket
+import subprocess
+import sys
+
+
+def main():
+    signature = os.environ.get('HYPRLAND_INSTANCE_SIGNATURE', '')
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', signature):
+        raise ValueError('No hay una sesión Hyprland válida')
+    runtime = Path(os.environ['XDG_RUNTIME_DIR'])
+    endpoint = runtime/'hypr'/signature/'.socket2.sock'
+    with (endpoint.parent/'orgm-session.lock').open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        with socket.socket(socket.AF_UNIX) as connection:
+            connection.connect(str(endpoint))
+            subprocess.run(['hypr-session-import-env'], check=True)
+            try:
+                subprocess.run(['systemctl', '--user', 'start', 'orgm-hyprland-session.target'], check=True)
+                while connection.recv(65536):
+                    pass
+            finally:
+                subprocess.run(['systemctl', '--user', 'stop', 'orgm-hyprland-session.target'], check=False)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        print('orgm-hyprland-session:', error, file=sys.stderr)
+        sys.exit(1)

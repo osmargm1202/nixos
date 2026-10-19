@@ -24,6 +24,7 @@ envy_helper="$ROOT/dotfiles/config/hosts/envy/profiles/hyprland/.local/bin/hypr-
 ! grep -Eq 'tailscale systray|syncthingtray|nextcloud --background' "$envy_helper" ||
   fail 'Envy must retain its retired synchronization trays'
 bash -n "$envy_helper"
+! grep -Eq 'tailscale systray|syncthingtray' "$HELPER" || fail 'ORGM synchronization/VPN must not launch tray clients'
 
 grep -Fq '"hypr-tray-applets",' "$AUTOSTART" ||
   fail 'Hyprland must start applets through the session-ready helper'
@@ -38,7 +39,7 @@ applet_line="$(grep -n -F 'nm-applet --indicator' "$HELPER" | cut -d: -f1)"
 [[ "$import_line" -lt "$applet_line" ]] ||
   fail 'tray helper must import session variables before applets'
 
-jq -e '.[0]["modules-right"] | index("tray") != null' "$WAYBAR" >/dev/null ||
+jq -e '.["modules-right"] | index("tray") != null' "$WAYBAR" >/dev/null ||
   fail 'Waybar must expose a tray for session applets'
 
 printf 'PASS: Hyprland starts NetworkManager, Bluetooth, and Nextcloud tray applets\n'

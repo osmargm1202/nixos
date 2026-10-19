@@ -36,6 +36,9 @@
     ".local/bin/hypr-video-timer",
     ".local/bin/hypr-wallpaper",
     ".local/bin/hypr-workspace-button",
-    ".local/bin/hyprlock-unlock"
+    ".local/bin/hyprlock-unlock",
+    ".local/bin/orgm-hyprland",
+    ".local/bin/orgm-hyprland-desktop",
+    ".local/bin/orgm-hyprland-session"
   ]
 }

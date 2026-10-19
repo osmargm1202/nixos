@@ -91,9 +91,10 @@ fi
   exec {dock_lock_fd}>&-
   exec "$dock_bin" \
     -x \
-    -p bottom \
+    -i 32 \
+    -p right \
     -a center \
-    -mb 14 \
+    -mr 6 \
     -c hypr-app-launcher \
     -s style.css
 ) >>"$state_dir/nwg-dock.log" 2>&1 &

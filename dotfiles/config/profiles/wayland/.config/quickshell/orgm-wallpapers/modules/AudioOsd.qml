@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import Quickshell.I3
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.config
 
@@ -34,7 +35,9 @@ PanelWindow {
         node = audioNode
         percent = Math.max(0, Math.min(150, value))
         muted = isMuted
-        outputName = I3.focusedMonitor ? I3.focusedMonitor.name : ""
+        outputName = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+            ? (Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "")
+            : (I3.focusedMonitor ? I3.focusedMonitor.name : "")
         active = true
         if (!slider.pressed && !muteButton.pressed) hideTimer.restart()
     }

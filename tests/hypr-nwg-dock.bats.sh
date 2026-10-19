@@ -51,8 +51,8 @@ cmp "$PINS" "$cache/nwg-dock-pinned" ||
   fail 'dock must seed its pins when no user pin state exists'
 [[ ! -e "$cache/nwg-dock-hyprland/nwg-dock-pinned" ]] ||
   fail 'dock must not initialize pins in the legacy nested cache path'
-grep -Fxq -- "-x -p bottom -a center -mb 14 -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
-  fail 'dock must retain its floating bottom geometry and Rofi launcher'
+grep -Fxq -- "-x -i 32 -p right -a center -mr 6 -c hypr-app-launcher -s style.css" "$DOCK_ARGS" ||
+  fail 'dock must retain its Sway-style right geometry and Rofi launcher'
 [[ "$(<"$DOCK_XDG_DATA_DIRS")" == "$home/.local/state/nix/profiles/home-manager/home-path/share:"* ]] ||
   fail 'dock must search the active Home Manager desktop entries first'
 printf 'custom\n' >"$cache/nwg-dock-pinned"
