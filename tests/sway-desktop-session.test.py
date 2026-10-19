@@ -25,9 +25,10 @@ runtime = home/'runtime'
 runtime.mkdir(mode=0o700)
 config = home/'.config'
 ui = config/'quickshell/orgm-wallpapers'
-shutil.copytree(SOURCE/'.config/quickshell/orgm-wallpapers', ui)
+shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-wallpapers', ui)
 binary = home/'.local/bin'
 binary.mkdir(parents=True)
+shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.local/lib', binary.parent/'lib')
 for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-volume-osd', 'sway-mic-volume-osd'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
 (home/'brightness').write_text('50')

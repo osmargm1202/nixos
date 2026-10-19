@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, call, patch
 ROOT = Path(__file__).resolve().parents[1]
 MODULE = runpy.run_path(str(ROOT/'dotfiles/config/profiles/sway/.local/bin/orgm-sway'))
 ENV = MODULE['wallpaper_catalog'].__globals__
-UI = ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-wallpapers'
+UI = ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-wallpapers'
 
 
 class WallpaperTests(unittest.TestCase):

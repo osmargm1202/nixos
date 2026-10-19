@@ -28,7 +28,7 @@ runtime = HOME/'runtime'
 runtime.mkdir(mode=0o700)
 config = HOME/'.config'
 ui_source = Path(os.environ.get('ORGM_TEST_WALLPAPER_UI',
-    str(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-wallpapers')))
+    str(ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-wallpapers')))
 shutil.copytree(ui_source, config/'quickshell/orgm-wallpapers')
 bin_dir = HOME/'bin'
 bin_dir.mkdir()

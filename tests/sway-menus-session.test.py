@@ -19,10 +19,11 @@ runtime = home/'runtime'
 runtime.mkdir(mode=0o700)
 config = home/'.config'
 ui = config/'quickshell/orgm-wallpapers'
-shutil.copytree(SOURCE/'.config/quickshell/orgm-wallpapers', ui)
+shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-wallpapers', ui)
 shutil.copytree(SOURCE/'.config/rofi-sway', config/'rofi-sway')
 binary = home/'.local/bin'
 binary.mkdir(parents=True)
+shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.local/lib', binary.parent/'lib')
 for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-app-launcher', 'sway-rofi-lib'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
 calls = home/'calls'
