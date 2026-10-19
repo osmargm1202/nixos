@@ -98,6 +98,9 @@ func (r *Runtime) collect() error {
 	for _, p := range r.Programs {
 		layers = append(layers, "programs/"+p)
 	}
+	if r.Profile == "sway" || r.Profile == "hyprland" {
+		layers = append(layers, "profiles/wayland")
+	}
 	layers = append(layers, "profiles/"+r.Profile, "users/"+r.User+"/common")
 	for _, p := range r.Programs {
 		layers = append(layers, "users/"+r.User+"/programs/"+p)

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "desktop-widgets",
+  "paths": [
+    ".config/quickshell/orgm-desktop",
+    ".config/orgm-desktop",
+    ".local/bin/orgm-desktop-widgets"
+  ]
+}

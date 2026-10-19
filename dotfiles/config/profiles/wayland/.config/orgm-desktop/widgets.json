@@ -1,0 +1,16 @@
+{
+  "clockDesign": "digital",
+  "clock24h": true,
+  "clockSeconds": false,
+  "dateShow": true,
+  "clockEnabled": true,
+  "clockScale": 1,
+  "clockX": 72,
+  "clockY": 64,
+  "calendarEnabled": true,
+  "calendarScale": 1,
+  "calendarX": 64,
+  "calendarY": 704,
+  "calendarWeekNumbers": true,
+  "calendarWeeks": 6
+}

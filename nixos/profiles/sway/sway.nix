@@ -89,6 +89,7 @@ in
       orgm-sway-clipboard = { description = "Clipboard history"; command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"; };
       orgm-sway-previews = { description = "Session-local window thumbnails"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-desktop previews"; };
       orgm-sway-menus = { description = "Preloaded Quickshell desktop menus"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-desktop menus-daemon"; };
+      orgm-desktop-widgets = { description = "Ryoku-derived desktop clock and calendar"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-desktop-widgets daemon"; };
     }
   );
   environment.systemPackages = with pkgs; [
