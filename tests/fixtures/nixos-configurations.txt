@@ -3,3 +3,4 @@ ero
 jarq
 lenovo
 orgm
+orgm-ryoku

@@ -24,6 +24,13 @@ def main():
             connection.connect(str(endpoint))
             subprocess.run(['hypr-session-import-env'], check=True)
             try:
+                # Restore the user's palette/wallpaper/game state before its
+                # consumers start. These optional workflows must not block login.
+                for command in (['orgm-visual-profile', 'apply'], ['hypr-game-mode', 'sync'], ['hypr-display-targets', 'ensure']):
+                    try:
+                        subprocess.run(command, check=False)
+                    except OSError as error:
+                        print('orgm-hyprland-session:', error, file=sys.stderr)
                 subprocess.run(['systemctl', '--user', 'start', 'orgm-hyprland-session.target'], check=True)
                 while connection.recv(65536):
                     pass

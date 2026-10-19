@@ -29,7 +29,8 @@ jq -e '
     {key: "ero", host: "ero", user: "osmarg", desktop: "i3"},
     {key: "jarq", host: "jarq", user: "jarq", desktop: "i3"},
     {key: "lenovo", host: "lenovo", user: "osmarg", desktop: "ryoku"},
-    {key: "orgm", host: "orgm", user: "osmarg", desktop: "ryoku"}
+    {key: "orgm", host: "orgm", user: "osmarg", desktop: "hyprland"},
+    {key: "orgm-ryoku", host: "orgm", user: "osmarg", desktop: "ryoku"}
   ]
 ' <<<"$inventory_json" >/dev/null \
   || fail 'canonical host, user or desktop selection changed'
@@ -49,4 +50,4 @@ jq -e '
 ' <<<"$inventory_json" >/dev/null \
   || fail 'configuration specs do not match normalized schema'
 
-printf 'PASS: canonical five-host configuration inventory\n'
+printf 'PASS: five hosts plus retained orgm-ryoku inventory\n'

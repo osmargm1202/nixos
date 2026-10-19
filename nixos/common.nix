@@ -118,7 +118,8 @@ let
     lib.optionals (hasProgram "nextcloud") [ pkgs.nextcloud-client ]
     ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
     ++ lib.optionals (hasProgram "syncthing" && profileName != "ryoku"
-      && config.networking.hostName != "envy") [ pkgs.syncthingtray ]
+      && config.networking.hostName != "envy"
+      && !(config.networking.hostName == "orgm" && profileName == "hyprland")) [ pkgs.syncthingtray ]
     ++ lib.optionals (hasProgram "development") developmentPackages
     ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]

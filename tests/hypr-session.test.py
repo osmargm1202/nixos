@@ -22,7 +22,7 @@ class Session(unittest.TestCase):
             log = base/'calls'
             binary = base/'bin'
             binary.mkdir()
-            for name in ('systemctl', 'hypr-session-import-env'):
+            for name in ('systemctl', 'hypr-session-import-env', 'orgm-visual-profile', 'hypr-game-mode', 'hypr-display-targets'):
                 p = binary/name
                 p.write_text('#!/usr/bin/env python3\nimport pathlib,sys,json\n'
                     f'with pathlib.Path({str(log)!r}).open("a") as f: f.write(json.dumps(sys.argv[1:])+"\\n")\n')
@@ -41,6 +41,8 @@ class Session(unittest.TestCase):
                 self.assertEqual(process.wait(timeout=5), 0)
                 calls = [json.loads(line) for line in log.read_text().splitlines()]
                 self.assertIn(['--user', 'start', 'orgm-hyprland-session.target'], calls)
+                self.assertLess(calls.index(['apply']), calls.index(['--user', 'start', 'orgm-hyprland-session.target']))
+                self.assertIn(['sync'], calls)
                 self.assertEqual(calls[-1], ['--user', 'stop', 'orgm-hyprland-session.target'])
             finally:
                 server.close()

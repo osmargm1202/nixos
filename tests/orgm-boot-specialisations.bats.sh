@@ -9,7 +9,7 @@ nix eval --impure --raw --expr '
     flake = builtins.getFlake "path:${toString ./.}" ;
     profileNames = [ "orgm-cinnamon" "orgm-gnome" "orgm-hyprland" "orgm-i3" "orgm-labwc" ];
     configs = builtins.map (name: (import ./tests/fixtures/legacy-configurations.nix).${name}.config) profileNames
-      ++ [ flake.nixosConfigurations.orgm.config ];
+      ++ [ flake.nixosConfigurations.orgm.config flake.nixosConfigurations.orgm-ryoku.config ];
     hasServerMode = config:
       let server = config.specialisation.server.configuration;
       in config.boot.loader.systemd-boot.sortKey == "nixos-00-normal"

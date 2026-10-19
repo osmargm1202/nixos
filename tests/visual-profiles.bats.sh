@@ -66,6 +66,9 @@ EOF
 cat >"$TMP/bin/systemctl" <<'EOF'
 #!/usr/bin/env bash
 printf 'systemctl %s\n' "$*" >>"$ORGM_VISUAL_PROFILE_TEST_CALLS"
+if [[ "$*" == '--user try-restart orgm-hyprland-dock.service' ]]; then
+  : >"$ORGM_VISUAL_PROFILE_TEST_DOCK_MARKER"
+fi
 EOF
 cat >"$TMP/bin/dconf" <<'EOF'
 #!/usr/bin/env bash
@@ -180,8 +183,8 @@ for _ in {1..20}; do
   sleep 0.01
 done
 [[ -e "$DOCK_RELOAD_MARKER" ]] || fail 'Hyprland profile apply did not request a dock reload'
-grep -Fq 'dunstctl <reload>' "$CALLS" ||
-  fail 'profile apply did not reload Dunst'
+grep -Fq 'swaync-client --reload-css --skip-wait' "$CALLS" ||
+  fail 'profile apply did not refresh Swaync CSS'
 
 # GTK mode is durable and scoped to each profile.
 run_profile set slc

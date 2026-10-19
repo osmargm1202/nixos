@@ -11,7 +11,7 @@ fail() {
 }
 
 actual_names="$(
-  nix eval --json "path:$REPO_DIR#nixosConfigurations" --apply builtins.attrNames \
+  nix eval --option allow-import-from-derivation false --json "path:$REPO_DIR#nixosConfigurations" --apply builtins.attrNames \
     | jq -r '.[]'
 )"
 
@@ -22,18 +22,19 @@ if grep -qx 'TEMPLATE' <<<"$actual_names"; then
   fail 'host templates must never be exported as nixosConfigurations'
 fi
 
-nix eval --impure --raw --expr '
+nix eval --option allow-import-from-derivation false --impure --raw --expr '
   let
     f = builtins.getFlake ("path:" + toString ./.);
     expected = {
       envy = { host = "envy"; user = "osmarg"; desktop = "sway"; modes = ["gaming" "server" "windows-vfio"]; };
       lenovo = { host = "lenovo"; user = "osmarg"; desktop = "ryoku"; modes = ["battery" "gaming" "server" "windows-vfio"]; };
-      orgm = { host = "orgm"; user = "osmarg"; desktop = "ryoku"; modes = ["server"]; };
+      orgm = { host = "orgm"; user = "osmarg"; desktop = "hyprland"; modes = ["server"]; };
+      orgm-ryoku = { host = "orgm"; user = "osmarg"; desktop = "ryoku"; modes = ["server"]; };
       ero = { host = "ero"; user = "osmarg"; desktop = "i3"; modes = []; };
       jarq = { host = "jarq"; user = "jarq"; desktop = "i3"; modes = []; };
     };
     historical = import ./tests/fixtures/legacy-configurations.nix;
-    selected = { envy = "envy"; lenovo = "lenovo-ryoku"; orgm = "orgm-ryoku"; ero = "ero-i3"; jarq = "jarq-i3"; };
+    selected = { envy = "envy"; lenovo = "lenovo-ryoku"; orgm = "orgm-hyprland"; orgm-ryoku = "orgm-ryoku"; ero = "ero-i3"; jarq = "jarq-i3"; };
     # Compare boot, graphics and VM boundaries against the preferred existing
     # descriptor, not an alternative desktop or the old host alias.
     mode = c: {
@@ -58,7 +59,9 @@ nix eval --impure --raw --expr '
       i3 = c.services.xserver.windowManager.i3.enable;
       compose = builtins.mapAttrs (_: file: {
         source = toString file.source;
-        text = if file.text != null then file.text else builtins.readFile file.source;
+        # The immutable source path already identifies generated content. Reading
+        # it would build the compose derivation during an otherwise pure eval.
+        text = file.text;
       })
         (f.inputs.nixpkgs.lib.filterAttrs (name: _: builtins.match ".*compose.*" name != null)
           c.home-manager.users.${if c.networking.hostName == "jarq" then "jarq" else "osmarg"}.home.file);

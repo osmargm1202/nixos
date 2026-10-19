@@ -137,6 +137,10 @@ write_runtime_palette() {
       dock='#box { background: #202124; border: none; border-radius: 12px; box-shadow: none; } button:hover { background: #3a3b40; }'
       ;;
   esac
+  if [[ "$(backend)" == hypr ]]; then
+    css="${css//0.94/0.82}"
+    dock='#box { background: transparent; border: none; box-shadow: none; } button:hover { background: rgba(138, 180, 248, 0.16); }'
+  fi
   if [[ "$(backend)" == sway ]]; then
     # Same selected palette, without restoring Hyprland's opaque dock surface.
     css="${css//0.94/0.82}"
@@ -193,12 +197,12 @@ refresh_surfaces() {
   else
     command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
   fi
-  if [[ "$(backend)" == hypr ]] && command -v hypr-nwg-dock-reload >/dev/null 2>&1; then
-    (
-      [[ -n "${profile_lock_fd:-}" ]] && exec {profile_lock_fd}>&-
-      unset ORGM_VISUAL_PROFILE_LOCKED
-      exec hypr-nwg-dock-reload
-    ) >/dev/null 2>&1 &
+  if [[ "$(backend)" == hypr ]] && command -v systemctl >/dev/null 2>&1; then
+    # Keep ownership in the session units instead of starting detached daemons.
+    systemctl --user try-restart orgm-hyprland-dock.service >/dev/null 2>&1 || true
+    if [[ "${ORGM_VISUAL_PROFILE_KEEP_WAYBAR:-0}" != 1 ]]; then
+      systemctl --user try-restart orgm-hyprland-waybar.service >/dev/null 2>&1 || true
+    fi
   elif [[ "$(backend)" == i3 ]] && command -v i3-msg >/dev/null 2>&1; then
     i3-msg reload >/dev/null 2>&1 || true
   elif [[ "$(backend)" == sway ]] && command -v systemctl >/dev/null 2>&1; then

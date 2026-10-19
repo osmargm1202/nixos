@@ -6,6 +6,15 @@ let
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
+  retireOrgmTrays = hostName == "orgm" && profileName == "hyprland";
+  retiredTrayNames = [ "tailscale-systray.desktop" "syncthingtray.desktop" ];
+  retiredTrayManifest = pkgs.writeText "orgm-retired-trays.json" (builtins.toJSON {
+    autostart = retiredTrayNames;
+    packageUnits = [
+      ".config/systemd/user/default.target.wants/syncthing.service"
+      ".config/systemd/user/syncthing.service"
+    ];
+  });
   orgmaiPackage = pkgs.callPackage ./orgm/orgm-ai.nix { };
   dotPackage = pkgs.callPackage ./orgm/orgm-dot.nix { };
   contextJSON = builtins.toJSON {
@@ -74,7 +83,7 @@ in {
         source = "${builtins.head (builtins.filter (p: p.name == "nvim.desktop") config.home.packages)}/share/applications/nvim.desktop";
       };
       xdg.configFile = lib.mkMerge [
-        (lib.optionalAttrs (programEnabled "tailscale" && !ryokuEnabled && hostName != "envy") {
+        (lib.optionalAttrs (programEnabled "tailscale" && !ryokuEnabled && hostName != "envy" && !retireOrgmTrays) {
           # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
           # and Labwc start the same command explicitly.
           "autostart/tailscale-systray.desktop".text = ''
@@ -88,7 +97,7 @@ in {
             OnlyShowIn=GNOME;X-Cinnamon;
           '';
         })
-        (lib.optionalAttrs (programEnabled "syncthing" && !ryokuEnabled && hostName != "envy") {
+        (lib.optionalAttrs (programEnabled "syncthing" && !ryokuEnabled && hostName != "envy" && !retireOrgmTrays) {
           # The setup wizard can create this file before Home Manager owns it.
           # Replace only the autostart entry, not the user's syncthingtray.ini.
           "autostart/syncthingtray.desktop" = {
@@ -105,12 +114,26 @@ in {
             '';
           };
         })
+        (lib.optionalAttrs retireOrgmTrays (lib.genAttrs (map (name: "autostart/${name}") retiredTrayNames) (_: {
+          force = true;
+          text = "[Desktop Entry]\nType=Application\nHidden=true\n";
+        })))
       ];
+
+      # Archive existing launchers before Home Manager owns the two masks.
+      # The small cleanup utility is shared with Ryoku; no Ryoku runtime is loaded.
+      home.activation.orgmRetiredTrayBackups = lib.mkIf retireOrgmTrays (
+        lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+          $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./profiles/ryoku/cleanup.py} \
+            "$HOME" "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-desktop" \
+            ${retiredTrayManifest}
+        ''
+      );
 
       # Keep synchronization independent of the selected shell and tray.
       # Ryoku console modes and Envy's return to Hyprland retain the same unit.
       systemd.user.services.syncthing = lib.mkIf
-        (programEnabled "syncthing" && (profileName == "ryoku" || hostName == "envy"))
+        (programEnabled "syncthing" && (profileName == "ryoku" || hostName == "envy" || retireOrgmTrays))
         (import ./syncthing/user-service.nix { inherit pkgs; });
 
       # Keep user-level MIME preferences in sync with declarative defaults,
