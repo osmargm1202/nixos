@@ -4,6 +4,9 @@ import Quickshell
 
 // Adapted from shadowofdominance/swaydots; see ../NOTICE.md.
 Singleton {
+    readonly property bool hyprlandSession: Quickshell.env("ORGM_DESKTOP_COMPOSITOR")
+        ? Quickshell.env("ORGM_DESKTOP_COMPOSITOR") === "hyprland"
+        : Quickshell.env("XDG_CURRENT_DESKTOP").toLowerCase().includes("hyprland")
     property var palette: ({})
     readonly property color bg: palette.bg || "#080808"
     readonly property color surface: palette.surface || "#202020"

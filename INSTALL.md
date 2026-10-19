@@ -1,5 +1,10 @@
 # Instalación de ORGMOS en NixOS
 
+Para las salidas existentes de este repositorio, `orgm` selecciona Hyprland
+basado en Sway y `orgm-ryoku` conserva Ryoku como alternativa. La migración
+está preparada sin build/switch de orgm; véanse [estado, dotfiles compartidos
+y verificación pendiente](docs/orgm-sway-hyprland.md).
+
 El instalador es `install.sh` en la raíz del repositorio. El archivo descargado
 puede llamarse `/tmp/orgm-install.sh`; ese nombre local no cambia la URL de origen.
 Para Ubuntu/Debian o Arch y solo dotfiles, usar `server/install.sh`.

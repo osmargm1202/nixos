@@ -22,10 +22,13 @@ grep -Fq 'version = "2efa6168e072194005152106ded1d7acd3a5170c";' "$PACKAGE"
 grep -Fq 'hash = "sha256-l+47qR3CWO/3xdTLuC23Nktmys7ibRjhVU4gW19NtYg=";' "$PACKAGE"
 ! grep -Fq 'environment.etc."scrolloverview.so"' "$PROFILE"
 ! grep -Fq 'hyprctl plugin load /etc/scrolloverview.so' "$AUTOSTART"
-grep -Fq 'hl.dispatch(hl.dsp.exec_cmd("hypr-rofi-window"))' "$BINDINGS"
 grep -Fq 'hl.on("hyprland.start", function()' "$AUTOSTART"
-grep -Fq 'hl.bind("ALT + Tab", function()' "$BINDINGS"
-grep -Fq 'hl.plugin.scrolloverview.overview("toggle")' "$BINDINGS"
+lua="${ORGM_TEST_LUA:-$(command -v lua || true)}"
+if [[ -n "$lua" ]]; then
+  "$lua" "$ROOT/tests/hypr-sway-bindings.lua" "$ROOT"
+else
+  printf '%s\n' 'SKIP: executable keybinding regression requires Lua'
+fi
 if grep -Fq 'hyprctl dispatch scrolloverview:overview toggle' "$BINDINGS"; then
   fail 'ScrollOverview must use its Lua dispatcher API'
 fi
@@ -34,4 +37,4 @@ grep -Fq 'hl.plugin.scrolloverview.configure({' "$LOOK_AND_FEEL"
 grep -Fq 'layout = "vertical",' "$LOOK_AND_FEEL"
 grep -Fq 'workspace_gap = 24,' "$LOOK_AND_FEEL"
 
-printf '%s\n' 'hypr-scroll-overview: stock window selector works without compiling plugins'
+printf '%s\n' 'hypr-scroll-overview: shared Quickshell selector, no required compiled plugin'

@@ -35,7 +35,7 @@ PanelWindow {
         node = audioNode
         percent = Math.max(0, Math.min(150, value))
         muted = isMuted
-        outputName = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+        outputName = Style.hyprlandSession
             ? (Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "")
             : (I3.focusedMonitor ? I3.focusedMonitor.name : "")
         active = true

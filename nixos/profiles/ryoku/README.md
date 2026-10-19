@@ -1,6 +1,8 @@
 # Ryoku para Osmarg
 
-Hosts Ryoku: `orgm` y `lenovo`; cada host tiene una única salida pública. Se usa el módulo oficial
+Salidas Ryoku: `orgm-ryoku` y `lenovo`. `orgm` ahora prepara Hyprland basado en
+[Sway](../../../docs/orgm-sway-hyprland.md), conservando la alternativa Ryoku sin
+desplegar el cambio todavía. Se usa el módulo oficial
 de [Ryoku on NixOS](https://github.com/aethctl/Ryoku-on-NixOS), fijado en
 `28c5207586babb136aecf8568ce3ed873fa8f8fd`. Su nixpkgs se conserva separado:
 Hyprland, plugins, portales y Quickshell deben usar el mismo conjunto compatible.
@@ -15,11 +17,13 @@ nh os switch . -H lenovo -s windows-vfio
 ```
 
 `-s windows-vfio` conserva ese modo de Lenovo. Para elegir normal usa `-S`.
-En ORGM usa `-H orgm -S`. Tras aplicar, cierra la sesión y entra de nuevo
+Para conservar Ryoku en ORGM, usa `-H orgm-ryoku -S` cuando se decida aplicar.
+`-H orgm` selecciona el nuevo Hyprland. Tras aplicar, cierra la sesión y entra de nuevo
 en Hyprland: cambiar el paquete del compositor necesita una sesión nueva.
 Los archivos nuevos utilizados por el flake deben estar registrados en Git;
 no hace falta crear un commit para construir o aplicar la configuración.
-Usa `-H lenovo`: selecciona Ryoku directamente; ya no hay alias ni variantes públicas por escritorio.
+Usa `-H lenovo`: selecciona Ryoku directamente. La alternativa pública
+`orgm-ryoku` es explícita, no un alias.
 
 Ryoku controla barra, dock, fondos, temas, Kitty, Neovim, monitores, bloqueo,
 idle y notificaciones. Las aplicaciones y herramientas de Osmarg conservan su

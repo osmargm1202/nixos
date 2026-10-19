@@ -305,6 +305,7 @@ def menus_daemon():
         raise RuntimeError('Quickshell no está disponible')
     config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))/'quickshell/orgm-wallpapers/daemon.qml'
     os.environ['ORGM_SWAY_DESKTOP_BACKEND'] = str(Path(ENTRYPOINT).resolve())
+    os.environ['ORGM_DESKTOP_COMPOSITOR'] = SWAY.get('compositor', 'sway')
     if os.environ.get('SWAYSOCK'):
         os.environ['I3SOCK'] = os.environ['SWAYSOCK']
     os.execv(binary, [binary, '--no-duplicate', '--path', str(config)])

@@ -4,6 +4,7 @@ import fcntl
 import os
 from pathlib import Path
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -23,6 +24,7 @@ def main():
         with socket.socket(socket.AF_UNIX) as connection:
             connection.connect(str(endpoint))
             subprocess.run(['hypr-session-import-env'], check=True)
+            signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
             try:
                 # Restore the user's palette/wallpaper/game state before its
                 # consumers start. These optional workflows must not block login.

@@ -526,7 +526,7 @@ def graphical_menu(catalog, *, entry=None, result=None):
         if resident is not None:
             return resident
         with subprocess.Popen([binary, '--no-duplicate', '--path', str(target)],
-                              env=dict(os.environ, ORGM_WALLPAPER_DATA=str(data),
+                              env=dict(os.environ, ORGM_DESKTOP_COMPOSITOR=COMPOSITOR, ORGM_WALLPAPER_DATA=str(data),
                                        ORGM_WALLPAPER_STATUS=str(status),
                                        ORGM_MENU_RESULT=str(result) if result else '')) as process:
             deadline = time.monotonic() + 10

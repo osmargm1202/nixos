@@ -17,7 +17,7 @@ ShellRoot {
     FileView { id: completion; blockWrites: true; printErrors: false }
     FileView {
         id: palette
-        path: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") ? "/waybar-hypr/orgm-current.css" : "/waybar/orgm-current.css")
+        path: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + (Style.hyprlandSession ? "/waybar-hypr/orgm-current.css" : "/waybar/orgm-current.css")
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
