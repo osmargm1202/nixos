@@ -150,6 +150,35 @@ regresiones antiguas no quedan validadas: una compara texto obsoleto de udiskie;
 otra necesita un xdg-utils del store no realizado. No se declara toda la suite
 ni el despliegue en hardware como verificados.
 
+## Clic de workspaces en Waybar con Hyprland Lua
+
+Waybar 0.15 envía `dispatch workspace N`; el parser Lua de Hyprland 0.55 lo
+rechaza aunque las consultas IPC y los colores de workspace sigan funcionando.
+Cambiar `on-click` por un comando de shell no reemplaza el manejador interno
+del módulo `hyprland/workspaces`.
+
+`nixos/profiles/hyprland/waybar.nix` adapta la corrección oficial
+[e17c0d9](https://github.com/Alexays/Waybar/commit/e17c0d9f0a73acc370df60ec8c532b1ed2385c73)
+a la versión fijada. Se excluye únicamente el hunk de scroll para fuentes más
+nuevas, ausente en esta versión. El perfil instala ese paquete y su servicio
+de barra selecciona el mismo binario mediante `WAYBAR_BIN`; no afecta Sway.
+
+Pruebas: `tests/hypr-waybar-package.test.py` evalúa el cableado Nix;
+`tests/waybar-watch-restart.bats.sh` comprueba la selección del binario;
+`tests/hypr-waybar-click-session.test.py` pulsa los botones reales 2, 3 y 1
+en una sesión Hyprland anidada con IPC, display y D-Bus privados. La integración
+requiere `ORGM_TEST_PARENT_DISPLAY`; `ORGM_TEST_WAYBAR` selecciona el paquete
+compilado sin cambiar la barra del escritorio anfitrión.
+
+Para la aplicación inmediata sin `nixos-rebuild switch`, el paquete compilado
+se conserva con una raíz de GC en
+`~/.local/state/orgm-hyprland-tools/waybar`. Un drop-in temporal bajo
+`$XDG_RUNTIME_DIR/systemd/user/orgm-hyprland-waybar.service.d/` selecciona ese
+binario para la barra de esta sesión; la configuración Nix conserva la misma
+selección para futuras activaciones. No se modifica el entorno global de otros
+servicios. Al aplicar `orgm-dot pull waybar`, se preservan la paleta generada
+`orgm-current.css` y la configuración local de la barra Sway.
+
 ## Consulta: LocalSend sin escritorio
 
 Upstream documenta un cliente terminal separado, `localsend-cli`, por ejemplo:

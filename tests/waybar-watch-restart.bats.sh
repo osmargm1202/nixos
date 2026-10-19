@@ -60,4 +60,20 @@ active_watcher="$(cat "$state/waybar/waybar-hypr.watch.pid")"
 [[ "$active_watcher" == "$restart_pid" ]]
 kill -0 "$active_watcher"
 watcher_pid="$restart_pid"
+
+# A Nix-pinned compatibility build must win over the stock executable in PATH.
+cat >"$tmp/selected-waybar" <<'EOF'
+#!/bin/sh
+printf 'selected\n' >>"$WAYBAR_SELECTED"
+exec "$HOME/.local/bin/waybar" "$@"
+EOF
+chmod +x "$tmp/selected-waybar"
+HOME="$home" XDG_STATE_HOME="$state" PATH="$bin:/run/current-system/sw/bin:/usr/bin:/bin" \
+  WAYBAR_PIDS="$pids" WAYBAR_SELECTED="$tmp/selected" WAYBAR_BIN="$tmp/selected-waybar" \
+  "$watcher" --restart "$config" &
+restart_pid="$!"
+wait_for_starts 3
+wait "$watcher_pid" || true
+[[ "$(cat "$tmp/selected")" == selected ]]
+watcher_pid="$restart_pid"
 printf '%s\n' 'waybar-watch-restart: ok'

@@ -18,7 +18,7 @@ for instance_dir in "$runtime_dir"/hypr/*; do
   # game-mode wallpaper state, dock and Waybar refresh in deterministic order.
   if [ -x "$helper" ]; then
     XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$signature" \
-      hyprctl dispatch exec "$helper" >/dev/null 2>&1 || exit 1
+      hyprctl dispatch 'hl.dsp.exec_cmd([["$HOME/.local/bin/hypr-session-refresh"]])' >/dev/null 2>&1 || exit 1
   fi
   exit 0
 done

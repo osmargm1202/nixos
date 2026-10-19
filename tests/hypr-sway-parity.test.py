@@ -32,6 +32,24 @@ class Backend(unittest.TestCase):
                         activewindow=dict(address='0xabc'))[kind]
         self.backend = self.module['Backend'](request=request, dispatch=lambda *args: self.commands.append(args))
 
+    def test_dispatch_uses_native_lua_and_rejects_zero_exit_errors(self):
+        calls = []
+        response = subprocess.CompletedProcess([], 0, 'ok\n', '')
+        def execute(args, **kwargs):
+            calls.append(args)
+            return response
+        with patch.object(subprocess, 'run', execute):
+            self.module['dispatch']('focuswindow', 'address:0xabc')
+            self.assertEqual(calls[-1], ['hyprctl', 'dispatch',
+                'hl.dsp.focus({window=[[\naddress:0xabc]]})'])
+            self.module['dispatch']('workspace', 'name:quoted "x" ]] workspace')
+            self.assertEqual(calls[-1][2], 'hl.dsp.focus({workspace=[=[\nname:quoted "x" ]] workspace]=]})')
+            self.module['dispatch']('togglespecialworkspace', 'magic')
+            self.assertEqual(calls[-1][2], 'hl.dsp.workspace.toggle_special([[\nmagic]])')
+            response.stdout = 'error: invalid Lua dispatcher\n'
+            with self.assertRaisesRegex(RuntimeError, 'invalid Lua dispatcher'):
+                self.module['dispatch']('focuswindow', 'address:0xabc')
+
     def test_normalizes_focus_hidden_workspaces_and_quoted_titles(self):
         items = self.backend.windows()
         self.assertEqual([i['id'] for i in items], ['0xabc', '0xdef'])

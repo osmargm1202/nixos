@@ -105,39 +105,6 @@ if not game_mode then
 end
 
 
-local utilities = {
-  { class = "^(org.gnome.Calculator)$", size = "420 520" },
-  { class = "^(pavucontrol)$", size = "760 520" },
-  { class = "^(blueman-manager)$", size = "760 520" },
-  { class = "^(nm-connection-editor)$", size = "820 560" },
-  { class = "^(org.gnome.FileRoller)$", size = "820 560" },
-  { class = "^(orgmai-chat)$", size = "monitor_w*0.85 monitor_h*0.85" },
-  { class = "^(orgmai-config)$", size = "monitor_w*0.8 monitor_h*0.8" },
-}
-
-for _, rule in ipairs(utilities) do
-  hl.window_rule({ match = { class = rule.class }, float = true })
-  hl.window_rule({ match = { class = rule.class }, size = rule.size })
-  hl.window_rule({ match = { class = rule.class }, center = true })
-end
-
--- Browser web-notification popups: keep them floating at their own popup
--- size, pinned top-right, instead of tiling.
-local browser_notification_classes = {
-  "^(firefox|Firefox)$",
-  "^(brave-browser|Brave-browser|brave-origin)$",
-}
-
-for _, cls in ipairs(browser_notification_classes) do
-  hl.window_rule({
-    match = { class = cls, title = "^(.*[Nn]otificaci[oó]n.*|.*[Nn]otification.*)$" },
-    float = true,
-    pin = true,
-    no_initial_focus = true,
-    move = "100%-w-20 60",
-  })
-end
-
 hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
 
 -- Chromium derives a deterministic chrome-<url>-Default app_id for native
@@ -149,6 +116,9 @@ hl.window_rule({
   tile = true,
 })
 
+-- Specific extension popouts must win over the general webapp tiling rule.
+require("lua.window-rules")
+
 -- File choosers and other modal dialogs must remain opaque and neutral: their
 -- parent application's glass tags otherwise make native save dialogs opaque
 -- enough to reveal an oversized compositing shadow.
@@ -156,6 +126,7 @@ hl.window_rule({ match = { modal = true }, opacity = opaque })
 hl.window_rule({ match = { modal = true }, tag = "-hyprglass_enabled" })
 hl.window_rule({ match = { modal = true }, tag = "-hyprglass_preset_glass" })
 hl.window_rule({ match = { modal = true }, float = true })
+hl.window_rule({ match = { modal = true }, center = true })
 
 -- Discord starts normally; no forced scratchpad.
 

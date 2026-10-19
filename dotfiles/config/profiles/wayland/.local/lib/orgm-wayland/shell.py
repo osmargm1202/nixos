@@ -130,15 +130,18 @@ def wallpaper_tool(name):
         return binary
     if fallback.is_file() and os.access(fallback, os.X_OK):
         return str(fallback)
-    raise RuntimeError(f'Falta {name}; reconstruye el perfil Sway para instalar las herramientas de fondos')
+    raise RuntimeError(f'Falta {name}; reconstruye el perfil del escritorio para instalar las herramientas de fondos')
 
 
-def wallpaper_preview(value):
+def wallpaper_preview(value, *, thumbnail=False):
     path = Path(value).expanduser().resolve(strict=True)
     if path.suffix.lower() not in VIDEO_SUFFIXES:
         if path.suffix.lower() not in IMAGE_SUFFIXES:
             raise ValueError('Formato de fondo no admitido')
-        return path
+        # Applying a still wallpaper must keep its original resolution. Only
+        # the picker's decode-error fallback requests a bounded thumbnail.
+        if not thumbnail:
+            return path
     info = path.stat()
     key = hashlib.sha256(os.fsencode(path) + f':{info.st_mtime_ns}:{info.st_size}:v1'.encode()).hexdigest()
     cache = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache')) / 'orgm-sway-wallpapers'
@@ -153,7 +156,7 @@ def wallpaper_preview(value):
                          '-threads', '1', '-update', '1', str(temporary),
                          capture_output=True, text=True, timeout=20)
             if not temporary.is_file() or not temporary.stat().st_size:
-                raise RuntimeError('El video no contiene un fotograma válido: ' + result.stderr.strip())
+                raise RuntimeError('El archivo no contiene una imagen válida: ' + result.stderr.strip())
             temporary.replace(preview)
     return preview
 
@@ -648,7 +651,7 @@ def main(args):
     elif command == 'wallpaper-set':
         set_wallpaper(args[1])
     elif command == 'wallpaper-preview':
-        print(wallpaper_preview(args[1]).as_uri())
+        print(wallpaper_preview(args[1], thumbnail=True).as_uri())
     elif command == 'wallpaper-random':
         random_wallpaper(args[1])
     elif command in ("wallpaper", "wallpaper-pick"):

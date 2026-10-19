@@ -10,6 +10,7 @@ let
   hyprlandPackage = pkgs.hyprland;
   hyprlandPortalPackage = pkgs.xdg-desktop-portal-hyprland;
   hyprKdeconnectFix = pkgs.callPackage ./hypr-kdeconnect-fix.nix { };
+  waybarPackage = import ./waybar.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -245,7 +246,7 @@ in
     nwg-displays
     nwg-dock-hyprland
     pulsemixer
-    waybar
+    waybarPackage
   ];
 
   security.pam.services.hyprlock = { };

@@ -15,6 +15,7 @@ class Pointer:
         self.socket.connect(str(endpoint))
         self.buffer = b''
         self.manager = None
+        self.globals = {}
         self.send(1, 1, struct.pack('=I', 2))  # wl_display.get_registry
         self.sync(3)
         assert self.manager is not None, 'private compositor needs virtual-pointer protocol'
@@ -64,6 +65,7 @@ class Pointer:
                 raise RuntimeError('Private Wayland protocol error: ' + repr(body))
             if object_id == 2 and opcode == 0:
                 name, length = struct.unpack_from('=II', body)
+                self.globals[body[8:8 + length - 1].decode()] = name
                 if body[8:8 + length - 1] == b'zwlr_virtual_pointer_manager_v1':
                     self.manager = name
             if object_id == callback:

@@ -19,6 +19,7 @@ hl = {
   exec_cmd = function(command) table.insert(startup, command) end,
 }
 require("lua.keybindings").setup(require("lua.programs"))
+assert(bindings["SUPER + B"] == "chromium", "personal Win+B must launch Chromium")
 assert(bindings["ALT + Tab"] == "orgm-hyprland windows")
 assert(bindings["ALT + SHIFT + Tab"] == "orgm-hyprland windows prev")
 assert(bindings["SUPER + V"] == "orgm-hyprland clipboard")
@@ -35,4 +36,8 @@ for _, command in ipairs(startup) do
   assert(not command:find("hypr-nwg-dock", 1, true), "dock must be session-owned")
 end
 assert(supervisor == 1, "exactly one compositor supervisor")
+-- Also exercise the base profile: the personal module replaces it entirely.
+bindings = {}
+dofile(root .. "/dotfiles/config/profiles/hyprland/.config/hypr/lua/keybindings.lua").setup(require("lua.programs"))
+assert(bindings["SUPER + B"] == "chromium", "base Win+B must launch Chromium")
 print("PASS: effective personal keybindings and session-owned startup")

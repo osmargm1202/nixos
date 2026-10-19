@@ -102,6 +102,18 @@ class WallpaperTests(unittest.TestCase):
                 MODULE['wallpaper_preview'](video)
         self.assertEqual(list((self.home/'.cache/orgm-sway-wallpapers').iterdir()), [])
 
+    def test_image_thumbnail_is_cached_without_replacing_full_resolution_wallpaper(self):
+        image = self.file('large.png')
+        def ffmpeg(*args, **kwargs):
+            Path(args[-1]).write_bytes(b'bounded PNG')
+            return subprocess.CompletedProcess(args, 0, '', '')
+        with patch.dict(ENV, run=ffmpeg, wallpaper_tool=lambda _: '/tools/ffmpeg'):
+            preview = MODULE['wallpaper_preview'](image, thumbnail=True)
+            self.assertNotEqual(preview, image)
+            self.assertEqual(preview.read_bytes(), b'bounded PNG')
+            self.assertEqual(MODULE['wallpaper_preview'](image, thumbnail=True), preview)
+            self.assertEqual(MODULE['wallpaper_preview'](image), image)
+
     def test_video_application_and_image_switch_only_stop_owned_player(self):
         video = self.file('movie.mp4')
         frame = self.file('frame.png')
@@ -429,8 +441,8 @@ class WallpaperTests(unittest.TestCase):
     def test_video_posters_are_loaded_lazily_without_qt_multimedia(self):
         picker = (UI/'modules/WallpaperPicker.qml').read_text()
         self.assertIn('"wallpaper-preview", modelData.path', picker)
-        self.assertIn('visible && isVideo && !poster', picker)
-        self.assertIn('card.isVideo ? card.poster', picker)
+        self.assertIn('visible && (isVideo || preview.status === Image.Error)', picker)
+        self.assertIn('card.poster || (card.isVideo ?', picker)
         self.assertNotIn('QtMultimedia', picker)
         package = (ROOT/'nixos/profiles/sway/quickshell.nix').read_text()
         self.assertIn('pkgs.qt6.qtimageformats', package)

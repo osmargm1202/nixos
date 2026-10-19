@@ -87,7 +87,7 @@ start_waybar() {
     generated_config="$(hypr-display-targets waybar-config "$config_dir" 2>>"$log" || printf '%s/config\n' "$config_dir")"
   fi
 
-  waybar -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
+  "${WAYBAR_BIN:-waybar}" -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
   waybar_pid="$!"
 }
 

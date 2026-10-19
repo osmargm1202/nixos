@@ -100,7 +100,8 @@ MenuWindow {
                                 windows: Array.from({ length: windowCards.count }, (_, i) => {
                                     const card = windowCards.itemAt(i)
                                     const position = card.mapToItem(null, 0, 0)
-                                    return { id: card.modelData.id, x: position.x, y: position.y, width: card.width, height: card.height }
+                                    return { id: card.modelData.id, x: position.x, y: position.y, width: card.width, height: card.height,
+                                        previewReady: card.previewReady }
                                 }) }
                         }
                         MouseArea {
@@ -137,6 +138,7 @@ MenuWindow {
                                     delegate: Rectangle {
                                         id: card
                                         required property var modelData
+                                        readonly property bool previewReady: nativePreview.item ? nativePreview.item.ready : preview.status === Image.Ready
                                         width: (windowArea.width - (workspace.windowColumns - 1) * 10) / workspace.windowColumns
                                         height: Math.max(104, (windowArea.height - (workspace.windowRows - 1) * 10) / workspace.windowRows)
                                         color: Style.surface
@@ -151,12 +153,23 @@ MenuWindow {
                                             fillMode: Image.PreserveAspectFit
                                             asynchronous: true
                                             cache: false
+                                            visible: !Style.hyprlandSession
+                                        }
+                                        Loader {
+                                            id: nativePreview
+                                            anchors.fill: preview
+                                            active: Style.hyprlandSession && root.visible
+                                            source: active ? "HyprlandWindowPreview.qml" : ""
+                                            onLoaded: {
+                                                item.address = Qt.binding(() => card.modelData.id)
+                                                item.active = Qt.binding(() => root.open)
+                                            }
                                         }
                                         Text {
                                             anchors.centerIn: preview
                                             width: preview.width - 8
                                             text: "Vista previa pendiente"
-                                            visible: preview.status !== Image.Ready
+                                            visible: !card.previewReady
                                             horizontalAlignment: Text.AlignHCenter
                                             elide: Text.ElideRight
                                             color: Style.muted; font.family: Style.font; font.pixelSize: Style.fontSmall
@@ -191,7 +204,8 @@ MenuWindow {
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "Enter o soltar Alt: ventana · Espacio: escritorio · miniaturas del último contenido visible"
+            text: "Enter o soltar Alt: ventana · Espacio: escritorio · "
+                + (Style.hyprlandSession ? "vistas previas de cada ventana" : "miniaturas del último contenido visible")
             color: Style.muted; font.family: Style.font; font.pixelSize: Style.fontSmall
         }
     }

@@ -1,10 +1,6 @@
 local M = {}
 
 
-local function dispatch(cmd)
-  return hl.dsp.exec_cmd("hyprctl dispatch " .. cmd)
-end
-
 function M.setup(programs)
   local mainMod = "SUPER"
 
@@ -18,6 +14,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(programs.terminal))
   hl.bind(mainMod .. " + CTRL + Return", hl.dsp.exec_cmd("kitty -e tmux -u new-session -A -s main"))
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
+  hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("chromium"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("firefox-open-tab --focus"))
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("firefox-open-tab --restore-or-focus"))
 
@@ -81,19 +78,19 @@ function M.setup(programs)
   hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())
-  hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
+  hl.bind(mainMod .. " + R", hl.dsp.layout("colresize 1.0"))
 
   -- Group navigation (tabbed windows): Win+` next, Win+Shift+` back
   hl.bind(mainMod .. " + grave", hl.dsp.group.next())
   hl.bind(mainMod .. " + SHIFT + grave", hl.dsp.group.prev())
-  hl.bind(mainMod .. " + CTRL + minus", dispatch("resizeactive -20 0"))
-  hl.bind(mainMod .. " + CTRL + equal", dispatch("resizeactive 20 0"))
-  hl.bind(mainMod .. " + SHIFT + minus", dispatch("resizeactive 0 -20"))
-  hl.bind(mainMod .. " + SHIFT + equal", dispatch("resizeactive 0 20"))
-  hl.bind(mainMod .. " + ALT + left", dispatch("resizeactive -40 0"), { repeating = true })
-  hl.bind(mainMod .. " + ALT + right", dispatch("resizeactive 40 0"), { repeating = true })
-  hl.bind(mainMod .. " + ALT + up", dispatch("resizeactive 0 -40"), { repeating = true })
-  hl.bind(mainMod .. " + ALT + down", dispatch("resizeactive 0 40"), { repeating = true })
+  hl.bind(mainMod .. " + CTRL + minus", hl.dsp.window.resize({ x = -20, y = 0, relative = true }))
+  hl.bind(mainMod .. " + CTRL + equal", hl.dsp.window.resize({ x = 20, y = 0, relative = true }))
+  hl.bind(mainMod .. " + SHIFT + minus", hl.dsp.window.resize({ x = 0, y = -20, relative = true }))
+  hl.bind(mainMod .. " + SHIFT + equal", hl.dsp.window.resize({ x = 0, y = 20, relative = true }))
+  hl.bind(mainMod .. " + ALT + left", hl.dsp.window.resize({ x = -40, y = 0, relative = true }), { repeating = true })
+  hl.bind(mainMod .. " + ALT + right", hl.dsp.window.resize({ x = 40, y = 0, relative = true }), { repeating = true })
+  hl.bind(mainMod .. " + ALT + up", hl.dsp.window.resize({ x = 0, y = -40, relative = true }), { repeating = true })
+  hl.bind(mainMod .. " + ALT + down", hl.dsp.window.resize({ x = 0, y = 40, relative = true }), { repeating = true })
 
   -- Focus / move.
   local dirs = { left = "left", down = "down", up = "up", right = "right", h = "left", j = "down", k = "up" }

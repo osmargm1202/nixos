@@ -8,7 +8,22 @@
 let
   enabled = builtins.elem "flatpak" config.orgm.user.programs;
   discordEnabled = builtins.elem "discord" config.orgm.user.programs;
-  packages = config.orgm.user.flatpakPackages;
+  # Shared desktop baseline: install system-wide, independently of the user's
+  # personal app list. ArtCraft publishes bundles, not a Flathub application.
+  artcraftVersion = "0.5.1";
+  artcraftSha256 = "08fc5d5ec7498292b238ff7ea0bfdd0d880f282cefb64a9980db135f3db95f8b";
+  artcraftBundle = pkgs.fetchurl {
+    url = "https://github.com/storytold/craft-launcher/releases/download/v${artcraftVersion}/artcraft-launcher-${artcraftVersion}-linux-x86_64.flatpak";
+    sha256 = artcraftSha256;
+  };
+  packages = config.orgm.user.flatpakPackages ++ [
+    {
+      appId = "ai.storyteller.artcraft-launcher";
+      origin = "artcraft-launcher-origin";
+      bundle = "${artcraftBundle}";
+      sha256 = artcraftSha256;
+    }
+  ];
   discord = pkgs.callPackage ./discord-webrtc.nix { };
 in
 {

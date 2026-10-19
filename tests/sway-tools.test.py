@@ -87,6 +87,16 @@ class SwayWorkflows(unittest.TestCase):
         self.assertIn('floating enable', settings)
         self.assertNotIn('resize set', settings)
 
+    def test_image_viewer_floats_without_resizing_browser_windows(self):
+        for app in ('org.gnome.Loupe', 'org.gnome.loupe', 'loupe'):
+            for protocol in ('app_id', 'class'):
+                with self.subTest(app=app, protocol=protocol):
+                    actions = self.window_actions(**{protocol: app})
+                    self.assertIn('floating enable', actions)
+                    self.assertIn('move position center', actions)
+                    self.assertNotIn('resize set', actions)
+        self.assertNotIn('floating enable', self.window_actions(app_id='firefox', title='Loupe'))
+
     def test_main_music_and_whatsapp_windows_tile_but_their_dialogs_float(self):
         for app in ('Spotify', 'spotify', 'com.spotify.Client', 'orgm-webapp-whatsapp',
                     'chrome-web.whatsapp.com__-Default'):

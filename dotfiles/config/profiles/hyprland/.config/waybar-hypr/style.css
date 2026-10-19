@@ -33,8 +33,8 @@ window#waybar {
   border-radius: 8px;
   box-shadow: none;
 }
-#workspaces button.persistent, #workspaces button.empty { color: @overlay0; }
-#workspaces button.focused { color: @blue; }
+#workspaces button.empty { color: @overlay0; }
+#workspaces button.active { color: @blue; }
 #workspaces button.urgent { color: @red; }
 #workspaces button:hover { background: rgba(138, 180, 248, 0.15); }
 

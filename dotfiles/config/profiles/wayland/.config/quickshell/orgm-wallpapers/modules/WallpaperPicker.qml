@@ -172,7 +172,10 @@ MenuWindow {
                 readonly property bool previewReady: preview.status === Image.Ready
                 readonly property bool previewFailed: posterFailed || preview.status === Image.Error
                 function loadPoster() {
-                    if (root.open && visible && isVideo && !poster && !posterProc.running && !posterFailed) {
+                    // PNG decoders may allocate the full source image despite
+                    // sourceSize. Retry rejected stills as bounded FFmpeg PNGs.
+                    if (root.open && visible && (isVideo || preview.status === Image.Error)
+                            && !poster && !posterProc.running && !posterFailed) {
                         posterProc.command = [root.catalog.backend, "wallpaper-preview", modelData.path]
                         posterProc.running = true
                         posterGuard.restart()
@@ -218,7 +221,8 @@ MenuWindow {
                 Image {
                     id: preview
                     anchors.fill: parent
-                    source: root.visible && card.visible ? (card.isVideo ? card.poster : card.modelData.url) : ""
+                    source: root.visible && card.visible ? (card.poster || (card.isVideo ? "" : card.modelData.url)) : ""
+                    onStatusChanged: if (status === Image.Error) card.loadPoster()
                     sourceSize: Qt.size(1200, 800)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true

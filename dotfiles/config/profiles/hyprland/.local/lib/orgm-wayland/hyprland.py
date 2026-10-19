@@ -11,8 +11,30 @@ def request(kind):
     return json.loads(result.stdout)
 
 
-def dispatch(*args):
-    subprocess.run(['hyprctl', 'dispatch', *args], check=True, capture_output=True, text=True, timeout=3)
+def lua_string(value):
+    # Long strings keep workspace names literal, including quotes/backslashes
+    # and would-be Lua code. Lua strips the one explicit initial newline.
+    level = ''
+    while ']' + level + ']' in value:
+        level += '='
+    return '[' + level + '[\n' + value + ']' + level + ']'
+
+
+def dispatch(action, value=''):
+    literal = lua_string(value)
+    commands = {
+        'focuswindow': 'hl.dsp.focus({window='+literal+'})',
+        'workspace': 'hl.dsp.focus({workspace='+literal+'})',
+        'togglespecialworkspace': 'hl.dsp.workspace.toggle_special('+literal+')',
+        'exit': 'hl.dsp.exit()',
+    }
+    if action not in commands:
+        raise ValueError('Acción de compositor no válida')
+    result = subprocess.run(['hyprctl', 'dispatch', commands[action]], check=True,
+                            capture_output=True, text=True, timeout=3)
+    # Hyprctl can return exit zero for a rejected Lua expression.
+    if result.stdout.strip() != 'ok':
+        raise RuntimeError(result.stdout.strip() or result.stderr.strip() or 'Hyprland rechazó la acción')
 
 
 class Backend:

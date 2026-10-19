@@ -41,7 +41,7 @@ hl.config({
     },
     resize_on_border = false,
     allow_tearing = false,
-    layout = "dwindle",
+    layout = "scrolling",
   },
 
 
@@ -83,7 +83,7 @@ hl.config({
   },
 
   animations = {
-    enabled = false,
+    enabled = visual_effects,
   },
 })
 

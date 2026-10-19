@@ -11,6 +11,13 @@ fail() {
 
 [[ -x "$HELPER" ]] || fail 'game mode helper must be executable'
 
+lua="${ORGM_TEST_LUA:-$(command -v lua || true)}"
+if [[ -n "$lua" ]]; then
+  "$lua" "$ROOT/tests/hypr-animations.lua" "$ROOT"
+else
+  printf '%s\n' 'SKIP: visual game-mode regression requires Lua'
+fi
+
 tmp="$(mktemp -d)"
 cleanup() {
   if [[ -f "$tmp/background-pids" ]]; then

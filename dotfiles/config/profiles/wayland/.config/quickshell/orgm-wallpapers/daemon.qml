@@ -95,6 +95,10 @@ ShellRoot {
         // Drop history and image catalogs before clients remove their private files.
         if (kind !== "windows") { panels[kind].catalog = ({}); panels[kind].reset() }
         complete(finished)
+        // Hyprland restores the old focus when the overlay unmaps. Apply the
+        // selection only after its close animation and layer teardown finish.
+        if (kind === "windows" && finished.selection)
+            Quickshell.execDetached([backend, "windows-focus", finished.selection])
         if (pending) {
             const next = pending
             pending = null
@@ -105,7 +109,6 @@ ShellRoot {
         if (!current || current.catalog.kind !== kind) return
         current.selection = value
         panels[kind].close()
-        if (kind === "windows") Quickshell.execDetached([backend, "windows-focus", value])
     }
 
     WindowSwitcher { id: windows; onChosen: value => root.choose("windows", value); onDismissed: root.dismissed("windows") }

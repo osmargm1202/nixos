@@ -41,5 +41,5 @@ chmod +x "$bin/hyprctl" "$home/.local/bin/hypr-session-refresh"
 
 HOME="$home" XDG_RUNTIME_DIR="$runtime" PATH="$bin:$PATH" HYPRCTL_CALLS="$tmp/calls" "$script"
 grep -Fxq 'live:reload' "$tmp/calls"
-grep -Fxq "live:dispatch exec $home/.local/bin/hypr-session-refresh" "$tmp/calls"
+grep -Fxq 'live:dispatch hl.dsp.exec_cmd([["$HOME/.local/bin/hypr-session-refresh"]])' "$tmp/calls"
 printf '%s\n' 'hypr-reload-after-switch: ok'
