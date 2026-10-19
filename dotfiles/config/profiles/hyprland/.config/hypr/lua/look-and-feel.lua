@@ -31,7 +31,9 @@ end
 hl.config({
   general = {
     gaps_in = game_mode and 0 or 5,
-    gaps_out = game_mode and 0 or { top = 5, right = 60, bottom = 5, left = 5 },
+    -- The exclusive-zone dock reserves its own width. Keep only the normal
+    -- inter-window gap here, instead of reserving the dock a second time.
+    gaps_out = game_mode and 0 or { top = 5, right = 5, bottom = 5, left = 5 },
     border_size = 0,
     col = {
       active_border = { colors = { "rgba(8aadf4ee)", "rgba(f5a97fee)" }, angle = 45 },

@@ -34,7 +34,7 @@ for name in config style.css; do
   ln -s "$store/$name" "$config/$name"
 done
 
-ln -s "$repo_dir/dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-state" \
+ln -s "$repo_dir/dotfiles/config/profiles/wayland/.local/bin/waybar-caffeine-state" \
   "$home/.local/bin/waybar-caffeine-state"
 
 cat >"$home/.local/bin/waybar" <<'INNER'

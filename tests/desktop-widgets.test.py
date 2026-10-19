@@ -56,6 +56,75 @@ class Widgets(unittest.TestCase):
             self.assertEqual(settings['clockX'], 140)
             self.assertEqual(ryoku.read_text(), '{"clock24h": true, "clockX": 777}')
 
+    def update(self, config, patch, screen=''):
+        env = dict(os.environ, XDG_CONFIG_HOME=str(config))
+        return subprocess.run([str(LAUNCHER), 'update', json.dumps(patch), screen],
+                              env=env, capture_output=True, text=True)
+
+    def test_position_update_is_private_and_preserves_other_settings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp); path = config/'orgm-desktop/widgets.json'
+            path.parent.mkdir()
+            path.write_text('{"clock24h":false,"custom":"keep","screens":{"HDMI-A-1":{"clockX":60}}}')
+            result = self.update(config, {'clockX': 300, 'clockY': 180}, 'DP-3')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            saved = json.loads(path.read_text())
+            self.assertEqual(saved['screens']['DP-3'], {'clockX': 300, 'clockY': 180})
+            self.assertEqual(saved['screens']['HDMI-A-1']['clockX'], 60)
+            self.assertEqual(saved['custom'], 'keep')
+            self.assertIs(saved['clock24h'], False)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(json.loads(result.stdout)['screens']['DP-3']['clockY'], 180)
+
+    def test_visibility_update_survives_a_new_launcher(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp)
+            result = self.update(config, {'clockEnabled': False, 'calendarEnabled': True})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([str(LAUNCHER), 'settings'], env=dict(os.environ, XDG_CONFIG_HOME=tmp),
+                                    capture_output=True, text=True, check=True)
+            self.assertIs(json.loads(result.stdout)['clockEnabled'], False)
+
+    def test_invalid_writes_never_replace_existing_preferences(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp); path = config/'orgm-desktop/widgets.json'; path.parent.mkdir()
+            for original, patch, screen in [
+                ('{"clockX":72}', {'clockX': '300'}, 'DP-3'),
+                ('{"clockX":72}', {'clockX': -1}, 'DP-3'),
+                ('{"clockX":72}', {'clockEnabled': 'false'}, ''),
+                ('{"clockX":72}', {'command': 'exit'}, ''),
+                ('broken JSON', {'clockEnabled': False}, ''),
+            ]:
+                path.write_text(original)
+                result = self.update(config, patch, screen)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(path.read_text(), original)
+
+    def test_symlinked_preferences_are_not_written_through(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp); path = config/'orgm-desktop/widgets.json'; path.parent.mkdir()
+            external = config/'external.json'; external.write_text('{"clockX":99}')
+            path.symlink_to(external)
+            result = self.update(config, {'clockEnabled': False})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(external.read_text(), '{"clockX":99}')
+            self.assertTrue(path.is_symlink())
+
+    def test_concurrent_monitor_updates_do_not_lose_each_other(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp)
+            env = dict(os.environ, XDG_CONFIG_HOME=tmp)
+            jobs = [subprocess.Popen([str(LAUNCHER), 'update', json.dumps(patch), screen], env=env,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    for patch, screen in [({'clockX': 220, 'clockY': 100}, 'DP-3'),
+                                          ({'calendarX': 40, 'calendarY': 30}, 'DP-2')]]
+            results = [job.communicate(timeout=5) for job in jobs]
+            for job, (out, err) in zip(jobs, results):
+                self.assertEqual(job.returncode, 0, err)
+            saved = json.loads((config/'orgm-desktop/widgets.json').read_text())
+            self.assertEqual(saved['screens']['DP-3']['clockX'], 220)
+            self.assertEqual(saved['screens']['DP-2']['calendarY'], 30)
+
     def test_calendar_leap_year_and_year_boundary(self):
         model = BASE/'.config/quickshell/orgm-desktop/lib/calendar.js'
         script = '''const assert=require('assert'); const m=require(process.argv[1]);

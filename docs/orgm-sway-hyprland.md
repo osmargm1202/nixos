@@ -6,8 +6,11 @@
 - `orgm-ryoku`: alternativa Ryoku conservada, con su configuración propia.
 - `envy`: continúa en Sway. Los demás hosts conservan su escritorio.
 
-Estos cambios están **preparados en el repositorio, no desplegados**. No se ha
-hecho build ni switch de orgm, ni se ha reiniciado su sesión.
+El sistema y los dotfiles editables se aplican por separado. Un build no
+reemplaza una configuración antigua de Ryoku en HOME: Home Manager debe
+terminar su activación y las aplicaciones existentes se actualizan con un
+`orgm-dot pull` explícito, con respaldo. Revisar la migración antes de cerrar
+la sesión actual.
 
 ## Qué se comparte
 
@@ -37,6 +40,8 @@ sincronización de eventos ni servicios externos de calendario.
 
 ```bash
 orgm-desktop-widgets settings
+orgm-desktop-widgets edit
+orgm-desktop-widgets done
 qs --path ~/.config/quickshell/orgm-desktop ipc call widgets status
 qs --path ~/.config/quickshell/orgm-desktop ipc call widgets reload
 ```
@@ -44,6 +49,18 @@ qs --path ~/.config/quickshell/orgm-desktop ipc call widgets reload
 Los widgets se muestran debajo de las aplicaciones, sin reservar espacio ni
 capturar el teclado. Su geometría se ajusta a pantallas pequeñas/escaladas.
 No leen ni modifican `~/.config/ryoku/widgets.json`.
+
+**Centro de control → Editar widgets** abre una capa de edición sobre las
+ventanas, también accesible con `orgm-desktop-widgets edit`. Arrastrar el reloj
+o calendario guarda su posición al soltar el ratón. Las posiciones se guardan
+por nombre de pantalla en `screens` dentro del mismo JSON; no se fuerza el
+calendario debajo del reloj cuando se elige una posición libre.
+
+La barra de edición permite mostrar/ocultar cada widget, incluso si ambos están
+ocultos. **Terminar** o **Esc** sale del editor y bloquea el arrastre, sin
+desactivar los controles normales del calendario. El modo de edición no se
+guarda: cada inicio comienza bloqueado; posiciones y visibilidad sí persisten.
+Un error al guardar aparece en el editor y no sobrescribe un JSON inválido.
 
 ## Sesión Hyprland
 
@@ -53,9 +70,32 @@ Cuando el socket se cierra, detiene sus servicios: menús, widgets, Waybar,
 dock, Swaync, idle y portapapeles. Los cambios de paleta reinician el dock
 a través de su unidad, sin lanzar una segunda instancia fuera de systemd.
 
+El dock derecho reserva su propio ancho mediante su zona exclusiva. No se
+añade una segunda reserva manual en `gaps_out`; el modo normal mantiene el
+mismo hueco entre ventanas en los cuatro lados. Tanto la ventana GTK como
+su caja interior tienen fondo transparente, independientemente del tema GTK.
+
 Se conserva el modelo de **una sesión gráfica activa por usuario**, igual que
 las unidades de sesión Sway existentes; no se promete ejecutar simultáneamente
 Sway e Hyprland con el mismo HOME y gestor systemd de usuario.
+
+## Caffeine
+
+El centro de control incluye **Caffeine**, sincronizado con el inhibidor nativo
+de Waybar. Evita las acciones automáticas por inactividad sin detener
+`swayidle`/`hypridle`, ni deshabilitar el bloqueo manual o el bloqueo antes de
+suspender. Su estado se conserva en `~/.local/state/waybar/caffeine`.
+
+Un clic en el módulo nativo de Waybar sincroniza todas las barras de ese mismo
+proceso y persiste la elección. Desde el centro se reinicia únicamente la barra
+de la sesión para aplicar `start-activated`; si esa operación falla, se revierte
+la preferencia y se muestra un error. El control no se ofrece como activo si su
+barra no está funcionando.
+
+Sway usa `orgm-sway-waybar` para generar la configuración de arranque sin
+sobrescribir el archivo editable, incluidos comentarios y comas finales JSONC.
+Ese cambio de unidad requiere actualizar el perfil Sway; en Hyprland se usa el
+generador existente de `hypr-display-targets`.
 
 ## Syncthing y Tailscale
 
@@ -82,17 +122,24 @@ Aplicaciones relevantes: `hyprland`, `wayland-tools`, `sway-wallpapers`,
 Los nombres históricos `sway-wallpapers` y `swaync` ahora también pueden tener
 recursos seleccionados en Hyprland. Revisar backups antes de cada `pull`.
 
-Quedan pendientes build de orgm, arranque real, hardware NVIDIA/monitores,
-suspensión y prueba de Qylock/SDDM en esa máquina. El parser Lua y los tests de
-backend no sustituyen esas pruebas.
+Antes de dar una migración por validada, comprobar el arranque de Home Manager,
+los servicios gráficos y los monitores reales. Suspensión y Qylock/SDDM se
+validan por separado: el parser Lua y los tests de backend no sustituyen esas
+pruebas.
 
 ## Verificación sin despliegue
 
-- 29 scripts de regresión independientes de build pasan; también los tests Go,
+- Las regresiones independientes de build pasan; también los tests Go,
   las evaluaciones Nix de ambos targets y server (IFD deshabilitado), y el parser
   Lua real de Hyprland con los overrides de osmarg.
 - Sesión Sway privada: widgets simultáneos con menús, clipboard, audio y
   miniaturas; geometría/escalado/hotplug de los widgets comprobados por separado.
+- Editor: arrastre y botones reales, salida con Esc, bloqueo normal, posiciones
+  por pantalla, recuperación tras error y persistencia después de reiniciar.
+- Caffeine: Waybar con dos barras y swayidle reales en sesión privada; tanto el
+  clic nativo como el centro bloquean/restauran el timeout sin parar swayidle.
+- Dock: estilos evaluados con GTK3 real (ventana y caja con alfa cero) y reserva
+  Lua sin margen derecho duplicado.
 - Qylock admite la identidad nativa de Hyprland sin exigir SWAYSOCK. Sus tests
   mantienen la confirmación segura obligatoria; no son una prueba PAM real.
 - Waybar admite configuración objeto o array, monitor seleccionado y Caffeine.

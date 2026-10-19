@@ -80,7 +80,7 @@ in
         BusName = "org.freedesktop.Notifications";
       };
     }) {
-      orgm-sway-waybar = { description = "Sway status bar"; command = "${pkgs.waybar}/bin/waybar"; };
+      orgm-sway-waybar = { description = "Sway status bar"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-waybar"; };
       # Keep above normal windows but below fullscreen; overlay bypasses fullscreen.
       orgm-sway-dock = { description = "Sway application dock"; command = "${swayDock}/bin/nwg-dock -p right -i 32 -w 10 -nows -mr 6 -l top -c sway-app-launcher"; };
       orgm-sway-notifications = { description = "Sway notification center and OSD"; command = "${pkgs.swaynotificationcenter}/bin/swaync"; };

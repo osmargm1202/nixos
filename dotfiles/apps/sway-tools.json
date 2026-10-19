@@ -4,6 +4,7 @@
   "paths": [
     ".local/bin/sway-app-launcher",
     ".local/bin/orgm-sway-desktop",
+    ".local/bin/orgm-sway-waybar",
     ".local/bin/sway-game-mode",
     ".local/bin/orgm-sway-lock",
     ".local/bin/sway-brightness-osd",

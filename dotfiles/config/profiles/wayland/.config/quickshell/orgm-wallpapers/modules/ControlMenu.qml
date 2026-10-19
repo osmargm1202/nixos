@@ -87,6 +87,8 @@ MenuWindow {
                 width: parent.width
                 MenuButton { width: (parent.width - 12) / 2; text: "󰊴 Gaming"; highlighted: root.state.gaming === true; onClicked: root.action("gaming") }
                 MenuButton { width: (parent.width - 12) / 2; text: "󰂛 No molestar"; highlighted: root.state.dnd === true; onClicked: root.action("dnd") }
+                MenuButton { width: (parent.width - 12) / 2; text: "󰅶 Caffeine"; enabled: root.state.caffeineAvailable === true; highlighted: root.state.caffeine === true; onClicked: root.action("caffeine") }
+                MenuButton { width: (parent.width - 12) / 2; text: "󰏫 Editar widgets"; onClicked: root.chosen("widgets") }
                 MenuButton { width: (parent.width - 12) / 2; text: "󰕾 Audio"; onClicked: root.chosen("audio") }
                 MenuButton { width: (parent.width - 12) / 2; text: "󰅌 Portapapeles"; onClicked: root.chosen("clipboard") }
                 MenuButton { width: (parent.width - 12) / 2; text: " Wi-Fi"; onClicked: root.chosen("wifi") }

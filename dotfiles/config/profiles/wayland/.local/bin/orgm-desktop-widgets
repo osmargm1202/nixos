@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """Standalone Ryoku-derived widgets; never reads or changes Ryoku state."""
 import json
+import fcntl
 import math
 import os
 from pathlib import Path
 import sys
+import subprocess
+import tempfile
 
 DEFAULTS = dict(clockDesign='digital', clock24h=True, clockSeconds=False,
                 dateShow=True, clockEnabled=True, clockScale=1.0, clockX=72, clockY=64,
                 calendarEnabled=True, calendarScale=1.0, calendarX=64, calendarY=704,
                 calendarWeekNumbers=True, calendarWeeks=6)
+POSITIONS = ('clockX', 'clockY', 'calendarX', 'calendarY')
+VISIBILITY = ('clockEnabled', 'calendarEnabled')
 
 
 def load_settings(path):
@@ -33,7 +38,62 @@ def load_settings(path):
     for key in ('clockX', 'clockY', 'calendarX', 'calendarY'):
         settings[key] = max(0, min(16384, settings[key]))
     settings['calendarWeeks'] = max(4, min(8, round(settings['calendarWeeks'])))
+    settings['screens'] = {}
+    screens = data.get('screens', {})
+    if isinstance(screens, dict):
+        for name, row in screens.items():
+            if isinstance(row, dict):
+                settings['screens'][name] = {
+                    key: max(0, min(16384, value)) for key, value in row.items()
+                    if key in POSITIONS and isinstance(value, (int, float))
+                    and not isinstance(value, bool) and math.isfinite(value)}
     return settings
+
+
+def update_settings(path, patch, screen=''):
+    if not isinstance(patch, dict) or not patch:
+        raise ValueError('El cambio debe ser un objeto de preferencias')
+    for key, value in patch.items():
+        if key in VISIBILITY and not screen:
+            if isinstance(value, bool):
+                continue
+        elif key in POSITIONS and screen:
+            if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and math.isfinite(value) and 0 <= value <= 16384):
+                continue
+        raise ValueError('Preferencia o valor no válido: '+key)
+    if not isinstance(screen, str) or len(screen) > 256 or any(ord(c) < 32 for c in screen):
+        raise ValueError('Pantalla no válida')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path.parent/'.widgets.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if path.is_symlink():
+            raise ValueError('No se escribe a través de un enlace de preferencias')
+        data = json.loads(path.read_text()) if path.exists() else {}
+        if not isinstance(data, dict):
+            raise ValueError('El archivo de preferencias no es un objeto JSON')
+        if screen:
+            screens = data.setdefault('screens', {})
+            if not isinstance(screens, dict):
+                raise ValueError('Las preferencias de pantallas no son válidas')
+            row = screens.setdefault(screen, {})
+            if not isinstance(row, dict):
+                raise ValueError('Las preferencias de esta pantalla no son válidas')
+            row.update(patch)
+        else:
+            data.update(patch)
+        fd, temporary = tempfile.mkstemp(prefix='.widgets-', dir=path.parent)
+        try:
+            with os.fdopen(fd, 'w') as output:
+                json.dump(data, output, ensure_ascii=False, indent=2, allow_nan=False)
+                output.write('\n')
+                output.flush()
+                os.fsync(output.fileno())
+            os.replace(temporary, path)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+    return load_settings(path)
 
 
 def main():
@@ -44,8 +104,15 @@ def main():
     if action == 'settings':
         print(settings)
         return
+    if action == 'update' and len(sys.argv) in (3, 4):
+        print(json.dumps(update_settings(path, json.loads(sys.argv[2]), sys.argv[3] if len(sys.argv) == 4 else '')))
+        return
+    if action in ('edit', 'done'):
+        subprocess.run(['qs', '--path', str(config/'quickshell/orgm-desktop'),
+                        'ipc', 'call', 'widgets', action], check=True)
+        return
     if action != 'daemon':
-        raise SystemExit('Uso: orgm-desktop-widgets [daemon|settings]')
+        raise SystemExit('Uso: orgm-desktop-widgets [daemon|settings|edit|done|update JSON [PANTALLA]]')
     os.environ['ORGM_WIDGET_SETTINGS'] = settings
     os.environ['ORGM_WIDGET_CONFIG'] = str(path)
     os.environ['ORGM_WIDGET_BACKEND'] = str(Path(__file__).resolve())
@@ -53,4 +120,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise SystemExit('orgm-desktop-widgets: '+str(error))

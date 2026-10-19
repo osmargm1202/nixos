@@ -205,7 +205,7 @@ waybar_config_cmd() {
   fi
   temporary="$(mktemp "$generated.XXXXXX")"
   jq --argjson active "$caffeine" \
-    'map(if has("idle_inhibitor") then .idle_inhibitor["start-activated"] = $active | del(.idle_inhibitor.signal) else . end)' \
+    'map(if has("idle_inhibitor") then .idle_inhibitor["start-activated"] = $active | .idle_inhibitor["on-click"] = "waybar-caffeine-state toggle" | del(.idle_inhibitor.signal) else . end)' \
     "$generated" >"$temporary"
   mv "$temporary" "$generated"
   printf '%s\n' "$generated"

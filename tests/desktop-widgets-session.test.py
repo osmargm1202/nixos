@@ -6,10 +6,13 @@ from pathlib import Path
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'tests/helpers'))
+from wayland_pointer import Pointer
 SOURCE = ROOT/'dotfiles/config/profiles/wayland'
 SWAY = os.environ.get('ORGM_TEST_SWAY') or shutil.which('sway')
 if not SWAY:
@@ -36,6 +39,7 @@ compositor = subprocess.Popen(['dbus-run-session', '--', 'sh', '-c',
     'printf "%s" "$DBUS_SESSION_BUS_ADDRESS" > "$1"; shift; exec "$@"', '_', str(home/'bus'), SWAY,
     '-c', str(home/'sway.conf')], env=env, stdout=log, stderr=log, start_new_session=True)
 children = []
+pointer = None
 entry = home/'.config/quickshell/orgm-desktop'
 
 
@@ -62,15 +66,42 @@ def state():
         return None
 
 
+def cursor(x, y):
+    pointer.move(x, y)
+    time.sleep(.08)
+
+
+def click(x, y):
+    cursor(x, y)
+    pointer.button(True)
+    pointer.button(False)
+    time.sleep(.12)
+
+
+def drag(widget, dx, dy):
+    before = next(s for s in state()['screens'] if s['widget'] == widget and s['screen'] == 'HEADLESS-1')
+    x, y = before['x'] + before['width']/2, before['y'] + before['height']/2
+    cursor(x, y)
+    pointer.button(True)
+    for step in range(1, 6):
+        cursor(x + dx * step/5, y + dy * step/5)
+    pointer.button(False)
+    time.sleep(.15)
+    return before
+
+
 try:
     env['SWAYSOCK'] = str(wait(lambda: next(runtime.glob('sway-ipc.*.sock'), None), 'IPC'))
     env['WAYLAND_DISPLAY'] = wait(lambda: next((p.name for p in runtime.glob('wayland-*') if p.is_socket()), None), 'Wayland')
     env['DBUS_SESSION_BUS_ADDRESS'] = (home/'bus').read_text()
+    children.append(subprocess.Popen(['wtype', '-s', '120000'], env=env, stdout=log, stderr=log))
+    time.sleep(.1)
     widget = subprocess.Popen([str(home/'.local/bin/orgm-desktop-widgets'), 'daemon'],
         env=env, stdout=log, stderr=log)
     children.append(widget)
     initial = wait(lambda: (data := state()) and len(data['screens']) == 2 and data, 'two widget surfaces')
     assert initial['design'] == 'digital'
+    assert initial.get('editing') is False, 'widgets need an explicit locked/editing mode'
     for s in initial['screens']:
         assert 0 <= s['x'] and s['x']+s['width'] <= 1280
         assert 0 <= s['y'] and s['y']+s['height'] <= 720
@@ -96,8 +127,72 @@ try:
         command('grim', str(home/'widgets.png')).check_returncode()
     command('swaymsg', 'output HEADLESS-2 disable').check_returncode()
     wait(lambda: len(state()['screens']) == 2, 'output cleanup')
-    print('PASS: rendered widgets, bounded layout, scaling/hotplug, month navigation and singleton; artifacts:', home)
+    pointer = Pointer(runtime/env['WAYLAND_DISPLAY'])
+    command(str(home/'.local/bin/orgm-desktop-widgets'), 'edit').check_returncode()
+    wait(lambda: state()['editing'], 'edit mode')
+    drag('clock', 260, 220)
+    drag('calendar', 600, -330)
+    path = home/'.config/orgm-desktop/widgets.json'
+    def saved():
+        data = json.loads(path.read_text())
+        return data.get('screens', {}).get('HEADLESS-1', {})
+    wait(lambda: saved().get('calendarX') == 664, 'drag persistence')
+    assert saved() == dict(clockX=332, clockY=284, calendarX=664, calendarY=72), saved()
+    moved = {s['widget']: s for s in state()['screens']}
+    assert moved['calendar']['y'] < moved['clock']['y'], 'free placement must not force calendar below clock'
+    command('grim', str(home/'editor.png')).check_returncode()
+    # Both disabled widgets must remain recoverable through the editor toolbar.
+    click(529, 90)
+    click(751, 90)
+    wait(lambda: all(not s['visible'] for s in state()['screens']), 'both widgets hidden')
+    assert state()['editing'], 'toolbar must survive an empty desktop'
+    click(751, 90)
+    wait(lambda: any(s['widget'] == 'calendar' and s['visible'] for s in state()['screens']), 'show calendar')
+    click(808, 46)  # Actual Done button.
+    wait(lambda: not state()['editing'] and not state()['saving'], 'finish editor')
+    before = saved().copy()
+    drag('calendar', -100, 30)
+    assert saved() == before, 'normal desktop must not be draggable'
+    widget.terminate(); widget.wait(timeout=5)
+    widget = subprocess.Popen([str(home/'.local/bin/orgm-desktop-widgets'), 'daemon'], env=env, stdout=log, stderr=log)
+    children.append(widget)
+    wait(lambda: (data := state()) and len(data['screens']) == 2 and not data['editing'], 'restart locked')
+    restored = {s['widget']: s for s in state()['screens']}
+    assert restored['clock']['visible'] is False
+    assert (restored['calendar']['x'], restored['calendar']['y']) == (664, 72), restored
+    command(str(home/'.local/bin/orgm-desktop-widgets'), 'edit').check_returncode()
+    wait(lambda: state()['editing'], 'reopen editor')
+    click(529, 90)
+    command('wtype', '-k', 'Escape').check_returncode()
+    wait(lambda: not state()['editing'] and not state()['saving'], 'Escape ends edit mode')
+    assert all(s['visible'] for s in state()['screens'])
+    # A broken file must remain untouched and show a recoverable save error.
+    good = path.read_text()
+    command(str(home/'.local/bin/orgm-desktop-widgets'), 'edit').check_returncode()
+    wait(lambda: state()['editing'], 'edit before save error')
+    path.write_text('broken JSON')
+    time.sleep(.2)
+    click(529, 90)
+    wait(lambda: state()['error'] and not state()['saving'], 'save error is visible')
+    assert path.read_text() == 'broken JSON', 'editor must not replace invalid user data with defaults'
+    path.write_text(good)
+    time.sleep(.2)
+    click(529, 90)
+    wait(lambda: not state()['error'] and not state()['saving'], 'retry recovers')
+    click(529, 90)
+    command(str(home/'.local/bin/orgm-desktop-widgets'), 'done').check_returncode()
+    wait(lambda: not state()['editing'] and not state()['saving'], 'finish after retry')
+    command('swaymsg', 'create_output').check_returncode()
+    wait(lambda: len(state()['screens']) == 4, 'hotplug after saving')
+    other = [s for s in state()['screens'] if s['screen'] != 'HEADLESS-1']
+    assert all(s['x'] in (64, 72) for s in other), 'a new monitor must not inherit another monitor position'
+    command('swaymsg', 'output '+other[0]['screen']+' disable').check_returncode()
+    wait(lambda: len(state()['screens']) == 2, 'final output cleanup')
+    command('grim', str(home/'saved-layout.png')).check_returncode()
+    print('PASS: rendering, scaling/hotplug, actual drag/toggles/Done/Escape, locked mode and persistence after restart; artifacts:', home)
 finally:
+    if pointer is not None:
+        pointer.close()
     for p in reversed(children):
         if p.poll() is None:
             p.terminate()

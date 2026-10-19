@@ -11,7 +11,7 @@ grep -Fxq '@import "orgm-current.css";' \
   'dotfiles/config/profiles/hyprland/.config/waybar-hypr/style.css'
 
 
-caffeine_helper='dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-state'
+caffeine_helper='dotfiles/config/profiles/wayland/.local/bin/waybar-caffeine-state'
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 

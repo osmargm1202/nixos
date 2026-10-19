@@ -24,7 +24,7 @@ pids="$tmp/waybar-pids"
 mkdir -p "$home/.local/bin" "$state" "$config" "$bin"
 : >"$pids"
 touch "$config/config" "$config/style.css"
-ln -s "$repo_dir/dotfiles/config/profiles/hyprland/.local/bin/waybar-caffeine-state" "$home/.local/bin/waybar-caffeine-state"
+ln -s "$repo_dir/dotfiles/config/profiles/wayland/.local/bin/waybar-caffeine-state" "$home/.local/bin/waybar-caffeine-state"
 
 cat >"$home/.local/bin/waybar" <<'EOF'
 #!/bin/sh

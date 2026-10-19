@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Start native Waybar with Caffeine persisted without rewriting user config."""
+import json
+import os
+from pathlib import Path
+import re
+import tempfile
+
+
+def read_jsonc(text):
+    # Preserve quoted strings while removing native Waybar JSONC comments and
+    # trailing commas. No third-party Python modules are required at login.
+    quoted = r'"(?:\\.|[^"\\])*"'
+    text = re.sub(quoted+r'|//[^\n]*|/\*[\s\S]*?\*/',
+                  lambda m: m[0] if m[0].startswith('"') else ' ', text)
+    text = re.sub(quoted+r'|,\s*(?=[}\]])',
+                  lambda m: m[0] if m[0].startswith('"') else '', text)
+    return json.loads(text)
+
+
+def main():
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))/'waybar'
+    source = read_jsonc((config/'config').read_text())
+    bars = source if isinstance(source, list) else [source]
+    state = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'waybar/caffeine'
+    try:
+        active = state.read_text().strip() == 'activated'
+    except OSError:
+        active = False
+    for bar in bars:
+        if 'idle_inhibitor' in bar:
+            bar['idle_inhibitor']['start-activated'] = active
+            # Waybar's native left click toggles the live inhibitor, then runs
+            # on-click. Persist that toggle; do not restart from this callback.
+            bar['idle_inhibitor']['on-click'] = 'waybar-caffeine-state toggle'
+    cache = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache'))/'orgm-sway'
+    cache.mkdir(mode=0o700, parents=True, exist_ok=True)
+    generated = cache/'waybar.json'
+    with tempfile.NamedTemporaryFile(mode='w', dir=cache, delete=False) as output:
+        temporary = Path(output.name)
+        json.dump(source, output)
+    temporary.replace(generated)
+    os.execvp('waybar', ['waybar', '-c', str(generated), '-s', str(config/'style.css')])
+
+
+if __name__ == '__main__':
+    main()

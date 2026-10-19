@@ -24,6 +24,28 @@ def catalog(kind, **values):
     return dict(kind=kind, backend=str(Path(ENTRYPOINT).resolve()), **SWAY['menu_context'](), **values)
 
 
+def waybar_service():
+    return 'orgm-'+('hyprland' if SWAY.get('compositor') == 'hyprland' else 'sway')+'-waybar.service'
+
+
+def caffeine_state():
+    # Persistence alone is not an inhibitor: only offer the toggle with its
+    # session-owned Waybar alive. Never stop idle/lock services for Caffeine.
+    available = False
+    if shutil.which('waybar-caffeine-state'):
+        try:
+            available = run('systemctl', '--user', 'is-active', '--quiet', waybar_service(),
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2).returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            pass
+    state = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'waybar/caffeine'
+    try:
+        active = available and state.read_text().strip() == 'activated'
+    except OSError:
+        active = False
+    return dict(caffeine=active, caffeineAvailable=available)
+
+
 def control_state():
     brightness = None
     try:
@@ -36,7 +58,7 @@ def control_state():
         dnd = run('swaync-client', '--get-dnd', capture_output=True, text=True, timeout=2).stdout.strip() == 'true'
     except (OSError, subprocess.SubprocessError):
         pass
-    return dict(brightness=brightness, dnd=dnd, gaming=SWAY['game_mode_active']())
+    return dict(brightness=brightness, dnd=dnd, gaming=SWAY['game_mode_active'](), **caffeine_state())
 
 
 def control_action(action, value=''):
@@ -44,6 +66,17 @@ def control_action(action, value=''):
         run(str(Path(ENTRYPOINT).with_name(SWAY.get('game_mode_helper', 'sway-game-mode'))), 'toggle')
     elif action == 'dnd':
         run('swaync-client', '--toggle-dnd', '--skip-wait', stdout=subprocess.DEVNULL)
+    elif action == 'caffeine':
+        if not caffeine_state()['caffeineAvailable']:
+            raise RuntimeError('Caffeine requiere la barra de esta sesión activa')
+        run('waybar-caffeine-state', 'toggle', stdout=subprocess.DEVNULL)
+        try:
+            # Stock Waybar has no idle_inhibitor RT signal handler. Its supported
+            # start-activated setting is generated from the shared state file.
+            run('systemctl', '--user', 'restart', waybar_service(), timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            run('waybar-caffeine-state', 'toggle', stdout=subprocess.DEVNULL)
+            raise
     elif action == 'brightness' and value.isdecimal() and 5 <= int(value) <= 100:
         run('brightnessctl', '-q', 'set', value+'%')
     else:
@@ -61,6 +94,8 @@ def control():
         SWAY['main']([selection])
     elif selection == 'themes':
         run('orgm-qylock', 'themes')
+    elif selection == 'widgets':
+        run('orgm-desktop-widgets', 'edit')
     elif selection == 'wifi':
         subprocess.Popen(['kitty', '--class', 'nmtui', '-e', 'nmtui'], start_new_session=True)
     elif selection == 'bluetooth':
