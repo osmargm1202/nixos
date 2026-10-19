@@ -23,7 +23,7 @@ shutil.copytree(SOURCE/'.config/quickshell/orgm-wallpapers', ui)
 shutil.copytree(SOURCE/'.config/rofi-sway', config/'rofi-sway')
 binary = home/'.local/bin'
 binary.mkdir(parents=True)
-for name in ('orgm-sway', 'sway-app-launcher', 'sway-rofi-lib'):
+for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-app-launcher', 'sway-rofi-lib'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
 calls = home/'calls'
 calls.touch()
@@ -68,6 +68,9 @@ compositor = subprocess.Popen(['dbus-run-session', '--', 'sh', '-c',
     'printf "%s" "$DBUS_SESSION_BUS_ADDRESS" > "$1"; shift; exec "$@"', '_', str(home/'bus'),
     shutil.which('sway'), '-c', str(home/'sway.conf')], env=env, stdout=log, stderr=log, start_new_session=True)
 children = []
+resident_mode = bool(os.environ.get('ORGM_TEST_RESIDENT_MENUS'))
+menu_entry = 'daemon.qml' if resident_mode else 'menus.qml'
+service_pid = None
 
 
 def command(*args):
@@ -86,8 +89,11 @@ def wait(probe, label):
 
 
 def status():
-    result = command('qs', '--path', str(ui/'menus.qml'), 'ipc', 'call', 'menu', 'status')
-    return json.loads(result.stdout) if result.returncode == 0 else None
+    result = command('qs', '--path', str(ui/menu_entry), 'ipc', 'call', 'menu', 'status')
+    try:
+        return json.loads(result.stdout) if result.returncode == 0 else None
+    except json.JSONDecodeError:
+        return None
 
 
 def start(kind):
@@ -98,6 +104,7 @@ def start(kind):
     wait(lambda: any(s.get('namespace') == namespace for o in json.loads(
          command('swaymsg', '-r', '-t', 'get_outputs').stdout) for s in o.get('layer_shell_surfaces', [])), 'menu surface')
     time.sleep(.25)
+    if service_pid: assert status()['pid'] == service_pid
     return process
 
 
@@ -124,6 +131,11 @@ try:
     keeper = subprocess.Popen(['wtype', '-s', '120000'], env=env, stdout=log, stderr=log, start_new_session=True)
     children.append(keeper)
     time.sleep(.15)
+    if resident_mode:
+        daemon = subprocess.Popen([str(binary/'orgm-sway-desktop'), 'menus-daemon'], env=env, stdout=log, stderr=log, start_new_session=True)
+        children.append(daemon)
+        service_pid = wait(lambda: (data := status()) and data['pid'], 'resident menus ready')
+        assert len(status()['preloaded']) == 7
     process = start('power')
     assert status()['choice'] == 'Bloquear'
     assert status()['colors']['accent'] == '#71b7ff'
@@ -134,6 +146,7 @@ try:
     key('Escape')
     assert process.wait(timeout=5) == 0 and recorded() == []
     process = start('power')
+    assert status()['choice'] == 'Bloquear' and not status()['confirming'], 'Confirmation must reset after cancellation'
     key('5')
     key('Return')
     key('Return')
@@ -159,6 +172,53 @@ try:
     before = recorded()
     key('Escape')
     assert process.wait(timeout=5) == 0 and recorded() == before
+    if resident_mode:
+        # Wallpaper application stays in the picker, including failure/retry.
+        wallpaper_backend = binary/'wallpaper-test-backend'
+        failure = home/'wallpaper-fail'
+        wallpaper_backend.write_text('#!/usr/bin/env python3\nimport json,pathlib,sys,runpy\n'
+            f'if sys.argv[1]=="wallpaper-preview":print(runpy.run_path({str(binary/"orgm-sway")!r})["wallpaper_preview"](pathlib.Path(sys.argv[2])).as_uri());sys.exit(0)\n'
+            f'if pathlib.Path({str(failure)!r}).exists():print("fixture wallpaper failure",file=sys.stderr);sys.exit(1)\n'
+            f'with pathlib.Path({str(calls)!r}).open("a") as f:f.write(json.dumps(["wallpaper",*sys.argv[1:]])+"\\n")\n')
+        wallpaper_backend.chmod(0o755)
+        items = [dict(path=str(home/'Pictures'/p/'saved.png'), url=(home/'Pictures'/p/'saved.png').as_uri(), name=p, kind='image') for p in ('slc','orgm')]
+        catalog = dict(kind='wallpaper', backend=str(wallpaper_backend), profile='orgm', items=items,
+                       current=items[1]['path'], screen='HEADLESS-1', colors=dict(bg='#071422', accent='#71b7ff'))
+        def open_wallpaper():
+            p = subprocess.Popen(['python3','-c','import json,runpy,sys; m=runpy.run_path(sys.argv[1]); assert m["graphical_wallpaper_picker"](json.loads(sys.argv[2]))',str(binary/'orgm-sway'),json.dumps(catalog)],env=env,stdout=log,stderr=log,start_new_session=True)
+            children.append(p)
+            wait(lambda: (data := status()) and data['kind']=='wallpaper' and data['open'], 'resident wallpaper')
+            time.sleep(.25)
+            assert status()['pid'] == service_pid
+            return p
+        def wallpaper_status():
+            return json.loads(command('qs','--path',str(ui/menu_entry),'ipc','call','wallpaper','status').stdout)
+        failure.touch()
+        process = open_wallpaper()
+        assert wallpaper_status()['current'] == 1
+        key('Return')
+        wait(lambda: wallpaper_status()['error'] and not wallpaper_status()['busy'], 'resident wallpaper error')
+        key('Escape')
+        assert process.wait(timeout=5) == 0
+        failure.unlink()
+        process = open_wallpaper()
+        assert wallpaper_status()['error'] == '', 'Old wallpaper errors must clear on reopening'
+        key('Return')
+        assert process.wait(timeout=5) == 0
+        assert recorded()[-1] == ['wallpaper','wallpaper-set',items[1]['path']]
+        before = recorded()
+        process = open_wallpaper()
+        key('Escape')
+        assert process.wait(timeout=5) == 0 and recorded() == before
+        video = home/'fixture-video.mp4'
+        command('ffmpeg','-nostdin','-v','error','-f','lavfi','-i','color=c=purple:s=64x64:r=5','-t','0.4','-c:v','libx264','-pix_fmt','yuv420p',str(video)).check_returncode()
+        catalog['items'] = [dict(path=str(video),url=video.as_uri(),name='fixture video',kind='video')]
+        catalog['current'] = str(video)
+        process = open_wallpaper()
+        wait(lambda: wallpaper_status()['previews'][0]['ready'], 'resident video poster decoded')
+        key('Escape')
+        assert process.wait(timeout=5) == 0 and recorded() == before
+        assert not status()['open'] and daemon.poll() is None
     launcher = subprocess.Popen([str(binary/'sway-app-launcher')], env=env, stdout=log, stderr=log, start_new_session=True)
     children.append(launcher)
     wait(lambda: any(s.get('namespace') == 'rofi' for o in json.loads(
@@ -184,6 +244,18 @@ try:
         replacement.replace(config/'waybar/orgm-current.css')
         wait(lambda: bar_pixel() == rgb, 'bar palette refresh without restart')
         assert bar.poll() is None
+    if resident_mode:
+        process = start('power')
+        before = recorded()
+        key('5')
+        key('Return')
+        assert status()['confirming']
+        daemon.terminate()
+        daemon.wait(timeout=5)
+        wait(lambda: any(s.get('namespace')=='rofi' for o in json.loads(command('swaymsg','-r','-t','get_outputs').stdout) for s in o.get('layer_shell_surfaces',[])), 'fallback after resident service exit')
+        time.sleep(.25)  # Mapping precedes Rofi's keyboard-focus acknowledgement.
+        key('Escape')
+        assert process.wait(timeout=5)==0 and recorded()==before, 'Daemon exit cannot confirm a pending power action'
     log.flush()
     diagnostics = (home/'session.log').read_text()
     assert 'TypeError:' not in diagnostics and 'ReferenceError:' not in diagnostics, diagnostics

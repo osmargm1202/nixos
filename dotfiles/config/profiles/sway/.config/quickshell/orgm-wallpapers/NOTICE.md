@@ -22,6 +22,8 @@ previews, reusing the same components. Power actions are performed by the
 existing local backend after closing; logout/reboot/poweroff require an
 explicit confirmation. Network menus and upstream wallpaper scripts are excluded.
 
-The locally authored ControlMenu, AudioMenu, ClipboardMenu and WindowSwitcher
+The locally authored ControlMenu, AudioMenu, AudioOsd, ClipboardMenu and WindowSwitcher
 reuse these primitives. They use the existing Sway/session backends, native
 Quickshell PipeWire bindings, cliphist and session-only window snapshots.
+The local `daemon.qml` entry preloads the seven desktop menus for faster IPC
+opening; the original on-demand entrypoints remain available as fallbacks.

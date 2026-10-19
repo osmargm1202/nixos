@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small Sway IPC/menu adapter; no resident shell or compositor plugins."""
+"""Sway IPC/menu adapter, with an optional preloaded Quickshell service."""
 import configparser
 import fcntl
 import hashlib
@@ -461,6 +461,49 @@ def quickshell_binary():
     return str(fallback) if fallback.is_file() and os.access(fallback, os.X_OK) else None
 
 
+def resident_graphical_menu(binary, config, catalog, data, done, result):
+    daemon = config/'daemon.qml'
+    if not daemon.is_file():
+        return None
+    data.write_text(json.dumps(dict(catalog, kind=catalog.get('kind', 'wallpaper')), ensure_ascii=False))
+    data.chmod(0o600)
+    try:
+        reply = subprocess.run([binary, '--path', str(daemon), 'ipc', 'call', 'menu', 'request',
+                                str(data), str(result) if result else '', str(done)],
+                               capture_output=True, text=True, timeout=2)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    answer = reply.stdout.strip()
+    if reply.returncode:
+        return None
+    if answer in ('busy', 'duplicate'):
+        return True
+    if not re.fullmatch(r'accepted:[1-9][0-9]*', answer):
+        return None
+    try:
+        pidfd = os.pidfd_open(int(answer.partition(':')[2]))
+    except OSError:
+        return False
+    try:
+        next_check = time.monotonic()+2
+        while not done.exists():
+            if select.select([pidfd], [], [], .04)[0]:
+                return done.is_file()
+            if time.monotonic() >= next_check:
+                # A QML hot reload can reset the request while keeping the same PID.
+                try:
+                    owner = subprocess.run([binary, '--path', str(daemon), 'ipc', 'call', 'menu',
+                                            'owns', str(done)], capture_output=True, text=True, timeout=2)
+                except (OSError, subprocess.SubprocessError):
+                    return False
+                if owner.returncode or owner.stdout.strip() != 'yes':
+                    return done.is_file()
+                next_check = time.monotonic()+2
+        return True
+    finally:
+        os.close(pidfd)
+
+
 def graphical_menu(catalog, *, entry=None, result=None):
     binary = quickshell_binary()
     config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config')) / 'quickshell/orgm-wallpapers'
@@ -472,6 +515,9 @@ def graphical_menu(catalog, *, entry=None, result=None):
         data.write_text(json.dumps(catalog, ensure_ascii=False))
         data.chmod(0o600)
         status = Path(directory) / 'status'
+        resident = resident_graphical_menu(binary, config, catalog, data, status, result)
+        if resident is not None:
+            return resident
         with subprocess.Popen([binary, '--no-duplicate', '--path', str(target)],
                               env=dict(os.environ, ORGM_WALLPAPER_DATA=str(data),
                                        ORGM_WALLPAPER_STATUS=str(status),

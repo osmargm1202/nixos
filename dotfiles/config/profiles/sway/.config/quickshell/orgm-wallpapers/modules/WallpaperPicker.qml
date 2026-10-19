@@ -37,6 +37,11 @@ MenuWindow {
         pos = current
         snap = false
     }
+    function reset() {
+        errorText = ""
+        wheelInput.remainder = 0
+        syncToSaved()
+    }
     function apply() {
         if (count === 0 || busy) return
         errorText = ""
@@ -167,13 +172,14 @@ MenuWindow {
                 readonly property bool previewReady: preview.status === Image.Ready
                 readonly property bool previewFailed: posterFailed || preview.status === Image.Error
                 function loadPoster() {
-                    if (visible && isVideo && !poster && !posterProc.running && !posterFailed) {
+                    if (root.open && visible && isVideo && !poster && !posterProc.running && !posterFailed) {
                         posterProc.command = [root.catalog.backend, "wallpaper-preview", modelData.path]
                         posterProc.running = true
                         posterGuard.restart()
                     }
                 }
                 onVisibleChanged: loadPoster()
+                Connections { target: root; function onOpenChanged() { card.loadPoster() } }
                 Component.onCompleted: loadPoster()
                 Timer {
                     id: posterGuard
@@ -212,7 +218,7 @@ MenuWindow {
                 Image {
                     id: preview
                     anchors.fill: parent
-                    source: card.visible ? (card.isVideo ? card.poster : card.modelData.url) : ""
+                    source: root.visible && card.visible ? (card.isVideo ? card.poster : card.modelData.url) : ""
                     sourceSize: Qt.size(1200, 800)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true

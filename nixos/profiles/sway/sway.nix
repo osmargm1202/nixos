@@ -88,6 +88,7 @@ in
       orgm-sway-idle = { description = "Lock before suspend and switch idle displays off"; command = "${pkgs.swayidle}/bin/swayidle -w -C %h/.config/swayidle/config"; };
       orgm-sway-clipboard = { description = "Clipboard history"; command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"; };
       orgm-sway-previews = { description = "Session-local window thumbnails"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-desktop previews"; };
+      orgm-sway-menus = { description = "Preloaded Quickshell desktop menus"; command = "${config.users.users.${userName}.home}/.local/bin/orgm-sway-desktop menus-daemon"; };
     }
   );
   environment.systemPackages = with pkgs; [

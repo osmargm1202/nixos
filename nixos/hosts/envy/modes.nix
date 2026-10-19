@@ -1,5 +1,8 @@
-{ lib, options, ... }:
+{ config, lib, options, pkgs, ... }:
 let
+  bootMount = if config.boot.loader.systemd-boot.xbootldrMountPoint != null
+    then config.boot.loader.systemd-boot.xbootldrMountPoint
+    else config.boot.loader.efi.efiSysMountPoint;
   console = {
     programs.hyprland.enable = lib.mkForce false;
     programs.sway.enable = lib.mkForce false;
@@ -20,23 +23,26 @@ let
     programs.ryoku.enable = lib.mkForce false;
   };
 in {
-  boot.loader.systemd-boot.sortKey = "nixos-00-normal";
+  boot.loader.systemd-boot = {
+    sortKey = "nixos";
+    # Apply to every retained generation, including older bootspec sort keys.
+    extraInstallCommands = ''
+      ${pkgs.python3}/bin/python3 ${./boot-menu-order.py} ${lib.escapeShellArg "${bootMount}/loader/entries"}
+    '';
+  };
   specialisation = {
     gaming.configuration = lib.mkMerge [ console {
       orgm.envy.mode = lib.mkForce "gaming";
       orgm.gaming.gamescopeTty1.enable = true;
-      boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-02-gaming";
       powerManagement.cpuFreqGovernor = "performance";
       environment.etc."orgm/desktop-profile".text = lib.mkForce "gaming\n";
     }];
     windows-vfio.configuration = {
       orgm.envy.mode = lib.mkForce "windows";
-      boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-01-windows-vfio";
       environment.etc."orgm/desktop-profile".text = lib.mkForce "windows\n";
     };
     server.configuration = lib.mkMerge [ console {
       orgm.envy.mode = lib.mkForce "server";
-      boot.loader.systemd-boot.sortKey = lib.mkForce "nixos-03-server";
       environment.etc."orgm/desktop-profile".text = lib.mkForce "server\n";
       systemd.defaultUnit = "multi-user.target";
       programs.xwayland.enable = lib.mkForce false;

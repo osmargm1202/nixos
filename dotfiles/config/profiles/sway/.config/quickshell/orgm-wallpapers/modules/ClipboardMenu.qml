@@ -20,6 +20,13 @@ MenuWindow {
     onFilterChanged: selected = 0
     onSelectedChanged: history.positionViewAtIndex(selected, ListView.Contain)
     onOpenChanged: if (open) Qt.callLater(() => search.forceActiveFocus())
+    function reset() {
+        search.text = ""
+        filter = ""
+        selected = 0
+        errorText = ""
+        entries = catalog.items || []
+    }
     function move(delta) { selected = Math.max(0, Math.min(filtered.length - 1, selected + delta)) }
     function activate() { if (open && choice) chosen(choice) }
     function remove() {

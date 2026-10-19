@@ -49,6 +49,9 @@ for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert c["gaming"]==(name=="gaming"),name
  if name=="gaming": assert "nvidia-game gamescope" in c["login"] and "steam -gamepadui" in c["login"]
  if name=="server": assert c["target"]=="multi-user.target" and not c["sunshine"]
-assert v["normal"]["mode"]=="normal" and v["normal"]["sort"]=="nixos-00-normal"
+assert v["normal"]["mode"]=="normal"
+for c in [v["normal"], *v["modes"].values()]:
+ assert c["sort"]=="nixos" and "boot-menu-order.py" in c["extraInstall"]
 print("PASS: Envy Sway mode GPU ownership, console isolation and preserved recovery")
 '''
+python3 "$ROOT/tests/envy-boot-order.test.py"

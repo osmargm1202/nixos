@@ -278,7 +278,41 @@ def advance_window_menu(direction):
     return False
 
 
+def resident_windows(direction):
+    binary = SWAY['quickshell_binary']()
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))/'quickshell/orgm-wallpapers/daemon.qml'
+    if not binary or not config.is_file():
+        return False
+    items = window_items()
+    directory = preview_directory()
+    for item in items:
+        image = directory/(item['id']+'.png')
+        if image.is_file():
+            item['preview'] = image.as_uri()
+    payload = catalog('windows', items=items, groups=workspace_groups(items), direction=direction)
+    try:
+        result = subprocess.run([binary, '--path', str(config), 'ipc', 'call', 'menu', 'open',
+                                 json.dumps(payload, ensure_ascii=False)],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        return result.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def menus_daemon():
+    binary = SWAY['quickshell_binary']()
+    if not binary:
+        raise RuntimeError('Quickshell no está disponible')
+    config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))/'quickshell/orgm-wallpapers/daemon.qml'
+    os.environ['ORGM_SWAY_DESKTOP_BACKEND'] = str(Path(__file__).resolve())
+    if os.environ.get('SWAYSOCK'):
+        os.environ['I3SOCK'] = os.environ['SWAYSOCK']
+    os.execv(binary, [binary, '--no-duplicate', '--path', str(config)])
+
+
 def windows(direction=1):
+    if resident_windows(direction):
+        return
     if advance_window_menu(direction):
         return
     directory = preview_directory()
@@ -324,6 +358,10 @@ def main(args):
         run('cliphist', 'delete', input=args[1].encode())
     elif action == 'windows':
         windows(-1 if len(args) > 1 and args[1] == 'prev' else 1)
+    elif action in ('menus-daemon', 'windows-daemon'):
+        menus_daemon()
+    elif action == 'windows-focus' and len(args) == 2:
+        focus_selection(args[1])
     elif action == 'previews':
         previews()
     else:

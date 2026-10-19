@@ -6,6 +6,7 @@ import qs.components
 MenuWindow {
     id: root
     layerNamespace: "orgm-windows"
+    animationDuration: 100
     property var catalog: ({})
     readonly property var groups: catalog.groups || []
     readonly property var windows: groups.reduce((all, group) => all.concat(group.items), [])
@@ -23,7 +24,8 @@ MenuWindow {
     onCatalogChanged: {
         const ordered = (catalog.groups || []).reduce((all, group) => all.concat(group.items), [])
         const focused = Math.max(0, ordered.findIndex(window => window.focused))
-        selected = ordered.length > 1 ? (focused + (catalog.direction < 0 ? -1 : 1) + ordered.length) % ordered.length : 0
+        const delta = catalog.direction === undefined ? 1 : catalog.direction
+        selected = ordered.length > 1 ? ((focused + delta) % ordered.length + ordered.length) % ordered.length : 0
     }
     function move(delta) { if (windows.length) selected = (selected + delta + windows.length) % windows.length }
     function moveGroup(delta) {

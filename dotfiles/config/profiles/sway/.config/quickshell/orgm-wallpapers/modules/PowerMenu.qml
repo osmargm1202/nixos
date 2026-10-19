@@ -23,6 +23,7 @@ MenuWindow {
     signal chosen(string value)
     screen: Quickshell.screens.find(s => s.name === root.catalog.screen) || Quickshell.screens[0]
     onSelectedChanged: confirming = false
+    function reset() { selected = 0; confirming = false }
 
     function move(delta) { selected = Math.max(0, Math.min(actions.length - 1, selected + delta)) }
     function activate() {

@@ -272,6 +272,17 @@ Por decisión del usuario, Envy tiene un solo perfil de escritorio con Sway.
 Se conservan gaming, windows-vfio y server dentro de la salida `envy`;
 no se publican salidas alternativas de escritorio para este host.
 
+El menú agrupa los modos por generación, de más reciente a más antigua:
+**normal → windows-vfio → gaming → server**, y luego repite ese orden para
+la generación anterior. Se conservan hasta tres generaciones. El hook
+`boot-menu-order.py` se ejecuta después de generar las entradas de systemd-boot
+y ajusta únicamente sus claves de orden, incluidas las generaciones anteriores;
+conserva títulos, versiones, rutas de arranque y la selección predeterminada.
+El cambio se aplica al reconstruir, por ejemplo con
+`nh os switch /home/osmarg/Hobby/nixos -H envy`. Los archivos del escritorio ya
+aplicados en vivo permanecen disponibles; esta reconstrucción también instala
+el servicio permanente de menús de Quickshell.
+
 
 ## Volumen inicial de audio y micrófono
 

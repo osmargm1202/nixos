@@ -9,12 +9,14 @@ PanelWindow {
     property bool open: false
     property bool busy: false
     property string layerNamespace: "orgm-wallpapers"
+    property int animationDuration: Style.animMed
     property real progress: open ? 1 : 0
     signal keyPressed(var event)
     signal keyReleased(var event)
     signal dismissed()
 
-    function show() { open = true }
+    function reset() {}
+    function show() { closeTimer.stop(); reset(); open = true }
     function close() {
         if (busy || !open) return
         open = false
@@ -22,11 +24,11 @@ PanelWindow {
     }
 
     Behavior on progress {
-        NumberAnimation { duration: Style.animMed; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: win.animationDuration; easing.type: Easing.OutCubic }
     }
     Timer {
         id: closeTimer
-        interval: Style.animMed + 40
+        interval: win.animationDuration + 40
         onTriggered: win.dismissed()
     }
 

@@ -7,6 +7,7 @@ import runpy
 import subprocess
 import tempfile
 import unittest
+import sys
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +16,32 @@ ENV = MODULE['main'].__globals__
 
 
 class Desktop(unittest.TestCase):
+    def test_audio_keys_use_one_native_adjustment_or_pamixer_without_notifications(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            log = root/'pamixer.jsonl'
+            notification = root/'notification'
+            for name, body in {
+                'qs': 'import os,sys\nif os.environ.get("FIXTURE_QS_OK"):print("ok");sys.exit(0)\nsys.exit(1)\n',
+                'pamixer': f'import sys,json\nfrom pathlib import Path\np=Path({str(log)!r})\nwith p.open("a") as f:f.write(json.dumps(sys.argv[1:])+"\\n")\nif "--get-volume" in sys.argv:print(73)\nif "--get-mute" in sys.argv:print("false")\n',
+                'notify-send': f'from pathlib import Path\nPath({str(notification)!r}).touch()\n',
+            }.items():
+                binary = root/name
+                binary.write_text('#!'+sys.executable+'\n'+body)
+                binary.chmod(0o755)
+            env = dict(os.environ, PATH=str(root)+os.pathsep+os.environ['PATH'], XDG_CONFIG_HOME=str(root/'config with spaces'))
+            helpers = ROOT/'dotfiles/config/profiles/sway/.local/bin'
+            for name, prefix in (('sway-volume-osd', []), ('sway-mic-volume-osd', ['--default-source'])):
+                log.unlink(missing_ok=True)
+                subprocess.run([str(helpers/name), 'up'], env=dict(env, FIXTURE_QS_OK='1'), check=True)
+                self.assertFalse(log.exists(), 'The native path must not also change volume through pamixer')
+                fallback = dict(env)
+                fallback.pop('FIXTURE_QS_OK', None)
+                subprocess.run([str(helpers/name), 'up'], env=fallback, check=True)
+                calls = [json.loads(line) for line in log.read_text().splitlines()]
+                self.assertEqual(calls, [prefix+['--allow-boost','--set-limit','150','-i','3'], prefix+['--get-volume'], prefix+['--get-mute']])
+                self.assertFalse(notification.exists())
+
     def test_control_commands_are_an_allowlist_and_brightness_is_bounded(self):
         calls = []
         with patch.dict(ENV, run=lambda *a, **kw: calls.append(a), control_state=lambda: {}):

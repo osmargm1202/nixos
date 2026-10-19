@@ -7,9 +7,11 @@ Only synthetic PipeWire nodes and a private clipboard database are used.
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import signal
+import statistics
 import struct
 import subprocess
 import tempfile
@@ -26,7 +28,7 @@ ui = config/'quickshell/orgm-wallpapers'
 shutil.copytree(SOURCE/'.config/quickshell/orgm-wallpapers', ui)
 binary = home/'.local/bin'
 binary.mkdir(parents=True)
-for name in ('orgm-sway', 'orgm-sway-desktop'):
+for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-volume-osd', 'sway-mic-volume-osd'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
 (home/'brightness').write_text('50')
 (home/'dnd').write_text('false')
@@ -44,7 +46,11 @@ for name in ('brightnessctl', 'swaync-client'):
 (config/'waybar/orgm-current.css').write_text('@define-color base #071422;\n@define-color blue #71b7ff;\n')
 (home/'sway.conf').write_text('output HEADLESS-1 mode 1280x900\nfont pango:monospace 10\ndefault_border none\n'
     f'bindsym Mod1+Tab exec {binary}/orgm-sway-desktop windows\n'
-    f'bindsym Mod1+Shift+Tab exec {binary}/orgm-sway-desktop windows prev\n')
+    f'bindsym Mod1+Shift+Tab exec {binary}/orgm-sway-desktop windows prev\n'
+    f'bindsym XF86AudioRaiseVolume exec {binary}/sway-volume-osd up\n'
+    f'bindsym XF86AudioLowerVolume exec {binary}/sway-volume-osd down\n'
+    f'bindsym XF86AudioMute exec {binary}/sway-volume-osd mute\n'
+    f'bindsym XF86AudioMicMute exec {binary}/sway-mic-volume-osd mute\n')
 env = dict(os.environ, HOME=str(home), XDG_CONFIG_HOME=str(config), XDG_STATE_HOME=str(home/'.local/state'),
            XDG_CACHE_HOME=str(home/'.cache'), XDG_DATA_HOME=str(home/'.local/share'),
            XDG_RUNTIME_DIR=str(runtime), PIPEWIRE_RUNTIME_DIR=str(runtime), PIPEWIRE_REMOTE='pipewire-0',
@@ -61,6 +67,8 @@ compositor = subprocess.Popen(['dbus-run-session', '--', 'sh', '-c',
     'printf "%s" "$DBUS_SESSION_BUS_ADDRESS" > "$1"; shift; exec "$@"', '_', str(home/'bus'),
     shutil.which('sway'), '-c', str(home/'sway.conf')], env=env, stdout=log, stderr=log, start_new_session=True)
 children = []
+menu_entry = 'menus.qml'
+latencies = {}
 
 
 def start(*args, **kwargs):
@@ -87,7 +95,7 @@ def wait(probe, label):
 
 
 def status():
-    result = command('qs', '--path', str(ui/'menus.qml'), 'ipc', 'call', 'menu', 'status')
+    result = command('qs', '--path', str(ui/menu_entry), 'ipc', 'call', 'menu', 'status')
     try:
         return json.loads(result.stdout) if result.returncode == 0 else None
     except json.JSONDecodeError:
@@ -95,10 +103,12 @@ def status():
 
 
 def menu(kind):
+    started = time.perf_counter()
     process = start(str(binary/'orgm-sway-desktop'), kind)
     wait(lambda: (data := status()) and data['kind'] == kind, kind+' status')
     wait(lambda: any(s.get('namespace') == 'orgm-'+kind for o in json.loads(
          command('swaymsg', '-r', '-t', 'get_outputs').stdout) for s in o.get('layer_shell_surfaces', [])), kind+' layer')
+    latencies.setdefault(menu_entry+':'+kind, []).append((time.perf_counter()-started)*1000)
     time.sleep(.3)
     return process
 
@@ -257,6 +267,162 @@ try:
         click(tile['x']+tile['width']/2, tile['y']+tile['height']/2)
         assert process.wait(timeout=5) == 0
         assert next(w for w in windows() if w['focused'])['id'] == extra[3], 'Tile must focus that exact window, not the last focused window'
+    # The persistent overview reuses Qt and maps without capturing on the key path.
+    recorder.terminate()
+    recorder.wait(timeout=5)
+    if pointer:
+        command('swaymsg', 'seat seat0 cursor set 10 10').check_returncode()
+    resident = start(str(binary/'orgm-sway-desktop'), 'menus-daemon')
+    menu_entry = 'daemon.qml'
+    ready = wait(lambda: (data := status()) and not data['open'] and data, 'preloaded overview ready')
+    pid = ready['pid']
+    focused_before = next(w for w in windows() if w['focused'])['id']
+    for _ in range(5):
+        process = menu('windows')
+        assert process.wait(timeout=5) == 0, 'An IPC request returns without waiting for the panel to close'
+        assert status()['pid'] == pid, 'Every invocation must reuse the same Qt process'
+        close(process)
+        wait(lambda: not status()['visible'], 'resident panel fully hidden after cancel')
+        assert next(w for w in windows() if w['focused'])['id'] == focused_before
+    process = menu('windows')
+    tile = next(window for group in status()['overview']['groups'] for window in group['windows'] if window['id'] == str(b))
+    if pointer:
+        command('swaymsg', f"seat seat0 cursor set {tile['x']+tile['width']/2} {tile['y']+tile['height']/2}").check_returncode()
+        wait(lambda: status()['choice'] == str(b), 'resident pointer hover selection')
+        key('Return')
+    else:
+        command('qs', '--path', str(ui/menu_entry), 'ipc', 'call', 'menu', 'close').check_returncode()
+    wait(lambda: not status()['visible'], 'resident panel closes after activation')
+    if pointer:
+        wait(lambda: any(w['focused'] and w['id'] == b for w in windows()), 'resident exact window focus')
+    assert resident.poll() is None
+    # Reopening during the closing animation must cancel its old dismissal timer.
+    process = menu('windows')
+    command('qs', '--path', str(ui/menu_entry), 'ipc', 'call', 'menu', 'close').check_returncode()
+    process = menu('windows')
+    assert status()['open'] and status()['pid'] == pid
+    close(process)
+    wait(lambda: not status()['visible'], 'resident quick reopen closes cleanly')
+    if pointer:
+        command('swaymsg', 'seat seat0 cursor set 10 10').check_returncode()
+    held = start('wtype', '-M', 'alt', '-P', 'Alt_L', '-k', 'Tab', '-s', '400', '-p', 'Alt_L', '-m', 'alt')
+    selection = wait(lambda: (data := status()) and data['open'] and data['choice'], 'warm Alt+Tab maps before a short Alt press ends')
+    assert held.wait(timeout=5) == 0
+    wait(lambda: not status()['visible'] and any(w['focused'] and str(w['id']) == selection for w in windows()), 'warm Alt release focuses selection')
+    cold = statistics.median(latencies['menus.qml:windows'])
+    warm = statistics.median(latencies['daemon.qml:windows'])
+    print(f'Observed request-to-mapped median: without daemon {cold:.0f}ms; resident {warm:.0f}ms')
+    process = menu('audio')
+    assert status()['pid'] == pid and len(status()['audio']['outputs']) == 2
+    close(process)
+    process = menu('control')
+    assert status()['pid'] == pid and status()['state']['brightness'] == int((home/'brightness').read_text())
+    close(process)
+    command('cliphist', 'store', input=image).check_returncode()
+    process = menu('clipboard')
+    assert status()['pid'] == pid
+    key('Return')
+    assert process.wait(timeout=5) == 0 and command('wl-paste','--type','image/png').stdout == image
+    process = menu('clipboard')
+    command('wtype','no-such-entry').check_returncode()
+    assert status()['choice'] == ''
+    close(process)
+    assert status()['items'] == [], 'Hidden clipboard must release its catalog'
+    process = menu('clipboard')
+    assert status()['choice'], 'Reopening clears the previous clipboard search'
+    command('wtype','beta').check_returncode()
+    key('Return')
+    assert process.wait(timeout=5) == 0 and command('wl-paste','--no-newline').stdout == b'beta fixture text'
+    # Different menu requests complete the previous client rather than stacking.
+    first_panel = menu('control')
+    process = menu('audio')
+    assert first_panel.wait(timeout=5) == 0 and status()['kind'] == 'audio'
+    close(process)
+    for kind in ('control','audio','clipboard'):
+        print(f"Observed {kind}: cold {statistics.median(latencies['menus.qml:'+kind]):.0f}ms; resident {statistics.median(latencies['daemon.qml:'+kind]):.0f}ms")
+    # OSD controls only this fixture's synthetic PipeWire nodes, even in fullscreen.
+    def osd():
+        return json.loads(command('qs','--path',str(ui/menu_entry),'ipc','call','osd','status').stdout)
+    command('swaymsg', f'[con_id={b}] focus').check_returncode()
+    command('swaymsg', 'fullscreen enable').check_returncode()
+    command('wpctl','set-volume','@DEFAULT_AUDIO_SINK@','1.49','--limit','1.5').check_returncode()
+    command('wpctl','set-mute','@DEFAULT_AUDIO_SINK@','0').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','output','149','false').check_returncode()
+    wait(lambda: osd()['devicePercent']==149, 'native default sink ready')
+    key('XF86AudioRaiseVolume')
+    wait(lambda: osd()['state']=='maximum' and osd()['percent']==150, 'maximum volume OSD')
+    command('grim',str(home/'osd-fullscreen-maximum.png')).check_returncode()
+    assert next(w for w in windows() if w['focused'])['id']==b
+    assert next(w for w in windows() if w['id']==b)['fullscreen_mode']==1
+    key('XF86AudioRaiseVolume')
+    assert osd()['active'] and osd()['percent']==150, 'A key press at maximum still refreshes the OSD'
+    key('XF86AudioLowerVolume')
+    wait(lambda: osd()['percent']==147, 'volume decrease OSD')
+    key('XF86AudioMute')
+    wait(lambda: osd()['muted'] and osd()['state']=='muted', 'output mute OSD')
+    command('grim',str(home/'osd-output-muted.png')).check_returncode()
+    key('XF86AudioMute')
+    wait(lambda: not osd()['muted'], 'output unmute OSD')
+    command('wpctl','set-volume','@DEFAULT_AUDIO_SOURCE@','0.50','--limit','1.5').check_returncode()
+    command('wpctl','set-mute','@DEFAULT_AUDIO_SOURCE@','0').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','input','50','false').check_returncode()
+    wait(lambda: osd()['devicePercent']==50, 'native default source ready')
+    command(str(binary/'sway-mic-volume-osd'),'up').check_returncode()
+    wait(lambda: osd()['target']=='input' and osd()['percent']==53, 'microphone gain OSD')
+    key('XF86AudioMicMute')
+    wait(lambda: osd()['muted'] and osd()['target']=='input', 'microphone mute OSD')
+    command('grim',str(home/'osd-microphone-muted.png')).check_returncode()
+    key('XF86AudioMicMute')
+    if pointer:
+        data=osd()
+        slider=data['slider']
+        x=(1280-data['width'])/2+slider['x']+slider['leftPadding']+slider['availableWidth']*.25
+        y=900-data['bottom']-data['height']+slider['y']+slider['height']/2
+        command('swaymsg', f'seat seat0 cursor set {x} {y}').check_returncode()
+        command('swaymsg', 'seat seat0 cursor press button1').check_returncode()
+        time.sleep(1.6)
+        assert osd()['active'], 'The slider must not disappear while held'
+        command('swaymsg', 'seat seat0 cursor release button1').check_returncode()
+        wait(lambda: 20<osd()['percent']<60 and abs(osd()['devicePercent']-osd()['percent'])<=1, 'interactive microphone slider')
+        assert next(w for w in windows() if w['focused'])['id']==b, 'OSD slider cannot take fullscreen keyboard focus'
+    # Verify that the rendered OSD is above the actual blue fullscreen content.
+    data=osd()
+    capture=command('grim','-t','ppm','-').stdout
+    header=re.match(rb'P6\s+(\d+)\s+(\d+)\s+255\s',capture)
+    x=int((1280-data['width'])/2+8);y=int(900-data['bottom']-data['height']+data['height']/2)
+    offset=header.end()+(y*int(header[1])+x)*3
+    assert capture[offset:offset+3]!=bytes([0,0,255]), 'OSD must draw above the fullscreen app'
+    wait(lambda: not osd()['visible'], 'OSD automatically hides')
+    # An unchanged value at zero must be announced too.
+    command('wpctl','set-volume','@DEFAULT_AUDIO_SINK@','0').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','output','0','false').check_returncode()
+    wait(lambda: osd()['devicePercent']==0, 'zero default sink ready')
+    command(str(binary/'sway-volume-osd'),'down').check_returncode()
+    assert osd()['active'] and osd()['state']=='zero' and osd()['percent']==0
+    command('swaymsg','fullscreen enable global').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','output','0','false').check_returncode()
+    assert next(w for w in windows() if w['id']==b)['fullscreen_mode']==2
+    command('swaymsg','fullscreen disable').check_returncode()
+    # The native Sway focus integration chooses the current monitor.
+    command('swaymsg','create_output').check_returncode()
+    wait(lambda: len(json.loads(command('swaymsg','-r','-t','get_outputs').stdout))==2, 'second OSD monitor')
+    command('swaymsg','output HEADLESS-2 mode 1280x900 pos 1280 0').check_returncode()
+    command('swaymsg','focus output HEADLESS-2').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','output','0','false').check_returncode()
+    wait(lambda: osd()['screen']=='HEADLESS-2', 'OSD follows focused monitor')
+    command('swaymsg','focus output HEADLESS-1').check_returncode()
+    command('swaymsg','output HEADLESS-2 disable').check_returncode()
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','hide').check_returncode()
+    replacement=config/'waybar/new-palette.css'
+    replacement.write_text('@define-color base #071422;\n@define-color blue #12ab34;\n')
+    replacement.replace(config/'waybar/orgm-current.css')
+    command('qs','--path',str(ui/menu_entry),'ipc','call','osd','display','output','20','false').check_returncode()
+    wait(lambda: osd()['accent']=='#12ab34', 'OSD palette refresh after atomic profile update')
+    resident.terminate()
+    resident.wait(timeout=5)
+    menu_entry = 'menus.qml'
+    process = menu('windows')
+    close(process)
     log.flush()
     diagnostics = (home/'session.log').read_text()
     assert 'TypeError:' not in diagnostics and 'ReferenceError:' not in diagnostics, diagnostics

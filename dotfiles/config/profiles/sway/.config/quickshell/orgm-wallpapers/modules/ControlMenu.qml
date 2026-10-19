@@ -14,6 +14,7 @@ MenuWindow {
     readonly property string choice: ""
     readonly property bool confirming: false
     signal chosen(string value)
+    function reset() { state = catalog.state || {}; errorText = "" }
     screen: Quickshell.screens.find(s => s.name === root.catalog.screen) || Quickshell.screens[0]
     function action(name, value) {
         if (update.running) return

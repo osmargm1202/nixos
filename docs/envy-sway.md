@@ -162,8 +162,9 @@ opacidad, gaps y la restauración del fondo sin alterar la sesión real.
   ←/→ o H/L cambian la selección; Enter o clic aplica; Esc o clic fuera cancela.
 
 `menus.qml`, `PowerMenu.qml` y `ProfilePicker.qml` reutilizan `MenuWindow`,
-`Surface` y `Style` del carrusel. Se abren en la pantalla activa, terminan al
-cerrarse y usan Rofi como fallback si falla Quickshell. El cambio de perfil
+`Surface` y `Style` del carrusel. Se abren en la pantalla activa y usan Rofi
+como fallback si falla Quickshell. Con el servicio residente se ocultan al
+cerrarse; la alternativa bajo demanda termina su proceso. El cambio de perfil
 conserva Waybar y el estado de Caffeine. No se ejecutan acciones al cancelar.
 
 Pruebas: `python3 tests/sway-menus.test.py` y
@@ -183,8 +184,22 @@ Caffeine conserva su botón de Waybar y su funcionamiento independiente.
 El clic sobre altavoz o micrófono abre `orgm-sway audio`. Muestra los dispositivos
 de salida y entrada de PipeWire, permite elegir los predeterminados, silenciar
 y ajustar cada volumen entre 0 y 150%. Los cambios son inmediatos; cerrar no
-modifica los valores por sí solo. Rueda y teclas multimedia conservan sus OSD;
-el clic derecho sigue abriendo pavucontrol.
+modifica los valores por sí solo. El clic derecho sigue abriendo pavucontrol.
+
+Volumen y micrófono usan un OSD de Quickshell, en el mismo proceso residente.
+Aparece abajo en el monitor enfocado, incluso sobre fullscreen, con icono,
+dispositivo, porcentaje y slider. Se puede arrastrar la barra o pulsar el icono
+para silenciar; la aplicación conserva el foco del teclado. Indica silencio,
+volumen cero, amplificación por encima de 100% y el máximo de 150%. Las teclas
+mantienen pasos de 3%; pulsar de nuevo en un límite también renueva el OSD.
+Desaparece tras 1,4 segundos, o 2 segundos en silencio/máximo, y espera a que
+termine un arrastre. Los sliders de audio y centro de control también lo muestran.
+La paleta sigue los cambios de perfil sin reiniciar el proceso.
+
+Los helpers `sway-volume-osd` y `sway-mic-volume-osd` usan IPC y PipeWire;
+si el servicio está reiniciándose, pamixer mantiene operativas las teclas.
+No envían notificaciones ni añaden entradas al historial de Swaync. Brillo
+conserva su aviso anterior.
 
 Super+V abre el historial de `cliphist` con búsqueda, texto y miniaturas de
 imágenes recientes. ↑/↓ seleccionan, Enter o clic copia y Esc cancela. Supr,
@@ -208,20 +223,43 @@ permite completar la selección. Super+Tab conserva `focus prev`.
 Sway 1.11 expone captura de salidas, pero no el protocolo de captura individual
 de ventanas utilizado por Quickshell. Por eso no se anuncian vistas en directo
 de ventanas ocultas: el servicio `orgm-sway-previews` actualiza una captura de
-la ventana enfocada como máximo cada tres segundos, y al abrir el selector
-se capturan las ventanas visibles. Una ventana todavía no capturada indica
+la ventana enfocada como máximo cada tres segundos. El selector residente usa
+esas imágenes sin esperar capturas al pulsar Alt+Tab. Su alternativa bajo
+demanda también captura las ventanas visibles al abrir. Una ventana todavía no capturada indica
 «Vista previa pendiente». No se recorren escritorios para generar imágenes.
 Las miniaturas viven en `$XDG_RUNTIME_DIR/orgm-sway-previews-<sesión>` con
 directorio 0700 y archivos 0600; se eliminan las de ventanas cerradas y el
 runtime desaparece al cerrar la sesión. La captura se pausa durante gaming,
 el bloqueo Qylock y los paneles que puedan tapar las ventanas.
 
-Los cuatro paneles son componentes de `menus.qml` y usan `orgm-sway-desktop`,
-registrado en sway-tools. Solo el recolector de miniaturas permanece activo.
+`orgm-sway-menus` mantiene `daemon.qml` y los siete menús cargados durante la
+sesión de Sway: Alt+Tab, centro de control, audio, portapapeles, perfiles,
+sesión/apagado y wallpapers. `orgm-sway-desktop windows` consulta las ventanas
+actuales y envía una orden IPC al mismo proceso, sin arrancar Qt de nuevo ni
+esperar capturas. La animación del selector dura 100 ms. Cerrarlo libera el
+teclado y oculta el panel; el proceso permanece preparado para la siguiente
+pulsación. Las pulsaciones repetidas avanzan en el mismo panel. Si el servicio
+no está disponible, sigue funcionando el selector bajo demanda y su fallback.
+
+Cada apertura actualiza el catálogo y la paleta desde el backend existente.
+Los resultados viajan en archivos privados y el cliente espera al cierre antes
+de aplicar perfiles, copiar o ejecutar acciones de sesión. Las búsquedas,
+confirmaciones y errores se limpian entre aperturas. El catálogo del portapapeles
+y las imágenes se liberan al ocultar esos paneles. Solo un menú toma el teclado:
+abrir otro cancela el anterior. Audio se mantiene actualizado mediante PipeWire.
+Si el daemon termina, los clientes detectan su salida; si una recarga de QML
+pierde una petición, tampoco quedan esperando indefinidamente.
+
+`menus.qml` y `shell.qml` conservan las alternativas bajo demanda. Los accesos
+existentes de Waybar y teclado usan el servicio automáticamente. El proceso
+de menús y el recolector de miniaturas son servicios de `sway-session.target`:
+se detienen con el escritorio y no se inician en los modos de consola.
 Pruebas: `python3 tests/sway-desktop.test.py` y
 `python3 tests/sway-desktop-session.test.py`. La integración usa un compositor,
 PipeWire/WirePlumber sin monitores de hardware, dispositivos sintéticos,
-clipboard y HOME privados. El menú de atajos y los demás paneles propuestos
+clipboard y HOME privados. `ORGM_TEST_RESIDENT_MENUS=1 python3 tests/sway-menus-session.test.py`
+comprueba el modo residente de perfiles, apagado y wallpapers, incluidos video,
+errores y cancelación tras la salida del daemon. El menú de atajos y los demás paneles propuestos
 quedan anotados en memoria como pendientes de autorización futura.
 
 ## Carrusel de wallpapers con Quickshell
@@ -515,9 +553,9 @@ este perfil; Hyprland/i3 conservan su integración anterior.
 - El panel muestra historial agrupado, botones para limpiar y el interruptor DND.
 - Las notificaciones normales permanecen en el historial tras caducar el popup,
   también con DND. No se promete conservarlas después de reiniciar el daemon.
-- Volumen, micrófono y brillo mantienen sus helpers `notify-send`, sustitución
-  síncrona y barras de progreso; las reglas `osd-*` los hacen transitorios para
-  no llenar el historial. DND también puede silenciar estos avisos.
+- Brillo conserva su helper `notify-send`, sustitución síncrona y barra de
+  progreso transitoria; DND puede silenciar ese aviso. Volumen y micrófono
+  usan el OSD de Quickshell descrito antes, independiente del historial y DND.
 - El panel y los popups dejan libre la franja derecha del dock. La campana usa
   suscripción nativa a eventos, sin sondeo periódico.
 
