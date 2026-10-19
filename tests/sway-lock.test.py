@@ -27,7 +27,7 @@ class Qylock(unittest.TestCase):
         self.runtime = self.root/'runtime'; self.runtime.mkdir(mode=0o700)
         self.environment = patch.dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home/'.config'),
             XDG_STATE_HOME=str(self.home/'.local/state'), XDG_RUNTIME_DIR=str(self.runtime),
-            WAYLAND_DISPLAY='wayland-private-test', SWAYSOCK=str(self.runtime/'sway-ipc.test.sock'))
+            XDG_CURRENT_DESKTOP='sway', WAYLAND_DISPLAY='wayland-private-test', SWAYSOCK=str(self.runtime/'sway-ipc.test.sock'))
         self.environment.start()
         self.package = self.root/'package'
         base = self.package/'share/orgm-qylock'; base.mkdir(parents=True)
@@ -132,6 +132,47 @@ class Qylock(unittest.TestCase):
                 patch.object(client,'compositor_secure',return_value=True), patch.object(client.subprocess,'Popen',side_effect=spawn):
             self.assertEqual(client.lock(self.metadata),0)
         with self.assertRaises(OSError):os.fstat(held[0])
+
+    def test_native_hyprland_lock_requires_compositor_secure_ack(self):
+        os.environ.pop('SWAYSOCK')
+        os.environ.update(XDG_CURRENT_DESKTOP='Hyprland', HYPRLAND_INSTANCE_SIGNATURE='private-a')
+        def spawn(args, **kwargs):
+            (Path(args[-2])/'ready').write_text('secure')
+            return types.SimpleNamespace(poll=lambda: None)
+        with patch.object(client, 'lock_settings', return_value={}), \
+                patch.object(client.subprocess, 'Popen', side_effect=spawn), \
+                patch.object(client, 'compositor_secure', return_value=True) as secure:
+            self.assertEqual(client.lock(self.metadata), 0)
+            secure.assert_called_once()
+        with patch.object(client, 'lock_settings', return_value={}), \
+                patch.object(client.subprocess, 'Popen', side_effect=spawn), \
+                patch.object(client, 'compositor_secure', return_value=False), \
+                patch.object(client.time, 'monotonic', side_effect=[0, 1, 11]), \
+                patch.object(client.time, 'sleep'):
+            with self.assertRaises(RuntimeError):
+                client.lock(self.metadata)
+
+    def test_lock_identity_separates_hyprland_instances_and_preserves_sway(self):
+        sway = client.runtime_paths()[1]
+        os.environ['HYPRLAND_INSTANCE_SIGNATURE'] = 'inherited-parent'
+        self.assertEqual(client.runtime_paths()[1], sway)
+        os.environ['XDG_CURRENT_DESKTOP'] = 'Hyprland'
+        first = client.runtime_paths()[1]
+        self.assertNotEqual(first, sway)
+        os.environ['HYPRLAND_INSTANCE_SIGNATURE'] = 'private-b'
+        self.assertNotEqual(client.runtime_paths()[1], first)
+
+    def test_hyprland_picker_uses_native_screen_and_palette(self):
+        os.environ.update(XDG_CURRENT_DESKTOP='Hyprland', HYPRLAND_INSTANCE_SIGNATURE='private-a')
+        palette = client.config_home()/'waybar-hypr/orgm-current.css'
+        palette.parent.mkdir(parents=True)
+        palette.write_text('@define-color base #123456;\n')
+        response = subprocess.CompletedProcess([], 0, '[{"name":"DP-2","focused":true}]')
+        with patch.object(client.subprocess, 'run', return_value=response) as run:
+            data = client.picker_catalog(self.metadata)
+        self.assertEqual(data['screen'], 'DP-2')
+        self.assertEqual(data['colors']['bg'], '#123456')
+        self.assertEqual(run.call_args.args[0], ['hyprctl', '-j', 'monitors'])
 
     def test_authenticated_exit_is_not_acknowledged_as_secure(self):
         info=self.root/'instance.json';info.write_text('{"pid":123}')

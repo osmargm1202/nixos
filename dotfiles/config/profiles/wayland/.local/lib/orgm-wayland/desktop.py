@@ -197,6 +197,9 @@ def capture_allowed():
     for output in query('get_outputs'):
         for layer in output.get('layer_shell_surfaces', []):
             namespace = layer.get('namespace', '')
+            # Permanent bottom-layer widgets are not private popup content.
+            if namespace in ('orgm-desktop-clock', 'orgm-desktop-calendar'):
+                continue
             if namespace.startswith(('orgm-', 'swaync-control')) or namespace == 'rofi':
                 return False
     return True

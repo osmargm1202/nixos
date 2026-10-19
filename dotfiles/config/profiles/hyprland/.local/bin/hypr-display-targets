@@ -193,9 +193,9 @@ waybar_config_cmd() {
   outputs="$(waybar_output_json)"
   mode="$(jq -r '.waybar.mode // "primary"' "$state_file")"
   if [ "$mode" = "all" ] || [ "$(monitor_count)" -le 1 ] || [ "$(printf '%s' "$outputs" | jq 'length')" -eq 0 ]; then
-    strip_jsonc "$source_config" | jq 'map(del(.output))' >"$generated"
+    strip_jsonc "$source_config" | jq '(if type == "object" then [.] else . end) | map(del(.output))' >"$generated"
   else
-    strip_jsonc "$source_config" | jq --argjson outs "$outputs" '[ $outs[] as $out | .[] | . + {output: $out} ]' >"$generated"
+    strip_jsonc "$source_config" | jq --argjson outs "$outputs" '(if type == "object" then [.] else . end) | [ $outs[] as $out | .[] | . + {output: $out} ]' >"$generated"
   fi
   # Stock Waybar restores the inhibitor through its supported startup setting.
   # Do not send an RT signal: unpatched idle_inhibitor has no signal handler.

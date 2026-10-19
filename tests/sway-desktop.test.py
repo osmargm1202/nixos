@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Desktop backend validation, clipboard bytes and bounded private thumbnail capture."""
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -123,6 +125,29 @@ class Desktop(unittest.TestCase):
             helpers['game_mode_active'] = lambda: False
             with patch.dict(ENV, SWAY=helpers, query=lambda _: [dict(layer_shell_surfaces=[dict(namespace='orgm-control')])]):
                 self.assertFalse(MODULE['capture_allowed']())
+
+    def test_widgets_allow_previews_but_popups_and_secure_lock_still_block(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, XDG_RUNTIME_DIR=directory):
+            root = Path(directory)
+            layers = [dict(namespace=n) for n in ('orgm-desktop-clock', 'orgm-desktop-calendar')]
+            def capture(*args, **kwargs):
+                Path(args[-1]).write_bytes(b'fixture PNG')
+            item = dict(id='7', visible=True, focused=True, rect=dict(x=0, y=0, width=200, height=100))
+            helpers = dict(ENV['SWAY'], game_mode_active=lambda: False)
+            with patch.dict(ENV, SWAY=helpers, query=lambda _: [dict(layer_shell_surfaces=layers)], run=capture):
+                MODULE['capture_previews'](root, [item])
+                self.assertTrue((root/'7.png').exists(), 'persistent widgets must not disable previews')
+                (root/'7.png').unlink()
+                for popup in ('orgm-control', 'orgm-desktop-clock-picker', 'swaync-control-center', 'rofi'):
+                    layers.append(dict(namespace=popup))
+                    MODULE['capture_previews'](root, [item])
+                    self.assertFalse((root/'7.png').exists(), popup)
+                    layers.pop()
+                key = hashlib.sha256((os.environ.get('WAYLAND_DISPLAY', '')+'\0'+os.environ.get('SWAYSOCK', '')).encode()).hexdigest()[:20]
+                with (root/('orgm-qylock-'+key+'.lock')).open('w') as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    MODULE['capture_previews'](root, [item])
+                    self.assertFalse((root/'7.png').exists(), 'lock must suppress capture with widgets visible')
 
     def test_existing_wifi_bluetooth_and_capture_bindings_are_preserved(self):
         config = json.loads((ROOT/'dotfiles/config/profiles/sway/.config/waybar/config').read_text())

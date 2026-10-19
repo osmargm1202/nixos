@@ -45,10 +45,18 @@ class Backend(unittest.TestCase):
     def test_focus_only_live_addresses_or_known_workspaces(self):
         for selection in ('0xabc', 'workspace:3', '0xabc;exit', '0xdead', 'workspace:3;exit'):
             self.backend.focus_selection(selection)
-        self.assertEqual(self.commands, [('focuswindow', 'address:0xabc'), ('workspace', '3')])
+        self.assertEqual(self.commands, [('focuswindow', 'address:0xabc'), ('workspace', 'name:3')])
         self.clients.clear()
         self.backend.focus_selection('0xabc')
         self.assertEqual(len(self.commands), 2, 'closed windows must not dispatch stale commands')
+
+    def test_named_workspaces_never_become_relative_navigation(self):
+        names = ['Web', 'previous', 'e+1', 'quoted "name"']
+        self.clients.extend(dict(self.clients[0], address='0x'+str(100+i),
+                                 workspace=dict(id=10+i, name=name)) for i, name in enumerate(names))
+        for name in names:
+            self.backend.focus_selection('workspace:'+name)
+        self.assertEqual(self.commands, [('workspace', 'name:'+name) for name in names])
 
     def test_groups_include_only_occupied_workspaces(self):
         groups = self.backend.workspace_groups(self.backend.windows())

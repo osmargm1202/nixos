@@ -67,7 +67,8 @@ class Backend:
                 if name.startswith('special:'):
                     self.dispatch('togglespecialworkspace', name.removeprefix('special:'))
                 else:
-                    self.dispatch('workspace', name)
+                    # Literal selector: names such as previous/e+1 are not navigation.
+                    self.dispatch('workspace', 'name:'+name)
         else:
             self.focus_window(selection)
 

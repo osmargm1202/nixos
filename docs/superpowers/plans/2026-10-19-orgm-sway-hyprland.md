@@ -10,6 +10,26 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-19-orgm-sway-hyprland-design.md`
 
+## Estado de ejecución
+
+Implementación en `feat/orgm-sway-hyprland`, sin despliegue. El runbook detallado
+abajo conserva sus pasos originales; no todos se ejecutaron literalmente (por
+ejemplo, se conservaron hooks probados de Sway en vez de duplicar el catálogo).
+El registro de evidencia y decisiones está en
+`.superpowers/sdd/2026-10-19-orgm-sway-hyprland/progress.md`.
+
+| Tarea | Estado comprobado |
+| --- | --- |
+| 1 | Capa compartida, Go, widgets y render Sway privado con escalado/hotplug |
+| 2 | CLI conservada; regresiones y menús Sway on-demand/residentes |
+| 3 | Adaptador y supervisor, overrides personales, parser Lua; runtime Hyprland/hardware pendiente |
+| 4 | orgm/alternativa Ryoku, trays retirados y daemons conservados, server: evaluación Nix sin IFD |
+| 5 | Docs, 29 scripts sin build, Go y revisión independiente con cuatro correcciones RED→GREEN; no merge/push |
+
+Pendientes explícitos: build/switch de orgm y prueba real Hyprland/NVIDIA,
+PAM/SDDM/suspensión, integración que construye copias de dotfiles. Fallos
+preexistentes/ambientales separados en `docs/orgm-sway-hyprland.md`.
+
 ## Global Constraints
 
 - No hacer build ni switch de orgm todavía; tampoco `nix run`, `nix shell`,

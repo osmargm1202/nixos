@@ -26,11 +26,15 @@ runtime.mkdir(mode=0o700)
 config = home/'.config'
 ui = config/'quickshell/orgm-wallpapers'
 shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-wallpapers', ui)
+shared = ROOT/'dotfiles/config/profiles/wayland'
+shutil.copytree(shared/'.config/quickshell/orgm-desktop', config/'quickshell/orgm-desktop')
+shutil.copytree(shared/'.config/orgm-desktop', config/'orgm-desktop')
 binary = home/'.local/bin'
 binary.mkdir(parents=True)
 shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.local/lib', binary.parent/'lib')
 for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-volume-osd', 'sway-mic-volume-osd'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
+shutil.copy2(shared/'.local/bin/orgm-desktop-widgets', binary/'orgm-desktop-widgets')
 (home/'brightness').write_text('50')
 (home/'dnd').write_text('false')
 (binary/'brightnessctl').write_text('#!/usr/bin/env python3\nfrom pathlib import Path\nimport sys\n'
@@ -143,6 +147,12 @@ try:
     env['SWAYSOCK'] = str(wait(lambda: next(runtime.glob('sway-ipc.*.sock'), None), 'IPC'))
     env['WAYLAND_DISPLAY'] = wait(lambda: next((p.name for p in runtime.glob('wayland-*') if p.is_socket()), None), 'Wayland')
     env['DBUS_SESSION_BUS_ADDRESS'] = (home/'bus').read_text()
+    start(str(binary/'orgm-desktop-widgets'), 'daemon')
+    def widgets_visible():
+        namespaces = {s.get('namespace') for o in json.loads(command('swaymsg', '-r', '-t', 'get_outputs').stdout)
+                      for s in o.get('layer_shell_surfaces', [])}
+        return {'orgm-desktop-clock', 'orgm-desktop-calendar'} <= namespaces
+    wait(widgets_visible, 'desktop widgets alongside menus and preview recorder')
     start('wtype', '-s', '120000')
     pointer = os.environ.get('ORGM_TEST_POINTER_KEEPER')
     if pointer:

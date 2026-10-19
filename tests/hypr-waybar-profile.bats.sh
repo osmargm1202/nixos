@@ -46,4 +46,21 @@ jq -e '.[0].idle_inhibitor["start-activated"] == false and (.[0].idle_inhibitor 
 XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
 generated="$(generate_bar)"
 jq -e '.[0].idle_inhibitor["start-activated"] == true' "$generated" >/dev/null
+# The Sway-based profile is one object, while historical profiles use arrays.
+cp "$repo_dir/dotfiles/config/users/osmarg/profiles/hyprland/.config/waybar-hypr/config" "$tmp/config/waybar-hypr/config"
+generated="$(generate_bar)"
+jq -e 'length == 1 and .[0].idle_inhibitor["start-activated"] == true and (.[0] | has("output") | not)' "$generated" >/dev/null
+printf '%s\n' '[{"name":"eDP-1","description":"Test panel","focused":true},{"name":"DP-2","description":"External panel"}]' > "$tmp/monitors.json"
+state="$tmp/config/orgm-hypr/display-targets.json"
+jq '.waybar = {mode:"selected", selected:["External panel"]}' "$state" > "$tmp/selected.json"
+mv "$tmp/selected.json" "$state"
+generated="$(generate_bar)"
+jq -e 'length == 1 and .[0].output == "DP-2" and .[0].idle_inhibitor["start-activated"] == true' "$generated" >/dev/null
+XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" "$caffeine_helper" toggle
+generated="$(generate_bar)"
+jq -e '.[0].idle_inhibitor["start-activated"] == false' "$generated" >/dev/null
+# Array sources remain supported with selected outputs too.
+printf '%s\n' '[{"idle_inhibitor":{"signal":8},"modules-left":["idle_inhibitor"]}]' > "$tmp/config/waybar-hypr/config"
+generated="$(generate_bar)"
+jq -e 'length == 1 and .[0].output == "DP-2" and .[0].idle_inhibitor["start-activated"] == false' "$generated" >/dev/null
 printf '%s\n' 'hypr-waybar-profile: ok'

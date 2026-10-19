@@ -85,3 +85,34 @@ recursos seleccionados en Hyprland. Revisar backups antes de cada `pull`.
 Quedan pendientes build de orgm, arranque real, hardware NVIDIA/monitores,
 suspensión y prueba de Qylock/SDDM en esa máquina. El parser Lua y los tests de
 backend no sustituyen esas pruebas.
+
+## Verificación sin despliegue
+
+- 29 scripts de regresión independientes de build pasan; también los tests Go,
+  las evaluaciones Nix de ambos targets y server (IFD deshabilitado), y el parser
+  Lua real de Hyprland con los overrides de osmarg.
+- Sesión Sway privada: widgets simultáneos con menús, clipboard, audio y
+  miniaturas; geometría/escalado/hotplug de los widgets comprobados por separado.
+- Qylock admite la identidad nativa de Hyprland sin exigir SWAYSOCK. Sus tests
+  mantienen la confirmación segura obligatoria; no son una prueba PAM real.
+- Waybar admite configuración objeto o array, monitor seleccionado y Caffeine.
+  Los workspaces con nombres como `previous` se seleccionan literalmente.
+
+La integración que construye las copias de dotfiles sigue pendiente. Dos
+regresiones antiguas no quedan validadas: una compara texto obsoleto de udiskie;
+otra necesita un xdg-utils del store no realizado. No se declara toda la suite
+ni el despliegue en hardware como verificados.
+
+## Consulta: LocalSend sin escritorio
+
+Upstream documenta un cliente terminal separado, `localsend-cli`, por ejemplo:
+
+```bash
+localsend-cli send --to 192.168.1.20 archivo.pdf
+```
+
+Fuente: [README oficial de LocalSend](https://github.com/localsend/localsend/blob/main/README.md#command-line-interface).
+No confundirlo con `--hidden`, que solo oculta la aplicación gráfica en el tray.
+Los inputs fijados en este repositorio ofrecen LocalSend 1.17.0 y no tienen
+el atributo `localsend-cli`; no se ha instalado ni empaquetado aquí el cliente
+terminal, ni se han actualizado inputs.
