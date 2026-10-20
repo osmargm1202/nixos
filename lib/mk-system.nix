@@ -70,6 +70,7 @@ let
         { nixpkgs.hostPlatform = system; }
         ../nixos/users/default.nix
         ../nixos/functions/binary-cache.nix
+        ../nixos/fonts.nix
         ../nixos/orgm/default.nix
       ]
       ++ roleModules
