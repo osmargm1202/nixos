@@ -180,6 +180,35 @@ No declarar puertos, parlantes, micrófono o suspensión probados sin intervenci
 física. El informe de instalación distingue enumeración, pruebas por software y
 pruebas pendientes del usuario.
 
+## Cámara de Envy
+
+En los modos de escritorio normal y windows-vfio se instala **GUVCView**:
+abrir el lanzador con Super+Space y buscar `guvcview`. Gaming y server no
+añaden esta aplicación gráfica. El paquete se declara en este host, sin
+cambiar la configuración de cámaras de Lenovo ni de los demás equipos.
+
+El HP ENVY 17m-ce1xxx tiene un interruptor físico de privacidad en el lateral
+derecho. Cuando corta la alimentación, la cámara desaparece de USB y no se
+crean dispositivos `/dev/video*`; instalar una aplicación o cambiar permisos
+no la vuelve a conectar. [HP describe este comportamiento](https://h30434.www3.hp.com/t5/Notebooks-Knowledge-Base/Camera-not-found-on-HP-Spectre-x360-or-HP-ENVY-0xA00F4244-lt/ta-p/7468492).
+
+Comprobado el 2026-10-20: al activar el interruptor apareció **HP Wide Vision HD
+Camera**, USB `05c8:03d3` en el puerto interno `1-4`, y `uvcvideo` se cargó
+automáticamente. `/dev/video0` es la captura y `/dev/video1` es el nodo de
+metadatos; no son dos cámaras. Se recibieron 15 fotogramas sin guardarlos:
+
+```bash
+v4l2-ctl --list-devices
+v4l2-ctl --device=/dev/video0 --list-formats-ext
+timeout 15s v4l2-ctl --device=/dev/video0 --stream-mmap --stream-count=15 --stream-to=/dev/null
+```
+
+La cámara anuncia MJPEG hasta 1280×720 a 30 fps. La prueba de recepción se hizo
+con el formato que ya tenía, MJPEG 640×360; no se afirma haber validado todos
+los modos ni la calidad visual. No necesita un controlador externo ni cambios
+en los portales para esta prueba directa por V4L2. El usuario ya pertenece al
+grupo `video`.
+
 ## Hoja de ruta preservada
 
 Diseño completo: `docs/superpowers/specs/2026-10-15-envy-design.md`.

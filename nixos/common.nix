@@ -430,6 +430,11 @@ in
 
   fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
+    # Microsoft document/web fonts, shared by every desktop host.
+    # corefonts also includes Tahoma; vista-fonts adds the ClearType families.
+    corefonts
+    vista-fonts
+    (callPackage ./packages/microsoft-office-fonts.nix { })
     jetbrains-mono
     inter
     noto-fonts

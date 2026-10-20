@@ -44,5 +44,5 @@
   environment.systemPackages = with pkgs; [
     pciutils usbutils smartmontools nvme-cli btrfs-progs
     mesa-demos vulkan-tools libva-utils alsa-utils v4l-utils ethtool
-  ];
+  ] ++ lib.optionals config.programs.sway.enable [ guvcview ];
 }
