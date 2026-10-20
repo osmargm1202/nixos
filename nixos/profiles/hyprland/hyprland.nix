@@ -10,6 +10,7 @@ let
   hyprlandPackage = pkgs.hyprland;
   hyprlandPortalPackage = pkgs.xdg-desktop-portal-hyprland;
   hyprKdeconnectFix = pkgs.callPackage ./hypr-kdeconnect-fix.nix { };
+  dockPackage = import ./nwg-dock.nix { inherit pkgs; };
   waybarPackage = import ./waybar.nix { inherit pkgs; };
 in
 {
@@ -244,7 +245,7 @@ in
     blueman
     networkmanagerapplet
     nwg-displays
-    nwg-dock-hyprland
+    dockPackage
     pulsemixer
     waybarPackage
   ];

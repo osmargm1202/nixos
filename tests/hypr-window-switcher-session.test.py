@@ -118,16 +118,28 @@ with tempfile.TemporaryDirectory(prefix='hs-') as tmp:
         keyboard = Keyboard(pointer)
         command('hyprctl', 'dispatch', 'hl.dsp.focus({window="address:'+b+'"})')
         wait(lambda: json.loads(command('hyprctl', '-j', 'activewindow')).get('address') == b, 'focused resize target')
-        keyboard.key(125, True)  # KEY_LEFTMETA
-        keyboard.modifiers(64)  # Mod4 / SUPER
-        keyboard.key(19, True)  # KEY_R
-        keyboard.key(19, False)
-        keyboard.modifiers(0)
-        keyboard.key(125, False)
-        full = wait(lambda: next((c for c in clients() if c['address'] == b
-                                  and c['size'][0] > output['width']*.9), None), 'Win+R full column')
-        assert not full['fullscreen'], '100% column width must not hide the bar/dock via fullscreen'
-        print('PASS: real Win+R sets scrolling width to 100% without fullscreen', flush=True)
+        def cycle_widths(address, label):
+            command('hyprctl', 'dispatch', 'hl.dsp.focus({window="address:'+address+'"})')
+            # Starting at 100% proves wrapping as well as the complete cycle.
+            command('hyprctl', 'dispatch', 'hl.dsp.layout("colresize 1.0")')
+            for fraction in (.333, .5, .667, 1.0, .333):
+                keyboard.key(125, True)  # KEY_LEFTMETA
+                keyboard.modifiers(64)  # Mod4 / SUPER
+                keyboard.key(19, True)  # KEY_R
+                keyboard.key(19, False)
+                keyboard.modifiers(0)
+                keyboard.key(125, False)
+                resized = wait(lambda: next((c for c in clients() if c['address'] == address
+                                    and abs(c['size'][0]/output['width']-fraction) < .04), None),
+                               f'Win+R {label} column width {fraction}')
+                assert not resized['fullscreen'], 'width cycling must not hide bar/dock via fullscreen'
+                assert json.loads(command('hyprctl', '-j', 'activewindow')).get('address') == address
+                time.sleep(.1)
+            print('PASS: real Win+R cycles 100 → 33 → 50 → 66 → 100 → 33% ('+label+')', flush=True)
+
+        cycle_widths(b, 'multiple columns')
+        cycle_widths(a, 'single column')
+        command('hyprctl', 'dispatch', 'hl.dsp.focus({window="address:'+b+'"})')
         command('hyprctl', 'dispatch', 'hl.dsp.layout("colresize 0.5")')
         # Leave the pointer over B: after closing the overlay it must still
         # focus the clicked card A, not restore the underlying window B.

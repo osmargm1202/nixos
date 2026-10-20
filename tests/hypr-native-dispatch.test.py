@@ -29,8 +29,8 @@ for _, profile in ipairs({"profiles/hyprland", "users/osmarg/profiles/hyprland"}
   local bindings = {}
   hl = {dsp=dispatcher("hl.dsp"), bind=function(key, command) bindings[key]=command end}
   dofile(root .. "/dotfiles/config/" .. profile .. "/.config/hypr/lua/keybindings.lua").setup({terminal="kitty", fileManager="nautilus"})
-  assert(bindings["SUPER + R"].path == "hl.dsp.layout" and bindings["SUPER + R"].args == "colresize 1.0",
-    profile .. ": Win+R must set the scrolling column to full width")
+  assert(bindings["SUPER + R"].path == "hl.dsp.layout" and bindings["SUPER + R"].args == "colresize +conf",
+    profile .. ": Win+R must cycle configured scrolling widths")
   local expected = {
     ["SUPER + CTRL + minus"]={-20,0}, ["SUPER + CTRL + equal"]={20,0},
     ["SUPER + SHIFT + minus"]={0,-20}, ["SUPER + SHIFT + equal"]={0,20},

@@ -78,7 +78,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + CTRL + C", hl.dsp.window.center())
-  hl.bind(mainMod .. " + R", hl.dsp.layout("colresize 1.0"))
+  hl.bind(mainMod .. " + R", hl.dsp.layout("colresize +conf"))
 
   -- Group navigation (tabbed windows): Win+` next, Win+Shift+` back
   hl.bind(mainMod .. " + grave", hl.dsp.group.next())

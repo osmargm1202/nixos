@@ -19,6 +19,8 @@ in
       PATH = lib.mkForce "${home}/.local/bin:/run/wrappers/bin:/etc/profiles/per-user/${userName}/bin:/run/current-system/sw/bin";
     } // lib.optionalAttrs (spec ? waybarBin) {
       WAYBAR_BIN = spec.waybarBin;
+    } // lib.optionalAttrs (spec ? dockBin) {
+      NWG_DOCK_BIN = spec.dockBin;
     };
     serviceConfig = {
       ExecStart = spec.command;
@@ -33,7 +35,7 @@ in
     orgm-desktop-widgets = { description = "Ryoku-derived desktop clock and calendar"; command = "${home}/.local/bin/orgm-desktop-widgets daemon"; };
     orgm-hyprland-notifications = { description = "Desktop notification center"; command = "${pkgs.swaynotificationcenter}/bin/swaync"; busName = "org.freedesktop.Notifications"; };
     orgm-hyprland-waybar = { description = "Sway-style Hyprland status bar"; command = "${home}/.local/bin/waybar-watch ${home}/.config/waybar-hypr"; waybarBin = "${import ./waybar.nix { inherit pkgs; }}/bin/waybar"; };
-    orgm-hyprland-dock = { description = "Right application dock"; command = "${home}/.local/bin/hypr-nwg-dock"; };
+    orgm-hyprland-dock = { description = "Right application dock"; command = "${home}/.local/bin/hypr-nwg-dock"; dockBin = "${import ./nwg-dock.nix { inherit pkgs; }}/bin/nwg-dock-hyprland"; };
     # Installing the agent only exposes its vendor unit; our compositor-owned
     # target must start it too, so pkexec can request a graphical password.
     hyprpolkitagent = { description = "Hyprland graphical authentication"; command = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"; };

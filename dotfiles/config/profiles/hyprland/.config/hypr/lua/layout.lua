@@ -6,7 +6,8 @@ hl.config({
     new_status = "master",
   },
   scrolling = {
-    fullscreen_on_one_column = true,
+    -- Respect manual width cycling even when the workspace has only one column.
+    fullscreen_on_one_column = false,
     column_width = 0.5,
     focus_fit_method = 1,
     follow_focus = true,

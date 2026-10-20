@@ -93,7 +93,7 @@ entries() {
       entry 'Win+F' 'Fullscreen app' 'fullscreen 1'
       entry 'Win+Shift+F' 'Fullscreen total' 'fullscreen 0'
       entry 'Win+Shift+Space' 'Floating toggle' 'togglefloating'
-      entry 'Win+R' 'Columna al 100% (scrolling)' 'colresize 1.0'
+      entry 'Win+R' 'Ancho 33/50/66/100% (scrolling)' 'colresize +conf'
       entry 'Win+T' 'Split toggle (dwindle)' 'layoutmsg togglesplit'
       entry 'Win+C' 'Centrar ventana' 'centerwindow'
       entry 'Win+←/↓/↑/→' 'Mover foco' 'movefocus'
