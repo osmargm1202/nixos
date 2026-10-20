@@ -42,7 +42,8 @@ in {
 }' | python3 -c '
 import json,shlex,sys
 v=json.load(sys.stdin)
-assert v["outputs"] == ["envy", "ero", "jarq", "lenovo", "orgm"], v["outputs"]
+# Keep exact canonical outputs; ORGM also retains its explicit Ryoku fallback.
+assert v["outputs"] == ["envy", "ero", "jarq", "lenovo", "orgm", "orgm-ryoku"], v["outputs"]
 assert sorted(v["modes"]) == ["gaming", "server", "windows-vfio"]
 for name,c in {"normal":v["normal"],**v["modes"]}.items():
     assert not c["assertions"],(name,c["assertions"])

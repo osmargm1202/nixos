@@ -42,6 +42,10 @@ puede resolver a otra combinación en Hyprland y dar un falso fallo de Win+R.
 
 ## Fallos generales y pendientes documentados
 
+**Actualización 2026-10-20:** los diez fallos de esta tabla quedaron reparados
+y verificados conjuntamente; véase el [informe de resolución](2026-10-20-regression-repairs.md).
+Se conserva el diagnóstico original debajo como historial.
+
 El intento amplio de ejecutar 134 scripts shell y 36 scripts `*.test.py` se
 interrumpió tras detectar fallos previos y builds ajenos de dependencias Ryoku;
 no se completó ni se declara equivalente a una suite verde.

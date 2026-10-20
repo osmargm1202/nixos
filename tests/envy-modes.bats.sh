@@ -26,7 +26,8 @@ in {hosts=builtins.attrNames f.nixosConfigurations; normal=describe c;
 import json,sys
 v=json.load(sys.stdin)
 assert sorted(v["modes"])==["gaming","server","windows-vfio"], "missing Envy internal modes"
-assert sorted(v["hosts"])==["envy","ero","jarq","lenovo","orgm"]
+# Five canonical hosts plus the deliberately retained ORGM Ryoku fallback.
+assert sorted(v["hosts"])==["envy","ero","jarq","lenovo","orgm","orgm-ryoku"], v["hosts"]
 for name,c in {"normal":v["normal"],**v["modes"]}.items():
  assert not c["assertionFailures"],(name,c["assertionFailures"])
  assert c["timeout"]==1 and c["kernel"].startswith("6.12.") and c["driver"].startswith("580."),name

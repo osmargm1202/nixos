@@ -4,11 +4,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Regression: missing host seed or disabling the internal panel would send
 # workspace focus/cursor onto the phantom DP-1 output on this laptop.
 source="$ROOT/dotfiles/config/hosts/envy/profiles/ryoku/.config/orgm-ryoku/monitors_user.lua"
-if [[ -z "$source" ]]; then
+if [[ ! -f "$source" ]]; then
   echo "FAIL: envy has no persistent phantom-output policy" >&2
   exit 1
 fi
-lua - "$source" <<"LUA"
+lua="$(bash "$ROOT/tests/helpers/declared-lua.sh" "$ROOT")"
+"$lua" - "$source" <<"LUA"
 local disabled = {}
 hl = { monitor = function(rule)
     assert(not rule.disabled or rule.output ~= "", "must not disable all external outputs")

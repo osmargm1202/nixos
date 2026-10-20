@@ -97,6 +97,17 @@ class SwayWorkflows(unittest.TestCase):
                     self.assertNotIn('resize set', actions)
         self.assertNotIn('floating enable', self.window_actions(app_id='firefox', title='Loupe'))
 
+    def test_vlc_floats_without_forcing_size_or_fullscreen(self):
+        for app in ('vlc', 'Vlc', 'VLC', 'org.videolan.VLC'):
+            for protocol in ('app_id', 'class'):
+                with self.subTest(app=app, protocol=protocol):
+                    actions = self.window_actions(**{protocol: app})
+                    self.assertIn('floating enable', actions)
+                    self.assertIn('move position center', actions)
+                    self.assertNotIn('resize set', actions)
+                    self.assertNotIn('fullscreen enable', actions)
+        self.assertNotIn('floating enable', self.window_actions(app_id='firefox', title='VLC'))
+
     def test_main_music_and_whatsapp_windows_tile_but_their_dialogs_float(self):
         for app in ('Spotify', 'spotify', 'com.spotify.Client', 'orgm-webapp-whatsapp',
                     'chrome-web.whatsapp.com__-Default'):

@@ -161,15 +161,16 @@ with tempfile.TemporaryDirectory(prefix='hs-') as tmp:
                                           active.get('class'), status())
         print('PASS: actual card click focuses exact window after overlay closes', flush=True)
 
-        utility = start('kitty', '--config', 'NONE', '--class', 'org.gnome.Nautilus',
-                        '-o', 'linux_display_server=wayland', '-o', 'confirm_os_window_close=0',
-                        'sh', '-c', 'sleep 120')
-        window = wait(lambda: next((c for c in clients() if c['class'] == 'org.gnome.Nautilus'), None),
-                      'Nautilus-class utility')
-        assert window['floating'], 'native Nautilus rule must float the actual mapped client'
-        print('PASS: actual Nautilus-class client maps floating under native rules', flush=True)
-        os.killpg(utility.pid, signal.SIGTERM)
-        utility.wait(timeout=3)
+        for app in ('org.gnome.Nautilus', 'vlc', 'org.videolan.VLC'):
+            utility = start('kitty', '--config', 'NONE', '--class', app,
+                            '-o', 'linux_display_server=wayland', '-o', 'confirm_os_window_close=0',
+                            'sh', '-c', 'sleep 120')
+            window = wait(lambda: next((c for c in clients() if c['class'] == app), None), app)
+            assert window['floating'], app+' rule must float the actual mapped client'
+            assert not window['fullscreen'], app+' must retain manual fullscreen controls'
+            print('PASS: actual '+app+' client maps floating under native rules', flush=True)
+            os.killpg(utility.pid, signal.SIGTERM)
+            utility.wait(timeout=3)
 
         # Keep other columns mapped: a single-column workspace would otherwise
         # fill the screen even when the per-app startup rule was missing.

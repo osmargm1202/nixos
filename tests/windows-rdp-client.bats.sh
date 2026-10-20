@@ -108,6 +108,7 @@ if [[ -n "${ROFI_TARGETS_LOG:-}" ]]; then
   while IFS= read -r line; do printf '%s\n' "$line" >>"$ROFI_TARGETS_LOG"; done
 fi
 printf '%s\n' "${ROFI_INDEX:-0}"
+exit "${ROFI_STATUS:-0}"
 EOF
 chmod +x "$bin/nc" "$bin/docker" "$bin/podman" "$bin/sdl-freerdp" "$bin/wlfreerdp" "$bin/xfreerdp" "$bin/looking-glass-client" "$bin/notify-send" "$bin/seq" "$bin/sleep" "$bin/hyprctl" "$bin/jq" "$bin/rofi"
 rdp_password_file="$tmp/rdp-password"
@@ -284,21 +285,42 @@ fi
 [[ "$web_no_browser_output" == *"Error: Firefox tab helper and Firefox are unavailable."* ]]
 
 # Both hosts exclusively delegate lifecycle; backend errors never fall back.
+# Explicitly select local RDP: headless stdin EOF intentionally cancels connect.
 for profile in envy-render-node envy-vfio envy-disabled lenovo-render-node lenovo-vfio; do
  printf '%s\n' "$profile" >"$tmp/envy-profile"
- for action in start stop toggle status web connect; do
-  : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"
+ for action in start stop toggle status web run connect; do
+  : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"; : >"$tmp/envy-rdp"
   set +e
-  HOME="$tmp/home" PATH="$web_helper_bin:$bin:/usr/bin:/bin" \
+  HOME="$tmp/home" PATH="$web_helper_bin:$bin:/usr/bin:/bin" DISPLAY=:0 WAYLAND_DISPLAY= ROFI_INDEX=0 \
    WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" ENVY_LOG="$tmp/envy-log" \
-   ENVY_FAIL=1 DOCKER_LOG="$tmp/envy-engine-log" WEB_LOG="$tmp/envy-web" \
+   NOTIFY_LOG="$tmp/notify" ENVY_FAIL=1 DOCKER_LOG="$tmp/envy-engine-log" WEB_LOG="$tmp/envy-web" \
+   RDP_LOG="$tmp/envy-rdp" \
    "$helper" "$action" >"$tmp/envy-output" 2>&1
   result=$?
   set -e
-  [[ "$result" != 0 ]]
-  [[ -s "$tmp/envy-log" ]]
+  if [[ ! -s "$tmp/envy-log" ]]; then
+   printf 'FAIL: %s/%s never reached the failing controller\n' "$profile" "$action" >&2
+   exit 1
+  fi
+  if [[ "$result" == 0 ]]; then
+   printf 'FAIL: %s/%s swallowed the controller failure\n' "$profile" "$action" >&2
+   exit 1
+  fi
   [[ ! -s "$tmp/envy-engine-log" ]]
+  [[ ! -s "$tmp/envy-rdp" ]]
  done
+done
+# Cancellation is not a controller failure: neither EOF nor a dismissed picker
+# should start a VM or attempt RDP, even when that controller would fail.
+for picker in headless graphical; do
+ : >"$tmp/envy-log"; : >"$tmp/envy-engine-log"; : >"$tmp/envy-rdp"
+ picker_display=""
+ [[ "$picker" != graphical ]] || picker_display=:0
+ HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" DISPLAY="$picker_display" WAYLAND_DISPLAY= \
+  WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" ENVY_LOG="$tmp/envy-log" ENVY_FAIL=1 \
+  ROFI_STATUS=1 DOCKER_LOG="$tmp/envy-engine-log" RDP_LOG="$tmp/envy-rdp" \
+  "$helper" connect </dev/null >"$tmp/envy-output" 2>&1
+ [[ ! -s "$tmp/envy-log" && ! -s "$tmp/envy-engine-log" && ! -s "$tmp/envy-rdp" ]]
 done
 printf '%s\n' envy-render-node >"$tmp/envy-profile"
 HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
@@ -346,7 +368,7 @@ for running in true false; do
  [[ ! -s "$tmp/lg-nc-log" ]]
  if [[ "$running" == false ]]; then grep -qx start "$tmp/envy-log"; else ! grep -qx start "$tmp/envy-log"; fi
 done
-HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
+HOME="$tmp/home" PATH="$bin:/usr/bin:/bin" DISPLAY=:0 WAYLAND_DISPLAY= WINDOWS_VM_PROFILE_FILE="$tmp/envy-profile" \
  WINDOWS_LOOKING_GLASS_DEVICE=/dev/null ENVY_LOG="$tmp/envy-log" LG_LOG="$lg_log" \
  ROFI_INDEX=3 ROFI_TARGETS_LOG="$tmp/lg-targets" "$helper" connect
 grep -Fq 'Local | envy-windows | Looking Glass' "$tmp/lg-targets"

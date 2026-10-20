@@ -21,6 +21,7 @@ end
 local utilities = {
   { "(?i)^(org\\.gnome\\.Nautilus|nautilus)$", "monitor_w*0.78 monitor_h*0.78" },
   { "(?i)^(org\\.gnome\\.Loupe|loupe)$" },
+  { "(?i)^(org\\.videolan\\.VLC|vlc)$" },
   { "(?i)^(org\\.gnome\\.Calculator|qalculate-gtk|qalculate-qt)$", "monitor_w*0.22 monitor_h*0.6" },
   { "(?i)^(pavucontrol|org\\.pulseaudio\\.pavucontrol|blueman-manager)$", "monitor_w*0.4 monitor_h*0.48" },
   { "(?i)^(bluetui|nmtui|nm-connection-editor|org\\.gnome\\.FileRoller|file-roller)$", "monitor_w*0.44 monitor_h*0.52" },

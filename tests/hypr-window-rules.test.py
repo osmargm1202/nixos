@@ -106,6 +106,12 @@ for cls in ['org.gnome.Loupe', 'org.gnome.loupe', 'loupe']:
     assert actual.get('center') is True, (cls, actual)
     assert 'size' not in actual, (cls, 'preserve image viewer client size')
 assert not effects('firefox', 'Loupe')['floating_result']
+for cls in ['vlc', 'Vlc', 'VLC', 'org.videolan.VLC']:
+    actual = effects(cls)
+    assert actual['floating_result'], (cls, 'VLC must float')
+    assert actual.get('center') is True, (cls, actual)
+    assert 'size' not in actual and 'fullscreen' not in actual, (cls, 'keep media geometry and fullscreen controls')
+assert not effects('firefox', 'VLC')['floating_result']
 assert effects('org.quickshell', 'Ryotunes')['floating_result']
 assert effects('windows-rdp').get('fullscreen') is True
 assert effects('kitty', 'hardware-fastfetch').get('maximize') is True
