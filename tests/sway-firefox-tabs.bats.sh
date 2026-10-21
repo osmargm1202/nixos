@@ -7,6 +7,11 @@ bash -n "$HELPER"
 grep -Fq 'bindsym $mod+Escape $exec sway-firefox-tabs' "$ROOT/dotfiles/config/profiles/sway/.config/sway/config" || fail 'Win+Esc binding missing'
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+# Include the shared launcher dependency in this private HOME, as deployment does.
+mkdir -p "$tmp/home/.local/bin" "$tmp/home/.local/lib"
+cp "$ROOT/dotfiles/config/profiles/wayland/.local/bin/orgm-rofi" "$tmp/home/.local/bin/"
+cp -R "$ROOT/dotfiles/config/profiles/wayland/.local/lib/orgm-wayland" "$tmp/home/.local/lib/"
+export XDG_CONFIG_HOME="$tmp/home/.config" XDG_CACHE_HOME="$tmp/home/.cache" XDG_STATE_HOME="$tmp/home/.local/state"
 mkdir -p "$tmp/bin" "$tmp/runtime"
 cat >"$tmp/bin/windows-manager-linux-orgm-tabs" <<'SH'
 #!/usr/bin/env bash
@@ -49,7 +54,7 @@ assert b'\x1f' not in rows[0].split(b'\0',1)[0]
 args=Path(sys.argv[2]).read_text().splitlines()
 assert '-no-config' in args and '-only-match' in args
 assert args[args.index('-format')+1]=='i'
-assert args[args.index('-theme')+1].endswith('/.config/rofi-sway/sway-menu.rasi')
+assert args[args.index('-theme')+1].endswith('/.config/rofi-sway/sway-launcher.rasi')
 PY
 rm "$tmp/activate" "$tmp/focus"
 ROFI_STATUS=1 "$HELPER"

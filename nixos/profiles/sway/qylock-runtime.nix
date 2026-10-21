@@ -35,13 +35,16 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     base="$out/share/orgm-qylock"
     mkdir -p "$base/imports" "$base/pam" "$out/bin"
-    ln -s ${source}/themes "$base/themes"
+    cp -r ${../../../dotfiles/config/programs/shell/.config/quickshell/orgm-osk} "$base/keyboard"
+    ${python3}/bin/python3 ${./qylock-keyboard-themes.py} ${source}/themes "$base/themes" "$base/keyboard"
     ln -s ${source} "$base/upstream"
     cp ${source}/LICENSE "$base/LICENSE"
     ln -s ${lockQuickshell.src} "$base/quickshell-source"
     cp ${./quickshell-session-lock-hotplug.patch} "$base/quickshell-session-lock-hotplug.patch"
     cp -r ${source}/quickshell-lockscreen/imports/SddmComponents "$base/imports/"
     cp -r ${../../../dotfiles/config/profiles/sway/.config/quickshell/orgm-lock} "$base/qml"
+    chmod u+w "$base/qml"
+    ln -s "$base/keyboard" "$base/qml/keyboard"
     cp -r ${../../../dotfiles/config/profiles/sway/.config/quickshell/orgm-locks} "$base/picker"
     ${python3}/bin/python3 ${./qylock-catalog.py} ${source} "$base"
     cat > "$base/pam/orgm-qylock-pw" <<EOF

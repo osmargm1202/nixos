@@ -19,6 +19,7 @@ with tempfile.TemporaryDirectory(prefix='hypr-native-') as tmp:
     recorder = home/'bindings.lua'
     recorder.write_text(r'''
 local root = arg[1]
+package.path = root .. "/dotfiles/config/profiles/hyprland/.config/hypr/?.lua;" .. package.path
 local function dispatcher(path)
   return setmetatable({}, {
     __index = function(_, key) return dispatcher(path .. "." .. key) end,

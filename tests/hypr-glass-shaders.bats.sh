@@ -78,6 +78,11 @@ grep -Fq "'󰎔 Shaders de apertura'" "$MAIN_MENU" || fail 'main menu shader ent
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+# Include the shared launcher dependency in this private HOME, as deployment does.
+mkdir -p "$tmp/home/.local/bin" "$tmp/home/.local/lib"
+cp "$ROOT/dotfiles/config/profiles/wayland/.local/bin/orgm-rofi" "$tmp/home/.local/bin/"
+cp -R "$ROOT/dotfiles/config/profiles/wayland/.local/lib/orgm-wayland" "$tmp/home/.local/lib/"
+export XDG_CONFIG_HOME="$tmp/home/.config" XDG_CACHE_HOME="$tmp/home/.cache" XDG_STATE_HOME="$tmp/home/.local/state"
 mkdir -p "$tmp/bin" "$tmp/home" "$tmp/shaders"
 touch "$tmp/shaders/morph.glsl"
 

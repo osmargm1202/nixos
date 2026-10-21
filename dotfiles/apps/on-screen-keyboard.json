@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "on-screen-keyboard",
+  "paths": [
+    ".config/quickshell/orgm-osk",
+    ".local/bin/orgm-osk"
+  ]
+}

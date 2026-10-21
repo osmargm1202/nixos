@@ -48,6 +48,7 @@ let
         zellij
         age
         fd
+        file # MIME detection used by shell preview helpers.
         jq
         trash-cli
         eza

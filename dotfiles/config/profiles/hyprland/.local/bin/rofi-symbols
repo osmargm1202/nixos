@@ -6,9 +6,15 @@ lib="${ROFI_MENU_LIB:-$HOME/.local/bin/rofi-menu-lib}"
 . "$lib"
 
 theme="$(rofi_menu_theme)"
+selector=rofi
+selector_args="-theme $theme"
+case "${XDG_CURRENT_DESKTOP:-}" in
+  *i3*) ;;
+  *) selector="${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}"; selector_args="--compositor hyprland" ;;
+esac
 exec rofimoji \
-  --selector rofi \
-  --selector-args="-theme $theme" \
+  --selector "$selector" \
+  --selector-args="$selector_args" \
   --action clipboard \
   --files 'emojis_*' nerd_font math miscellaneous_symbols miscellaneous_symbols_and_arrows \
   --prompt 'Símbolo'

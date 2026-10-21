@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import runpy,subprocess,sys
+try:
+    core=Path(__file__).resolve().parent.parent/'lib/orgm-wayland/tablet.py'
+    result=runpy.run_path(str(core))['main'](sys.argv[1:])
+    raise SystemExit(result or 0)
+except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
+    raise SystemExit('orgm-tablet: '+str(error))

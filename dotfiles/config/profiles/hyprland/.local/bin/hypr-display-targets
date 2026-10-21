@@ -114,7 +114,7 @@ choose_with_rofi() {
     hypr_rofi_dmenu "$prompt"
     return
   fi
-  rofi -dmenu -p "$prompt" 2>/dev/null || true
+  "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland -dmenu -p "$prompt" 2>/dev/null || true
 }
 
 prompt_primary() {

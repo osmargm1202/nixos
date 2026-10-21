@@ -46,7 +46,7 @@ prompt_url() {
     notify "Rofi is not installed"
     return 1
   }
-  rofi -no-config -theme "$HOME/.config/rofi-sway/sway-menu.rasi" -dmenu -i -p "Abrir web"
+  "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor sway -dmenu -i -p "Abrir web"
 }
 
 focus_firefox() {

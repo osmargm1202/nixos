@@ -49,6 +49,7 @@ for config in configs:
             assert 'FACE:auto_complete=fg=242' in result.stdout, result
             assert 'HOOK:PRECMD+=_orgm_command_separator' in result.stdout, result
             assert 'IMPORT:contrib/integration/fzf-key-bindings' in result.stdout, result
+            assert 'IMPORT:contrib/integration/fzf-completion' in result.stdout, result
         else:
             assert result.stdout == 'FACE:auto_complete:fg=242\n', result
 print('PASS: shared/user blesh configs support stable 0.3 and current 0.4 APIs')

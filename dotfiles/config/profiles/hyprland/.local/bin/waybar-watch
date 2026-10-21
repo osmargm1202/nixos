@@ -87,7 +87,12 @@ start_waybar() {
     generated_config="$(hypr-display-targets waybar-config "$config_dir" 2>>"$log" || printf '%s/config\n' "$config_dir")"
   fi
 
-  "${WAYBAR_BIN:-waybar}" -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
+  generated_style="${config_dir}/style.css"
+  if command -v orgm-tablet >/dev/null 2>&1; then
+    generated_config="$(orgm-tablet bar-config "$generated_config" hyprland)"
+    generated_style="$(orgm-tablet bar-style "$generated_style")"
+  fi
+  "${WAYBAR_BIN:-waybar}" -c "$generated_config" -s "$generated_style" >>"$log" 2>&1 &
   waybar_pid="$!"
 }
 

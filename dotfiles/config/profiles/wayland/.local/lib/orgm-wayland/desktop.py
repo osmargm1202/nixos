@@ -46,6 +46,84 @@ def caffeine_state():
     return dict(caffeine=active, caffeineAvailable=available)
 
 
+def control_commands():
+    comp = 'hyprland' if SWAY.get('compositor') == 'hyprland' else 'sway'
+    shell = 'orgm-'+comp
+    commands = {
+        'apps': [('hypr' if comp == 'hyprland' else 'sway')+'-app-launcher'],
+        'windows': [shell, 'windows'], 'audio': [shell, 'audio'],
+        'advanced-audio': ['pavucontrol'], 'terminal-mixer': ['kitty','-e','pulsemixer'],
+        'clipboard': [shell, 'clipboard'], 'profiles': [shell, 'profiles'],
+        'wallpaper': [shell, 'wallpaper-pick'], 'power': [shell, 'power'],
+        'help': [shell, 'help'], 'themes': ['orgm-qylock', 'themes'],
+        'widgets': ['orgm-desktop-widgets', 'edit'], 'wifi': ['nm-connection-editor'],
+        'bluetooth': ['blueman-manager'], 'notifications': ['swaync-client', '--toggle-panel', '--skip-wait'],
+        'accounts': ['gnome-online-accounts-gtk'], 'monitor': ['gnome-system-monitor'],
+        'files': ['nautilus', '--new-window'],
+        'displays': ['nwg-displays', '-o', str(Path.home()/'.config'/('hypr/monitors.conf' if comp=='hyprland' else 'sway/outputs.conf')), '-n', '10'],
+    }
+    if comp == 'hyprland': commands['displays'] = ['nwg-displays']
+    return commands
+
+
+def control_controls():
+    groups = [
+        ('Sesión y entrada', [('tablet','Modo tablet','tablet','toggle'), ('keyboard','Teclado táctil','keyboard','toggle'),
+         ('apps','Aplicaciones'), ('windows','Ventanas'), ('layout','Cambiar idioma','layout',''), ('scratchpad','Scratchpad','scratchpad','')]),
+        ('Conexiones y sonido', [('wifi','Red / Wi-Fi'), ('bluetooth','Bluetooth'), ('audio','Audio y micrófono'), ('advanced-audio','Audio avanzado / aplicaciones'), ('terminal-mixer','Mezclador de terminal'), ('notifications','Notificaciones'), ('dnd','No molestar','dnd','')]),
+        ('Reproducción', [('previous','Anterior','media','previous'), ('play-pause','Reproducir / pausar','media','play-pause'), ('next','Siguiente','media','next')]),
+        ('Energía', [('caffeine','Mantener despierto','caffeine',''), ('gaming','Gaming','gaming',''),
+         ('power-saver','Ahorro','profile','power-saver'), ('balanced','Equilibrado','profile','balanced'), ('performance','Rendimiento','profile','performance')]),
+        ('Espacios de trabajo', [('workspace-'+str(i),str(i),'workspace',str(i)) for i in range(1,11)]),
+        ('Apariencia', [('profiles','Perfil visual'), ('wallpaper','Elegir fondo'), ('random-wallpaper','Fondo aleatorio','random-wallpaper',''),
+         ('appearance','Claro / oscuro','appearance',''), ('themes','Inicio y bloqueo'), ('widgets','Editar widgets'), ('displays','Pantallas')]),
+        ('Herramientas y sesión', [('clipboard','Portapapeles'), ('files','Archivos'), ('accounts','Cuentas en línea'), ('monitor','Monitor del sistema'), ('help','Atajos'), ('power','Bloquear / salir / apagar')]),
+    ]
+    commands=control_commands()
+    tools={'tablet':'orgm-tablet','keyboard':'orgm-osk','layout':'hyprctl' if SWAY.get('compositor')=='hyprland' else 'swaymsg',
+           'scratchpad':'hyprctl' if SWAY.get('compositor')=='hyprland' else 'swaymsg',
+           'workspace':'hyprctl' if SWAY.get('compositor')=='hyprland' else 'swaymsg',
+           'media':'playerctl','profile':'powerprofilesctl','dnd':'swaync-client','caffeine':'waybar-caffeine-state',
+           'gaming':SWAY.get('game_mode_helper','sway-game-mode'),'appearance':'orgm-visual-profile','random-wallpaper':'orgm-visual-profile'}
+    result=[]
+    for section,items in groups:
+        for item in items:
+            key,label=item[:2];action=item[2] if len(item)>2 else '';value=item[3] if len(item)>3 else ''
+            tool=tools[action] if action else commands[key][0]
+            result.append(dict(id=key,label=label,section=section,action=action,value=value,
+                               available=shutil.which(tool) is not None and (key!='terminal-mixer' or shutil.which('pulsemixer') is not None)))
+    return result
+
+
+def tablet_state():
+    return runpy.run_path(str(Path(__file__).with_name('tablet.py')))['state']()
+
+
+def optional_output(*args):
+    try:
+        result=run(*args,capture_output=True,text=True,timeout=1)
+        return result.stdout.strip() if result.returncode==0 else ''
+    except (OSError,subprocess.SubprocessError): return ''
+
+
+def workspace_state():
+    try:
+        if SWAY.get('compositor')=='hyprland':
+            return int(json.loads(optional_output('hyprctl','-j','activeworkspace')).get('id',0))
+        return next((int(w['num']) for w in json.loads(optional_output('swaymsg','-r','-t','get_workspaces')) if w.get('focused')),0)
+    except (ValueError,KeyError,TypeError): return 0
+
+
+def battery_state():
+    values=[]
+    for battery in Path('/sys/class/power_supply').glob('*'):
+        try:
+            if (battery/'type').read_text().strip()=='Battery':
+                values.append(str(int((battery/'capacity').read_text()))+'% · '+(battery/'status').read_text().strip())
+        except (OSError,ValueError): pass
+    return ' / '.join(values) or 'Sin batería'
+
+
 def control_state():
     brightness = None
     try:
@@ -58,7 +136,12 @@ def control_state():
         dnd = run('swaync-client', '--get-dnd', capture_output=True, text=True, timeout=2).stdout.strip() == 'true'
     except (OSError, subprocess.SubprocessError):
         pass
-    return dict(brightness=brightness, dnd=dnd, gaming=SWAY['game_mode_active'](), **caffeine_state())
+    return dict(brightness=brightness, dnd=dnd, gaming=SWAY['game_mode_active'](), **caffeine_state(),
+                tablet=tablet_state(),controls=control_controls(),battery=battery_state(),workspace=workspace_state(),
+                mediaAvailable=bool(optional_output('playerctl','status')),
+                network=optional_output('nmcli','-t','-f','STATE','general') or 'Red no disponible',
+                powerProfile=optional_output('powerprofilesctl','get'),
+                media=optional_output('playerctl','metadata','--format','{{artist}} — {{title}}'))
 
 
 def control_action(action, value=''):
@@ -79,27 +162,49 @@ def control_action(action, value=''):
             raise
     elif action == 'brightness' and value.isdecimal() and 5 <= int(value) <= 100:
         run('brightnessctl', '-q', 'set', value+'%')
+    elif action == 'tablet' and value in ('on','off','toggle'):
+        run('orgm-tablet','mode',value,timeout=35,stdout=subprocess.DEVNULL)
+    elif action == 'keyboard' and value in ('show','hide','toggle'):
+        run('orgm-osk',value,timeout=3,stdout=subprocess.DEVNULL)
+    elif action == 'media' and value in ('previous','play-pause','next'):
+        run('playerctl',value)
+    elif action == 'profile' and value in ('power-saver','balanced','performance'):
+        run('powerprofilesctl','set',value)
+    elif action == 'layout' and not value:
+        if SWAY.get('compositor') == 'hyprland': run('hyprctl','switchxkblayout','all','next')
+        else: run('swaymsg','input type:keyboard xkb_switch_layout next')
+    elif action == 'scratchpad' and not value:
+        if SWAY.get('compositor') == 'hyprland': run('hyprctl','dispatch','hl.dsp.workspace.toggle_special("magic")')
+        else: run('swaymsg','scratchpad show')
+    elif action == 'workspace' and value.isdecimal() and 1 <= int(value) <= 10:
+        if SWAY.get('compositor') == 'hyprland': run('hyprctl','dispatch','hl.dsp.focus({workspace="'+str(int(value))+'"})')
+        else: run('swaymsg','workspace number '+str(int(value)))
+    elif action in ('appearance','random-wallpaper') and not value:
+        run('orgm-visual-profile','toggle-mode' if action=='appearance' else 'random-wallpaper',
+            env=dict(os.environ,ORGM_VISUAL_PROFILE_BACKEND=SWAY.get('compositor','sway')))
     else:
         raise ValueError('Acción de control no válida')
     return control_state()
 
 
+def control_choice(selection):
+    commands=control_commands()
+    if selection not in commands: raise ValueError('Control no válido')
+    if selection in ('audio','clipboard','windows'): main([selection])
+    elif selection in ('profiles','power'): SWAY['main']([selection])
+    else: run(*commands[selection])
+
+
 def control():
     handled, selection = SWAY['graphical_selection'](catalog('control', state=control_state()))
     if not handled:
-        SWAY['main'](['menu-fallback'])
-    elif selection in ('audio', 'clipboard'):
-        main([selection])
-    elif selection in ('profiles', 'power'):
-        SWAY['main']([selection])
-    elif selection == 'themes':
-        run('orgm-qylock', 'themes')
-    elif selection == 'widgets':
-        run('orgm-desktop-widgets', 'edit')
-    elif selection == 'wifi':
-        subprocess.Popen(['kitty', '--class', 'nmtui', '-e', 'nmtui'], start_new_session=True)
-    elif selection == 'bluetooth':
-        subprocess.Popen(['kitty', '--class', 'bluetui', '-e', 'bluetui'], start_new_session=True)
+        options=[c for c in control_controls() if c['available']]
+        selected=SWAY['pick']('Centro de control',[c['label'] for c in options],True)
+        if selected.isdecimal() and int(selected)<len(options):
+            item=options[int(selected)]
+            if item['action']: control_action(item['action'],item['value'])
+            else: control_choice(item['id'])
+    elif selection: control_choice(selection)
 
 
 def audio():

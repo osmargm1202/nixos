@@ -108,7 +108,7 @@ case "${XDG_CURRENT_DESKTOP:-}" in
   *sway*|*Sway*)
     # Format separately: a JSON/formatter failure must not look like cancellation.
     format_rofi_rows >"$state/rows" || picker_failed
-    if rofi -no-config -theme "$HOME/.config/rofi-sway/sway-menu.rasi" -dmenu -i -no-custom -only-match -format i -p 'Pestañas Firefox' -show-icons <"$state/rows" >"$state/selection"; then
+    if "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor sway -dmenu -i -no-custom -only-match -format i -p 'Pestañas Firefox' -show-icons <"$state/rows" >"$state/selection"; then
       :
     else
       status=$?

@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""One launcher visual contract for Sway/Hyprland Rofi callers."""
+import os
+from pathlib import Path
+import re
+import runpy
+import sys
+
+def main(args):
+    options={}
+    while args and args[0].startswith('--'):
+        name=args.pop(0)
+        if name=='--': break
+        if name not in ('--compositor','--lines','--width','--font-size','--padding','--icon-size') or not args:
+            raise ValueError('Opción de estilo no válida')
+        options[name]=args.pop(0)
+    desktop=options.get('--compositor',os.environ.get('ORGM_DESKTOP_COMPOSITOR') or os.environ.get('XDG_CURRENT_DESKTOP','')).lower()
+    comp='hyprland' if 'hyprland' in desktop else 'sway' if 'sway' in desktop else 'i3'
+    if comp=='i3':
+        os.execvp('rofi',['rofi','-normal-window','-theme',str(Path.home()/'.config/rofi/i3-menu.rasi'),*args])
+    shared=Path(__file__).resolve().parent.parent/'lib/orgm-wayland'
+    if not (shared/'shell.py').is_file():
+        shared=Path(__file__).resolve().parents[4]/'profiles/wayland/.local/lib/orgm-wayland'
+    shell=runpy.run_path(str(shared/'shell.py'),init_globals={'COMPOSITOR':comp})
+    tablet=runpy.run_path(str(shared/'tablet.py'))['load_policy']()['mode']=='on'
+    lines=options.get('--lines','8');width=options.get('--width','640px')
+    font=options.get('--font-size','12');padding=options.get('--padding','8px');icons=options.get('--icon-size','32px')
+    if not all(re.fullmatch(r'[1-9][0-9]{0,2}',v) for v in (lines,font)):
+        raise ValueError('Tamaño de texto/lista no válido')
+    if not all(re.fullmatch(r'[1-9][0-9]{0,3}(px|%)',v) for v in (width,padding,icons)):
+        raise ValueError('Dimensión no válida')
+    if tablet: font=str(max(18,int(font)));padding='14px';icons='40px';width='720px';lines=str(min(8,int(lines)))
+    style='configuration { font: "JetBrainsMono Nerd Font '+font+'"; hover-select: true; me-select-entry: ""; me-accept-entry: "MousePrimary"; }\n'
+    style+='window { width: '+width+'; } listview { lines: '+lines+'; } element { padding: '+padding+'; cursor: pointer; } element-icon { size: '+icons+'; }\n'
+    if '-dmenu' in args: style+='entry { placeholder: "Escribir o buscar…"; }\n'
+    style+='* { font: \"JetBrainsMono Nerd Font '+font+'\"; } prompt { font: \"JetBrainsMono Nerd Font '+str(max(14,int(font)))+'\"; }\n'
+    style+=shell['launcher_theme']()
+    prefix='HYPR' if comp=='hyprland' else 'SWAY'
+    theme=os.environ.get(prefix+'_ROFI_LAUNCHER_THEME',str(Path.home()/'.config/rofi-sway/sway-launcher.rasi'))
+    os.execvp('rofi',['rofi','-no-config','-theme',theme,'-theme-str',style,*args])
+
+if __name__=='__main__':
+    try: main(sys.argv[1:])
+    except (OSError,ValueError) as error:
+        print('orgm-rofi: '+str(error),file=sys.stderr);sys.exit(1)

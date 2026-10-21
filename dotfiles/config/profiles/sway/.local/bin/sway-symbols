@@ -7,8 +7,8 @@ lib="${SWAY_MENU_LIB:-$HOME/.local/bin/sway-menu-lib}"
 
 theme="$(rofi_menu_theme)"
 exec rofimoji \
-  --selector rofi \
-  --selector-args="-no-config -theme $theme" \
+  --selector "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" \
+  --selector-args="--compositor sway" \
   --action clipboard \
   --files 'emojis_*' nerd_font math miscellaneous_symbols miscellaneous_symbols_and_arrows \
   --prompt 'Símbolo'

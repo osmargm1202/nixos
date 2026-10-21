@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# A distinct touch dock; do not mutate normal favorite/cache files.
+if [[ "${ORGM_DOCK_NORMAL:-0}" != 1 && -x "$HOME/.local/bin/orgm-tablet" ]] && "$HOME/.local/bin/orgm-tablet" active; then
+  exec "$HOME/.local/bin/orgm-session-dock" hyprland
+fi
+
 user="${USER:-$(id -un)}"
 PATH="$HOME/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$user/bin:${PATH:-}"
 export PATH

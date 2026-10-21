@@ -18,7 +18,7 @@ let
     keyboardHwdb = c.services.udev.extraHwdb;
     sunshine = c.services.sunshine.enable;
     packages = map (p: p.pname or p.name or "") c.environment.systemPackages;
-    units = builtins.filter (n: f.inputs.nixpkgs.lib.hasPrefix "orgm-sway-" n) (builtins.attrNames c.systemd.user.services);
+    units = builtins.filter (n: f.inputs.nixpkgs.lib.hasPrefix "orgm-sway-" n && c.systemd.user.services.${n}.enable) (builtins.attrNames c.systemd.user.services);
     assertions = map (a: a.message) (builtins.filter (a: !a.assertion) c.assertions);
   };
   c = f.nixosConfigurations.envy.config;
@@ -69,7 +69,9 @@ assert "/home/osmarg/.local/bin" in v["unit"]["environment"]["PATH"]
 assert v["unit"]["wantedBy"]==["sway-session.target"]
 assert v["unit"]["partOf"]==["sway-session.target"]
 dock_args = shlex.split(v["dock"])
-assert dock_args[1:] == ["-p", "right", "-i", "32", "-w", "10", "-nows", "-mr", "6", "-l", "top", "-c", "sway-app-launcher"], dock_args
+assert dock_args[0] == "/home/osmarg/.local/bin/orgm-session-dock", dock_args
+assert dock_args[1] == "sway" and dock_args[2].endswith("/bin/nwg-dock"), dock_args
+assert dock_args[3:] == ["-p", "right", "-i", "32", "-w", "10", "-nows", "-mr", "6", "-l", "top", "-c", "sway-app-launcher"], dock_args
 assert v["notifications"]["command"].endswith("/bin/swaync")
 assert v["notifications"]["type"] == "dbus"
 assert v["notifications"]["busName"] == "org.freedesktop.Notifications"

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import QtQuick
+import "keyboard"
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -87,8 +88,15 @@ ShellRoot {
             }
             Fallback {
                 anchors.fill: parent
+                anchors.bottomMargin: fallbackKeyboard.reservedHeight
                 auth: backendAuth
                 visible: root.emergency || theme.status !== Loader.Ready
+            }
+            AuthKeyboard {
+                id: fallbackKeyboard
+                anchors.fill: parent
+                visible: root.emergency || theme.status !== Loader.Ready
+                onVisibleChanged: if (!visible) hide()
             }
             Text {
                 anchors.right: parent.right; anchors.bottom: parent.bottom

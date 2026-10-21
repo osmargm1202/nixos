@@ -13,6 +13,7 @@
     ".local/bin/hypr-rofi-window",
     ".local/bin/rofi-menu-lib",
     ".local/bin/rofi-symbols",
-    ".config/rofi-sway"
+    ".config/rofi-sway",
+    ".local/bin/orgm-rofi"
   ]
 }

@@ -16,7 +16,7 @@ rofi_menu() {
   if declare -F hypr_rofi_dmenu >/dev/null 2>&1; then
     hypr_rofi_dmenu "$1" 16
   else
-    rofi -dmenu -i -p "$1"
+    "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland -dmenu -i -p "$1"
   fi
 }
 

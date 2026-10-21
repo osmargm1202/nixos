@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ui="${ORGM_OSK_UI:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/orgm-osk/shell.qml}"
+qs="${ORGM_OSK_QS:-qs}"
+case "${1:-toggle}" in
+  daemon) exec "$qs" --no-duplicate --path "$ui" ;;
+  show|hide|toggle|status|retry) exec "$qs" --path "$ui" ipc call osk "${1:-toggle}" ;;
+  *) printf 'usage: orgm-osk [daemon|show|hide|toggle|status|retry]\n' >&2; exit 2 ;;
+esac

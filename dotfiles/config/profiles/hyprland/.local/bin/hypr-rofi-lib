@@ -2,7 +2,7 @@
 # Shared Rofi helpers for Sway menus. Source this file; do not execute it.
 
 hypr_rofi_load_env() {
-  HYPR_ROFI_THEME="${HYPR_ROFI_THEME:-$HOME/.config/rofi-sway/sway-menu.rasi}"
+  HYPR_ROFI_THEME="${HYPR_ROFI_THEME:-$HOME/.config/rofi-sway/sway-launcher.rasi}"
   HYPR_ROFI_ENV="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
 
   if [ -f "$HYPR_ROFI_ENV" ]; then
@@ -11,7 +11,7 @@ hypr_rofi_load_env() {
   fi
 
   HYPR_ROFI_SCALE="${HYPR_ROFI_SCALE:-1.00}"
-  HYPR_ROFI_WIDTH="${HYPR_ROFI_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 600 * s }')}"
+  HYPR_ROFI_WIDTH="${HYPR_ROFI_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 640 * s }')}"
   HYPR_ROFI_LINES="${HYPR_ROFI_LINES:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 13 * s }')}"
   HYPR_ROFI_FONT_SIZE="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 12 * s }')}"
   HYPR_ROFI_ICON_SIZE="${HYPR_ROFI_ICON_SIZE:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 32 * s }')}"
@@ -42,30 +42,25 @@ element-icon { size: ${HYPR_ROFI_ICON_SIZE}; }
 EOF
 }
 
+hypr_rofi_common() {
+  "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland \
+    --lines "$1" --width "$2" --font-size "${HYPR_ROFI_FONT_SIZE}" \
+    --padding "${HYPR_ROFI_ELEMENT_PADDING}" --icon-size "${HYPR_ROFI_ICON_SIZE}" "${@:3}"
+}
+
 hypr_rofi_dmenu() {
-  local prompt="$1"
-  local lines="${2:-$HYPR_ROFI_LINES}"
-  local width="${3:-$HYPR_ROFI_WIDTH}"
   hypr_rofi_need || return 1
-  rofi -no-config -dmenu -i -show-icons -p "$prompt" -theme "$HYPR_ROFI_THEME" -theme-str "$(hypr_rofi_theme_str "$lines" "$width")"
+  hypr_rofi_common "${2:-$HYPR_ROFI_LINES}" "${3:-$HYPR_ROFI_WIDTH}" -dmenu -i -show-icons -p "$1"
 }
 
 hypr_rofi_markup_dmenu() {
-  local prompt="$1"
-  local lines="${2:-$HYPR_ROFI_LINES}"
-  local width="${3:-$HYPR_ROFI_WIDTH}"
   hypr_rofi_need || return 1
-  rofi -no-config -dmenu -i -markup-rows -p "$prompt" -theme "$HYPR_ROFI_THEME" -theme-str "$(hypr_rofi_theme_str "$lines" "$width")"
+  hypr_rofi_common "${2:-$HYPR_ROFI_LINES}" "${3:-$HYPR_ROFI_WIDTH}" -dmenu -i -show-icons -markup-rows -p "$1"
 }
 
 hypr_rofi_drun() {
   hypr_rofi_need || return 1
-  local theme="${HYPR_ROFI_LAUNCHER_THEME:-$HOME/.config/rofi-sway/sway-launcher.rasi}" palette=''
-  if [ -x "$HOME/.local/bin/orgm-hyprland" ]; then
-    palette="$("$HOME/.local/bin/orgm-hyprland" launcher-theme)" || palette=''
-  fi
-  rofi -no-config -show drun -theme "$theme" -theme-str "$(hypr_rofi_theme_str "${HYPR_ROFI_LAUNCHER_LINES:-8}" "${HYPR_ROFI_LAUNCHER_WIDTH:-640px}")
-$palette"
+  hypr_rofi_common "${HYPR_ROFI_LAUNCHER_LINES:-8}" "${HYPR_ROFI_LAUNCHER_WIDTH:-640px}" -show drun
 }
 
 hypr_rofi_load_env

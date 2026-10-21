@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 
 
@@ -40,7 +41,12 @@ def main():
         temporary = Path(output.name)
         json.dump(source, output)
     temporary.replace(generated)
-    os.execvp('waybar', ['waybar', '-c', str(generated), '-s', str(config/'style.css')])
+    style=str(config/'style.css')
+    helper=Path.home()/'.local/bin/orgm-tablet'
+    if helper.is_file():
+        generated=Path(subprocess.check_output([str(helper),'bar-config',str(generated),'sway'],text=True).strip())
+        style=subprocess.check_output([str(helper),'bar-style',style],text=True).strip()
+    os.execvp('waybar', ['waybar', '-c', str(generated), '-s', style])
 
 
 if __name__ == '__main__':

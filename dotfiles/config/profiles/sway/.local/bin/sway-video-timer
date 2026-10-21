@@ -14,7 +14,7 @@ case "$backend" in
 esac
 
 if [[ "${1:-}" != "--internal-run" ]]; then
-  seconds="$(printf '' | rofi -no-config -theme "$HOME/.config/rofi-sway/sway-menu.rasi" -dmenu -p 'Segundos')" || exit 0
+  seconds="$(printf '' | "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor sway -dmenu -p 'Segundos')" || exit 0
   [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
 
   token="$(< /proc/sys/kernel/random/uuid)"

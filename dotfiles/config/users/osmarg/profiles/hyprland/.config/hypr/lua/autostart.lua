@@ -1,3 +1,5 @@
+require("lua.overview").register()
+
 local exec_once = {
   -- Import the graphical session before starting StatusNotifier clients.
   "hypr-tray-applets",

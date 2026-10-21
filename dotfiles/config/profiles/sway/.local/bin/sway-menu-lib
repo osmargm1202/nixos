@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Profile-specific theme, independent of the active user's other desktops.
-rofi_menu_theme() {
-  printf '%s\n' "$HOME/.config/rofi-sway/sway-menu.rasi"
-}
-rofi_menu() {
-  rofi -no-config -theme "$(rofi_menu_theme)" "$@"
-}
+# Sway symbols and generic menus share the launcher contract.
+rofi_menu_theme() { printf '%s\n' "$HOME/.config/rofi-sway/sway-launcher.rasi"; }
+rofi_menu() { "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor sway "$@"; }

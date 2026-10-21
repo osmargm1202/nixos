@@ -2,7 +2,7 @@
 # Shared Rofi helpers for Sway menus. Source this file; do not execute it.
 
 sway_rofi_load_env() {
-  SWAY_ROFI_THEME="${SWAY_ROFI_THEME:-$HOME/.config/rofi-sway/sway-menu.rasi}"
+  SWAY_ROFI_THEME="${SWAY_ROFI_THEME:-$HOME/.config/rofi-sway/sway-launcher.rasi}"
   SWAY_ROFI_ENV="${SWAY_ROFI_ENV:-$HOME/.config/rofi-sway/sway-menu.env}"
 
   if [ -f "$SWAY_ROFI_ENV" ]; then
@@ -11,7 +11,7 @@ sway_rofi_load_env() {
   fi
 
   SWAY_ROFI_SCALE="${SWAY_ROFI_SCALE:-1.00}"
-  SWAY_ROFI_WIDTH="${SWAY_ROFI_WIDTH:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 600 * s }')}"
+  SWAY_ROFI_WIDTH="${SWAY_ROFI_WIDTH:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 640 * s }')}"
   SWAY_ROFI_LINES="${SWAY_ROFI_LINES:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%d", 13 * s }')}"
   SWAY_ROFI_FONT_SIZE="${SWAY_ROFI_FONT_SIZE:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%d", 12 * s }')}"
   SWAY_ROFI_ICON_SIZE="${SWAY_ROFI_ICON_SIZE:-$(awk -v s="$SWAY_ROFI_SCALE" 'BEGIN { printf "%dpx", 32 * s }')}"
@@ -42,30 +42,25 @@ element-icon { size: ${SWAY_ROFI_ICON_SIZE}; }
 EOF
 }
 
+sway_rofi_common() {
+  "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor sway \
+    --lines "$1" --width "$2" --font-size "${SWAY_ROFI_FONT_SIZE}" \
+    --padding "${SWAY_ROFI_ELEMENT_PADDING}" --icon-size "${SWAY_ROFI_ICON_SIZE}" "${@:3}"
+}
+
 sway_rofi_dmenu() {
-  local prompt="$1"
-  local lines="${2:-$SWAY_ROFI_LINES}"
-  local width="${3:-$SWAY_ROFI_WIDTH}"
   sway_rofi_need || return 1
-  rofi -no-config -dmenu -i -show-icons -p "$prompt" -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str "$lines" "$width")"
+  sway_rofi_common "${2:-$SWAY_ROFI_LINES}" "${3:-$SWAY_ROFI_WIDTH}" -dmenu -i -show-icons -p "$1"
 }
 
 sway_rofi_markup_dmenu() {
-  local prompt="$1"
-  local lines="${2:-$SWAY_ROFI_LINES}"
-  local width="${3:-$SWAY_ROFI_WIDTH}"
   sway_rofi_need || return 1
-  rofi -no-config -dmenu -i -markup-rows -p "$prompt" -theme "$SWAY_ROFI_THEME" -theme-str "$(sway_rofi_theme_str "$lines" "$width")"
+  sway_rofi_common "${2:-$SWAY_ROFI_LINES}" "${3:-$SWAY_ROFI_WIDTH}" -dmenu -i -show-icons -markup-rows -p "$1"
 }
 
 sway_rofi_drun() {
   sway_rofi_need || return 1
-  local theme="${SWAY_ROFI_LAUNCHER_THEME:-$HOME/.config/rofi-sway/sway-launcher.rasi}" palette=''
-  if [ -x "$HOME/.local/bin/orgm-sway" ]; then
-    palette="$("$HOME/.local/bin/orgm-sway" launcher-theme)" || palette=''
-  fi
-  rofi -no-config -show drun -theme "$theme" -theme-str "$(sway_rofi_theme_str "${SWAY_ROFI_LAUNCHER_LINES:-8}" "${SWAY_ROFI_LAUNCHER_WIDTH:-640px}")
-$palette"
+  sway_rofi_common "${SWAY_ROFI_LAUNCHER_LINES:-8}" "${SWAY_ROFI_LAUNCHER_WIDTH:-640px}" -show drun
 }
 
 sway_rofi_load_env

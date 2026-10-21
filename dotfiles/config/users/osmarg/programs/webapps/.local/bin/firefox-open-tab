@@ -46,7 +46,11 @@ prompt_url() {
     notify "Rofi is not installed"
     return 1
   }
-  rofi -dmenu -i -p "Abrir web"
+  local desktop="${XDG_CURRENT_DESKTOP:-}"
+  case "${desktop,,}" in
+    *sway*|*hyprland*) "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" -dmenu -i -p "Abrir web" ;;
+    *) rofi -dmenu -i -p "Abrir web" ;;
+  esac
 }
 
 focus_firefox() {

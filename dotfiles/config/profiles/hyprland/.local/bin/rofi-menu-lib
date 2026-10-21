@@ -6,10 +6,13 @@
 rofi_menu_theme() {
   case "${XDG_CURRENT_DESKTOP:-${DESKTOP_SESSION:-}}" in
     *i3*) printf '%s\n' "$HOME/.config/rofi/i3-menu.rasi" ;;
-    *) printf '%s\n' "$HOME/.config/orgm-hypr/rofi/hypr-menu.rasi" ;;
+    *) printf '%s\n' "$HOME/.config/rofi-sway/sway-launcher.rasi" ;;
   esac
 }
 
 rofi_menu() {
-  rofi -theme "$(rofi_menu_theme)" "$@"
+  case "${XDG_CURRENT_DESKTOP:-}" in
+    *i3*) rofi -theme "$(rofi_menu_theme)" "$@" ;;
+    *) "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland "$@" ;;
+  esac
 }

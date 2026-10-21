@@ -15,21 +15,21 @@ element-icon { size: 32px; }'
 
 case "${1:-}" in
   --drun)
-    exec rofi -show drun -theme "$theme" -theme-str "$base_theme_override"
+    exec rofi -show drun -normal-window -theme "$theme" -theme-str "$base_theme_override"
     ;;
   --window)
-    exec rofi -show window -theme "$theme" -theme-str "$base_theme_override"
+    exec rofi -show window -normal-window -theme "$theme" -theme-str "$base_theme_override"
     ;;
   --calc)
-    exec rofi -show calc -modes calc -theme "$theme" -theme-str "$base_theme_override"
+    exec rofi -show calc -modes calc -normal-window -theme "$theme" -theme-str "$base_theme_override"
     ;;
   --tab-picker)
     exec rofi -dmenu -i -no-custom -only-match -format i -p 'Pestañas Firefox' \
-      -show-icons -theme "$theme" -theme-str "$base_theme_override listview { lines: 14; }"
+      -show-icons -normal-window -theme "$theme" -theme-str "$base_theme_override listview { lines: 14; }"
     ;;
 esac
 
 prompt="${1:-i3}"
 lines="${2:-14}"
-exec rofi -dmenu -i -p "$prompt" -show-icons -theme "$theme" \
+exec rofi -dmenu -i -p "$prompt" -show-icons -normal-window -theme "$theme" \
   -theme-str "$base_theme_override listview { lines: $lines; }"

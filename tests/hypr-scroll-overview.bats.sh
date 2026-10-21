@@ -1,40 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="$ROOT/nixos/profiles/hyprland/hyprland.nix"
-PACKAGE="$ROOT/nixos/profiles/hyprland/hyprland-scroll-overview.nix"
-AUTOSTART="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/autostart.lua"
-BINDINGS="$ROOT/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/lua/keybindings.lua"
-LOOK_AND_FEEL="$ROOT/dotfiles/config/profiles/hyprland/.config/hypr/lua/look-and-feel.lua"
-
-fail() {
-  printf 'FAIL: %s\n' "$*" >&2
-  exit 1
-}
-
-for file in "$PROFILE" "$PACKAGE" "$AUTOSTART" "$BINDINGS" "$LOOK_AND_FEEL"; do
-  [[ -f $file ]] || fail "missing $file"
-done
-
-grep -Fq 'repo = "hyprland-scroll-overview";' "$PACKAGE"
-grep -Fq 'version = "2efa6168e072194005152106ded1d7acd3a5170c";' "$PACKAGE"
-grep -Fq 'hash = "sha256-l+47qR3CWO/3xdTLuC23Nktmys7ibRjhVU4gW19NtYg=";' "$PACKAGE"
-! grep -Fq 'environment.etc."scrolloverview.so"' "$PROFILE"
-! grep -Fq 'hyprctl plugin load /etc/scrolloverview.so' "$AUTOSTART"
-grep -Fq 'hl.on("hyprland.start", function()' "$AUTOSTART"
+python3 "$ROOT/tests/hypr-scroll-overview.test.py"
+python3 "$ROOT/tests/hypr-scroll-overview-package.test.py"
 lua="${ORGM_TEST_LUA:-$(command -v lua || true)}"
-if [[ -n "$lua" ]]; then
-  "$lua" "$ROOT/tests/hypr-sway-bindings.lua" "$ROOT"
+if [[ -z "$lua" ]]; then
+  printf '%s\n' 'SKIP: adjacent binding/startup regression requires Lua'
 else
-  printf '%s\n' 'SKIP: executable keybinding regression requires Lua'
+  "$lua" "$ROOT/tests/hypr-sway-bindings.lua" "$ROOT"
 fi
-if grep -Fq 'hyprctl dispatch scrolloverview:overview toggle' "$BINDINGS"; then
-  fail 'ScrollOverview must use its Lua dispatcher API'
-fi
-grep -Fq 'if hl.plugin and hl.plugin.scrolloverview then' "$LOOK_AND_FEEL"
-grep -Fq 'hl.plugin.scrolloverview.configure({' "$LOOK_AND_FEEL"
-grep -Fq 'layout = "vertical",' "$LOOK_AND_FEEL"
-grep -Fq 'workspace_gap = 24,' "$LOOK_AND_FEEL"
-
-printf '%s\n' 'hypr-scroll-overview: shared Quickshell selector, no required compiled plugin'
+printf '%s\n' 'hypr-scroll-overview: pinned native plugin with Quickshell fallback'

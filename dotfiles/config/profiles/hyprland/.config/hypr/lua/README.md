@@ -22,9 +22,14 @@ behavior changes in these Lua modules.
 Keep this order deterministic. Put shared external command names in
 `programs.lua`; pass them into modules instead of duplicating paths.
 
-`lua.autostart` loads ScrollOverview first at `hyprland.start`. Its plugin load
-reloads the configuration; `lua.look-and-feel` then configures it only when
-`hl.plugin.scrolloverview` is available.
+`lua.autostart` calls `lua.overview.register()` during configuration evaluation.
+It registers `/etc/scrolloverview.so`, or the standalone GC-root under
+`$XDG_STATE_HOME/orgm-hyprland-tools/scrolloverview` (default `~/.local/state`).
+Hyprland's native plugin manager loads it after evaluation and re-evaluates the
+config; `lua.look-and-feel` configures it when `hl.plugin.scrolloverview` exists.
+Do not move registration into `hyprland.start` or launch an asynchronous loader.
+Alt+Tab and Alt+Shift+Tab use ScrollOverview, with the existing Quickshell
+forward/reverse commands retained if the plugin is absent or its action fails.
 
 ## Module contract
 

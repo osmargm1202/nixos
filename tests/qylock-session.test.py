@@ -13,6 +13,7 @@ import signal
 import subprocess
 import tempfile
 import time
+from helpers.wayland_pointer import Pointer
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = Path(os.environ['ORGM_TEST_QYLOCK_PACKAGE']).resolve()
@@ -27,12 +28,12 @@ for name in ('orgm-qylock-pw', 'orgm-qylock-fp'):
 env = dict(os.environ, HOME=str(HOME), XDG_CONFIG_HOME=str(HOME/'.config'),
     XDG_STATE_HOME=str(HOME/'.local/state'), XDG_CACHE_HOME=str(HOME/'.cache'),
     XDG_DATA_HOME=str(HOME/'.local/share'), XDG_RUNTIME_DIR=str(runtime),
-    WLR_BACKENDS='headless', WLR_HEADLESS_OUTPUTS='2', WLR_RENDERER='gles2',
+    XDG_CURRENT_DESKTOP='sway', WLR_BACKENDS='headless', WLR_HEADLESS_OUTPUTS='2', WLR_RENDERER='gles2',
     WLR_RENDERER_ALLOW_SOFTWARE='1', QT_QPA_PLATFORM='wayland',
     PULSE_SERVER='unix:'+str(runtime/'nonexistent-pulse'), QML_XHR_ALLOW_FILE_READ='1',
     DBUS_SYSTEM_BUS_ADDRESS='unix:path='+str(runtime/'nonexistent-system-bus'))
 for key in ('DISPLAY','WAYLAND_DISPLAY','SWAYSOCK','DBUS_SESSION_BUS_ADDRESS','WAYLAND_SOCKET',
-            'ORGM_VISUAL_PROFILE_STATE_DIR','QS_CONFIG_PATH','QS_CONFIG_NAME'):
+            'ORGM_VISUAL_PROFILE_STATE_DIR','QS_CONFIG_PATH','QS_CONFIG_NAME','HYPRLAND_INSTANCE_SIGNATURE'):
     env.pop(key, None)
 intel = Path('/dev/dri/by-path/pci-0000:00:02.0-render')
 if intel.exists(): env['WLR_RENDER_DRM_DEVICE'] = str(intel.resolve())
@@ -95,6 +96,30 @@ try:
         return dict(id=item['id'], config=item['config'], themeUrl=(Path(META['themes'])/item['id']).as_uri(),
             pamDirectory=str(policy), user=pwd.getpwuid(os.getuid()).pw_name, realName='Private test', host='private-sway',
             home=str(HOME), icon='', fingerprint=False)
+    def touch_test():
+        # Keys-only theme: touch the actual packaged auth keyboard, then its Enter.
+        # Only the fake test PAM token is used on this private display.
+        pixel=next(i for i in items if i['id']=='pixel-coffee')
+        command('swaymsg','output','HEADLESS-2','disable').check_returncode()
+        touched=launch(Path(META['lockQml']),settings(pixel),HOME/'touch-ready')
+        wait(lambda:(s if (s:=status(touched,'orgm-lock')) and s['secure'] and s['surfaces']==1 else None),'pixel touch lock')
+        command('swaymsg','focus','output','HEADLESS-1').check_returncode();time.sleep(.7)
+        key('QYLOCK_TEST_ONLY_NOT_A_REAL_PASSWORD')
+        pointer=Pointer(runtime/env['WAYLAND_DISPLAY'])
+        try:
+            def tap_at(x,y):
+                pointer.move(x,y,1920,1080);time.sleep(.1);pointer.button(True);pointer.button(False);time.sleep(.25)
+            tap_at(94,1042)  # visible secure keyboard button, output1
+            if os.environ.get('ORGM_TEST_QYLOCK_TOUCH_CAPTURE'):command('grim',os.environ['ORGM_TEST_QYLOCK_TOUCH_CAPTURE']).check_returncode()
+            tap_at(1446,850) # Enter, common14.9-unit second row,1100x360 board
+            try:assert touched.wait(timeout=7)==0
+            except subprocess.TimeoutExpired:raise AssertionError('Touch Enter did not submit: '+str(status(touched,'orgm-lock')))
+        finally:pointer.close()
+        command('swaymsg','output','HEADLESS-2','enable').check_returncode()
+        print('PASS: actual secure-lock keyboard button + touch Enter submits Keys-only Pixel Coffee through fake PAM',flush=True)
+
+    if os.environ.get('ORGM_TEST_QYLOCK_TOUCH_ONLY'):
+        touch_test();raise SystemExit(0)
     candidates = [settings(i) for i in items]
     preview = launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/preview.qml', dict(candidates=candidates))
     wait(lambda:status(preview,'lock-preview'),'preview IPC')
@@ -184,7 +209,7 @@ try:
 
     winter = next(i for i in items if i['id']=='winter')
     ready = HOME/'secure-ready'
-    locker = launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/lock.qml',settings(winter),ready)
+    locker = launch(Path(META['lockQml']),settings(winter),ready)
     wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==2 else None),'ext-session-lock secure on both monitors')
     assert ready.read_text()=='secure'
     command('swaymsg','output','HEADLESS-2','disable').check_returncode()
@@ -225,12 +250,14 @@ try:
         raise AssertionError('Fake PAM did not unlock: '+str(status(locker,'orgm-lock')))
     print('PASS: two-monitor Wayland lock, hotplug/all-off/restore, mode/scale changes, Escape rejection, fallback and fake-PAM negative/positive authentication',flush=True)
 
-    themed=launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/lock.qml',settings(winter),HOME/'theme-ready')
+    themed=launch(Path(META['lockQml']),settings(winter),HOME/'theme-ready')
     wait(lambda:(s if (s:=status(themed,'orgm-lock')) and s['secure'] else None),'winter real lock')
     time.sleep(.6)
     key('QYLOCK_TEST_ONLY_NOT_A_REAL_PASSWORD');key('-k','Return')
     assert themed.wait(timeout=5)==0
     print('PASS: normal Winter theme submits through the same real PAM adapter (test token only)',flush=True)
+
+    touch_test()
 
     # Now validate the real launcher's daemonize/duplicate contract WITHOUT
     # starting any real PAM conversation (no typing into that lock).

@@ -6,7 +6,7 @@ menu=$'!a ChatGPT\n!c Claude\n!g Google\n!y YouTube'
 
 input="${*:-}"
 if [ -z "$input" ]; then
-  input="$(printf '%s\n' "$menu" | rofi -dmenu -i -p 'Search or URL' -mesg 'Hints: !a ChatGPT | !c Claude | !g Google | !y YouTube' -theme "$theme" || true)"
+  input="$(printf '%s\n' "$menu" | "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland -dmenu -i -p 'Search or URL' -mesg 'Hints: !a ChatGPT | !c Claude | !g Google | !y YouTube' || true)"
 fi
 
 input="$(printf '%s' "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"

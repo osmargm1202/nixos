@@ -1,3 +1,5 @@
+require("lua.overview").register()
+
 local exec_once = {
   "hypr-tray-applets",
   "orgm-hyprland-session",

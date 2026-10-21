@@ -96,10 +96,14 @@ def caffeine():
     return json.loads(run(str(binary/'orgm-sway-desktop'),'control-state').stdout)['caffeine']
 
 
-def center_state():
+def center_status():
     result=run('qs','--path',str(config/'quickshell/orgm-wallpapers/menus.qml'),'ipc','call','menu','status')
-    try:return json.loads(result.stdout)['state']
+    try:return json.loads(result.stdout)
     except (ValueError,KeyError):return {}
+
+def center_state():
+    return center_status().get('state', {})
+
 
 def click(x,y):
     pointer.move(x,y,1280,900)
@@ -147,7 +151,23 @@ try:
     wait(lambda:'orgm-control' in run('swaymsg','-t','get_outputs').stdout,'center mapped')
     time.sleep(.4)
     run('grim',str(home/'caffeine-on.png')).check_returncode()
-    click(500,403)
+    # The complete center scrolls; find the real Caffeine control rather than
+    # clicking coordinates belonging to the previous compact center.
+    for _ in range(40):
+        button=next(b for b in center_status()['controls'] if b['id']=='caffeine')
+        if 55 < button['y'] and button['y']+button['height'] < 845:
+            break
+        pointer.move(640,450,1280,900)
+        pointer.scroll(60 if button['y']>450 else -60)
+        time.sleep(.12)
+    else:
+        raise AssertionError('Caffeine button never became visible')
+    time.sleep(.5)  # Let Qt's wheel-scroll animation settle before aiming.
+    button=next(b for b in center_status()['controls'] if b['id']=='caffeine')
+    print('Caffeine target:', button, flush=True)
+    run('grim',str(home/'caffeine-target.png')).check_returncode()
+    assert button['enabled'], 'Caffeine must be available'
+    click(button['x']+button['width']/2,button['y']+button['height']/2)
     wait(lambda:center_state().get('caffeine') is False,'center caffeine off after restart completed')
     assert panel.poll() is None, 'Caffeine toggles in place without closing the center'
     run('wtype','-k','Escape').check_returncode()

@@ -42,6 +42,12 @@ class Pointer:
                                   0x110, int(pressed)))
         self.frame()
 
+    def scroll(self, distance):
+        # zwlr_virtual_pointer_v1.axis(time, vertical_scroll, wl_fixed).
+        self.send(5, 3, struct.pack('=IIi', int(time.monotonic()*1000) & 0xffffffff,
+                                   0, round(distance*256)))
+        self.frame()
+
     def send(self, object_id, opcode, body):
         self.socket.sendall(struct.pack('=II', object_id, (len(body) + 8) << 16 | opcode) + body)
 

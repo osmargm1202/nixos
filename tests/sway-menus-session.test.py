@@ -26,6 +26,7 @@ binary.mkdir(parents=True)
 shutil.copytree(ROOT/'dotfiles/config/profiles/wayland/.local/lib', binary.parent/'lib')
 for name in ('orgm-sway', 'orgm-sway-desktop', 'sway-app-launcher', 'sway-rofi-lib'):
     shutil.copy2(SOURCE/'.local/bin'/name, binary/name)
+shutil.copy2(ROOT/'dotfiles/config/profiles/wayland/.local/bin/orgm-rofi', binary/'orgm-rofi')
 calls = home/'calls'
 calls.touch()
 for name in ('orgm-qylock', 'systemctl', 'orgm-visual-profile'):

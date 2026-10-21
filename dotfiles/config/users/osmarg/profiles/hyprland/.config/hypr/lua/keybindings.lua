@@ -1,3 +1,4 @@
+local overview = require("lua.overview")
 local M = {}
 
 
@@ -76,10 +77,12 @@ function M.setup(programs)
   hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("orgm-hyprland wallpaper-pick"))
   hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("env ORGM_VISUAL_PROFILE_BACKEND=hyprland orgm-visual-profile random-wallpaper"))
 
+  hl.bind(mainMod .. " + CTRL + O", hl.dsp.exec_cmd("orgm-osk toggle"))
+
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
-  hl.bind("ALT + Tab", hl.dsp.exec_cmd("orgm-hyprland windows"))
-  hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("orgm-hyprland windows prev"))
+  hl.bind("ALT + Tab", overview.toggle("orgm-hyprland windows"))
+  hl.bind("ALT + SHIFT + Tab", overview.toggle("orgm-hyprland windows prev"))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("hypr-kill-windows"))
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())

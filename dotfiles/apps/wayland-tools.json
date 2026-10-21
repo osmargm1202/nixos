@@ -2,6 +2,9 @@
   "version": 1,
   "name": "wayland-tools",
   "paths": [
-    ".local/lib/orgm-wayland"
+    ".local/lib/orgm-wayland",
+    ".local/bin/orgm-tablet",
+    ".local/bin/orgm-session-dock",
+    ".config/quickshell/orgm-tablet-dock"
   ]
 }

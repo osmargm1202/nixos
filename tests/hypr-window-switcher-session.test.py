@@ -45,7 +45,8 @@ with tempfile.TemporaryDirectory(prefix='hs-') as tmp:
     for key in ('WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'DISPLAY', 'SWAYSOCK', 'I3SOCK',
                 'HYPRLAND_INSTANCE_SIGNATURE', 'QS_CONFIG_PATH', 'QS_CONFIG_NAME'):
         env.pop(key, None)
-    (home/'hyprland.lua').write_text('hl.monitor({output="",mode="1280x800@60",position="0x0",scale=1})\n'
+    (home/'hyprland.lua').write_text(f'package.path = {json.dumps(str(ROOT/"dotfiles/config/profiles/hyprland/.config/hypr/?.lua"))} .. ";" .. package.path\n'
+        'hl.monitor({output="",mode="1280x800@60",position="0x0",scale=1})\n'
         'hl.config({general={layout="scrolling"},animations={enabled=false},input={follow_mouse=1},debug={disable_logs=false}})\n'
         f'dofile({json.dumps(str(ROOT/"dotfiles/config/profiles/hyprland/.config/hypr/lua/layout.lua"))})\n'
         f'dofile({json.dumps(str(ROOT/"dotfiles/config/profiles/hyprland/.config/hypr/lua/window-rules.lua"))})\n'

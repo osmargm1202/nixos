@@ -31,6 +31,7 @@ if declare -F blehook >/dev/null; then
 fi
 
 if declare -F blehook >/dev/null && command -v fzf >/dev/null && declare -F ble-import >/dev/null; then
+  ble-import contrib/integration/fzf-completion
   ble-import contrib/integration/fzf-key-bindings
   blesh_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/bash"
   if [[ -r "$blesh_config_dir/fzf-widgets.bash" ]]; then

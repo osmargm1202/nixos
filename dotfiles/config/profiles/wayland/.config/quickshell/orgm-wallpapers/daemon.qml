@@ -138,6 +138,7 @@ ShellRoot {
                 choice: panel.choice || "", screen: panel.screen ? panel.screen.name : "",
                 items: panel.catalog.items || [], colors: panel.catalog.colors || {},
                 state: kind === "control" ? panel.state : null,
+                controls: kind === "control" ? panel.snapshot() : null,
                 overview: kind === "windows" ? panel.snapshot() : null,
                 audio: kind === "audio" ? panel.snapshot() : null })
         }

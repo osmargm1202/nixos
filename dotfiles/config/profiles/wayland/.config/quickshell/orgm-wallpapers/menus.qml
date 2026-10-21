@@ -41,6 +41,7 @@ ShellRoot {
                 screen: menu.item && menu.item.screen ? menu.item.screen.name : "",
                 items: root.catalog.items || [], colors: root.catalog.colors || {},
                 state: root.catalog.kind === "control" && menu.item ? menu.item.state : null,
+                controls: root.catalog.kind === "control" && menu.item ? menu.item.snapshot() : null,
                 overview: root.catalog.kind === "windows" && menu.item ? menu.item.snapshot() : null,
                 audio: root.catalog.kind === "audio" && menu.item ? menu.item.snapshot() : null })
         }

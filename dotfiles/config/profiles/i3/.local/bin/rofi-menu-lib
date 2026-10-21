@@ -11,5 +11,5 @@ rofi_menu_theme() {
 }
 
 rofi_menu() {
-  rofi -theme "$(rofi_menu_theme)" "$@"
+  rofi -normal-window -theme "$(rofi_menu_theme)" "$@"
 }

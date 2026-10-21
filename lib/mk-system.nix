@@ -71,6 +71,8 @@ let
         ../nixos/users/default.nix
         ../nixos/functions/binary-cache.nix
         ../nixos/fonts.nix
+        ../nixos/osk
+        ../nixos/tablet.nix
         ../nixos/orgm/default.nix
       ]
       ++ roleModules

@@ -20,8 +20,11 @@ hl = {
 }
 require("lua.keybindings").setup(require("lua.programs"))
 assert(bindings["SUPER + B"] == "chromium", "personal Win+B must launch Chromium")
-assert(bindings["ALT + Tab"] == "orgm-hyprland windows")
-assert(bindings["ALT + SHIFT + Tab"] == "orgm-hyprland windows prev")
+assert(type(bindings["ALT + Tab"]) == "function")
+bindings["ALT + Tab"]()
+assert(startup[#startup] == "orgm-hyprland windows")
+bindings["ALT + SHIFT + Tab"]()
+assert(startup[#startup] == "orgm-hyprland windows prev")
 assert(bindings["SUPER + V"] == "orgm-hyprland clipboard")
 assert(bindings["SUPER + L"] == "orgm-qylock lock")
 assert(bindings["SUPER + ALT + Space"] == "orgm-hyprland control")

@@ -10,6 +10,10 @@ let
   hyprlandPackage = pkgs.hyprland;
   hyprlandPortalPackage = pkgs.xdg-desktop-portal-hyprland;
   hyprKdeconnectFix = pkgs.callPackage ./hypr-kdeconnect-fix.nix { };
+  scrollOverviewPackage = pkgs.callPackage ./hyprland-scroll-overview.nix {
+    hyprland = hyprlandPackage;
+    inherit (pkgs.hyprlandPlugins) mkHyprlandPlugin;
+  };
   dockPackage = import ./nwg-dock.nix { inherit pkgs; };
   waybarPackage = import ./waybar.nix { inherit pkgs; };
 in
@@ -19,6 +23,10 @@ in
     ../../print/printer.nix
     ./desktop-session.nix
   ];
+  environment.etc."scrolloverview.so" = lib.mkIf config.programs.hyprland.enable {
+    source = "${scrollOverviewPackage}/lib/libscrolloverview.so";
+  };
+
   services.xserver.enable = false;
   services.displayManager.defaultSession = "hyprland";
 

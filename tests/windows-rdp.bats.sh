@@ -116,7 +116,12 @@ with_tmp() {
 	local tmp rc
 	tmp="$(mktemp -d)"
 	: >"$tmp/calls"
-	mkdir -p "$tmp/home"
+	# The themed-menu dependency and Python must exist even in the closed PATH.
+	mkdir -p "$tmp/home/.local/bin" "$tmp/home/.local/lib"
+	cp "$REPO_DIR/dotfiles/config/profiles/wayland/.local/bin/orgm-rofi" "$tmp/home/.local/bin/"
+	cp -R "$REPO_DIR/dotfiles/config/profiles/wayland/.local/lib/orgm-wayland" "$tmp/home/.local/lib/"
+	ln -s "$(command -v python3)" "$tmp/python3"
+	export XDG_CONFIG_HOME="$tmp/home/.config" XDG_CACHE_HOME="$tmp/home/.cache" XDG_STATE_HOME="$tmp/home/.local/state"
 	printf '%s\n' osmar-password >"$tmp/osmar-password"
 	printf '%s\n' osmarg >"$tmp/osmar-user"
 	make_default_stubs "$tmp"
@@ -287,7 +292,8 @@ test_graphical_selector_and_moonlight() {
     export JQ_OUTPUT=$'"'"'tony-windows\t100.64.0.4\tonline\norgm\t100.64.0.6\tonline'"'"'
     export ROFI_INDEX=4 WINDOWS_RDP_TEST_DISPLAY=:1 WINDOWS_RDP_TEST_DESKTOP=Hyprland
     run_script "$script" connect "$tmp"
-    assert_calls_contains "$tmp" "rofi -theme .*/.config/orgm-hypr/rofi/hypr-menu.rasi -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "desktop selector uses the shared themed Rofi menu"
+    assert_calls_contains "$tmp" "rofi -no-config -theme .*/.config/rofi-sway/sway-launcher.rasi -theme-str" "desktop selector uses the shared themed Rofi menu"
+    assert_calls_contains "$tmp" " -dmenu -i -no-custom -only-match -format i -p Conectar remoto" "selector preserves row-index selection"
     assert_calls_contains "$tmp" "xfreerdp3 /v:100.64.0.4:3389" "Rofi dispatches online RDP"
     assert_calls_not_contains "$tmp" "docker" "graphical remote RDP leaves the local VM untouched"
   ' bash "$script"

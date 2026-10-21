@@ -60,7 +60,7 @@ def windows(node=None):
 
 
 def pick(prompt, labels, index=False):
-    args = ["rofi", "-no-config", "-theme", str(Path.home()/".config/rofi-sway/sway-menu.rasi"), "-dmenu", "-i", "-p", prompt]
+    args = [str(Path.home()/".local/bin/orgm-rofi"), "--compositor", COMPOSITOR, "-dmenu", "-i", "-p", prompt]
     if index:
         args += ["-format", "i", "-no-custom"]
     result = subprocess.run(args, input="\n".join(labels), capture_output=True, text=True)

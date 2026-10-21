@@ -23,7 +23,7 @@ diff -u <(sed '3d' "$HYPR_THEME") <(sed '3d; s/i3-current.rasi/orgm-current.rasi
 i3_theme="$(XDG_CURRENT_DESKTOP=i3 HOME="$tmp/home" bash -c '. "$1"; rofi_menu_theme' -- "$LIB")"
 hypr_theme="$(XDG_CURRENT_DESKTOP=Hyprland HOME="$tmp/home" bash -c '. "$1"; rofi_menu_theme' -- "$HYPR_LIB")"
 [[ "$i3_theme" == "$tmp/home/.config/rofi/i3-menu.rasi" ]]
-[[ "$hypr_theme" == "$tmp/home/.config/orgm-hypr/rofi/hypr-menu.rasi" ]]
+[[ "$hypr_theme" == "$tmp/home/.config/rofi-sway/sway-launcher.rasi" ]]
 
 mkdir -p "$tmp/bin" "$tmp/home"
 cat >"$tmp/bin/rofimoji" <<'EOF'
