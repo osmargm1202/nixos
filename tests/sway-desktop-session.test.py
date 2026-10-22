@@ -49,7 +49,7 @@ for name in ('brightnessctl', 'swaync-client'):
     (binary/name).chmod(0o755)
 (config/'waybar').mkdir()
 (config/'waybar/orgm-current.css').write_text('@define-color base #071422;\n@define-color blue #71b7ff;\n')
-(home/'sway.conf').write_text('output HEADLESS-1 mode 1280x900\nfont pango:monospace 10\ndefault_border none\n'
+(home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1280x900\nfont pango:monospace 10\ndefault_border none\n'
     f'bindsym Mod1+Tab exec {binary}/orgm-sway-desktop windows\n'
     f'bindsym Mod1+Shift+Tab exec {binary}/orgm-sway-desktop windows prev\n'
     f'bindsym XF86AudioRaiseVolume exec {binary}/sway-volume-osd up\n'

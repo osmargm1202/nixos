@@ -24,7 +24,7 @@ runtime = HOME/'runtime'; runtime.mkdir(mode=0o700)
 policy = HOME/'pam'; policy.mkdir()
 for name in ('orgm-qylock-pw', 'orgm-qylock-fp'):
     (policy/name).write_text(f'auth required {PAM}\naccount required {PAM}\n')
-(HOME/'sway.conf').write_text('output HEADLESS-1 mode 1920x1080 pos 0 0\noutput HEADLESS-2 mode 1280x720 pos 1920 0\nfont pango:monospace 10\ndefault_border none\n')
+(HOME/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1920x1080 pos 0 0\noutput HEADLESS-2 mode 1280x720 pos 1920 0\nfont pango:monospace 10\ndefault_border none\n')
 env = dict(os.environ, HOME=str(HOME), XDG_CONFIG_HOME=str(HOME/'.config'),
     XDG_STATE_HOME=str(HOME/'.local/state'), XDG_CACHE_HOME=str(HOME/'.cache'),
     XDG_DATA_HOME=str(HOME/'.local/share'), XDG_RUNTIME_DIR=str(runtime),

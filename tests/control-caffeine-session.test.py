@@ -36,7 +36,7 @@ barconfig.mkdir()
 (barconfig/'config').write_text(json.dumps([{'layer': 'top', 'position': position, 'height': 30,
     'modules-left': ['idle_inhibitor'], 'idle_inhibitor': {'format': '{status}'}} for position in ('top','bottom')]))
 (barconfig/'style.css').write_text('window#waybar { background: #111111; color: white; }')
-(home/'sway.conf').write_text('output HEADLESS-1 mode 1280x900\nfont pango:monospace 10\n')
+(home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1280x900\nfont pango:monospace 10\n')
 (binary/'systemctl').write_text('#!'+sys.executable+'\n'+'''
 import os,signal,subprocess,sys,time
 from pathlib import Path

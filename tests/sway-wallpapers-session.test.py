@@ -65,7 +65,7 @@ profile_state.parent.mkdir(parents=True)
 profile_state.write_text('slc\n')
 (config/'waybar').mkdir()
 (config/'waybar/orgm-current.css').write_text('@define-color base #071422;\n@define-color blue #71b7ff;\n')
-(HOME/'sway.conf').write_text('output HEADLESS-1 mode 1920x1080 pos 0 0\noutput HEADLESS-2 mode 1280x720 pos 1920 0\n'
+(HOME/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1920x1080 pos 0 0\noutput HEADLESS-2 mode 1280x720 pos 1920 0\n'
     'font pango:monospace 10\ndefault_border none\n')
 env = dict(os.environ, HOME=str(HOME), XDG_CONFIG_HOME=str(config), XDG_CACHE_HOME=str(HOME/'.cache'),
            XDG_STATE_HOME=str(HOME/'.local/state'), XDG_DATA_HOME=str(HOME/'.local/share'),

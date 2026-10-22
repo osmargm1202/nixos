@@ -119,6 +119,11 @@ function M.setup(programs)
     hl.bind(mainMod .. " + CTRL + " .. key, hl.dsp.window.move({ direction = dir }))
   end
 
+  -- Match Sway/i3: Shift+arrows move windows; keep Ctrl aliases above.
+  for _, key in ipairs({ "left", "down", "up", "right" }) do
+    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ direction = moveDirs[key] }), { repeating = true })
+  end
+
   -- Workspaces.
   hl.bind(mainMod .. " + Home", hl.dsp.focus({ workspace = 1 }))
   hl.bind(mainMod .. " + End", hl.dsp.focus({ workspace = 10 }))

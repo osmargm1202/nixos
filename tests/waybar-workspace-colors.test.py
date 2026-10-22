@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix='workspace-css-') as tmp:
     home = Path(tmp)
     runtime = home/'r'
     runtime.mkdir(mode=0o700)
-    (home/'sway.conf').write_text('output HEADLESS-1 mode 640x480\n')
+    (home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 640x480\n')
     env = dict(os.environ, HOME=tmp, XDG_RUNTIME_DIR=str(runtime), WLR_BACKENDS='headless',
                WLR_HEADLESS_OUTPUTS='1', WLR_RENDERER='gles2', WLR_RENDERER_ALLOW_SOFTWARE='1')
     for name in ('SWAYSOCK', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'DISPLAY', 'DBUS_SESSION_BUS_ADDRESS'):

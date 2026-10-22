@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='vf-') as tmp:
     for key in ('WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'DISPLAY', 'SWAYSOCK', 'I3SOCK',
                 'HYPRLAND_INSTANCE_SIGNATURE'):
         env.pop(key, None)
-    (home/'sway.conf').write_text('output HEADLESS-1 mode 1280x800\n'
+    (home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1280x800\n'
         f'include {ROOT}/dotfiles/config/profiles/sway/.config/sway/window-rules.conf\n')
     children = []
     log = (home/'session.log').open('w')

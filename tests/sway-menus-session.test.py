@@ -53,7 +53,7 @@ for profile, color in (('slc', [255, 0, 0]), ('orgm', [0, 255, 0]), ('osmar', [0
     saved.write_text(str(image)+'\n')
 (config/'waybar').mkdir()
 (config/'waybar/orgm-current.css').write_text('@define-color base #071422;\n@define-color blue #71b7ff;\n')
-(home/'sway.conf').write_text('output HEADLESS-1 mode 1280x720\nfont pango:monospace 10\n')
+(home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1280x720\nfont pango:monospace 10\n')
 env = dict(os.environ, HOME=str(home), XDG_CONFIG_HOME=str(config), XDG_STATE_HOME=str(home/'.local/state'),
            XDG_CACHE_HOME=str(home/'.cache'), XDG_DATA_HOME=str(home/'.local/share'),
            XDG_RUNTIME_DIR=str(runtime), PATH=str(binary)+os.pathsep+os.environ['PATH'],

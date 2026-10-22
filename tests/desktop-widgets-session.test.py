@@ -22,7 +22,7 @@ runtime = home/'r'
 runtime.mkdir(mode=0o700)
 shutil.copytree(SOURCE/'.config', home/'.config')
 shutil.copytree(SOURCE/'.local', home/'.local')
-(home/'sway.conf').write_text('output HEADLESS-1 mode 1280x720\nfont pango:monospace 10\n')
+(home/'sway.conf').write_text('xwayland disable\noutput HEADLESS-1 mode 1280x720\nfont pango:monospace 10\n')
 env = dict(os.environ, HOME=str(home), XDG_CONFIG_HOME=str(home/'.config'),
            XDG_CACHE_HOME=str(home/'.cache'), XDG_DATA_HOME=str(home/'.local/share'),
            XDG_STATE_HOME=str(home/'.local/state'), XDG_RUNTIME_DIR=str(runtime),

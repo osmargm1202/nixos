@@ -47,7 +47,7 @@ reload_hooks = '\n'.join(line.replace('env PATH="$HOME/.local/bin:$PATH" sway-ga
                          for line in production.splitlines()
                          if line.startswith('exec_always ') and
                          ('swaymsg gaps' in line or 'sway-game-mode sync' in line))
-(config/'config').write_text(f'''output HEADLESS-1 mode 800x600
+(config/'config').write_text(f'''xwayland disable\noutput HEADLESS-1 mode 800x600
 output * bg {image} fill
 font pango:monospace 10
 default_border none
