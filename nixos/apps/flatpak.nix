@@ -25,6 +25,9 @@ let
     }
   ];
   discord = pkgs.callPackage ./discord-webrtc.nix { };
+  windowsFontNames = pkgs.callPackage ../packages/windows-font-names.nix {
+    microsoftOfficeFonts = pkgs.callPackage ../packages/microsoft-office-fonts.nix { };
+  };
 in
 {
   config = lib.mkIf enabled {
@@ -55,6 +58,18 @@ in
 
     home-manager.users.${userName} = { lib, ... }: {
       config = lib.mkMerge [ {
+      # CADCraft (user flatpak, outside nix-flatpak) ignores fontconfig and the
+      # host fonts in /run/host/fonts: it only scans ~/.local/share/fonts, by
+      # Windows file name, and follows at most one symlink, so copy real files.
+      home.activation.cadcraftFonts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        fonts="$HOME/.local/share/fonts/windows-names"
+        $DRY_RUN_CMD rm -rf "$fonts"
+        $DRY_RUN_CMD mkdir -p "$fonts"
+        $DRY_RUN_CMD cp -L --no-preserve=mode ${windowsFontNames}/share/fonts/windows-names/* "$fonts"/
+        if ${pkgs.flatpak}/bin/flatpak info --user ai.storyteller.cadcraft >/dev/null 2>&1; then
+          $DRY_RUN_CMD ${pkgs.flatpak}/bin/flatpak override --user --filesystem=xdg-data/fonts:ro ai.storyteller.cadcraft
+        fi
+      '';
       home.activation.removeFastpotify = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         if ${pkgs.flatpak}/bin/flatpak info --user rocks.fastpotify.Fastpotify >/dev/null 2>&1; then
           $DRY_RUN_CMD ${pkgs.flatpak}/bin/flatpak uninstall --user --noninteractive --assumeyes rocks.fastpotify.Fastpotify
