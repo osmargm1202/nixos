@@ -22,7 +22,7 @@ recorder = r'''
 local root = arg[1]
 package.path = root .. "/dotfiles/config/users/osmarg/profiles/hyprland/.config/hypr/?.lua;"
   .. root .. "/dotfiles/config/profiles/hyprland/.config/hypr/?.lua;" .. package.path
-package.preload["lua.game-mode"] = function() return {enabled=function() return false end} end
+package.preload["lua.game-mode"] = function() return {enabled=function() return false end,preferences=function() return {vrr=false,tearing=false} end} end
 local function json(value)
   if type(value) == "string" then
     return '"' .. value:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub('\t', '\\t') .. '"'
@@ -75,6 +75,22 @@ for cls in ['firefox', 'Firefox', 'org.mozilla.firefox', 'chromium', 'Chromium',
 for cls in ['kitty', 'org.gnome.Nautilus', 'org.gnome.Loupe',
             'chrome-nngceckbapebfimnlniiiahkandclblb-Default']:
     assert 'scrolling_width' not in effects(cls), (cls, 'not a full-width browser/PWA')
+# ArtCraft uses ai.storyteller.<id>; binary aliases cover AppImage/X11 builds.
+# Catalog: storytold/craft-launcher crates/core/src/catalog.rs (13 apps).
+craft_apps = ['cadcraft', 'photocraft', 'vectorcraft', 'filmcraft', 'lightcraft',
+              'pdfcraft', 'effectcraft', 'designcraft', 'figcraft', 'wordcraft',
+              'soundcraft', 'deckcraft', 'gridcraft', 'printcraft', 'artcraft-launcher']
+for app in craft_apps:
+    for cls in (app, 'ai.storyteller.' + app, app.upper()):
+        actual = effects(cls)
+        assert actual.get('scrolling_width') == 1, (cls, 'ArtCraft must start at 100% column width')
+        assert not actual['floating_result'], (cls, 'keep ArtCraft tiled in scrolling layout')
+        assert not actual.get('fullscreen') and not actual.get('maximize'), (cls, '100% is not fullscreen')
+        assert 'scrolling_width' not in effects(cls, 'Preferences', modal=True), (cls, 'leave modal geometry alone')
+for cls in ['minecraft', 'org.example.cadcraft', 'aiXstorytellerXcadcraft',
+            'not-cadcraft', 'cadcraft-helper', 'ai.storyteller.unknowncraft', 'kitty']:
+    assert 'scrolling_width' not in effects(cls, 'CADCraft'), (cls, 'no title or unbounded suffix matching')
+
 families = [
     (['org.gnome.Nautilus', 'nautilus', 'NAUTILUS'], 78, 78),
     (['org.gnome.Calculator', 'qalculate-gtk', 'qalculate-qt'], 22, 60),

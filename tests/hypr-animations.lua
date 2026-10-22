@@ -1,7 +1,7 @@
 -- Evaluate the real visual config at the compositor API boundary.
 local root = assert(arg[1])
 for _, game_mode in ipairs({ false, true }) do
-  package.loaded["lua.game-mode"] = { enabled = function() return game_mode end }
+  package.loaded["lua.game-mode"] = { enabled = function() return game_mode end, preferences = function() return {vrr=false,tearing=false} end }
   local config, animations = nil, {}
   hl = {
     config = function(value) config = value end,

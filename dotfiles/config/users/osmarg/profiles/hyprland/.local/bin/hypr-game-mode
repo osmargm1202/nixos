@@ -61,9 +61,92 @@ apply_state() {
   fi
 }
 
+read_option() {
+  local path="$state_dir/game-$1"
+  if [[ -f "$path" && -r "$path" ]] && [[ "$(<"$path")" == activated ]]; then
+    printf '%s\n' activated
+  else
+    printf '%s\n' deactivated
+  fi
+}
+
+write_option() {
+  local temporary
+  temporary="$(mktemp "$state_dir/game-$1.tmp.XXXXXX")" || return 1
+  if ! printf '%s\n' "$2" >"$temporary" || ! mv "$temporary" "$state_dir/game-$1"; then
+    rm -f "$temporary"
+    return 1
+  fi
+}
+
+# Subshell releases the lock before a settings menu waits for its next choice.
+set_option() (
+  local key="$1" action="$2" previous next
+  case "$key:$action" in
+    vrr:on|vrr:off|vrr:toggle|tearing:on|tearing:off|tearing:toggle) ;;
+    *) return 64 ;;
+  esac
+  exec 9>"$lock_file" || return 1
+  flock 9 || return 1
+  previous="$(read_option "$key")"
+  case "$action" in
+    on) next=activated ;;
+    off) next=deactivated ;;
+    toggle) [[ "$previous" == activated ]] && next=deactivated || next=activated ;;
+  esac
+  write_option "$key" "$next" || return 1
+  # Saving an opt-in never enables Game Mode or changes the wallpaper.
+  if [[ "$(read_state)" == activated ]] && ! hyprctl reload; then
+    write_option "$key" "$previous" || return 1
+    hyprctl reload || true
+    return 1
+  fi
+)
+
+options_json() {
+  local vrr=false tearing=false
+  [[ "$(read_option vrr)" == activated ]] && vrr=true
+  [[ "$(read_option tearing)" == activated ]] && tearing=true
+  printf '{"vrr":%s,"tearing":%s}\n' "$vrr" "$tearing"
+}
+
+settings_menu() {
+  local choice code vrr tearing
+  while true; do
+    vrr=apagado; tearing=apagado
+    [[ "$(read_option vrr)" == activated ]] && vrr=activado
+    [[ "$(read_option tearing)" == activated ]] && tearing=activado
+    if choice="$(printf '%s\n' "VRR fullscreen: $vrr" "Tearing: $tearing" "Volver" |
+      "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" --compositor hyprland --lines 3 \
+        -dmenu -i -no-custom -only-match -format i -p "Opciones de juegos" \
+        -mesg "Solo durante Modo juego. VRR requiere pantalla compatible; tearing puede producir cortes.")"; then
+      case "$choice" in
+        0) set_option vrr toggle || return $? ;;
+        1) set_option tearing toggle || return $? ;;
+        2) return 0 ;;
+        *) return 64 ;;
+      esac
+    else
+      code=$?
+      [[ "$code" == 1 ]] && return 0
+      return "$code"
+    fi
+  done
+}
+
 mkdir -p "$state_dir"
 
 case "${1:-}" in
+  vrr|tearing)
+    [[ "$#" == 2 ]] || exit 64
+    set_option "$1" "$2"
+    ;;
+  options)
+    options_json
+    ;;
+  settings)
+    settings_menu
+    ;;
   toggle|on|off)
     exec 9>"$lock_file"
     flock 9
@@ -91,7 +174,7 @@ case "${1:-}" in
     fi
     ;;
   *)
-    printf 'Usage: %s {toggle|on|off|status|waybar|sync}\n' "${0##*/}" >&2
+    printf 'Usage: %s {toggle|on|off|status|waybar|sync|options|settings|vrr on/off/toggle|tearing on/off/toggle}\n' "${0##*/}" >&2
     exit 64
     ;;
 esac

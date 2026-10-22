@@ -5,14 +5,23 @@ local function state_file()
   return state_home .. "/hypr/game-mode"
 end
 
-function M.enabled()
-  local file = io.open(state_file(), "r")
-  if not file then
-    return false
-  end
-  local enabled = file:read("*l") == "activated"
+local function activated(path)
+  local file = io.open(path, "r")
+  if not file then return false end
+  -- Match shell command substitution: discard trailing LF, not extra content.
+  local contents = file:read("*a")
   file:close()
-  return enabled
+  return contents ~= nil and contents:gsub("\n+$", "") == "activated"
+end
+
+function M.enabled()
+  return activated(state_file())
+end
+
+-- Explicit user opt-ins; malformed or missing flags always stay disabled.
+function M.preferences()
+  local prefix = state_file():gsub("game%-mode$", "")
+  return { vrr = activated(prefix .. "game-vrr"), tearing = activated(prefix .. "game-tearing") }
 end
 
 return M

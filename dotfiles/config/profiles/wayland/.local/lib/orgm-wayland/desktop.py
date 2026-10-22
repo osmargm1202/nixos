@@ -62,7 +62,9 @@ def control_commands():
         'files': ['nautilus', '--new-window'],
         'displays': ['nwg-displays', '-o', str(Path.home()/'.config'/('hypr/monitors.conf' if comp=='hyprland' else 'sway/outputs.conf')), '-n', '10'],
     }
-    if comp == 'hyprland': commands['displays'] = ['nwg-displays']
+    if comp == 'hyprland':
+        commands['displays'] = ['nwg-displays']
+        commands['gaming-options'] = ['hypr-game-mode','settings']
     return commands
 
 
@@ -73,6 +75,7 @@ def control_controls():
         ('Conexiones y sonido', [('wifi','Red / Wi-Fi'), ('bluetooth','Bluetooth'), ('audio','Audio y micrófono'), ('advanced-audio','Audio avanzado / aplicaciones'), ('terminal-mixer','Mezclador de terminal'), ('notifications','Notificaciones'), ('dnd','No molestar','dnd','')]),
         ('Reproducción', [('previous','Anterior','media','previous'), ('play-pause','Reproducir / pausar','media','play-pause'), ('next','Siguiente','media','next')]),
         ('Energía', [('caffeine','Mantener despierto','caffeine',''), ('gaming','Gaming','gaming',''),
+         *([('gaming-options','Opciones de juegos')] if SWAY.get('compositor')=='hyprland' else []),
          ('power-saver','Ahorro','profile','power-saver'), ('balanced','Equilibrado','profile','balanced'), ('performance','Rendimiento','profile','performance')]),
         ('Espacios de trabajo', [('workspace-'+str(i),str(i),'workspace',str(i)) for i in range(1,11)]),
         ('Apariencia', [('profiles','Perfil visual'), ('wallpaper','Elegir fondo'), ('random-wallpaper','Fondo aleatorio','random-wallpaper',''),

@@ -1,4 +1,5 @@
 local game_mode = require("lua.game-mode").enabled()
+local performance = require("lua.game-mode").preferences()
 local visual_effects = not game_mode
 
 if hl.plugin and hl.plugin.scrolloverview then
@@ -40,10 +41,14 @@ hl.config({
       inactive_border = "rgba(363a4faa)",
     },
     resize_on_border = false,
-    allow_tearing = false,
+    allow_tearing = game_mode and performance.tearing,
     layout = "scrolling",
   },
 
+
+  -- Preserve normal presentation when Game Mode is off. VRR is opt-in and
+  -- fullscreen-only; the monitor/driver still decide whether it can engage.
+  misc = { vrr = game_mode and performance.vrr and 2 or 0 },
 
   group = {
     col = {

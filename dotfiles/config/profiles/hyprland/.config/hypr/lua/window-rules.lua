@@ -12,6 +12,18 @@ for _, class in ipairs({
   hl.window_rule({ match = { class = class, modal = false }, scrolling_width = 1.0 })
 end
 
+-- ArtCraft suite + launcher: verified Flatpak app_ids and binary aliases.
+-- Catalog: storytold/craft-launcher crates/core/src/catalog.rs; printcraft is
+-- PdfCraft's former name. Exact identities only, never arbitrary *craft titles.
+hl.window_rule({
+  name = "orgm-artcraft-column-width",
+  match = {
+    class = "(?i)^(ai\\.storyteller\\.)?(artcraft-launcher|cadcraft|photocraft|vectorcraft|filmcraft|lightcraft|pdfcraft|printcraft|effectcraft|designcraft|figcraft|wordcraft|soundcraft|deckcraft|gridcraft)$",
+    modal = false,
+  },
+  scrolling_width = 1.0,
+})
+
 local function utility(match, size)
   local rule = { match = match, float = true, center = true }
   if size then rule.size = size end
@@ -67,10 +79,22 @@ end
 dialog({ title = "^(Open File|Save File|Save As|Choose Files|Open Folder|Abrir archivo|Guardar archivo|Guardar como|Elegir archivos|Abrir carpeta)$" })
 dialog({ class = "(?i)^(polkit-gnome-authentication-agent-1|org\\.kde\\.polkit-kde-authentication-agent-1|hyprpolkitagent|xdg-desktop-portal-gtk)$" })
 
-local games = { class = "^(steam|steam_app_.*|gamescope|EtG\\.x86_64)$" }
-hl.window_rule({ match = games, opacity = opaque, no_blur = true, no_shadow = true, idle_inhibit = "fullscreen" })
-hl.window_rule({ match = games, tag = "-hyprglass_enabled" })
-hl.window_rule({ match = games, tag = "-hyprglass_preset_glass" })
+-- Client windows are not games: they must not steal focus or render hidden.
+local games = { class = "^(steam_app_[0-9]+|dota2|gamescope|EtG\\.x86_64)$" }
+local desktop_and_games = { class = "^(steam|steam_app_[0-9]+|dota2|gamescope|EtG\\.x86_64)$" }
+hl.window_rule({ match = desktop_and_games, opacity = opaque, no_blur = true, no_shadow = true, idle_inhibit = "fullscreen" })
+hl.window_rule({ match = desktop_and_games, tag = "-hyprglass_enabled" })
+hl.window_rule({ match = desktop_and_games, tag = "-hyprglass_preset_glass" })
+hl.window_rule({ name = "orgm-game-activation", match = games, focus_on_activate = true })
+
+local game_mode = require("lua.game-mode")
+if game_mode.enabled() then
+  local fullscreen_game = { class = games.class, fullscreen = true }
+  hl.window_rule({ name = "orgm-game-background", match = fullscreen_game, render_unfocused = true })
+  if game_mode.preferences().tearing then
+    hl.window_rule({ name = "orgm-game-immediate", match = fullscreen_game, immediate = true })
+  end
+end
 
 -- Native-rule limitations in 0.55: no X11 window_type/window_role matcher.
 -- Therefore no generic role=pop-up rule (would float Chromium PWA main windows),
