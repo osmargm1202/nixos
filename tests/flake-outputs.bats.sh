@@ -31,10 +31,9 @@ nix eval --option allow-import-from-derivation false --impure --raw --expr '
       orgm = { host = "orgm"; user = "osmarg"; desktop = "hyprland"; modes = ["server"]; };
       orgm-ryoku = { host = "orgm"; user = "osmarg"; desktop = "ryoku"; modes = ["server"]; };
       ero = { host = "ero"; user = "osmarg"; desktop = "i3"; modes = []; };
-      jarq = { host = "jarq"; user = "jarq"; desktop = "i3"; modes = []; };
     };
     historical = import ./tests/fixtures/legacy-configurations.nix;
-    selected = { envy = "envy"; lenovo = "lenovo-ryoku"; orgm = "orgm-hyprland"; orgm-ryoku = "orgm-ryoku"; ero = "ero-i3"; jarq = "jarq-i3"; };
+    selected = { envy = "envy"; lenovo = "lenovo-ryoku"; orgm = "orgm-hyprland"; orgm-ryoku = "orgm-ryoku"; ero = "ero-i3"; };
     # Compare boot, graphics and VM boundaries against the preferred existing
     # descriptor, not an alternative desktop or the old host alias.
     mode = c: {
@@ -80,7 +79,10 @@ nix eval --option allow-import-from-derivation false --impure --raw --expr '
       && c.system.nixos.label == want.desktop
       && builtins.attrNames c.specialisation == want.modes
       && snapshot c == snapshot historical.${selected.${name}}.config;
-  in assert f.inputs.nixpkgs.lib.all (name: matches name expected.${name}) (builtins.attrNames expected);
+  in
+  assert f.nixosConfigurations.jarq.config.system.nixos.label == "jarq-multimedia";
+  assert f.nixosConfigurations.jarq.config.system.build.toplevel.drvPath == f.nixosConfigurations.jarq-multimedia.config.system.build.toplevel.drvPath;
+  assert f.inputs.nixpkgs.lib.all (name: matches name expected.${name}) (builtins.attrNames expected);
   "PASS: evaluated canonical host/user/desktop/modes\n"
 '
 printf 'PASS: evaluated flake output baseline\n'

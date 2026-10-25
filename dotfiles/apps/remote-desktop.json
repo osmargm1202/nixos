@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "remote-desktop",
+  "paths": [
+    ".local/bin/orgm-remote-desktop",
+    ".local/lib/orgm-remote-desktop",
+    ".local/share/applications/orgm-remote-desktop.desktop"
+  ]
+}

@@ -59,6 +59,14 @@ printf 'custom\n' >"$cache/nwg-dock-pinned"
 env HYPRLAND_INSTANCE_SIGNATURE=test-dock HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
 [[ "$(<"$cache/nwg-dock-pinned")" == "custom" ]] ||
   fail 'dock must preserve user-managed pins after initialization'
+# Tablet mode keeps the same native dock/pins, only increases icon size.
+mkdir -p "$home/.local/bin"
+printf '#!/usr/bin/env bash\n[[ "${1:-}" == active ]]\n' >"$home/.local/bin/orgm-tablet"
+chmod +x "$home/.local/bin/orgm-tablet"
+env HYPRLAND_INSTANCE_SIGNATURE=test-dock HOME="$home" XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER"
+grep -Fxq -- "-x -i 48 -p right -a center -mr 6 -c hypr-app-launcher -s style.css" "$DOCK_ARGS" || fail 'tablet mode must keep native app dock with larger icons'
+[[ "$(<"$cache/nwg-dock-pinned")" == custom ]] || fail 'tablet mode must not replace favorites'
+rm "$home/.local/bin/orgm-tablet"
 DOCK_BLOCK=1 env HYPRLAND_INSTANCE_SIGNATURE=test-dock HOME="$home" \
   XDG_STATE_HOME="$state" XDG_CONFIG_HOME="$config" XDG_CACHE_HOME="$cache" \
   NWG_DOCK_BIN="$bin/nwg-dock-hyprland" PATH="$bin:$PATH" "$HELPER" &

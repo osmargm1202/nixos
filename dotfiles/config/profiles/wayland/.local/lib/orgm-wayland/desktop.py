@@ -60,7 +60,7 @@ def control_commands():
         'bluetooth': ['blueman-manager'], 'notifications': ['swaync-client', '--toggle-panel', '--skip-wait'],
         'accounts': ['gnome-online-accounts-gtk'], 'monitor': ['gnome-system-monitor'],
         'files': ['nautilus', '--new-window'],
-        'displays': ['nwg-displays', '-o', str(Path.home()/'.config'/('hypr/monitors.conf' if comp=='hyprland' else 'sway/outputs.conf')), '-n', '10'],
+        'displays': ['nwg-displays', '-n', '10'],
     }
     if comp == 'hyprland':
         commands['displays'] = ['nwg-displays']

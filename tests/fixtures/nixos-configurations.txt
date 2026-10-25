@@ -1,6 +1,7 @@
 envy
 ero
 jarq
+jarq-multimedia
 lenovo
 orgm
 orgm-ryoku

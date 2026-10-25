@@ -56,12 +56,23 @@ let
             ../nixos/profiles/terminal.nix
             { networking.hostName = hostName; }
           ]
+        else if role == "multimedia" then
+          [
+            hardware
+            ../nixos/profiles/multimedia.nix
+            { networking.hostName = hostName; }
+          ]
         else
-          throw "Unknown ORGMOS role '${role}'. Valid roles: desktop, server, terminal";
+          throw "Unknown ORGMOS role '${role}'. Valid roles: desktop, server, terminal, multimedia";
     in
     lib.nixosSystem {
       specialArgs = {
-        inherit inputs userName hostName role;
+        inherit
+          inputs
+          userName
+          hostName
+          role
+          ;
       }
       // lib.optionalAttrs (effectiveProfileName != null) {
         profileName = effectiveProfileName;

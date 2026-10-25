@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "cadcraft-opening",
+  "paths": [
+    ".local/bin/orgm-cadcraft",
+    ".local/lib/orgm-artcraft"
+  ]
+}

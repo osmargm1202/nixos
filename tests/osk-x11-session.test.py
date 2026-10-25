@@ -39,6 +39,7 @@ with tempfile.TemporaryDirectory(prefix='ox-') as tmp:
         start(I3,'-c',str(config),stdout=log);time.sleep(.3)
         start('qs','--no-duplicate','--path',str(ui/'shell.qml'),stdout=log)
         wait(lambda:status().get('ready'),'X11 QS and input engine')
+        assert panel()['button'].get('visible',True),'X11 controls must remain visible without WAYLAND_DISPLAY'
         click(panel()['button']);wait(lambda:status()['open'],'X11 fixed button without Rofi')
         cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','osk','hide')
         for word,codes in [('mañana',[50,30,39,30,49,30]),('café',[46,30,33,26,18]),('Ñ@',['shift',39,'altgr',3,'altgr']),('a b',[30,57,16,14,48]),('a@',['altgr',30,3,'altgr']),('€{',['altgr','shift',18,8,'altgr']),('b',[30,30,30,30,30,30,'hold-backspace',48]),('',[1])]:

@@ -40,10 +40,13 @@ export PATH="$(_orgm_path_with /run/wrappers/bin "$HOME/.local/bin" "$HOME/.carg
 if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then
   export PATH="$(_orgm_path_with "$HOME/.local/share/fnm")"
 fi
-unset -f _orgm_path_with
 if command -v fnm >/dev/null; then
   eval "$(fnm env --shell bash)"
 fi
+# fnm prepends Node's bin directory, which can contain unwrapped AI CLIs.
+# Restore our launchers and the privileged sudo wrapper ahead of that directory.
+export PATH="$(_orgm_path_with /run/wrappers/bin "$HOME/.local/bin")"
+unset -f _orgm_path_with
 
 _orgm_sudo() {
   if [[ -x /run/wrappers/bin/sudo ]]; then

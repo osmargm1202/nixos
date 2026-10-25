@@ -6,6 +6,26 @@ import Quickshell.Wayland
 Scope {
  id:root
  property bool opened:false
+ property bool tabletMode:false
+ readonly property bool waylandSession:!!Quickshell.env("WAYLAND_DISPLAY")
+ // X11/i3 keeps its existing controls; Wayland follows manual tablet mode.
+ readonly property bool touchControlsVisible:!waylandSession||tabletMode
+ FileView {
+  id:tabletPolicy
+  path:(Quickshell.env("XDG_STATE_HOME")||Quickshell.env("HOME")+"/.local/state")+"/orgm-tablet/preferences.json"
+  watchChanges:true; printErrors:false
+  onFileChanged:reload()
+  onLoaded: {
+   try {
+    var policy=JSON.parse(text());
+    root.tabletMode=policy!==null&&!Array.isArray(policy)&&policy.mode==="on";
+   } catch(e) { root.tabletMode=false; }
+  }
+  onLoadFailed:root.tabletMode=false
+ }
+ // First-run directories may not exist yet. Retry reads without a helper process;
+ // the watcher handles normal changes, including atomic policy replacement.
+ Timer { interval:2000; running:root.waylandSession; repeat:true; onTriggered:tabletPolicy.reload() }
  property string output:""
  property bool ready:false
  property string error:""
@@ -37,7 +57,7 @@ Scope {
   function hide():void { root.hide(); }
   function toggle():void { root.toggle(""); }
   function retry():void { root.retry(); }
-  function status():string { return JSON.stringify({open:root.opened,ready:root.ready,error:root.error,panels:root.panels.map(p=>p.snapshot())}); }
+  function status():string { return JSON.stringify({open:root.opened,ready:root.ready,error:root.error,tablet:root.tabletMode,panels:root.panels.map(p=>p.snapshot())}); }
  }
  Variants {
   model:Quickshell.screens
@@ -47,7 +67,8 @@ Scope {
    function reset() { board.reset(); }
    function snapshot() {
     return {screen:modelData.name,
-     button:{x:button.margins.left,y:modelData.height-button.margins.bottom-button.height,width:button.width,height:button.height},
+     button:{visible:button.visible,x:button.margins.left,y:modelData.height-button.margins.bottom-button.height,width:button.width,height:button.height},
+     gesture:{visible:gesture.visible},
      keyboard:{x:(modelData.width-background.width)/2+10,y:modelData.height-keyboard.height+10,width:board.width,height:board.height},keys:board.snapshot()};
    }
    Component.onCompleted:root.panels=[...root.panels,surface]
@@ -67,7 +88,7 @@ Scope {
     }
    }
    PanelWindow {
-    id:button; screen:surface.modelData
+    id:button; screen:surface.modelData; visible:root.touchControlsVisible
     anchors { bottom:true; left:true }
     implicitWidth:52; implicitHeight:48
     margins { left:16; bottom:surface.active?keyboard.height+12:18 }
@@ -80,7 +101,7 @@ Scope {
     }
    }
    PanelWindow {
-    screen:surface.modelData; visible:!surface.active
+    id:gesture; screen:surface.modelData; visible:root.touchControlsVisible&&!surface.active
     anchors.bottom:true; implicitWidth:150; implicitHeight:14
     exclusionMode:ExclusionMode.Ignore; focusable:false; aboveWindows:true; color:"transparent"
     Component.onCompleted:root.overlay(this)

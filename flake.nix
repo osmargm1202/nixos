@@ -24,6 +24,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+    orgm-multimedia = {
+      url = "github:osmargm1202/orgm-multimedia/b844e1cf7fa6df473d7aaff6453e10480a009aa2";
+      flake = false;
+    };
     cinnamon-spices-extensions = {
       url = "github:linuxmint/cinnamon-spices-extensions";
       flake = false;
@@ -82,6 +86,7 @@
 
           nixosModules = {
             orgm = ./nixos/orgm/default.nix;
+            multimedia = ./nixos/profiles/multimedia.nix;
             gpu = {
               intel = ./nixos/hardware/gpu/intel.nix;
               radeon = ./nixos/hardware/gpu/radeon.nix;
@@ -119,6 +124,7 @@
           formatter = pkgs.nixfmt-rfc-style;
 
           packages = orgmPackages // {
+            orgm-multimedia = pkgs.callPackage "${inputs.orgm-multimedia}/package.nix" { };
             inherit
               engram
               braveOrigin
@@ -129,6 +135,10 @@
             fprintd-synatudor = fingerprintPackages.fprintd;
             envy-fingerprint-test = fingerprintPackages.probe;
             default = braveOrigin;
+          };
+
+          checks.multimedia-boot = import ./tests/multimedia-boot.nix {
+            inherit pkgs inputs;
           };
 
           # Dev shell for hacking on this NixOS repo. Enter with `nix develop`.

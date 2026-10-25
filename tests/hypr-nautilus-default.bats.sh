@@ -21,7 +21,7 @@ in {
   packages = map (p: p.pname or p.name)
     (c.environment.systemPackages ++ c.home-manager.users.osmarg.home.packages);
   xdgMime = "${system.pkgs.xdg-utils}/bin/xdg-mime";
-  fileHandlers = builtins.mapAttrs (_: handlers: system.pkgs.lib.toList handlers)
+  fileHandlers = builtins.mapAttrs (_: handlers: system.pkgs.lib.splitString ";" handlers)
     (builtins.intersectAttrs { "text/plain" = null; "text/markdown" = null;
       "text/x-markdown" = null; "text/x-python" = null; } c.xdg.mime.defaultApplications);
   neovim = if c.home-manager.users.osmarg.xdg.desktopEntries ? nvim then {
@@ -42,7 +42,7 @@ for profile in sys.argv[2:] or ("hyprland", "ryoku", "i3", "gnome", "labwc", "ci
         assert package in config["packages"], f"{profile}: default manager is not installed"
         editor = "xed.desktop" if profile == "cinnamon" else "org.gnome.TextEditor.desktop"
         for mime in ("text/plain", "text/markdown", "text/x-markdown"):
-            assert config["fileHandlers"][mime] == [editor], (profile, mime, config["fileHandlers"])
+            assert config["fileHandlers"][mime][0] == "ai.storyteller.wordcraft.desktop" and editor in config["fileHandlers"][mime], (profile, mime, config["fileHandlers"])
         assert config["fileHandlers"]["text/x-python"] == ["nvim.desktop"]
         assert not config["neovim"]["terminal"]
         assert "/bin/kitty -e nvim %F" in config["neovim"]["exec"]

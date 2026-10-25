@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='ok-') as tmp:
             except (subprocess.SubprocessError,json.JSONDecodeError):pass
             time.sleep(.06)
         raise AssertionError('Timeout: '+label)
-    def status():return json.loads(cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','osk','status'))
+    def status():return json.loads(cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','status'))
     def panel():return status()['panels'][0]
     def click(rect):
         pointer.move(rect['x']+rect['width']/2,rect['y']+rect['height']/2,1280,800)
@@ -39,13 +39,39 @@ with tempfile.TemporaryDirectory(prefix='ok-') as tmp:
         env['SWAYSOCK']=str(wait(lambda:next(runtime.glob('sway-ipc.*.sock'),None),'Sway IPC'))
         shell=start('qs','--no-duplicate','--path',str(ui/'shell.qml'),stdout=log)
         wait(lambda:status().get('ready'),'QS and persistent native engine')
+        assert not panel()['button'].get('visible',True),'fixed OSK button must be hidden outside tablet mode'
+        assert not panel().get('gesture',{'visible':True})['visible'],'no touch handle outside tablet mode'
+        # Desktop commands can still open the keyboard without making touch controls visible.
+        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','show')
+        wait(lambda:status()['open'],'manual OSK IPC opens in desktop mode')
+        assert not panel()['button']['visible']
+        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','hide')
         helper=str(ROOT/'dotfiles/config/profiles/wayland/.local/bin/orgm-rofi')
         pref=home/'.state/orgm-tablet/preferences.json';pref.parent.mkdir(parents=True,exist_ok=True);pref.write_text('{"mode":"on"}')
         dump=cmd(helper,'--compositor','sway','-dump-theme')
         import re
         for selector in (r'\*',r'prompt'):
             assert re.search(selector+r'\s*\{[^}]*font:\s*"JetBrainsMono Nerd Font 18"',dump,re.S),'effective tablet font override '+selector
+        wait(lambda:panel()['button']['visible'] and panel()['gesture']['visible'],'tablet controls appear after first preference creation')
+        # Real policy writes use atomic replacement, not in-place edits.
+        def policy(contents):
+            temporary=pref.with_suffix('.tmp');temporary.write_text(contents);temporary.replace(pref)
+        for contents in ('{"mode":"off"}','{"mode":"auto"}','bad-json','{"mode":true}'):
+            policy(contents)
+            wait(lambda:not panel()['button']['visible'] and not panel()['gesture']['visible'],'invalid/off/old-auto policy hides controls')
+            policy('{"mode":"on"}')
+            wait(lambda:panel()['button']['visible'],'atomic tablet-on update')
         pref.unlink()
+        wait(lambda:not panel()['button']['visible'],'deleted policy hides controls')
+        policy('{"mode":"on"}')
+        wait(lambda:panel()['button']['visible'],'recreated policy restores controls without shell restart')
+        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','show')
+        policy('{"mode":"off"}')
+        wait(lambda:not panel()['button']['visible'] and status()['open'],'leaving tablet mode hides button without closing manual keyboard')
+        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','hide')
+        policy('{"mode":"on"}')
+        wait(lambda:panel()['button']['visible'],'tablet controls restored for input fixtures')
+        print('PASS: tablet-only OSK controls follow missing/off/on/auto/corrupt/deleted/atomic policies; desktop IPC remains usable',flush=True)
         print('PASS: actual Rofi parsed tablet theme uses18px globally and in prompt',flush=True)
         pointer=Pointer(display)
         for word,codes in [('mañana',[50,30,39,30,49,30]),('café',[46,30,33,26,18]),('Ñ@',['shift',39,'altgr',3,'altgr']),('a b',[30,57,16,14,48]),('a@',['altgr',30,3,'altgr']),('€{',['altgr','shift',18,8,'altgr']),('b',[30,30,30,30,30,30,'hold-backspace',48]),('',[1])]:
@@ -67,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix='ok-') as tmp:
             wait(lambda:rofi.poll() is not None,'Rofi selection with actual OSK taps')
             selected=rofi.stdout.read().strip();assert selected==word,(word,selected)
             print('PASS: fixed OSK button, actual taps type/select '+word+' in Rofi without focus loss',flush=True)
-            cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','osk','hide')
+            cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','hide')
             wait(lambda:not status()['open'],'hide keyboard')
         pointer.move(640,795,1280,800);pointer.button(True);pointer.move(640,700,1280,800);pointer.button(False)
         wait(lambda:status()['open'],'bottom edge swipe opens keyboard')
@@ -84,7 +110,7 @@ with tempfile.TemporaryDirectory(prefix='ok-') as tmp:
         assert len(child_ids)==1,child_ids
         os.kill(int(child_ids[0]),signal.SIGTERM)
         wait(lambda:not status()['ready'],'engine disconnect visible')
-        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','osk','retry')
+        cmd('qs','--path',str(ui/'shell.qml'),'ipc','call','--','osk','retry')
         wait(lambda:status()['ready'] and not status()['error'],'manual engine retry')
         print('PASS: disconnected engine can retry without restarting shell',flush=True)
     except Exception:

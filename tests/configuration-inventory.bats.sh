@@ -27,7 +27,8 @@ jq -e '
     user: .value.userName, desktop: .value.profileName}] == [
     {key: "envy", host: "envy", user: "osmarg", desktop: "sway"},
     {key: "ero", host: "ero", user: "osmarg", desktop: "i3"},
-    {key: "jarq", host: "jarq", user: "jarq", desktop: "i3"},
+    {key: "jarq", host: "jarq", user: "jarq", desktop: "multimedia"},
+    {key: "jarq-multimedia", host: "jarq", user: "jarq", desktop: "multimedia"},
     {key: "lenovo", host: "lenovo", user: "osmarg", desktop: "ryoku"},
     {key: "orgm", host: "orgm", user: "osmarg", desktop: "hyprland"},
     {key: "orgm-ryoku", host: "orgm", user: "osmarg", desktop: "ryoku"}
@@ -37,17 +38,19 @@ jq -e '
 
 jq -e '
   all(.configurations[];
-    (.role == "desktop" or .role == "terminal" or .role == "server")
+    (.role == "desktop" or .role == "terminal" or .role == "server" or .role == "multimedia")
     and (.hostName | type == "string")
     and (.hardware | type == "string")
     and (.userName | type == "string")
     and (.extraModules | type == "array")
     and (if .role == "desktop"
          then (.profile | type == "string") and (.profileName | type == "string")
+         elif .role == "multimedia"
+         then (has("profile") | not) and (.profileName == "multimedia")
          else (has("profile") | not) and (has("profileName") | not)
          end)
   )
 ' <<<"$inventory_json" >/dev/null \
   || fail 'configuration specs do not match normalized schema'
 
-printf 'PASS: five hosts plus retained orgm-ryoku inventory\n'
+printf 'PASS: canonical hosts, retained orgm-ryoku and dedicated jarq-multimedia inventory\n'

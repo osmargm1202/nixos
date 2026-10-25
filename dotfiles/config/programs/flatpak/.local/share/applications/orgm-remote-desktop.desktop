@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Conectar a equipo
+Comment=Escritorio remoto o terminal SSH para mis equipos de Tailscale
+Exec=orgm-remote-desktop connect
+Icon=org.remmina.Remmina
+Terminal=false
+Categories=Network;RemoteAccess;

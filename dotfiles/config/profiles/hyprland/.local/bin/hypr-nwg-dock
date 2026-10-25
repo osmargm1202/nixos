@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# A distinct touch dock; do not mutate normal favorite/cache files.
-if [[ "${ORGM_DOCK_NORMAL:-0}" != 1 && -x "$HOME/.local/bin/orgm-tablet" ]] && "$HOME/.local/bin/orgm-tablet" active; then
-  exec "$HOME/.local/bin/orgm-session-dock" hyprland
+# Keep the same application dock/favorites in tablet mode, with larger icons.
+icon_size=32
+if [[ -x "$HOME/.local/bin/orgm-tablet" ]] && "$HOME/.local/bin/orgm-tablet" active; then
+  icon_size=48
 fi
 
 user="${USER:-$(id -un)}"
@@ -96,7 +97,7 @@ fi
   exec {dock_lock_fd}>&-
   exec "$dock_bin" \
     -x \
-    -i 32 \
+    -i "$icon_size" \
     -p right \
     -a center \
     -mr 6 \

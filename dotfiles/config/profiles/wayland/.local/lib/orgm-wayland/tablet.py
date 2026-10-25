@@ -88,6 +88,19 @@ def apply_profile():
     subprocess.run(['systemctl','--user','restart','orgm-'+comp+'-waybar.service','orgm-'+comp+'-dock.service'],check=True,timeout=15)
 
 
+def dock_command(command,active):
+    """Keep normal native app/favorite behavior; only enlarge tablet icons."""
+    args=list(command)
+    if not args:raise ValueError('Falta el comando del dock')
+    if active:
+        if '-i' in args:
+            index=args.index('-i')+1
+            if index>=len(args):raise ValueError('Falta el tamaño de iconos del dock')
+            args[index]='48'
+        else:args.extend(['-i','48'])
+    return args
+
+
 def bar_profile(source,comp,active):
     value=copy.deepcopy(source)
     if not active:return value
@@ -102,7 +115,7 @@ def bar_profile(source,comp,active):
         bar['modules-right']=['idle_inhibitor','custom/control'] if 'idle_inhibitor' in bar else ['custom/control']
         if 'idle_inhibitor' in bar:
             bar['idle_inhibitor'].update(format='',tooltip=False)
-        bar['custom/control']={'format':'󰒓','on-click':'orgm-'+comp+' control','tooltip-format':'Centro de control · modo tablet'}
+        bar['custom/control']={'format':'󰒓  Control','on-click':'orgm-'+comp+' control','tooltip-format':'Centro de control · modo tablet'}
     return value
 
 
@@ -140,7 +153,7 @@ def bar_style(path):
     target=cache_file(source,'css')
     css='@import url('+json.dumps(source.resolve().as_uri())+');\n'
     css+='* { font-size: 18px; }\nwindow#waybar { min-height: 52px; }\n'
-    css+='#custom-control { min-width: 56px; min-height: 48px; padding: 0 12px; }\n'
+    css+='#custom-control { min-width: 128px; min-height: 48px; padding: 0 12px; font-size: 24px; }\n'
     css+='#clock { font-size: 22px; padding: 0 12px; }\n#battery { padding: 0 12px; }\n'
     atomic_text(target,css);return str(target)
 

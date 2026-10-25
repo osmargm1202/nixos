@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
-"""Real private Waybar + touch dock; actual pointer clicks, no real services."""
+"""Private Waybar + native app dock, larger icons and unchanged favorites."""
 import glob,json,os,shutil,signal,subprocess,sys,tempfile,time,runpy
 from pathlib import Path
 from helpers.wayland_pointer import Pointer
-ROOT=Path(__file__).resolve().parents[1]
+# Native Sway/Hyprland nwg docks share a /tmp lock keyed only by user
+# name. A private Wayland socket alone is NOT sufficient to isolate them.
+if os.environ.get('ORGM_TEST_DOCK_ISOLATED')!='1':
+ bwrap=os.environ.get('ORGM_TEST_BWRAP') or shutil.which('bwrap')
+ if not bwrap:
+  print('SKIP: bwrap required for native-dock process/lock isolation');raise SystemExit(0)
+ os.execvpe(bwrap,[bwrap,'--die-with-parent','--unshare-pid','--unshare-ipc','--unshare-net','--bind','/','/','--proc','/proc','--dev-bind','/dev','/dev','--tmpfs','/tmp','--setenv','ORGM_TEST_DOCK_ISOLATED','1',sys.executable,'-B',__file__],os.environ)
+ROOT=Path(os.environ.get('ORGM_TEST_REPO',Path(__file__).resolve().parents[1]))
+PIXBUF=os.environ.get('ORGM_TEST_DOCK_PIXBUF') or next(iter(glob.glob('/nix/store/*-librsvg-*/lib/gdk-pixbuf-2.0/*/loaders.cache')),None)
+assert PIXBUF,'supply librsvg loader cache for real native dock icons'
 SWAY=os.environ.get('ORGM_TEST_SWAY') or shutil.which('sway') or glob.glob('/nix/store/*-swayfx-0.5.3/bin/sway')[0]
 with tempfile.TemporaryDirectory(prefix='tablet-private-') as temp:
  home=Path(temp);runtime=home/'run';runtime.mkdir(mode=0o700);binary=home/'bin';binary.mkdir()
- env=dict(os.environ,HOME=temp,XDG_CONFIG_HOME=temp+'/.config',XDG_STATE_HOME=temp+'/.state',XDG_CACHE_HOME=temp+'/.cache',XDG_RUNTIME_DIR=str(runtime),DBUS_SESSION_BUS_ADDRESS='unix:path='+temp+'/no-bus',WLR_BACKENDS='headless',WLR_RENDERER='pixman',WLR_LIBINPUT_NO_DEVICES='1',QT_QPA_PLATFORM='wayland',ORGM_DESKTOP_COMPOSITOR='sway',PATH=str(binary)+os.pathsep+str(Path(SWAY).parent)+os.pathsep+os.environ['PATH'])
+ env=dict(os.environ,HOME=temp,XDG_CONFIG_HOME=temp+'/.config',XDG_DATA_HOME=temp+'/.data',XDG_STATE_HOME=temp+'/.state',XDG_CACHE_HOME=temp+'/.cache',XDG_RUNTIME_DIR=str(runtime),DBUS_SESSION_BUS_ADDRESS='unix:path='+temp+'/no-bus',WLR_BACKENDS='headless',WLR_RENDERER='pixman',WLR_LIBINPUT_NO_DEVICES='1',QT_QPA_PLATFORM='wayland',GDK_PIXBUF_MODULE_FILE=PIXBUF,ORGM_DESKTOP_COMPOSITOR='sway',PATH=str(binary)+os.pathsep+str(Path(SWAY).parent)+os.pathsep+os.environ['PATH'])
  for k in ('DISPLAY','WAYLAND_DISPLAY','SWAYSOCK','HYPRLAND_INSTANCE_SIGNATURE','WAYLAND_SOCKET','QS_CONFIG_PATH','QS_CONFIG_NAME'):env.pop(k,None)
  calls=home/'calls.jsonl'
  for name in ('sway-app-launcher','orgm-sway','orgm-osk','normal-dock'):
@@ -43,20 +52,32 @@ with tempfile.TemporaryDirectory(prefix='tablet-private-') as temp:
   subprocess.run([str(wrapper),'sway',str(binary/'normal-dock'),'normal-argument'],env=env,check=True)
   assert ['normal-dock','normal-argument'] in events(),'normal dock command must be untouched'
   pref=home/'.state/orgm-tablet/preferences.json';pref.parent.mkdir(parents=True);pref.write_text('{"mode":"on"}')
-  start(str(wrapper),'sway',str(binary/'normal-dock'))
-  ui=home/'.config/quickshell/orgm-tablet-dock/shell.qml'
-  def status():return json.loads(cmd('qs','--path',str(ui),'ipc','call','tablet-dock','status'))
-  wait(lambda:status().get('buttons'),'touch dock')
+  subprocess.run([str(wrapper),'sway',str(binary/'normal-dock'),'-i','32','normal-argument'],env=env,check=True)
+  assert events()==[['normal-dock','normal-argument'],['normal-dock','-i','48','normal-argument']],events()
+  print('PASS: same native dock command/favorites policy; tablet icons32->48 only',flush=True)
+  native=os.environ.get('ORGM_TEST_SWAY_DOCK') or shutil.which('nwg-dock')
+  assert native,'supply the real Sway nwg-dock binary'
+  shutil.copytree(ROOT/'dotfiles/config/profiles/sway/.config/nwg-dock',home/'.config/nwg-dock',dirs_exist_ok=True)
+  apps=home/'.data/applications';apps.mkdir(parents=True)
+  (apps/'tablet-fixture.desktop').write_text('[Desktop Entry]\nType=Application\nName=Fixture app\nExec=false\nIcon=utilities-terminal\n')
+  shutil.copytree(ROOT/'dotfiles/config/profiles/sway/.local/share/nwg-dock',home/'.data/nwg-dock',dirs_exist_ok=True)
+  # Native0.4.3 uses XDG_CONFIG_HOME for pins when XDG_CACHE_HOME is set.
+  pins=home/'.config/nwg-dock-pinned';pins.parent.mkdir(parents=True,exist_ok=True);pins.write_text('tablet-fixture\n');saved_pins=pins.read_bytes()
+  dock=start(str(wrapper),'sway',native,'-p','right','-i','32','-w','10','-nows','-mr','6','-l','top','-c','sway-app-launcher')
+  wait(lambda:b'-i\x0048\x00' in Path('/proc/'+str(dock.pid)+'/cmdline').read_bytes(),'actual enlarged native dock')
+  assert pins.read_bytes()==saved_pins
   pointer=Pointer(display)
-  for rect in status()['buttons']:click(rect)
-  wait(lambda:len(events())==4,'all three actual dock clicks')
-  assert events()==[['normal-dock','normal-argument'],['sway-app-launcher'],['orgm-sway','windows'],['orgm-osk','toggle']],events()
-  print('PASS: normal dock command unchanged; actual Apps/Windows/Keyboard touch dispatch',flush=True)
   source=home/'.config/waybar/config'
   value=json.loads(source.read_text());value['idle_inhibitor']['start-activated']=True;source.write_text(json.dumps(value))
   generated=cmd(str(home/'.local/bin/orgm-tablet'),'bar-config',str(home/'.config/waybar/config'),'sway').strip()
   style=cmd(str(home/'.local/bin/orgm-tablet'),'bar-style',str(home/'.config/waybar/style.css')).strip()
   bar=start('waybar','-c',generated,'-s',style);time.sleep(.8);assert bar.poll() is None,'actual Waybar must load profile/CSS'
+  assert dock.poll() is None and pins.read_bytes()==saved_pins
+  # Prove actual native app icons render, not just a living PID/argv. This
+  # region excludes Waybar and contains only our fixture dock on black.
+  pixels=subprocess.check_output(['grim','-t','ppm','-g','1150,52 130x748','-'],env=env).split(b'\n',3)[-1]
+  assert max(pixels)>100 and len(set(pixels))>8,'native dock has no visible icons'
+  if os.environ.get('ORGM_TEST_TABLET_SCREENSHOT'):cmd('grim',os.environ['ORGM_TEST_TABLET_SCREENSHOT'])
   click(dict(x=1215,y=1,width=55,height=50))
   wait(lambda:['orgm-sway','control'] in events(),'actual large Waybar control button')
   print('PASS: real large/reduced Waybar and control-center touch target',flush=True)
@@ -68,7 +89,6 @@ with tempfile.TemporaryDirectory(prefix='tablet-private-') as temp:
   os.killpg(bar.pid,signal.SIGTERM);bar.wait(timeout=3)
   wait(lambda:idle.exists(),'inhibitor released when test Waybar stops')
   print('PASS: actual idle-notify remains inhibited by tablet Caffeine and resumes after bar exit',flush=True)
-  if os.environ.get('ORGM_TEST_TABLET_SCREENSHOT'):cmd('grim',os.environ['ORGM_TEST_TABLET_SCREENSHOT'])
  except Exception:
   log.flush();print((home/'session.log').read_text(errors='replace')[-4000:]);raise
  finally:
@@ -78,3 +98,4 @@ with tempfile.TemporaryDirectory(prefix='tablet-private-') as temp:
    try:p.wait(timeout=3)
    except subprocess.TimeoutExpired:os.killpg(p.pid,signal.SIGKILL);p.wait()
   log.close()
+  if os.environ.get('ORGM_TEST_TABLET_LOG'):shutil.copy2(home/'session.log',os.environ['ORGM_TEST_TABLET_LOG'])

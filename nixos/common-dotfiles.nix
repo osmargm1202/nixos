@@ -30,7 +30,7 @@ let
   fileMimeHandlers = lib.genAttrs [
     "text/plain" "text/markdown" "text/x-markdown" "application/x-zerosize"
     "text/x-lua" "text/x-python" "application/json" "application/x-shellscript"
-  ] (mime: lib.toList (config.xdg.mime.defaultApplications.${mime} or [ "nvim.desktop" ]));
+  ] (mime: lib.filter (name: name != "") (lib.splitString ";" (config.xdg.mime.defaultApplications.${mime} or "nvim.desktop")));
   # Mirrors *.desktop files Steam (and similar launchers) drop into
   # ~/Desktop over to ~/.local/share/applications so dock/launcher icons
   # actually see them. Run both at HM activation and via a systemd --user

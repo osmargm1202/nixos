@@ -55,9 +55,11 @@ input type:touchpad {
     dwt enabled
 }
 output * bg #181926 solid_color
-# Envy-specific outputs live in a separate copied file.
+# Keep per-host/manual defaults; nwg-displays generated files override them.
 include ~/.config/sway/outputs.conf
 include ~/.config/sway/workspaces.conf
+include ~/.config/sway/outputs
+include ~/.config/sway/workspaces
 include /etc/sway/config.d/*
 exec_always env PATH="$HOME/.local/bin:$PATH" orgm-sway appearance
 exec_always env PATH="$HOME/.local/bin:$PATH" orgm-sway wallpaper

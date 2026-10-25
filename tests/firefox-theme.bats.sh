@@ -23,5 +23,6 @@ assert_amo_addon() {
 assert_amo_addon "{22b0eca1-8c02-4c0d-a5d7-6604ddd9836e}"
 assert_amo_addon "jid1-NIfFY2CA8fy1tg@jetpack"
 assert_amo_addon "{446900e4-71c2-419f-a6a7-df9c091e268b}"
+assert_amo_addon "es-DO@dictionaries.addons.mozilla.org"
 
 printf 'PASS: Firefox installs the requested AMO theme and extensions\n'

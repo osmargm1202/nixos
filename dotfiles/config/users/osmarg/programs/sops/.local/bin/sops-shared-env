@@ -10,7 +10,9 @@ usage() {
 (( $# > 0 )) || usage
 
 secrets_dir="${XDG_CONFIG_HOME:-$HOME/.config}/sops-nix/secrets"
+require_secrets=false
 if [[ $1 == --with ]]; then
+  require_secrets=true
   shift
   secret_names=()
   while (( $# > 0 )) && [[ $1 != -- ]]; do
@@ -47,6 +49,11 @@ fi
 for secret_name in "${secret_names[@]}"; do
   secret_path="$secrets_dir/$secret_name"
   if [ ! -r "$secret_path" ]; then
+    # Automatic injection is optional; tools can use their own authentication.
+    # Keep explicit --with requests strict (for example, publishing tokens).
+    if [[ $require_secrets == false ]]; then
+      continue
+    fi
     printf 'sops-shared-env: unavailable secret: %s\n' "$secret_name" >&2
     printf 'Apply the Home Manager configuration, then start a new session.\n' >&2
     exit 1

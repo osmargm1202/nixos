@@ -46,6 +46,13 @@ class Center(unittest.TestCase):
    for name in ('pavucontrol','pulsemixer'):
     self.assertTrue(any(name in c for c in secondary),'fixture must contain '+name)
     self.assertTrue(any(name in c for c in commands),'missing touch equivalent '+name)
+ def test_sway_display_editor_uses_native_files_included_by_sway(self):
+  with patch.dict(G,SWAY=dict(G['SWAY'],compositor='sway')):
+   self.assertEqual(M['control_commands']()['displays'],['nwg-displays','-n','10'])
+  config=(ROOT/'dotfiles/config/profiles/sway/.config/sway/config').read_text().splitlines()
+  for name in ('outputs','workspaces'):
+   self.assertIn('include ~/.config/sway/'+name,config)
+   self.assertLess(config.index('include ~/.config/sway/'+name+'.conf'),config.index('include ~/.config/sway/'+name))
  def test_unrecognized_choice_is_rejected(self):
   with self.assertRaises(ValueError):M['control_choice']('arbitrary command')
 if __name__=='__main__':unittest.main()

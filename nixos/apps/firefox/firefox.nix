@@ -12,6 +12,7 @@ let
   defaultThemeId = "{22b0eca1-8c02-4c0d-a5d7-6604ddd9836e}";
   adBlockId = "jid1-NIfFY2CA8fy1tg@jetpack";
   bitwardenId = "{446900e4-71c2-419f-a6a7-df9c091e268b}";
+  dominicanDictionaryId = "es-DO@dictionaries.addons.mozilla.org";
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
 in
 {
@@ -40,6 +41,10 @@ in
           "${bitwardenId}" = {
             installation_mode = "force_installed";
             install_url = amoXpi bitwardenId;
+          };
+          "${dominicanDictionaryId}" = {
+            installation_mode = "force_installed";
+            install_url = amoXpi dominicanDictionaryId;
           };
         }
         // lib.optionalAttrs hasSignedWindowsManagerLinuxOrgm {

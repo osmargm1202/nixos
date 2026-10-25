@@ -5,6 +5,7 @@ from pathlib import Path
 import unittest
 import subprocess
 import re
+import json,os,tempfile
 ROOT=Path(__file__).resolve().parents[1]
 class Engine(unittest.TestCase):
     @classmethod
@@ -53,6 +54,17 @@ class Engine(unittest.TestCase):
             self.assertNotIn(shortcut.lower(),[b.lower() for b in bindings],profile+' binding collision')
         # Hyprland emits Ctrl+h/j/k/l movement bindings from its direction map.
         self.assertNotIn(shortcut.lower().split('+')[-1],('h','j','k','l'))
+
+    def test_helper_disambiguates_show_from_qs_inspection_subcommand(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake=Path(tmp)/'qs'
+            fake.write_text('#!/usr/bin/env python3\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\n')
+            fake.chmod(0o755)
+            env=dict(os.environ,ORGM_OSK_QS=str(fake),ORGM_OSK_UI='/private/osk/shell.qml')
+            helper=ROOT/'dotfiles/config/programs/shell/.local/bin/orgm-osk'
+            for action in ('show','hide','toggle','status','retry'):
+                args=json.loads(subprocess.check_output([str(helper),action],env=env,text=True))
+                self.assertEqual(args,['--path','/private/osk/shell.qml','ipc','call','--','osk',action])
 
     def test_ui_has_attribution(self):
         ui=ROOT/'dotfiles/config/programs/shell/.config/quickshell/orgm-osk'

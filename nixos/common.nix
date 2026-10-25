@@ -179,6 +179,8 @@ in
       ./apps/tailscale.nix
       ./functions/clean.nix
       ./apps/udiskie.nix
+      ./apps/artcraft-defaults.nix
+      ./apps/remote-desktop.nix
     ];
 
   home-manager.useGlobalPkgs = true;

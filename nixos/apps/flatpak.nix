@@ -17,6 +17,8 @@ let
     sha256 = artcraftSha256;
   };
   packages = config.orgm.user.flatpakPackages ++ [
+    # One common remote-desktop client, including users without personal extras.
+    "org.remmina.Remmina"
     {
       appId = "ai.storyteller.artcraft-launcher";
       origin = "artcraft-launcher-origin";
@@ -58,6 +60,15 @@ in
 
     home-manager.users.${userName} = { lib, ... }: {
       config = lib.mkMerge [ {
+      # Keep the upstream Flatpak and its updates. Install a reusable-window
+      # desktop entry only when CADCraft exists; TryExec preserves native
+      # fallback when the Flatpak is removed. Do not touch other app defaults.
+      home.activation.cadcraftOpening = lib.hm.dag.entryAfter [ "orgmDotBootstrap" "writeBoundary" ] ''
+        if [ -x "$HOME/.local/bin/orgm-cadcraft" ]; then
+          $DRY_RUN_CMD ${pkgs.coreutils}/bin/env PATH=${lib.makeBinPath [ pkgs.python3 pkgs.flatpak pkgs.desktop-file-utils ]}:"$PATH" \
+            ${pkgs.bash}/bin/bash "$HOME/.local/bin/orgm-cadcraft" install
+        fi
+      '';
       # CADCraft (user flatpak, outside nix-flatpak) ignores fontconfig and the
       # host fonts in /run/host/fonts: it only scans ~/.local/share/fonts, by
       # Windows file name, and follows at most one symlink, so copy real files.

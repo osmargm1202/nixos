@@ -53,17 +53,26 @@ with tempfile.TemporaryDirectory(prefix='tablet-private-') as temp:
   wait(lambda:len(status().get('controls') or [])>35,'complete native control center')
   pointer=Pointer(display)
   def control(name):return next(b for b in status()['controls'] if b['id']==name)
+  def settled_control(name):
+   previous=None
+   def ready():
+    nonlocal previous
+    rect=control(name)
+    stable=rect==previous and rect['enabled']
+    previous=rect
+    return rect if stable else None
+   return wait(ready,'enabled and settled '+name)
   assert control('tablet')['height']>=48
-  click(control('tablet'));wait(lambda:status()['state']['tablet']['active'],'manual tablet click')
+  click(settled_control('tablet'));wait(lambda:status()['state']['tablet']['active'],'manual tablet click')
   wait(lambda:control('keyboard')['height']>=64,'large tablet controls')
-  click(control('keyboard'));wait(lambda:status()['state']['tablet']['keyboardVisible'],'shared keyboard action')
+  click(settled_control('keyboard'));wait(lambda:status()['state']['tablet']['keyboardVisible'],'shared keyboard action')
   if os.environ.get('ORGM_TEST_UI_ARTIFACTS'):
    dest=Path(os.environ['ORGM_TEST_UI_ARTIFACTS']);dest.mkdir(parents=True,exist_ok=True)
    cmd('grim',str(dest/'control-landscape.png'))
    cmd('swaymsg','output','HEADLESS-1','mode','800x1280');time.sleep(.5)
    cmd('grim',str(dest/'control-portrait.png'))
    cmd('swaymsg','output','HEADLESS-1','mode','1280x800');time.sleep(.5)
-  click(control('windows'));wait(lambda:result.exists() and result.read_text().strip()=='windows','window selector choice')
+  click(settled_control('windows'));wait(lambda:result.exists() and result.read_text().strip()=='windows','window selector choice')
   print('PASS: native complete CC, manual mode click increases targets, shared keyboard and Windows choice; landscape/portrait',flush=True)
  except Exception:
   log.flush();print((home/'session.log').read_text(errors='replace')[-4000:]);raise

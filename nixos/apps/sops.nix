@@ -6,6 +6,26 @@
   userName,
   ...
 }:
+let
+  apiKeysFile = ../../secrets/shared/api-keys.yaml;
+  apiKeyLines = lib.splitString "\n" (builtins.readFile apiKeysFile);
+  # Only install API secrets still present in the encrypted YAML file.
+  sharedSecrets = lib.filterAttrs (
+    name: _: lib.any (lib.hasPrefix "${name}:") apiKeyLines
+  ) {
+    OPENCODE_API_KEY = { };
+    MINIMAX_API_KEY = { };
+    ANTHROPIC_API_KEY = { };
+    STITCH_API_KEY = { };
+    INSFORGE_API_KEY = { };
+    INSFORGE_API_BASE_URL = { };
+    AVANTE_ANTHROPIC_API_KEY = { };
+    ORGM_TOKEN = { };
+    UV_PUBLISH_TOKEN = { };
+    NEXTCLOUD_USER = { };
+    NEXTCLOUD_PASS = { };
+  };
+in
 {
   config = lib.mkIf (builtins.elem "sops" config.orgm.user.programs) {
   home-manager.users.${userName} = { config, lib, ... }: {
@@ -15,19 +35,9 @@
       # A private local copy is available before online-account mounts.
       # Seed from the recovery identity only when no host override exists.
       age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
-      defaultSopsFile = ../../secrets/shared/api-keys.yaml;
+      defaultSopsFile = apiKeysFile;
 
-      secrets = {
-        OPENCODE_API_KEY = { };
-        MINIMAX_API_KEY = { };
-        ANTHROPIC_API_KEY = { };
-        STITCH_API_KEY = { };
-        INSFORGE_API_KEY = { };
-        INSFORGE_API_BASE_URL = { };
-        AVANTE_ANTHROPIC_API_KEY = { };
-        ORGM_TOKEN = { };
-        UV_PUBLISH_TOKEN = { };
-
+      secrets = sharedSecrets // {
         WINDOWS_RDP_USER_OSMAR_WINDOWS = {
           sopsFile = ../../secrets/shared/windows-rdp.yaml;
           mode = "0400";

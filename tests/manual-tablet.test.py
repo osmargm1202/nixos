@@ -59,13 +59,20 @@ class Tablet(unittest.TestCase):
   result=Path(self.m.bar_config(source,'sway'))
   self.assertEqual(json.loads(result.read_text())['clock']['format'],'http://valid')
   self.assertIn('/* comment */',source.read_text())
- def test_dock_profile_has_only_three_large_actions_and_no_pin_mutation(self):
-  ui=ROOT/'dotfiles/config/profiles/wayland/.config/quickshell/orgm-tablet-dock/shell.qml'
-  self.assertTrue(ui.exists(),'tablet dock missing')
-  text=ui.read_text()
-  for action in ('launcher','windows','keyboard'):self.assertIn('"'+action+'"',text)
-  self.assertNotIn('pinned',text)
-  self.assertTrue((ROOT/'dotfiles/config/profiles/wayland/.local/bin/orgm-session-dock').is_file())
+ def test_native_dock_keeps_apps_flags_and_enlarges_only_in_tablet(self):
+  original=['/fixture/nwg-dock','-p','right','-i','32','-nows','-c','sway-app-launcher'];saved=list(original)
+  self.assertEqual(self.m.dock_command(original,False),saved)
+  active=self.m.dock_command(original,True)
+  expected=list(original);expected[expected.index('-i')+1]='48'
+  self.assertEqual(active,expected);self.assertEqual(original,saved)
+  self.assertEqual(self.m.dock_command(['/fixture/nwg-dock'],True),['/fixture/nwg-dock','-i','48'])
+ def test_native_dock_wrapper_does_not_create_duplicate_keyboard_strip(self):
+  text=(ROOT/'dotfiles/config/profiles/wayland/.local/bin/orgm-session-dock').read_text()
+  self.assertNotIn('orgm-tablet-dock',text)
+  self.assertNotIn("os.execvp('qs'",text)
+ def test_tablet_control_center_is_readable_without_recognizing_a_glyph(self):
+  bar=self.m.bar_profile({},'sway',True)
+  self.assertIn('Control',bar['custom/control']['format'])
  def test_reduced_bar_retains_hidden_functional_inhibitor(self):
   source={'idle_inhibitor':{'start-activated':True,'format':'coffee'}}
   profile=self.m.bar_profile(source,'sway',True)

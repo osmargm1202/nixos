@@ -370,6 +370,23 @@
         "type": "github"
       }
     },
+    "orgm-multimedia": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792946322,
+        "narHash": "sha256-9uqTWjVOF1oibMC/ixS9u9xATAK/JJaM6ItUyC20Mr8=",
+        "owner": "osmargm1202",
+        "repo": "orgm-multimedia",
+        "rev": "b844e1cf7fa6df473d7aaff6453e10480a009aa2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "orgm-multimedia",
+        "rev": "b844e1cf7fa6df473d7aaff6453e10480a009aa2",
+        "type": "github"
+      }
+    },
     "pyproject-build-systems": {
       "inputs": {
         "nixpkgs": [
@@ -457,6 +474,7 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-tailscale": "nixpkgs-tailscale",
         "nixpkgs-zen70": "nixpkgs-zen70",
+        "orgm-multimedia": "orgm-multimedia",
         "ryoku": "ryoku",
         "sops-nix": "sops-nix"
       }

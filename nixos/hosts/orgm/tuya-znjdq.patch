@@ -1,0 +1,41 @@
+--- a/homeassistant/components/tuya/const.py
++++ b/homeassistant/components/tuya/const.py
+@@ -88,6 +88,9 @@
+ 
+     https://developer.tuya.com/en/docs/iot/standarddescription?id=K9i5ql6waswzq
+     """
++
++    ZNJDQ = "znjdq"
++    """Smart circuit breaker with switch_1 and a native countdown."""
+ 
+     AMY = "amy"
+     """Massage chair"""
+--- a/homeassistant/components/tuya/switch.py
++++ b/homeassistant/components/tuya/switch.py
+@@ -28,6 +28,9 @@
+ # default instruction set of each category end up being a Switch.
+ # https://developer.tuya.com/en/docs/iot/standarddescription?id=K9i5ql6waswzq
+ SWITCHES: dict[DeviceCategory, tuple[SwitchEntityDescription, ...]] = {
++    DeviceCategory.ZNJDQ: (
++        SwitchEntityDescription(key=DPCode.SWITCH_1, name=None),
++    ),
+     DeviceCategory.BH: (
+         SwitchEntityDescription(
+             key=DPCode.START,
+--- a/homeassistant/components/tuya/number.py
++++ b/homeassistant/components/tuya/number.py
+@@ -31,6 +31,14 @@
+ from .entity import TuyaEntity
+ 
+ NUMBERS: dict[DeviceCategory, tuple[NumberEntityDescription, ...]] = {
++    DeviceCategory.ZNJDQ: (
++        NumberEntityDescription(
++            key=DPCode.COUNTDOWN_1,
++            name="Temporizador",
++            device_class=NumberDeviceClass.DURATION,
++            native_unit_of_measurement=UnitOfTime.SECONDS,
++        ),
++    ),
+     DeviceCategory.BH: (
+         NumberEntityDescription(
+             key=DPCode.TEMP_SET,
