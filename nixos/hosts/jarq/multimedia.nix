@@ -24,6 +24,8 @@
   orgm.jarq.wifi.experimental.enable = true;
   orgm.multimedia.exposure = "tailscale";
   orgm.multimedia.tailnetAddress = "100.122.22.48";
+  orgm.multimedia.lanAddress = "10.0.0.98";
+  orgm.multimedia.tls = true;
   orgm.multimedia.airplayName = "ORGM Jarq";
   orgm.multimedia.airplayNetworks = [ "10.0.0.0/24" ];
   hardware.graphics.extraPackages = lib.mkDefault [ pkgs.intel-media-driver ];

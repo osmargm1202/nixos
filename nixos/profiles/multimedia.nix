@@ -9,11 +9,29 @@
 }:
 let
   cfg = config.orgm.multimedia;
-  app = (pkgs.callPackage "${inputs.orgm-multimedia}/package.nix" { }).overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [ ./multimedia/bomba.patch ];
+  app = pkgs.callPackage "${inputs.orgm-multimedia}/package.nix" { };
+  receiver = pkgs.uxplay.overrideAttrs (_: {
+    version = "1.73.7";
+    src = pkgs.fetchFromGitHub {
+      owner = "FDH2";
+      repo = "UxPlay";
+      tag = "v1.73.7";
+      hash = "sha256-S4E2PB8Wgtv5BZ/WVHE0wm1kuhqpyXsV48MI20prZ+I=";
+    };
   });
   bomba = import ../apps/bomba/package.nix { inherit pkgs; };
   catalog = pkgs.formats.json { };
+  remoteLocations."/" = {
+    proxyPass = "http://127.0.0.1:8765";
+    extraConfig = ''
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
+      proxy_set_header Host $host;
+      proxy_set_header Cf-Access-Jwt-Assertion $http_cf_access_jwt_assertion;
+      proxy_read_timeout 75s;
+      client_max_body_size 8k;
+    '';
+  };
   oskEngine = import ../osk/package.nix { inherit pkgs; };
   quickshell = import ./sway/quickshell.nix { inherit pkgs; };
   mirror = pkgs.wl-mirror.override { installExampleScripts = false; };
@@ -146,6 +164,17 @@ in
       default = "";
       description = "Exact IPv4 Tailscale address for the private Nginx listener.";
     };
+    lanAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "Optional private IPv4 origin for paired remotes on the trusted receiver LANs.";
+    };
+    tls = lib.mkEnableOption "private HTTPS for home.or-gm.com using Cloudflare DNS validation";
+    tlsCredentialFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/orgm-home-acme/cloudflare-token";
+      description = "Root-owned Cloudflare DNS token, loaded as a systemd credential outside the store.";
+    };
     origins = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
@@ -153,7 +182,8 @@ in
         "http://localhost:8765"
         "https://home.or-gm.com"
       ]
-      ++ lib.optional (cfg.exposure == "tailscale") "http://home.or-gm.com";
+      ++ lib.optional (cfg.exposure == "tailscale") "http://home.or-gm.com"
+      ++ lib.optional (cfg.lanAddress != "") "http://${cfg.lanAddress}";
       description = "Exact allowed web origins. Add a private VPN origin explicitly if needed.";
     };
     accessEnvironmentFile = lib.mkOption {
@@ -183,10 +213,14 @@ in
           || builtins.match "100\\.[0-9]+\\.[0-9]+\\.[0-9]+" cfg.tailnetAddress != null;
         message = "Private multimedia exposure requires an explicit Tailscale IPv4 address.";
       }
+      {
+        assertion = cfg.lanAddress == "" || (cfg.exposure == "tailscale" && cfg.airplayNetworks != [ ]);
+        message = "A LAN remote requires private exposure and explicit trusted receiver subnets.";
+      }
     ];
-    networking.firewall.interfaces.tailscale0.allowedTCPPorts = lib.mkIf (cfg.exposure == "tailscale") [
+    networking.firewall.interfaces.tailscale0.allowedTCPPorts = lib.mkIf (cfg.exposure == "tailscale") ([
       80
-    ];
+    ] ++ lib.optional cfg.tls 443);
     # Do not bring personal desktop applications/services into the appliance.
     orgm.user.programs = lib.mkForce [ ];
     orgm.user.flatpakPackages = lib.mkForce [ ];
@@ -232,6 +266,12 @@ in
     networking.firewall.extraInputRules = lib.optionalString (cfg.airplayNetworks != [ ]) ''
       ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } tcp dport 7000-7002 accept
       ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } udp dport 7000-7002 accept
+      ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } tcp dport 8766 accept
+      ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } udp dport 1900 accept
+    '' + lib.optionalString (cfg.lanAddress != "") ''
+      ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } tcp dport 80 accept
+    '' + lib.optionalString (cfg.lanAddress != "" && cfg.tls) ''
+      ip saddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } tcp dport 443 accept
     '';
     # Avahi owns mDNS; two responders caused repeated local hostname conflicts.
     services.resolved.settings.Resolve.MulticastDNS = false;
@@ -487,16 +527,20 @@ in
       orgm-home-touch = sessionService "orgm-home-touch";
       orgm-home-idle = sessionService "orgm-home-idle-screen";
       orgm-home-airplay = {
-        description = "ORGM AirPlay receiver (opened from the launcher)";
+        description = "ORGM AirPlay video and audio receiver";
+        wantedBy = [ "orgm-home-session.target" ];
         partOf = [ "orgm-home-session.target" ];
         after = [ "orgm-home-session.target" ];
         unitConfig.ConditionUser = "media";
         environment = {
           PULSE_PROP = ''application.name="ORGM AirPlay" application.id=orgm-home-airplay'';
+          GST_DEBUG = "2";
+          GST_DEBUG_NO_COLOR = "1";
         };
         serviceConfig = {
-          ExecStart = "${pkgs.uxplay}/bin/uxplay " + lib.escapeShellArgs [
+          ExecStart = "${pkgs.coreutils}/bin/stdbuf -oL -eL ${receiver}/bin/uxplay " + lib.escapeShellArgs [
             "-n" cfg.airplayName "-nh" "-p" "7000" "-s" "1920x1080"
+            "-hls" "2"
             # GStreamer 1.26 waylandsink sets fullscreen before creating its
             # window with -fs, causing "Window has no size set" on first frame.
             # The Sway uxplay rule applies fullscreen after the window maps.
@@ -507,6 +551,37 @@ in
           TimeoutStopSec = 10;
           UMask = "0077";
         };
+      };
+    };
+    systemd.services.orgm-home-cast = lib.mkIf (cfg.airplayNetworks != [ ]) {
+      description = "Private LAN YouTube discovery and launcher bridge";
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "orgm-home.service" ];
+      after = [ "orgm-home.service" "network.target" ];
+      environment = {
+        ORGM_DIAL_NETWORKS = lib.concatStringsSep "," cfg.airplayNetworks;
+        ORGM_DIAL_NAME = "${cfg.airplayName} · YouTube";
+      };
+      serviceConfig = {
+        ExecStart = "${app}/bin/orgm-home-cast";
+        DynamicUser = true;
+        User = "orgm-home-cast";
+        LoadCredential = "control-token:/var/lib/orgm-home/control-token";
+        Restart = "on-failure";
+        RestartSec = 3;
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" ];
+        IPAddressDeny = "any";
+        IPAddressAllow = [ "localhost" "239.255.255.250/32" ] ++ cfg.airplayNetworks;
+        UMask = "0077";
       };
     };
     systemd.services.orgm-home-flatpaks = {
@@ -540,6 +615,9 @@ in
             type filter hook output priority 0; policy accept;
             meta skuid 1100 ct state established,related accept
             meta skuid 1100 ip daddr 127.0.0.1 tcp dport 8765 accept
+            # UxPlay's YouTube HLS player reads playlists from its own server.
+            meta skuid 1100 ip daddr 127.0.0.1 tcp dport 7001 accept
+            meta skuid 1100 ip6 daddr ::1 tcp dport 7001 accept
             ${lib.optionalString config.services.home-assistant.enable "meta skuid 1100 ip daddr 127.0.0.1 tcp dport 8123 accept"}
             meta skuid 1100 meta l4proto { tcp, udp } th dport 53 accept
             ${lib.optionalString (cfg.airplayNetworks != [ ]) "meta skuid 1100 ip daddr { ${lib.concatStringsSep ", " cfg.airplayNetworks} } udp sport 7000-7002 accept"}
@@ -550,28 +628,42 @@ in
         '';
       };
     };
+    security.acme = lib.mkIf cfg.tls {
+      acceptTerms = true;
+      certs."home.or-gm.com" = {
+        dnsProvider = "cloudflare";
+        credentialFiles.CF_DNS_API_TOKEN_FILE = cfg.tlsCredentialFile;
+        dnsResolver = "1.1.1.1:53";
+        group = "nginx";
+        reloadServices = [ "nginx.service" ];
+      };
+    };
     services.nginx = lib.mkIf cfg.nginx {
       enable = true;
       # Set Host once: the recommended block plus a custom Host emits two
       # Host headers, which Uvicorn correctly rejects as malformed HTTP.
       recommendedProxySettings = false;
-      virtualHosts."home.or-gm.com" = {
+      virtualHosts = {
+      "home.or-gm.com" = {
+        useACMEHost = lib.mkIf cfg.tls "home.or-gm.com";
+        forceSSL = cfg.tls;
+        serverAliases = lib.optional (cfg.lanAddress != "" && !cfg.tls) cfg.lanAddress;
         listen = [
           {
-            addr = if cfg.exposure == "tailscale" then cfg.tailnetAddress else "127.0.0.1";
+            addr = if cfg.lanAddress != "" then "0.0.0.0" else if cfg.exposure == "tailscale" then cfg.tailnetAddress else "127.0.0.1";
             port = if cfg.exposure == "tailscale" then 80 else 8085;
           }
-        ];
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:8765";
-          extraConfig = ''
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
-            proxy_set_header Host home.or-gm.com;
-            proxy_set_header Cf-Access-Jwt-Assertion $http_cf_access_jwt_assertion;
-            proxy_read_timeout 75s;
-            client_max_body_size 8k;
-          '';
+        ] ++ lib.optional cfg.tls {
+          addr = if cfg.lanAddress != "" then "0.0.0.0" else cfg.tailnetAddress;
+          port = 443;
+          ssl = true;
+        };
+        locations = remoteLocations;
+      };
+      } // lib.optionalAttrs (cfg.tls && cfg.lanAddress != "") {
+        "${cfg.lanAddress}" = {
+          listen = [{ addr = "0.0.0.0"; port = 80; }];
+          locations = remoteLocations;
         };
       };
     };
@@ -579,7 +671,7 @@ in
       after = [ "tailscaled.service" ];
       wants = [ "tailscaled.service" ];
       unitConfig.StartLimitIntervalSec = lib.mkForce 0;
-      preStart = lib.mkBefore ''
+      preStart = lib.mkBefore (lib.optionalString (cfg.lanAddress == "") ''
         ready=false
         for attempt in $(seq 1 60); do
           if ${pkgs.iproute2}/bin/ip -4 -o addr show dev tailscale0 | ${pkgs.gnugrep}/bin/grep -Fq ' ${cfg.tailnetAddress}/'; then
@@ -589,7 +681,7 @@ in
           sleep 1
         done
         "$ready"
-      '';
+      '');
       serviceConfig.RestartSec = lib.mkForce 5;
       # The readiness check queries interface addresses via netlink. Nginx's
       # default sandbox only permits stream families, so allow this local
@@ -615,7 +707,7 @@ in
       wireplumber
       playerctl
       pulseaudio
-      uxplay
+      receiver
       kitty
       git
       rsync

@@ -34,6 +34,7 @@ pkgs.testers.runNixOSTest {
     '';
     orgm.multimedia.exposure = "tailscale";
     orgm.multimedia.tailnetAddress = "100.64.0.2";
+    orgm.multimedia.lanAddress = "10.0.2.15";
     orgm.multimedia.airplayName = "ORGM Test";
     orgm.multimedia.airplayNetworks = [ "10.0.2.0/24" ];
     systemd.services.test-tailnet = {
@@ -52,10 +53,20 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("orgm-home.service")
     machine.wait_for_unit("greetd.service")
     machine.wait_for_unit("nginx.service")
+    machine.wait_for_unit("orgm-home-cast.service")
+    machine.wait_until_succeeds("curl --fail http://127.0.0.1:8766/ | grep -F 'ORGM Test'")
+    machine.succeed("curl --fail http://127.0.0.1:8766/apps/YouTube | grep -F '<state>stopped</state>'")
+    machine.succeed("test $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8766/apps/Netflix) = 404")
     machine.wait_until_succeeds("curl --fail -H 'Host: home.or-gm.com' http://100.64.0.2/api/health", timeout=40)
+    machine.succeed("curl --fail -H 'Host: 10.0.2.15' http://127.0.0.1/api/health")
+    machine.succeed("test $(curl -s -o /dev/null -w '%{http_code}' -H 'Host: 10.0.2.15' http://127.0.0.1/api/status) = 401")
     machine.wait_until_succeeds("test -S /run/orgm-home/agent.sock", timeout=90)
     query = "echo '{\"action\":\"status\"}' | runuser -u media -- socat -t 30 - UNIX-CONNECT:/run/orgm-home/agent.sock"
     machine.wait_until_succeeds(query + " | jq -e '.ok and .data.session and .data.app == \"home\"'", timeout=120)
+    # UxPlay only serves playlists in an active Apple session. Test the exact
+    # TCP boundary here without requiring an Apple sender or a fake HTTP page.
+    machine.wait_until_succeeds("runuser -u media -- ${pkgs.python3}/bin/python3 -c 'import socket; socket.create_connection((\"127.0.0.1\",7001),3).close()'", timeout=20)
+    machine.succeed("runuser -u media -- ${pkgs.python3}/bin/python3 -c 'import socket; socket.create_connection((\"::1\",7001),3).close()'")
     machine.succeed("test $(stat -c %a /var/lib/orgm-home/control-token) = 600")
     machine.succeed("nft list table inet orgm-media-egress")
     machine.succeed("curl --fail http://127.0.0.1:8765/api/health")

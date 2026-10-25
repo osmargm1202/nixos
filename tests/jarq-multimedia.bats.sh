@@ -47,7 +47,16 @@ nix eval --impure --raw --expr '
   assert !c.services.cloudflared.enable;
   assert c.services.nginx.enable;
   assert c.orgm.multimedia.exposure == "tailscale";
-  assert c.services.nginx.virtualHosts."home.or-gm.com".listen == [{ addr = "100.122.22.48"; port = 80; ssl = false; proxyProtocol = false; extraParameters = []; }];
+  assert c.services.nginx.virtualHosts."home.or-gm.com".listen == [
+    { addr = "0.0.0.0"; port = 80; ssl = false; proxyProtocol = false; extraParameters = []; }
+    { addr = "0.0.0.0"; port = 443; ssl = true; proxyProtocol = false; extraParameters = []; }
+  ];
+  assert c.services.nginx.virtualHosts."home.or-gm.com".forceSSL;
+  assert c.security.acme.certs."home.or-gm.com".dnsProvider == "cloudflare";
+  assert c.security.acme.certs."home.or-gm.com".credentialFiles.CF_DNS_API_TOKEN_FILE == "/var/lib/orgm-home-acme/cloudflare-token";
+  assert !(builtins.elem 443 c.networking.firewall.allowedTCPPorts);
+  assert builtins.elem "http://10.0.0.98" c.orgm.multimedia.origins;
+  assert lib.hasInfix "ip saddr { 10.0.0.0/24 } tcp dport 80 accept" c.networking.firewall.extraInputRules;
   assert builtins.elem 80 c.networking.firewall.interfaces.tailscale0.allowedTCPPorts;
   assert builtins.elem 8123 c.networking.firewall.interfaces.tailscale0.allowedTCPPorts;
   assert c.services.home-assistant.enable;
