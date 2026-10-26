@@ -21,6 +21,17 @@ let
   });
   bomba = import ../apps/bomba/package.nix { inherit pkgs; };
   catalog = pkgs.formats.json { };
+  remoteLocations."/static/" = {
+    alias = "${app}/${pkgs.python3.sitePackages}/orgm_home/static/";
+    extraConfig = ''
+      add_header Cache-Control $orgm_asset_cache;
+      add_header X-Content-Type-Options nosniff;
+      sendfile on;
+      open_file_cache max=1000 inactive=60s;
+      open_file_cache_valid 60s;
+      access_log off;
+    '';
+  };
   remoteLocations."/" = {
     proxyPass = "http://127.0.0.1:8765";
     extraConfig = ''
@@ -388,7 +399,9 @@ in
       polkit.addRule(function(action, subject) {
         if (subject.user === "media" && (
           action.id === "org.freedesktop.login1.reboot" ||
-          action.id === "org.freedesktop.login1.reboot-multiple-sessions"
+          action.id === "org.freedesktop.login1.reboot-multiple-sessions" ||
+          action.id === "org.freedesktop.login1.power-off" ||
+          action.id === "org.freedesktop.login1.power-off-multiple-sessions"
         )) return polkit.Result.YES;
       });
     '';
@@ -640,6 +653,13 @@ in
     };
     services.nginx = lib.mkIf cfg.nginx {
       enable = true;
+      recommendedGzipSettings = true;
+      appendHttpConfig = ''
+        map $arg_v $orgm_asset_cache {
+          default "public, max-age=3600, must-revalidate";
+          "~^[a-f0-9]{12}$" "public, max-age=31536000, immutable";
+        }
+      '';
       # Set Host once: the recommended block plus a custom Host emits two
       # Host headers, which Uvicorn correctly rejects as malformed HTTP.
       recommendedProxySettings = false;

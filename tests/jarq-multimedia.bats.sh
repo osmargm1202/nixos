@@ -46,6 +46,9 @@ nix eval --impure --raw --expr '
   assert builtins.elem "orgm-home-session.target" c.systemd.user.services.orgm-home-kiosk.partOf;
   assert !c.services.cloudflared.enable;
   assert c.services.nginx.enable;
+  assert c.services.nginx.recommendedGzipSettings;
+  assert c.services.nginx.virtualHosts."home.or-gm.com".locations."/static/".alias != null;
+  assert lib.hasInfix "org.freedesktop.login1.power-off" c.security.polkit.extraConfig;
   assert c.orgm.multimedia.exposure == "tailscale";
   assert c.services.nginx.virtualHosts."home.or-gm.com".listen == [
     { addr = "0.0.0.0"; port = 80; ssl = false; proxyProtocol = false; extraParameters = []; }
