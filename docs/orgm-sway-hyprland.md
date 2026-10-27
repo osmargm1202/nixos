@@ -86,6 +86,17 @@ de Waybar. Evita las acciones automáticas por inactividad sin detener
 `swayidle`/`hypridle`, ni deshabilitar el bloqueo manual o el bloqueo antes de
 suspender. Su estado se conserva en `~/.local/state/waybar/caffeine`.
 
+El menú de sesión ofrece **Ahorro** (`orgm-ahorro on|off|toggle|status`) en
+Hyprland y Sway: apaga los monitores, pone el CPU en `power-saver` y toma un
+inhibidor `idle:sleep` de systemd, así que no bloquea, no suspende ni hiberna y
+los procesos largos siguen. En Sway además detiene `orgm-sway-idle` mientras
+dura, porque swayidle ignora los inhibidores de systemd. Cualquier tecla (no el
+ratón) enciende los monitores y restaura el estado anterior: Hyprland usa
+`misc:key_press_enables_dpms` y Sway lee el teclado con `libinput
+debug-events` (usuario en el grupo `input`; `libinput` lo instala el perfil
+Sway). Por SSH: `ssh osmarg@orgm orgm-ahorro off` (activarlo por SSH requiere
+`HYPRLAND_INSTANCE_SIGNATURE` o `SWAYSOCK`).
+
 Un clic en el módulo nativo de Waybar sincroniza todas las barras de ese mismo
 proceso y persiste la elección. Desde el centro se reinicia únicamente la barra
 de la sesión para aplicar `start-activated`; si esa operación falla, se revierte

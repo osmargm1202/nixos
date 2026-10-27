@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Low-power mode for Hyprland and Sway: monitors off, CPU in power-saver, no
+# lock and no system sleep, so long-running processes keep going. Any key
+# press turns the monitors back on and restores the previous state. Mouse
+# movement is not a wake source: sensor jitter would light the screen again
+# within a second.
+set -euo pipefail
+
+unit=orgm-ahorro
+state_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orgm-ahorro"
+# Sway's idle daemon ignores systemd idle inhibitors; it is paused instead.
+sway_idle=orgm-sway-idle.service
+
+usage() {
+  echo "uso: orgm-ahorro [on|off|toggle|status]" >&2
+  exit 2
+}
+
+active() { systemctl --user --quiet is-active "$unit.service"; }
+
+compositor() {
+  if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then echo hyprland
+  elif [ -n "${SWAYSOCK:-}" ]; then echo sway
+  else return 1
+  fi
+}
+
+hypr_wake_option() {
+  hyprctl getoption -j misc:key_press_enables_dpms | sed -n 's/.*"bool": *\(true\|false\).*/\1/p'
+}
+
+hypr_set_wake() {
+  hyprctl eval "hl.config({ misc = { key_press_enables_dpms = $1 } })" >/dev/null
+}
+
+dpms() {
+  case "$wm" in
+    hyprland) hyprctl dispatch "hl.dsp.dpms({ action = \"$1\" })" >/dev/null ;;
+    sway) swaymsg "output * power $1" >/dev/null ;;
+  esac
+}
+
+hypr_monitors_on() { hyprctl monitors -j | grep -q '"dpmsStatus": *true'; }
+
+restore() {
+  trap - EXIT INT TERM
+  [ -z "${keys_pid:-}" ] || kill "$keys_pid" 2>/dev/null || true
+  [ -z "${inhibitor:-}" ] || kill "$inhibitor" 2>/dev/null || true
+  dpms on || true
+  if [ -f "$state_dir/wake" ]; then
+    hypr_set_wake "$(cat "$state_dir/wake")" || true
+  fi
+  if [ -f "$state_dir/sway-idle" ]; then
+    systemctl --user start "$sway_idle" || true
+  fi
+  if [ -f "$state_dir/profile" ]; then
+    powerprofilesctl set "$(cat "$state_dir/profile")" || true
+  fi
+  rm -rf "$state_dir"
+}
+
+# Hyprland wakes the monitors itself on a key press; wait until it has.
+hyprland_wait() {
+  hypr_set_wake true
+  dpms off
+  sleep 3 & wait $!
+  while ! hypr_monitors_on; do
+    sleep 3 & wait $!
+  done
+}
+
+# Sway has no key-press wake, so read keyboard events from libinput (the user
+# is in the input group) and ignore pointer events.
+sway_wait() {
+  dpms off
+  coproc keys { exec libinput debug-events 2>/dev/null; }
+  keys_pid=$keys_PID
+  # Coproc descriptors are not inherited by subshells; duplicate it first.
+  exec 3<&"${keys[0]}"
+  grep -m1 -q KEYBOARD_KEY <&3 & wait $!
+}
+
+# Main process of the transient unit. KillMode=mixed signals only this shell
+# on stop, so the restore trap can still reach the compositor and daemons.
+hold() {
+  wm=$(compositor)
+  systemd-inhibit --what=idle:sleep --mode=block \
+    --who="Modo ahorro" --why="Monitores apagados; los procesos siguen activos" \
+    sleep infinity &
+  inhibitor=$!
+  mkdir -p "$state_dir"
+  powerprofilesctl get >"$state_dir/profile"
+  trap restore EXIT INT TERM
+  if [ "$wm" = hyprland ]; then
+    hypr_wake_option >"$state_dir/wake"
+  elif systemctl --user --quiet is-active "$sway_idle"; then
+    touch "$state_dir/sway-idle"
+    systemctl --user stop "$sway_idle"
+  fi
+  powerprofilesctl set power-saver
+  # Let the menu click or key release settle before input can wake the screen.
+  sleep 1
+  "${wm}_wait"
+}
+
+case "${1:-toggle}" in
+  _hold) hold ;;
+  on)
+    active && exit 0
+    compositor >/dev/null || { echo "orgm-ahorro: requiere una sesión de Hyprland o Sway" >&2; exit 1; }
+    systemd-run --user --unit="$unit" --collect --quiet -p KillMode=mixed \
+      -E HYPRLAND_INSTANCE_SIGNATURE -E SWAYSOCK -E XDG_RUNTIME_DIR -E PATH \
+      "$(readlink -f "$0")" _hold
+    ;;
+  off) active && systemctl --user stop "$unit.service" || true ;;
+  toggle) if active; then "$0" off; else "$0" on; fi ;;
+  status) if active; then echo activo; else echo inactivo; fi ;;
+  *) usage ;;
+esac

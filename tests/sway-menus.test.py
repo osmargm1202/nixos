@@ -66,6 +66,7 @@ class Menus(unittest.TestCase):
     def test_power_graphical_result_dispatches_only_known_confirmed_actions(self):
         for selection, expected in (('Apagar', [('systemctl', 'poweroff')]),
                                     ('Suspender', [('orgm-qylock', 'lock'), ('systemctl', 'suspend')]),
+                                    ('Ahorro', [('orgm-ahorro', 'on')]),
                                     ('arbitrary command', [])):
             calls = []
             with patch.dict(ENV, graphical_selection=lambda _: (True, selection), menu_context=lambda: {},

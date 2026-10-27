@@ -153,9 +153,10 @@ opacidad, gaps y la restauración del fondo sin alterar la sesión real.
   La paleta se lee del perfil activo al abrirlo. Los demás menús Rofi conservan
   su tema. `sway-launcher.rasi` y su `NOTICE.md` viven en `~/.config/rofi-sway`.
 - El botón de apagado de Waybar, Super+Ctrl+P y Super+Alt+E abren el menú de
-  sesión con cinco botones: bloquear, suspender, cerrar sesión, reiniciar y
-  apagar. Cerrar sesión, reiniciar y apagar piden una segunda aceptación en
-  el propio menú. Suspender bloquea primero mediante Qylock.
+  sesión con seis botones: bloquear, ahorro, suspender, cerrar sesión,
+  reiniciar y apagar. Cerrar sesión, reiniciar y apagar piden una segunda aceptación en
+  el propio menú. Suspender bloquea primero mediante Qylock. Ahorro apaga las
+  pantallas sin bloquear ni suspender y vuelve con cualquier tecla.
 - El botón PERFIL de Waybar abre tres tarjetas con el último fondo guardado
   de SLC, ORGM y OSMAR, incluido un fotograma para videos. El perfil actual
   aparece marcado; un perfil sin un archivo válido muestra «Sin vista previa».

@@ -103,5 +103,7 @@ in
     adwaita-icon-theme hicolor-icon-theme colloid-icon-theme gnome-themes-extra
     catppuccin-gtk catppuccin-cursors.macchiatoTeal
     qt6.qtwayland python3
+    # orgm-ahorro wakes the outputs on a key press read from libinput.
+    libinput
   ];
 }

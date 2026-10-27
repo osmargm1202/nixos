@@ -11,6 +11,7 @@ MenuWindow {
     property var catalog: ({})
     readonly property var actions: [
         { icon: "\uf023", label: "Bloquear" },
+        { icon: "\uf06c", label: "Ahorro" },
         { icon: "\uf186", label: "Suspender" },
         { icon: "\uf08b", label: "Cerrar sesión" },
         { icon: "\uf021", label: "Reiniciar" },
@@ -19,7 +20,7 @@ MenuWindow {
     property int selected: 0
     property bool confirming: false
     readonly property string choice: actions[selected].label
-    readonly property real buttonSize: Math.min(128, (width - 64 - row.spacing * 4) / 5)
+    readonly property real buttonSize: Math.min(128, (width - 64 - row.spacing * (actions.length - 1)) / actions.length)
     signal chosen(string value)
     screen: Quickshell.screens.find(s => s.name === root.catalog.screen) || Quickshell.screens[0]
     onSelectedChanged: confirming = false
@@ -28,7 +29,7 @@ MenuWindow {
     function move(delta) { selected = Math.max(0, Math.min(actions.length - 1, selected + delta)) }
     function activate() {
         if (!open) return
-        if (selected >= 2 && !confirming) { confirming = true; return }
+        if (selected >= 3 && !confirming) { confirming = true; return }
         chosen(choice)
     }
     onKeyPressed: event => {
@@ -36,7 +37,7 @@ MenuWindow {
         case Qt.Key_Left: case Qt.Key_H: move(-1); break
         case Qt.Key_Right: case Qt.Key_L: move(1); break
         case Qt.Key_Return: case Qt.Key_Enter: case Qt.Key_Space: if (!event.isAutoRepeat) activate(); break
-        case Qt.Key_1: case Qt.Key_2: case Qt.Key_3: case Qt.Key_4: case Qt.Key_5:
+        case Qt.Key_1: case Qt.Key_2: case Qt.Key_3: case Qt.Key_4: case Qt.Key_5: case Qt.Key_6:
             selected = event.key - Qt.Key_1; break
         }
         event.accepted = true

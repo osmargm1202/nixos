@@ -3,6 +3,7 @@
   "name": "wayland-tools",
   "paths": [
     ".local/lib/orgm-wayland",
+    ".local/bin/orgm-ahorro",
     ".local/bin/orgm-tablet",
     ".local/bin/orgm-session-dock",
     ".config/quickshell/orgm-tablet-dock"

@@ -82,12 +82,15 @@ def power(action=None, *, confirmed=False):
     if action is None:
         handled, selected = graphical_selection(dict(kind='power', **menu_context()))
         if handled:
-            if selected in ('Bloquear', 'Suspender', 'Cerrar sesión', 'Reiniciar', 'Apagar'):
+            if selected in ('Bloquear', 'Ahorro', 'Suspender', 'Cerrar sesión', 'Reiniciar', 'Apagar'):
                 power(selected, confirmed=True)
             return
-    action = action or pick("Sesión", ["Bloquear", "Suspender", "Cerrar sesión", "Reiniciar", "Apagar"])
+    action = action or pick("Sesión", ["Bloquear", "Ahorro", "Suspender", "Cerrar sesión", "Reiniciar", "Apagar"])
     if action == "Bloquear":
         run("orgm-qylock", "lock")
+    elif action == "Ahorro":
+        # Monitors off without locking or sleeping; long jobs keep running.
+        run("orgm-ahorro", "on")
     elif action == "Suspender":
         run("orgm-qylock", "lock")
         run("systemctl", "suspend")
