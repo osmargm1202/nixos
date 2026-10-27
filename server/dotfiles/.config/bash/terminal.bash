@@ -17,10 +17,12 @@ export PATH="$(_orgm_path_with "$HOME/.local/bin" "${BUN_INSTALL:-$HOME/.bun}/bi
 if ! command -v fnm >/dev/null && [[ -x $HOME/.local/share/fnm/fnm ]]; then
   export PATH="$(_orgm_path_with "$HOME/.local/share/fnm")"
 fi
-unset -f _orgm_path_with
 if command -v fnm >/dev/null; then
   eval "$(fnm env --shell bash)"
 fi
+# fnm can prepend unwrapped npm clients; keep our session recorders first.
+export PATH="$(_orgm_path_with "$HOME/.local/bin")"
+unset -f _orgm_path_with
 
 # Functions remain available when a CLI is installed later in this session.
 # Utility subcommands keep their original flags (including remote pairing).

@@ -29,11 +29,16 @@ El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
   `extended-keys-format` se configura únicamente si el tmux instalado la admite.
 - `tmux-resurrect` y `tmux-continuum`: descargas HTTPS fijadas a commits,
   sin TPM ni rutas `/nix/store` en los servidores.
+- Restauración de tmux y de conversaciones de Claude Code, Codex, Pi, OMP y
+  OpenCode al encender, antes del login. El instalador habilita `linger`,
+  `tmux-session.service` y `tmux-session-save.timer` para el usuario.
+  Guarda cada minuto, incluso sin clientes conectados, y de nuevo al apagar.
 - `~/.bashrc.local`: archivo opcional para ajustes privados de cada host;
   el instalador no lo modifica. No se replican rutas de Villarpando, zona horaria,
   credenciales, claves SOPS ni configuraciones gráficas.
 
-No cambia Fish, el shell de login, servicios, firewall, DNS ni NixOS.
+No cambia Fish, el shell de login, firewall, DNS ni NixOS.
+Los servicios que administra son las unidades de usuario de tmux indicadas arriba.
 Rechaza destinos gestionados por Nix/Home Manager: en el escritorio se debe
 seguir usando Home Manager, no este instalador.
 
@@ -48,11 +53,19 @@ bash server/install.sh --source "$PWD"
 bash server/install.sh --source "$PWD" --packages
 # Copiar solo tmux sin reemplazar Bash:
 bash server/install.sh --source "$PWD" --tmux-only
+# Preparar la persistencia sin habilitar servicios ni linger:
+bash server/install.sh --source "$PWD" --no-autostart
 ```
 
 `--no-plugins` instala tmux básico y un loader vacío; si antes había plugins,
-respalda y sustituye su loader, sin borrar sus directorios de datos.
-`--home DIR` permite instalar en un HOME aislado. `--help` lista las opciones.
+respalda y sustituye su loader, y deshabilita sus unidades de persistencia
+instaladas previamente para el usuario actual. Conserva los datos y `linger`.
+`--no-autostart` instala los archivos de persistencia sin cambiar el estado
+de los servicios; las unidades que ya estaban habilitadas siguen habilitadas.
+`--home DIR` permite instalar en un HOME aislado: cuando no es el HOME de la
+cuenta actual, nunca ejecuta `systemctl`, `loginctl` ni sudo para activar servicios.
+`--tmux-only` conserva Bash y sus perfiles, e incluye los launchers necesarios
+para registrar las conversaciones. `--help` lista las opciones.
 El modo `--dry-run` puede descargar/stagear archivos temporales, pero no modifica
 el HOME ni instala paquetes.
 
@@ -64,7 +77,8 @@ de las etapas omitidas por las opciones elegidas. Si una operación falla, indic
 la etapa y termina sin anunciar éxito. Las descargas tienen límite de conexión
 de 15 segundos, de duración total de 5 minutos y de inactividad de 30 segundos.
 
-`--packages` instala tmux, git, curl, bash-completion, neovim, ripgrep,
+`--packages` instala tmux, Python 3, procps/procps-ng, util-linux (flock),
+hostname/inetutils, diffutils (cmp), git, curl, bash-completion, neovim, ripgrep,
 fd-find/fd, fzf, zoxide, btop, jq, rsync, bat, file, tree, unzip y xz.
 Los helpers para Bun, ble.sh y los agentes se ejecutan por separado; no instala
 Starship, Atuin ni neofetch. Las versiones dependen de la distro;
@@ -72,6 +86,75 @@ replicar estos dotfiles no garantiza versiones de paquetes idénticas.
 Arch utiliza `pacman -S --needed`, nunca `pacman -Sy`; si sus repositorios locales
 están desactualizados, primero debe resolverse la actualización normal del sistema.
 No se hace un upgrade completo de servidores automáticamente.
+
+## Restauración al encender y agentes
+
+La instalación normal con plugins activa la persistencia en Arch y Ubuntu/Debian
+con systemd. Ejecutar el instalador con el usuario que utilizará los agentes:
+
+```bash
+bash server/install.sh --source "$PWD" --packages
+tmux -u attach
+```
+
+El instalador usa `loginctl enable-linger` para arrancar el gestor del usuario al
+encender y mantenerlo después del logout. Si la política del host requiere
+privilegios, reintenta ese comando con sudo y explica el motivo. La administración
+de las unidades usa `systemctl --user` desde la cuenta actual.
+Al arrancar espera hasta 30 segundos a NetworkManager o systemd-networkd, cuando
+están activos, antes de restaurar las conversaciones. Si no hay red, abre el
+estado guardado para que puedas conectarte.
+
+Los scripts compartidos de `nixos/tmux/` se copian a `~/.local/lib/orgm-tmux/`.
+Los launchers en `~/.local/bin/` y las unidades en `~/.config/systemd/user/`
+utilizan Python/Bash y los plugins locales, sin necesitar Nix. OpenCode no
+necesita Bun para registrar su sesión: el helper conserva su configuración
+JSONC con Python. Pi y OMP mantienen los runtimes que requieren sus propios CLIs.
+
+```bash
+systemctl --user status tmux-session.service tmux-session-save.timer
+journalctl --user -u tmux-session.service -u tmux-session-save.service
+tmux-session save
+```
+
+Abre `codex`, `claude`, `pi`, `omp` u `opencode` dentro de tmux. Se guarda el ID
+o archivo exacto de cada conversación; dos paneles en una carpeta se recuperan
+por separado. Al restaurar se envía la instrucción de revisar el estado y
+continuar la última tarea autorizada. Si terminó, se pausó o necesita información,
+el agente debe esperar. No se copian conversaciones ni credenciales de otra PC.
+Los clientes necesitan sus credenciales vigentes y acceso a la red.
+
+Codex usa un backend por panel (`--no-daemon`) para identificar su conversación.
+Pi/OMP cargan una extensión explícita y OpenCode 1.4.3 un plugin de TUI. Las
+opciones de permisos siguen en las funciones interactivas de Bash: el nuevo
+launcher de Codex conserva `command codex ...` con los permisos normales.
+El instalador mantiene `~/.local/bin` delante de los clientes de fnm.
+
+Para reabrir las conversaciones esperando tu intervención, edita
+`~/.config/tmux/persistence.conf` y recarga tmux:
+
+```tmux
+set -g @orgm-agent-auto-continue off
+```
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
+Después de preparar otro HOME o usar `--no-autostart`, ejecuta desde una sesión
+de ese usuario para activar el arranque:
+
+```bash
+loginctl enable-linger "$USER"  # sudo si la política del host lo requiere
+systemctl --user daemon-reload
+systemctl --user enable --now tmux-session.service tmux-session-save.timer
+```
+
+En contenedores o WSL sin systemd, `--no-autostart` prepara los archivos y permite
+usar el guardado/restaurado manual. La instalación normal informa del error
+si no puede habilitar el arranque; no anuncia que esté activo.
+Más detalles y compatibilidad: [tmux y agentes](../docs/tmux-agents.md).
+[Documentación de linger](https://www.freedesktop.org/software/systemd/man/257/loginctl.html).
 
 Todos los recursos se descargan antes de reemplazar configuraciones.
 Los archivos cambiados, incluidos symlinks, se respaldan en:
@@ -271,6 +354,16 @@ Referencias oficiales:
 
 ## Verificación realizada
 
+- `python3 tests/server-persistence.test.py`: recursos portables compartidos,
+  HOME alternativo sin efectos en el host, idempotencia, dry-run, rechazo de
+  destinos Nix, activación de unidades y fallback a sudo simulados.
+- `python3 tests/tmux-session.test.py /ruta/home/.local`: guardado real sin
+  clientes, reinicio del servidor tmux y restauración de seis conversaciones
+  simuladas de los cinco clientes, sin llamadas a proveedores.
+- Instalación y restauración con plugins reales en contenedores Ubuntu 24.04
+  (tmux 3.4, Python 3.12) y Arch (tmux 3.8, Python 3.14), usando la configuración
+  completa y shells de login. Las unidades y `linger` se verifican con mocks;
+  no se reinicia un host físico durante estas pruebas.
 - `bash tests/server-bash-banner.bats.sh`: terminal con banner, tmux sin banner,
   invocación manual, recarga, redirección y ejecución no interactiva.
 - `bash tests/server-installer.bats.sh`: dry-run, fallo de staging sin modificar

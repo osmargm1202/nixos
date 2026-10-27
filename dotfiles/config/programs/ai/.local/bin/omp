@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep the terminal and stdin intact while adding tmux's session recorder.
+while IFS= read -r -u 3 candidate; do
+  [[ $candidate -ef $0 ]] && continue
+  if command -v tmux-agent-resume >/dev/null 2>&1; then
+    exec tmux-agent-resume launch omp "$candidate" "$@" 3<&-
+  fi
+  exec "$candidate" "$@" 3<&-
+done 3< <(type -aP omp)
+
+printf '%s\n' 'omp: native executable not found on PATH' >&2
+exit 127

@@ -9,12 +9,14 @@ DRY_RUN=0
 INSTALL_PACKAGES=0
 INSTALL_TMUX_ONLY=0
 INSTALL_PLUGINS=1
+INSTALL_AUTOSTART=1
 TEMP_DIR=
 BACKUP_DIR=
 CURRENT_STAGE='Preparación'
 
 declare -a BACKED_UP=()
 declare -a TERMINAL_SOURCES=() TERMINAL_DESTINATIONS=() TERMINAL_MODES=()
+declare -a PERSISTENCE_SOURCES=() PERSISTENCE_DESTINATIONS=() PERSISTENCE_MODES=()
 declare -A TERMINAL_STAGED=()
 
 action() {
@@ -45,15 +47,19 @@ Usage: install.sh [options]
 
 Install ORGM Bash/tmux, AI install/update commands, blesh settings and FZF widgets.
 Agent binaries and blesh are installed only when their helper is invoked.
-It does not change shells, Fish, NixOS configuration, DNS, or services.
+With plugins, restores tmux and Claude/Codex/Pi/OMP/OpenCode at boot via systemd --user.
+It does not change shells, Fish, NixOS configuration, or DNS.
 
 Options:
-  --tmux-only    Install tmux, its helper, and optional plugins only.
+  --tmux-only    Install tmux, persistence, agent launchers, and optional plugins.
                  Leave Bash and login profiles unchanged.
   --source DIR   Read files from a local checkout instead of GitHub.
   --home DIR     Install into DIR (useful for an isolated test home).
   --packages     Install optional baseline tools with apt or pacman.
   --no-plugins   Skip tmux-resurrect and tmux-continuum installation.
+                 Skip persistence and disable its previously installed services.
+  --no-autostart Install persistence files without enabling services or linger.
+                 Existing service enablement is left unchanged.
   --dry-run      Show planned changes without writing HOME or installing packages.
   --help         Show this help.
 
@@ -77,6 +83,7 @@ while (($#)); do
             ;;
         --packages) INSTALL_PACKAGES=1; shift ;;
         --no-plugins) INSTALL_PLUGINS=0; shift ;;
+        --no-autostart) INSTALL_AUTOSTART=0; shift ;;
         --tmux-only) INSTALL_TMUX_ONLY=1; shift ;;
         --dry-run) DRY_RUN=1; shift ;;
         --help|-h) usage; exit 0 ;;
@@ -176,6 +183,38 @@ fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.tmux.conf' "$TEMP_DIR/fi
 fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.local/bin/tmux-spanish-date' "$TEMP_DIR/files/tmux-spanish-date"
 
 if ((INSTALL_PLUGINS)); then
+    PERSISTENCE_SOURCES=(
+        'nixos/tmux/agents.py'
+        'nixos/tmux/session.sh'
+        'nixos/tmux/hooks/session-record.mjs'
+        'nixos/tmux/hooks/pi-session.mjs'
+        'nixos/tmux/hooks/opencode-session.mjs'
+        'server/dotfiles/.local/lib/orgm-tmux/save'
+        'server/dotfiles/.local/bin/tmux-agent-resume'
+        'server/dotfiles/.local/bin/tmux-session'
+        'server/dotfiles/.local/bin/codex'
+        'dotfiles/config/programs/ai/.local/bin/pi'
+        'dotfiles/config/programs/ai/.local/bin/omp'
+        'dotfiles/config/programs/ai/.local/bin/opencode'
+        'dotfiles/config/programs/tmux/.config/tmux/persistence.conf'
+        'server/dotfiles/.config/systemd/user/tmux-session.service'
+        'server/dotfiles/.config/systemd/user/tmux-session-save.service'
+        'server/dotfiles/.config/systemd/user/tmux-session-save.timer'
+    )
+    PERSISTENCE_DESTINATIONS=(
+        '.local/lib/orgm-tmux/agents.py' '.local/lib/orgm-tmux/session.sh'
+        '.local/lib/orgm-tmux/hooks/session-record.mjs' '.local/lib/orgm-tmux/hooks/pi-session.mjs'
+        '.local/lib/orgm-tmux/hooks/opencode-session.mjs' '.local/lib/orgm-tmux/save'
+        '.local/bin/tmux-agent-resume' '.local/bin/tmux-session'
+        '.local/bin/codex' '.local/bin/pi' '.local/bin/omp' '.local/bin/opencode'
+        '.config/tmux/persistence.conf'
+        '.config/systemd/user/tmux-session.service' '.config/systemd/user/tmux-session-save.service'
+        '.config/systemd/user/tmux-session-save.timer'
+    )
+    PERSISTENCE_MODES=(0644 0644 0644 0644 0644 0755 0755 0755 0755 0755 0755 0755 0644 0644 0644 0644)
+    for index in "${!PERSISTENCE_SOURCES[@]}"; do
+        fetch_file "${PERSISTENCE_SOURCES[$index]}" "$TEMP_DIR/files/persistence-$index"
+    done
     require_command tar
     mkdir -p -- "$TEMP_DIR/plugins"
     fetch_plugin() {
@@ -233,6 +272,10 @@ TMUX_CONF_DIR=$TARGET_HOME/.config/tmux
 HELPER_DEST=$TARGET_HOME/.local/bin/tmux-spanish-date
 PLUGIN_ROOT=$TARGET_HOME/.local/share/orgm-dotfiles/tmux
 PLUGINS_CONF=$TMUX_CONF_DIR/plugins.conf
+ACCOUNT_HOME=$(getent passwd "$(id -u)" | cut -d: -f6)
+ACCOUNT_HOME=$(readlink -m -- "$ACCOUNT_HOME")
+ACTIVATE_HERE=0
+if [[ $TARGET_HOME == "$ACCOUNT_HOME" ]]; then ACTIVATE_HERE=1; fi
 
 # Check every possible managed destination before making any change under HOME.
 check_not_nix_managed "$TARGET_HOME/.tmux.conf" "$HELPER_DEST" "$PLUGINS_CONF"
@@ -244,6 +287,18 @@ if ((!INSTALL_TMUX_ONLY)); then
 fi
 if ((INSTALL_PLUGINS)); then
     check_not_nix_managed "$PLUGIN_ROOT/tmux-resurrect" "$PLUGIN_ROOT/tmux-continuum"
+    for relative in "${PERSISTENCE_DESTINATIONS[@]}"; do
+        check_not_nix_managed "$TARGET_HOME/$relative"
+    done
+elif ((ACTIVATE_HERE)); then
+    # --no-plugins must never stop Nix/Home Manager units on a desktop.
+    check_not_nix_managed "$TARGET_HOME/.config/systemd/user/tmux-session.service" \
+        "$TARGET_HOME/.config/systemd/user/tmux-session-save.timer"
+fi
+if ((ACTIVATE_HERE && INSTALL_PLUGINS && INSTALL_AUTOSTART && !DRY_RUN)); then
+    [[ -d /run/systemd/system ]] || die 'systemd is not running; use --no-autostart to prepare files only'
+    require_command systemctl
+    require_command loginctl
 fi
 
 login_loads_bashrc() {
@@ -340,7 +395,7 @@ install_packages() {
     fi
     case ${ID:-} in
         ubuntu|debian)
-            packages=(tmux git curl bash-completion neovim ripgrep fd-find fzf zoxide btop jq rsync bat file tree unzip xz-utils)
+            packages=(tmux python3 procps util-linux hostname diffutils git curl bash-completion neovim ripgrep fd-find fzf zoxide btop jq rsync bat file tree unzip xz-utils)
             if ((DRY_RUN)); then
                 action "Would run: apt-get update && apt-get install ${packages[*]}"
                 return
@@ -356,14 +411,14 @@ install_packages() {
                 action "Instalando paquetes: ${packages[*]}"
                 sudo apt-get install -y "${packages[@]}"
             fi
-            action "Instalando paquetes con pacman: ${packages[*]} (puede solicitar sudo)."
             ;;
         arch|manjaro)
-            packages=(tmux git curl bash-completion neovim ripgrep fd fzf zoxide btop jq rsync bat file tree unzip xz)
+            packages=(tmux python procps-ng util-linux inetutils diffutils git curl bash-completion neovim ripgrep fd fzf zoxide btop jq rsync bat file tree unzip xz)
             if ((DRY_RUN)); then
                 action "Would run: pacman -S --needed ${packages[*]}"
                 return
             fi
+            action "Instalando paquetes con pacman: ${packages[*]} (puede solicitar sudo)."
             if ((EUID == 0)); then
                 pacman -S --needed --noconfirm "${packages[@]}"
             else
@@ -386,6 +441,11 @@ if ((INSTALL_PACKAGES)); then
 else
     action 'Paquetes del sistema omitidos; usa --packages para instalarlos.'
 fi
+if ((ACTIVATE_HERE && INSTALL_PLUGINS && INSTALL_AUTOSTART && !DRY_RUN)); then
+    for dependency in tmux python3 flock hostname cmp; do
+        command -v "$dependency" >/dev/null 2>&1 || die "missing $dependency; rerun with --packages"
+    done
+fi
 
 stage 5 'Aplicar configuración y respaldar archivos anteriores'
 if ((!INSTALL_TMUX_ONLY)); then
@@ -403,23 +463,69 @@ if [[ -n $LOGIN_UPDATE ]]; then
 fi
 
 if ((INSTALL_PLUGINS)); then
+    for index in "${!PERSISTENCE_DESTINATIONS[@]}"; do
+        relative=${PERSISTENCE_DESTINATIONS[$index]}
+        deploy_file "$TEMP_DIR/files/persistence-$index" "$TARGET_HOME/$relative" "$relative" "${PERSISTENCE_MODES[$index]}"
+    done
     deploy_tree "$TEMP_DIR/plugins/tmux-resurrect-extracted" "$PLUGIN_ROOT/tmux-resurrect" '.local/share/orgm-dotfiles/tmux/tmux-resurrect'
     deploy_tree "$TEMP_DIR/plugins/tmux-continuum-extracted" "$PLUGIN_ROOT/tmux-continuum" '.local/share/orgm-dotfiles/tmux/tmux-continuum'
 fi
 {
     printf '# Generated by ORGM server/install.sh; local plugin paths.\n'
     if ((INSTALL_PLUGINS)); then
-        for plugin in "$PLUGIN_ROOT/tmux-resurrect/resurrect.tmux" "$PLUGIN_ROOT/tmux-continuum/continuum.tmux"; do
-            printf -v shell_path '%q' "$plugin"
-            shell_path=${shell_path//\\/\\\\}
-            shell_path=${shell_path//\"/\\\"}
-            shell_path=${shell_path//\$/\\\$}
-            printf 'run-shell "%s"\n' "$shell_path"
-        done
+        printf '%s\n' "run-shell '\"\$HOME/.local/bin/tmux-session\" plugins'"
     fi
 } >"$TEMP_DIR/files/plugins.conf"
 deploy_file "$TEMP_DIR/files/plugins.conf" "$PLUGINS_CONF" '.config/tmux/plugins.conf' 0644
 
+configure_autostart() {
+    if ((!ACTIVATE_HERE)); then
+        action 'HOME alternativo: archivos preparados; no se cambian servicios ni linger de este equipo.'
+        return
+    fi
+    if ((!INSTALL_PLUGINS)); then
+        if [[ -f $TARGET_HOME/.config/systemd/user/tmux-session.service ]] &&
+            grep -q '^# ORGM portable tmux persistence$' "$TARGET_HOME/.config/systemd/user/tmux-session.service"; then
+            if ((DRY_RUN)); then
+                action 'Se deshabilitarían tmux-session.service y tmux-session-save.timer.'
+            else
+                systemctl --user disable --now tmux-session-save.timer tmux-session.service
+            fi
+        fi
+        return
+    fi
+    if ((!INSTALL_AUTOSTART)); then
+        action 'Arranque automático omitido (--no-autostart); archivos de servicio instalados.'
+        return
+    fi
+    if ((DRY_RUN)); then
+        action "Se habilitaría linger para $(id -un) y los servicios de usuario de tmux."
+        return
+    fi
+    action 'Habilitando linger para arrancar tmux al encender y mantenerlo después de cerrar sesión.'
+    if ! loginctl enable-linger "$(id -un)"; then
+        action 'La política de logind requiere privilegios para habilitar linger; se utilizará sudo.'
+        require_command sudo
+        sudo loginctl enable-linger "$(id -un)"
+    fi
+    export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+    export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}
+    local attempt ready=0
+    for attempt in {1..20}; do
+        if systemctl --user show-environment >/dev/null 2>&1; then ready=1; break; fi
+        sleep 0.25
+    done
+    ((ready)) || die 'cannot connect to systemd --user after enabling linger; rerun from a login session'
+    systemctl --user daemon-reload
+    # Reload plugins in a live server so its next save includes agent IDs.
+    if PATH="$TARGET_HOME/.local/bin:$PATH" tmux list-sessions >/dev/null 2>&1; then
+        PATH="$TARGET_HOME/.local/bin:$PATH" tmux source-file "$TARGET_HOME/.tmux.conf"
+    fi
+    systemctl --user enable --now tmux-session.service tmux-session-save.timer
+    systemctl --user start tmux-session-save.service
+    action 'Restauración al encender activa; guardado cada minuto y al apagar.'
+}
+configure_autostart
 
 
 if ((${#BACKED_UP[@]})); then

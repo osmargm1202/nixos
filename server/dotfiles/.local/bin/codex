@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Permission flags belong to the interactive Bash function, not this launcher.
+while IFS= read -r -u 3 candidate; do
+  [[ $candidate -ef $0 ]] && continue
+  if command -v tmux-agent-resume >/dev/null 2>&1; then
+    exec tmux-agent-resume launch codex "$candidate" "$@" 3<&-
+  fi
+  exec "$candidate" "$@" 3<&-
+done 3< <(type -aP codex)
+
+printf '%s\n' 'codex: native executable not found on PATH; run codex-install' >&2
+exit 127

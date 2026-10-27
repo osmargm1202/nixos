@@ -166,6 +166,7 @@ in
       ./apps/sops.nix
       ./apps/flatpak.nix
       ./common-dotfiles.nix
+      ./tmux
       ./apps/chromium.nix
       ./apps/firefox/firefox.nix
       ./apps/webapps.nix

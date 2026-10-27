@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep the terminal and stdin intact while adding tmux's session recorder.
+while IFS= read -r -u 3 candidate; do
+  [[ $candidate -ef $0 ]] && continue
+  if [[ -n ${TMUX:-} ]] && command -v tmux-agent-resume >/dev/null 2>&1; then
+    exec tmux-agent-resume launch pi "$candidate" "$@" 3<&-
+  fi
+  exec "$candidate" "$@" 3<&-
+done 3< <(type -aP pi)
+
+printf '%s\n' 'pi: native executable not found on PATH' >&2
+exit 127

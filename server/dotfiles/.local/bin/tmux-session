@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../lib/orgm-tmux" && pwd)
+export PATH="$HOME/.local/bin:${BUN_INSTALL:-$HOME/.bun}/bin:${NPM_CONFIG_PREFIX:-$HOME/.npm-global}/bin:${PNPM_HOME:-$HOME/.local/share/pnpm}:$HOME/.opencode/bin:$PATH"
+RESURRECT=$HOME/.local/share/orgm-dotfiles/tmux/tmux-resurrect
+CONTINUUM=$HOME/.local/share/orgm-dotfiles/tmux/tmux-continuum
+SAVE_PROXY=$session_lib/save
+
+if [[ ${1:-} == wait-network ]]; then
+  if command -v nm-online >/dev/null 2>&1 && systemctl is-active --quiet NetworkManager.service; then
+    nm-online --quiet --timeout=30 || true
+  elif [[ -x /usr/lib/systemd/systemd-networkd-wait-online ]] &&
+      systemctl is-active --quiet systemd-networkd.service; then
+    /usr/lib/systemd/systemd-networkd-wait-online --any --timeout=30 || true
+  fi
+  exit 0
+fi
+
+if [[ ${1:-} == plugins ]]; then
+  tmux source-file "$HOME/.config/tmux/persistence.conf"
+  # tmux-only preserves login profiles, which may replace PATH. Restore through
+  # the installed helper's absolute path, then rebuild user tool paths there.
+  restore_strategy=$(python3 -c 'import shlex,sys; print(shlex.quote("tmux-agent-resume->" + shlex.quote(sys.argv[1]) + " *"))' "$HOME/.local/bin/tmux-agent-resume")
+  tmux set-option -g @resurrect-processes "$restore_strategy"
+  tmux set-environment -g PATH "$PATH"
+fi
+# shellcheck source=/dev/null
+source "$session_lib/session.sh"

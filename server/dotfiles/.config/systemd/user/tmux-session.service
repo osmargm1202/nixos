@@ -1,0 +1,17 @@
+# ORGM portable tmux persistence
+[Unit]
+Description=Restore tmux and agent conversations
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment="PATH=%h/.local/bin:%h/.bun/bin:%h/.npm-global/bin:%h/.local/share/pnpm:%h/.opencode/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStartPre=%h/.local/bin/tmux-session wait-network
+ExecStart=%h/.local/bin/tmux-session start
+ExecStop=%h/.local/bin/tmux-session save
+KillMode=process
+TimeoutStartSec=90
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

@@ -26,6 +26,10 @@ with tempfile.TemporaryDirectory(prefix="codex-stdin-") as directory:
 set -euo pipefail
 [[ $1 == --dangerously-bypass-approvals-and-sandbox ]] || exit 40
 shift
+if [[ ${EXPECT_DEDICATED:-0} == 1 ]]; then
+  [[ $1 == --no-daemon ]] || exit 45
+  shift
+fi
 if [[ ${EXPECT_PROMPT:-0} == 1 ]]; then
   [[ $# == 1 && $1 == 'prompt with spaces' ]] || exit 44
 fi
@@ -43,9 +47,16 @@ IFS= read -r payload
                    shlex.quote(f'export PATH="{consumer}:$PATH"') + "\n")
     fnm.chmod(0o755)
     environment = dict(os.environ, PATH=f"{launcher}:{consumer}:{os.environ['PATH']}")
+    environment.pop('TMUX', None)
     environment["EXPECT_TTY"] = "0"
     result = subprocess.run([str(launcher / "codex")], input=b"input from caller\n",
                             env=environment, capture_output=True, timeout=5)
+    assert result.returncode == 0, (result.returncode, result.stderr)
+
+    # A tmux TUI gets a dedicated backend while retaining the caller's stdin.
+    result = subprocess.run([str(launcher / 'codex')], input=b'input from caller\n',
+                            env=dict(environment, TMUX='/tmp/test-socket,1,0', EXPECT_DEDICATED='1'),
+                            capture_output=True, timeout=5)
     assert result.returncode == 0, (result.returncode, result.stderr)
 
     # fnm prepends its Node bin directory, which may also contain npm's Codex.

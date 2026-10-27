@@ -1,0 +1,9 @@
+# ORGM portable tmux persistence
+[Unit]
+Description=Save tmux even without attached clients
+After=tmux-session.service
+
+[Service]
+Type=oneshot
+Environment="PATH=%h/.local/bin:%h/.bun/bin:%h/.npm-global/bin:%h/.local/share/pnpm:%h/.opencode/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=%h/.local/bin/tmux-session save

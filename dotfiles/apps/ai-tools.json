@@ -4,6 +4,9 @@
   "paths": [
     ".local/bin/aichat-rewrite",
     ".local/bin/claude",
-    ".local/bin/codex"
+    ".local/bin/codex",
+    ".local/bin/pi",
+    ".local/bin/omp",
+    ".local/bin/opencode"
   ]
 }

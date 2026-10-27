@@ -1,5 +1,9 @@
 # Dotfiles editables con orgm-dot
 
+La restauración automática de tmux y de conversaciones de Claude Code, Codex,
+Pi, OMP y OpenCode
+se documenta en [tmux y agentes](../docs/tmux-agents.md).
+
 NixOS instala las aplicaciones, servicios y el helper Go `orgm-dot`. Las
 configuraciones de este directorio se leen del checkout al ejecutar el helper;
 no se importan en `home.file` ni se mantienen como enlaces al Nix store.

@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import os
+import runpy
+
+home = Path.home()
+directories = [home / '.local/bin', Path(os.environ.get('BUN_INSTALL', str(home / '.bun'))) / 'bin',
+               Path(os.environ.get('NPM_CONFIG_PREFIX', str(home / '.npm-global'))) / 'bin',
+               Path(os.environ.get('PNPM_HOME', str(home / '.local/share/pnpm'))), home / '.opencode/bin']
+os.environ['PATH'] = os.pathsep.join(map(str, directories)) + os.pathsep + os.environ.get('PATH', '/usr/bin:/bin')
+runpy.run_path(str(Path(__file__).resolve().parent.parent / 'lib/orgm-tmux/agents.py'), run_name='__main__')
