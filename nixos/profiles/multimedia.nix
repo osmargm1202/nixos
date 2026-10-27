@@ -38,6 +38,7 @@ let
       proxy_http_version 1.1;
       proxy_set_header Connection "";
       proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header Cf-Access-Jwt-Assertion $http_cf_access_jwt_assertion;
       proxy_read_timeout 75s;
       client_max_body_size 8k;
@@ -193,8 +194,7 @@ in
         "http://localhost:8765"
         "https://home.or-gm.com"
       ]
-      ++ lib.optional (cfg.exposure == "tailscale") "http://home.or-gm.com"
-      ++ lib.optional (cfg.lanAddress != "") "http://${cfg.lanAddress}";
+      ++ lib.optional (cfg.exposure == "tailscale") "http://home.or-gm.com";
       description = "Exact allowed web origins. Add a private VPN origin explicitly if needed.";
     };
     accessEnvironmentFile = lib.mkOption {
@@ -667,7 +667,6 @@ in
       "home.or-gm.com" = {
         useACMEHost = lib.mkIf cfg.tls "home.or-gm.com";
         forceSSL = cfg.tls;
-        serverAliases = lib.optional (cfg.lanAddress != "" && !cfg.tls) cfg.lanAddress;
         listen = [
           {
             addr = if cfg.lanAddress != "" then "0.0.0.0" else if cfg.exposure == "tailscale" then cfg.tailnetAddress else "127.0.0.1";
@@ -680,10 +679,18 @@ in
         };
         locations = remoteLocations;
       };
-      } // lib.optionalAttrs (cfg.tls && cfg.lanAddress != "") {
-        "${cfg.lanAddress}" = {
-          listen = [{ addr = "0.0.0.0"; port = 80; }];
-          locations = remoteLocations;
+        "orgm-reject-unknown-host" = {
+          default = true;
+          rejectSSL = cfg.tls;
+          listen = [ {
+            addr = if cfg.lanAddress != "" then "0.0.0.0" else if cfg.exposure == "tailscale" then cfg.tailnetAddress else "127.0.0.1";
+            port = if cfg.exposure == "tailscale" then 80 else 8085;
+          } ] ++ lib.optional cfg.tls {
+            addr = if cfg.lanAddress != "" then "0.0.0.0" else cfg.tailnetAddress;
+            port = 443;
+            ssl = true;
+          };
+          locations."/".return = "421";
         };
       };
     };
@@ -733,7 +740,7 @@ in
       rsync
       vim
       (writeShellScriptBin "orgm-home-pair" ''
-        exec sudo ${coreutils}/bin/cat /var/lib/orgm-home/control-token
+        printf 'Abre https://home.or-gm.com, solicita permiso y acepta en la pantalla de Jarq.\n'
       '')
     ];
   };
