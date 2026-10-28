@@ -19,6 +19,13 @@ en `/dev/sda`; no se utiliza systemd-boot. Zram LZ4 tiene prioridad sobre la
 swap del SSD. TRIM es periódico; `/` utiliza noatime. La tapa suspende salvo
 cuando está acoplada a una pantalla externa. No se configura hibernación.
 
+Plymouth conserva el tema BGRT compartido, con `thinkpad-bgrt` como variante:
+prioriza la imagen del firmware y, si no existe, muestra ThinkPad en blanco con
+su punto rojo, el indicador de carga original y el logo NixOS debajo. Esta
+instalación Legacy no publica una imagen BGRT, por lo que utiliza el respaldo.
+El controlador i915 se carga desde initrd. Se verificó el arranque gráfico con
+el kernel/initrd resultantes en QEMU, sin reiniciar la sesión del equipo real.
+
 Las preferencias de hm viven en `nixos/users/hm.nix` y
 `dotfiles/config/users/hm/`. Incluyen Steam y la selección clásica de emuladores:
 RetroArch con núcleos para NES, SNES, GB/GBC, GBA, Mega Drive, N64, PS1,
@@ -30,10 +37,19 @@ No se incluyen ROM, juegos comerciales ni BIOS.
 ArtCraft Launcher 0.8.1 y CADCraft 0.13.0 son bundles oficiales con SHA-256.
 El launcher permite acceder a la biblioteca sin instalar toda la suite.
 El inicio de sesión no arranca Firefox, Steam ni clientes de IA automáticamente.
+Aplicaciones nativas: Galculator, Mousepad, Neovim/LazyVim, monitor de tareas
+Xfce, Discos y mapa de caracteres; además de Thunar, File Roller, MuPDF,
+Ristretto y MPV. Las opciones, atajos y extensiones personales de Neovim son
+dotfiles editables. LazyVim, sus complementos, analizadores y herramientas de
+Lua/Nix se suministran desde Nix, sin compilación ni instalaciones automáticas
+de Mason en la laptop. Las actualizaciones se preparan en el constructor.
 hm también selecciona Chromium con Widevine, las webapps generales, Kitty como
 terminal adicional, Spotify, Warehouse y Flatseal. Los perfiles Chromium permanecen
 en el SSD; no se sincronizan a RAM. Win+Enter utiliza Xterm y la barra i3status
 usa letra de 9.5 puntos. Xterm permite escritura OSC 52 para copiar desde SSH/tmux.
+La barra conserva los iconos, los colores, los controles y la fecha completa del
+estilo i3 compartido mediante `i3status-localized`, con actualización cada cinco
+segundos y sin control de compositor.
 
 CADCraft 0.13.0 mostraba una ventana negra con OpenGL acelerado en Bay Trail.
 La excepción de este host usa OpenGL por software (llvmpipe), dos hilos y vsync;

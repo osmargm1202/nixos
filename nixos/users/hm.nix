@@ -7,6 +7,7 @@
   };
   programs.steam.enable = true;
   programs.gamemode.enable = true;
+  orgm.neovim.prebuilt = true;
   orgm.chromium.enable = true;
   # Keep profiles on disk on a 4 GB machine instead of copying them into RAM.
   home-manager.users.hm.systemd.user = {
@@ -19,6 +20,10 @@
     pkgs.pi-coding-agent
     pkgs.claude-code
     pkgs.kitty
+    pkgs.galculator
+    pkgs.xfce4-taskmanager
+    pkgs.gnome-disk-utility
+    pkgs.gucharmap
   ];
   # User choices, independent of the machine and its hardware.
   orgm.artcraft.launcher = {
@@ -31,6 +36,7 @@
       "git"
       "tmux"
       "xterm"
+      "neovim"
       "orgm"
       "ai"
       "webapps"

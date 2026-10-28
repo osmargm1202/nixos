@@ -62,6 +62,28 @@ calls = []
 wrapper.subprocess.Popen = lambda command, **_kwargs: calls.append(command)
 wrapper.click_action({"name": "picom-effects", "button": 1})
 assert calls[0][-1] == "toggle"
+
+# The lightweight variation retains the shared status presentation without an
+# effects control for a compositor which is deliberately absent.
+wrapper.SHOW_PICOM_EFFECTS = False
+calls.clear()
+wrapper.click_action({"name": "picom-effects", "button": 1})
+assert calls == []
+wrapper.keyboard_block = lambda: {"name": "keyboard", "full_text": " US", "color": wrapper.NORMAL}
+wrapper.system_battery = lambda: None
+cpu = type("Cpu", (), {"percent": lambda self: 20})()
+blocks = wrapper.decorate([
+    {"name": "wireless", "full_text": "10.0.0.63"},
+    {"name": "ethernet", "full_text": "down"},
+    {"name": "battery all", "full_text": "BAT 87%"},
+    {"name": "tztime", "full_text": "Wednesday 28 - October - 2026 / 28-10-26 | 3:45 AM"},
+], cpu)
+assert [block["name"] for block in blocks] == [
+    "wireless", "ethernet", "battery all", "keyboard", "caffeine", "cpu", "memory", "disk", "tztime"
+]
+assert blocks[0]["color"] == wrapper.NETWORK and blocks[0]["full_text"] == f"{wrapper.ICON_WIFI} 10.0.0.63"
+assert blocks[2]["color"] == wrapper.NORMAL
+assert blocks[-1]["full_text"] == "Miércoles 28 - Octubre - 2026 / 28-10-26 | 3:45 AM"
 PY
 
 bash -n "$HELPER"

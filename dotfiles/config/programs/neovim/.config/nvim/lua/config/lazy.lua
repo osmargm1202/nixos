@@ -1,3 +1,9 @@
+-- Optional Nix-supplied plugins/parsers for machines which must not compile.
+if (vim.uv or vim.loop).fs_stat(vim.fn.stdpath("config") .. "/lua/config/nix.lua") then
+  require("config.nix")
+  return
+end
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"

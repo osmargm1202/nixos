@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   userName,
@@ -14,6 +15,19 @@
     device = "/dev/disk/by-id/ata-LITEON_LCH-128V2S_SD0F66155L2TH5910C3B";
     efiSupport = false;
   };
+  # Legacy BIOS supplies no BGRT image. Preserve the common firmware-logo
+  # theme, adding a small ThinkPad fallback without changing its spinner.
+  boot.plymouth = {
+    theme = lib.mkForce "thinkpad-bgrt";
+    themePackages = [
+      (pkgs.callPackage ../../packages/plymouth-thinkpad.nix {
+        logo = config.boot.plymouth.logo;
+      })
+    ];
+  };
+  boot.initrd.kernelModules = [ "i915" ];
+  boot.initrd.verbose = false;
+  boot.consoleLogLevel = 0;
   fileSystems."/".options = [ "noatime" ];
   hardware.graphics.extraPackages = [ pkgs.intel-vaapi-driver ];
   services.xserver.videoDrivers = [ "modesetting" ];

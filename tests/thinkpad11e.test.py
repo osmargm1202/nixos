@@ -36,6 +36,11 @@ projection = r'''s: let c=s.config; in {
   status=c.home-manager.users.hm.xresources.properties."orgm.i3.statusCommand";
   barFont=c.home-manager.users.hm.xresources.properties."orgm.i3.barFont";
   monitorGuard=c.systemd.services.autorandr.unitConfig.ConditionPathExistsGlob;
+  plymouth=c.boot.plymouth.enable;
+  bootTheme=c.boot.plymouth.theme;
+  earlyGpu=c.boot.initrd.kernelModules;
+  prebuiltEditor=c.orgm.neovim.prebuilt;
+  packages=map (p: p.pname or (s.pkgs.lib.getName p)) c.environment.systemPackages;
 }'''
 c = json.loads(subprocess.check_output([
     "nix", "eval", "--impure", "--json", f"path:{root}#nixosConfigurations.thinkpad11e", "--apply", projection
@@ -50,14 +55,18 @@ assert not set(c["artcraftTargets"]) & set(c["flatpakAfter"]), "ArtCraft creates
 assert c["monitorGuard"] == "/run/user/1000/i3/ipc-socket.*"
 assert c["browser"] == "chromium-browser.desktop"
 assert c["browserBridge"]
-assert c["editor"] == "org.xfce.mousepad.desktop"
+assert c["editor"] == "nvim.desktop"
 assert all(command in c["ai"] for command in ("orgmai new", "orgmai prev", "orgmai config", "i3-pi-prompt"))
 assert "i3-lightweight" in c["context"]["programs"]
 print("PASS: thinkpad11e hardware, isolated hm preferences, lightweight i3, AI, Firefox and classic gaming")
 
 assert set(c["webapps"]) == {"fast", "netflix", "disney-plus", "hbo-max", "kick", "youtube", "youtube-kids", "poki", "crunchyroll", "chatgpt", "claude", "twitch"}
 assert {"com.spotify.Client", "io.github.flattool.Warehouse", "com.github.tchx84.Flatseal"} <= set(c["flatpaks"])
-assert c["terminal"] == "xterm" and c["status"] == "i3status -c ~/.config/i3/i3status.conf"
+assert c["terminal"] == "xterm" and c["status"] == "exec env I3_STATUS_PICOM=0 ~/.local/bin/i3status-localized"
 assert c["barFont"] == "JetBrainsMono Nerd Font 9.5"
 
 assert c["clipboard"] is True
+assert c["plymouth"] and c["bootTheme"] == "thinkpad-bgrt"
+assert "i915" in c["earlyGpu"]
+assert c["prebuiltEditor"] and "neovim" in c["context"]["programs"]
+assert {"neovim", "galculator", "xfce4-taskmanager", "gnome-disk-utility", "gucharmap", "mousepad"} <= set(c["packages"])

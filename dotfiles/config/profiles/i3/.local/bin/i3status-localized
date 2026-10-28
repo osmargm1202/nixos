@@ -17,6 +17,7 @@ CAFFEINE_OFF = "#565f89"
 NETWORK = "#7aa2f7"
 PICOM_EFFECTS_ON = "#bb9af7"
 PICOM_EFFECTS_OFF = "#565f89"
+SHOW_PICOM_EFFECTS = os.environ.get("I3_STATUS_PICOM", "1") != "0"
 ICON_KEYBOARD = ""
 ICON_CAFFEINE_ON = ""
 ICON_CAFFEINE_OFF = "󰅶"
@@ -75,6 +76,8 @@ def click_action(click):
     if click.get("name") == "caffeine":
         command = [str(helper / "i3-caffeine-toggle"), "toggle"]
     elif click.get("name") == "picom-effects":
+        if not SHOW_PICOM_EFFECTS:
+            return
         command = [str(helper / "i3-picom-effects"), "toggle"]
     elif click.get("name") == "keyboard":
         command = ["xkb-switch", "-n"]
@@ -179,7 +182,8 @@ def decorate(blocks, cpu_usage):
     resources[1]["color"] = CRITICAL if int(resources[1]["full_text"].split()[-1][:-1]) > 90 else CPU_WARNING if int(resources[1]["full_text"].split()[-1][:-1]) >= 75 else NORMAL
     memory_used = 100 * (total_kib - available_kib) / total_kib
     resources[2]["color"] = CRITICAL if memory_used >= 90 else RAM_WARNING if memory_used > 50 else NORMAL
-    return regular + [picom_effects_block()] + resources + clock
+    effects = [picom_effects_block()] if SHOW_PICOM_EFFECTS else []
+    return regular + effects + resources + clock
 
 
 def handle_clicks():

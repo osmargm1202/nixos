@@ -31,7 +31,6 @@
     greeters.gtk.enable = true;
   };
   boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
-  boot.plymouth.enable = lib.mkForce false;
   zramSwap = {
     enable = true;
     algorithm = "lz4";
@@ -61,8 +60,8 @@
     cores = 1;
   };
   environment.variables = {
-    EDITOR = lib.mkForce "vim";
-    VISUAL = lib.mkForce "vim";
+    EDITOR = lib.mkForce (if builtins.elem "neovim" config.orgm.user.programs then "nvim" else "vim");
+    VISUAL = lib.mkForce (if builtins.elem "neovim" config.orgm.user.programs then "nvim" else "vim");
   };
   xdg.mime.defaultApplications =
     lib.genAttrs
@@ -99,7 +98,7 @@
     xresources.properties = {
       "orgm.i3.terminal" = "xterm";
       "orgm.i3.alternateTerminal" = "xterm";
-      "orgm.i3.statusCommand" = "i3status -c ~/.config/i3/i3status.conf";
+      "orgm.i3.statusCommand" = "exec env I3_STATUS_PICOM=0 ~/.local/bin/i3status-localized";
       "orgm.i3.barFont" = "JetBrainsMono Nerd Font 9.5";
       "XTerm*renderFont" = true;
       "XTerm*faceName" = "JetBrainsMono Nerd Font Mono";

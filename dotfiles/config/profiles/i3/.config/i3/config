@@ -15,7 +15,7 @@ floating_modifier $mod
 tiling_drag modifier titlebar
 
 exec --no-startup-id dex --autostart --environment i3
-exec --no-startup-id /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1
+exec --no-startup-id i3-polkit-agent
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
 exec --no-startup-id systemctl --user start i3-clipcat.service

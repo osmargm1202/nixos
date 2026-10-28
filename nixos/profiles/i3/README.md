@@ -2,13 +2,22 @@
 
 `i3.nix` mantiene el escritorio existente. `lightweight.nix` importa esa misma
 base, conserva autotiling, swallowing, atajos, portapapeles y monitor externo,
-y selecciona aplicaciones pequeñas, Xterm, LightDM GTK, i3status nativo y bloqueo
+y selecciona aplicaciones pequeñas, Xterm, LightDM GTK, i3status y bloqueo
 con i3lock-color. No instala Picom, fondos de vídeo ni el teclado
 Quickshell. Steam se ejecuta dentro de i3, sin sesión Gamescope.
 Chromium puede habilitarse por usuario para webapps y Widevine; hm lo selecciona.
 Las preferencias `orgm.i3.terminal`, `orgm.i3.alternateTerminal`,
 `orgm.i3.statusCommand` y `orgm.i3.barFont` se leen mediante Xresources: i3
 expande las variables del archivo principal antes de procesar los includes.
+La barra conserva el decorador compartido `i3status-localized`: iconos, colores,
+IP, batería, teclado, cafeína, CPU, memoria disponible, espacio libre y fecha
+completa en español. La variante ligera usa letra de 9.5 puntos y actualiza cada
+cinco segundos. Omite únicamente el control de Picom, que no está instalado.
+El perfil conserva Plymouth y el logo de arranque del escritorio compartido;
+cada host puede aportar una imagen de respaldo cuando no exista BGRT.
+El usuario puede elegir `neovim` y `orgm.neovim.prebuilt = true` para LazyVim:
+el adaptador carga complementos y parsers del almacén Nix, conservando las
+opciones y atajos editables. No descarga ni compila complementos al abrirse.
 
 Los menús Rofi se adaptan al monitor activo, con un máximo de 480 px de ancho,
 tipografía de 10.5 puntos y una cantidad limitada de filas con desplazamiento.

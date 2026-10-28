@@ -321,6 +321,9 @@ in
         # i3bar hosts XEmbed only; bridge StatusNotifier items such as Tailscale.
         snixembed
         polkit_gnome
+        (writeShellScriptBin "i3-polkit-agent" ''
+          exec ${polkit_gnome}/libexec/polkit-gnome-authentication-agent-1
+        '')
         dex
         xss-lock
         udiskie
