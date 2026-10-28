@@ -10,6 +10,7 @@ function M.setup(programs)
   end
 
   -- Help / launchers.
+  hl.bind(mainMod .. " + ALT + Y", hl.dsp.exec_cmd("orgm-send-youtube"))
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keybindings-help"))
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(programs.terminal))

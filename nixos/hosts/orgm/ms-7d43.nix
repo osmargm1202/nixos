@@ -1,7 +1,7 @@
 { lib, profileName ? null, ... }:
 
 {
-  imports = [ ./audio.nix ];
+  imports = [ ./audio.nix ../../apps/youtube-send.nix ];
 
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.

@@ -69,6 +69,7 @@ bindsym $mod+Shift+Return $exec kitty
 bindsym $mod+Ctrl+Return $exec kitty -e tmux -u new-session -A -s main
 bindsym $mod+e $exec nautilus --new-window
 bindsym $mod+b $exec chromium
+bindsym --no-repeat $mod+Mod1+y $exec orgm-send-youtube
 bindsym $mod+o $exec orgm-sway obsidian
 bindsym $mod+w $exec sway-firefox-open-tab --restore-or-focus
 bindsym $mod+Shift+w $exec sway-firefox-open-tab --focus
