@@ -85,6 +85,7 @@ let
         ../nixos/osk
         ../nixos/tablet.nix
         ../nixos/orgm/default.nix
+        ../nixos/apps/terminal-visuals.nix
       ]
       ++ roleModules
       ++ extraModules;
