@@ -87,8 +87,8 @@ in
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "text/html" = [ "chromium-browser.desktop" ];
-      "application/xhtml+xml" = [ "chromium-browser.desktop" ];
+      "text/html" = [ (if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop") ];
+      "application/xhtml+xml" = [ (if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop") ];
       "x-scheme-handler/http" = [ "firefox.desktop" ];
       "x-scheme-handler/https" = [ "firefox.desktop" ];
     };

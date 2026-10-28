@@ -26,5 +26,8 @@ file="$root/$selection"
 case "$mode" in
   open) exec xdg-open "$file" ;;
   dir) exec thunar "$(dirname "$file")" ;;
-  terminal) exec kitty --directory "$(dirname "$file")" ;;
+  terminal)
+    cd "$(dirname "$file")"
+    exec "${TERMINAL:-kitty}"
+    ;;
 esac

@@ -244,6 +244,25 @@ class Backend:
                 address = matches[0].get("address", "")
                 if address.startswith("0x") and all(c in "0123456789abcdefABCDEF" for c in address[2:]) and len(address) > 2:
                     self.run(["hyprctl", "dispatch", "focuswindow", "address:" + address])
+        elif os.environ.get("I3SOCK") or "i3" in os.environ.get("XDG_CURRENT_DESKTOP", "").lower():
+            tree = json.loads(self.run(["i3-msg", "-t", "get_tree"]).stdout)
+            def windows(node):
+                yield node
+                for child in node.get("nodes", []) + node.get("floating_nodes", []):
+                    yield from windows(child)
+            matches = []
+            for node in windows(tree):
+                properties = node.get("window_properties") or {}
+                app_class = str(properties.get("class", "")).lower()
+                if app_class not in (APP, "cadcraft") or type(node.get("window")) is not int:
+                    continue
+                # _NET_WM_PID may be a sandbox PID. XRes returns the PID of the
+                # actual local X connection, so another instance cannot match.
+                pid = self.run(["orgm-x11-client-pid", str(node["window"])]).stdout.strip()
+                if pid.isdecimal() and self.belongs_to_instance(int(pid), pids):
+                    matches.append(node)
+            if len(matches) == 1 and type(matches[0].get("id")) is int:
+                self.run(["i3-msg", "[con_id=" + str(matches[0]["id"]) + "] focus"])
 
     def parent_pid(self, pid):
         try:

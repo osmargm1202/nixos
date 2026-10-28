@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+input="$(printf '' | i3-rofi 'Pedir instrucción a Pi' 3 || true)"
+[[ -n "$input" ]] || exit 0
+exec xterm -e pi "$input"

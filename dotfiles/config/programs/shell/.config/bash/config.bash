@@ -110,8 +110,8 @@ if command -v ssh >/dev/null; then
   alias ssh='env TERM=xterm-256color ssh'
 fi
 
-export EDITOR=nvim
-export VISUAL=nvim
+export EDITOR="${EDITOR:-nvim}"
+export VISUAL="${VISUAL:-$EDITOR}"
 alias fastfetch-hardware='fastfetch --config "$HOME/.config/fastfetch/hardware.jsonc"'
 
 if command -v zutty-fast >/dev/null; then

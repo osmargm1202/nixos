@@ -3,6 +3,7 @@
 { config, pkgs, lib, userName ? "osmarg", profileName ? "hyprland", ... }:
 let
   hostName = config.networking.hostName;
+  htmlDesktop = if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop";
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
@@ -143,8 +144,8 @@ in {
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${lib.escapeShellArg (builtins.head directoryMimeHandlers)} inode/directory
         ''}
         ${lib.optionalString (profileName != "terminal") ''
-          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default chromium-browser.desktop text/html
-          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default chromium-browser.desktop application/xhtml+xml
+          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${htmlDesktop} text/html
+          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${htmlDesktop} application/xhtml+xml
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/http
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/https
         ''}

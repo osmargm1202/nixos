@@ -5,9 +5,29 @@ necessary even if a user changes Flatpak overrides after installation.
 """
 import json
 import os
+from pathlib import Path
 import socket
+import stat
 import sys
 import uuid
+
+
+def control_token(port):
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    directory = Path(runtime) if runtime else Path.home() / ".cache"
+    path = directory / ("cadcraft-control-" + str(port) + ".token")
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    except FileNotFoundError:
+        return None  # Older vendor releases do not require a session token.
+    with os.fdopen(fd, encoding="utf-8") as token_file:
+        info = os.fstat(token_file.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
+            raise ValueError("Token de CADCraft sin permisos privados")
+        token = token_file.read(4097).strip()
+        if not token or len(token) > 4096:
+            raise ValueError("Token de CADCraft inválido")
+        return token
 
 
 def call(request):
@@ -31,6 +51,9 @@ def call(request):
     port = request["port"]
     if type(port) is not int or not 1024 <= port <= 65535:
         raise ValueError("Puerto inválido")
+    token = control_token(port)
+    if token is not None:
+        payload["token"] = token
     with socket.create_connection(("127.0.0.1", port), timeout=2) as conn:
         conn.settimeout(65 if operation == "open" else 3)
         conn.sendall((json.dumps(payload) + "\n").encode())

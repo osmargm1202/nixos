@@ -28,7 +28,7 @@ assert wayland_app_id("https://claude.ai") == "chrome-claude.ai__-Default"
 catalog = evaluate("--file", str(root / "nixos/apps/webapps.catalog.nix"))
 apps = [app for group in catalog.values() for app in group]
 ids = {app["id"] for app in apps}
-assert len(apps) == len(ids) == 28, "Catalog must retain 28 unique applications"
+assert len(apps) == len(ids) == 31, "Catalog must retain 31 unique applications"
 perplexity = next(app for app in apps if app["id"] == "perplexity")
 assert perplexity["name"] == "Perplexity"
 assert perplexity["url"] == "https://www.perplexity.ai/"

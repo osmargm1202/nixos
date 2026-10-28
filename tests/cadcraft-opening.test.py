@@ -63,6 +63,42 @@ class Opening(unittest.TestCase):
             self.assertTrue(b.belongs_to_instance(111,{100}))
             self.assertFalse(b.belongs_to_instance(222,{100}))
 
+    def test_i3_focus_uses_xres_host_pid_and_exact_container(self):
+        b = self.cad.Backend()
+        calls = []
+        tree = {"nodes": [
+            {"id": 41, "window": 123, "window_properties": {"class": "CADCraft"}},
+            {"id": 42, "window": 124, "window_properties": {"class": "CADCraft"}},
+            {"id": 43, "window": 125, "window_properties": {"class": "Other"}},
+        ]}
+        def run(args):
+            calls.append(args)
+            if args == ["i3-msg", "-t", "get_tree"]:
+                return subprocess.CompletedProcess(args, 0, json.dumps(tree))
+            pid = {"123": "111", "124": "999"}.get(args[-1], "")
+            return subprocess.CompletedProcess(args, 0, pid)
+        with patch.dict(os.environ, {"I3SOCK": "/tmp/test-i3"}, clear=True), \
+             patch.object(b, "rows", return_value=[["42", self.cad.APP, "100", "110"]]), \
+             patch.object(b, "run", side_effect=run), \
+             patch.object(b, "belongs_to_instance", side_effect=lambda pid, roots: pid == 111):
+            b.focus("42")
+        self.assertEqual(calls[-1], ["i3-msg", "[con_id=41] focus"])
+        self.assertNotIn(["orgm-x11-client-pid", "125"], calls)
+
+    def test_i3_does_not_focus_an_unrelated_cadcraft_instance(self):
+        b = self.cad.Backend()
+        tree = {"floating_nodes": [{"id": 7, "window": 10, "window_properties": {"class": self.cad.APP}}]}
+        calls = []
+        def run(args):
+            calls.append(args)
+            return subprocess.CompletedProcess(args, 0, json.dumps(tree) if args[0] == "i3-msg" else "999")
+        with patch.dict(os.environ, {"XDG_CURRENT_DESKTOP": "i3"}, clear=True), \
+             patch.object(b, "rows", return_value=[["42", self.cad.APP, "100", "110"]]), \
+             patch.object(b, "run", side_effect=run), \
+             patch.object(b, "belongs_to_instance", return_value=False):
+            b.focus("42")
+        self.assertFalse(any("focus" in arg for call in calls for arg in call))
+
     def test_starts_once_only_when_absent(self):
         b=self.backend()
         self.cad.open_files([str(self.file)],b,self.home/"runtime")

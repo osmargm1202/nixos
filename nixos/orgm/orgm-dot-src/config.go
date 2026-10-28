@@ -101,7 +101,15 @@ func (r *Runtime) collect() error {
 	if r.Profile == "sway" || r.Profile == "hyprland" {
 		layers = append(layers, "profiles/wayland")
 	}
-	layers = append(layers, "profiles/"+r.Profile, "users/"+r.User+"/common")
+	layers = append(layers, "profiles/"+r.Profile)
+	if r.Profile == "i3" {
+		for _, program := range r.Programs {
+			if program == "i3-lightweight" {
+				layers = append(layers, "profiles/i3-lightweight")
+			}
+		}
+	}
+	layers = append(layers, "users/"+r.User+"/common")
 	for _, p := range r.Programs {
 		layers = append(layers, "users/"+r.User+"/programs/"+p)
 	}

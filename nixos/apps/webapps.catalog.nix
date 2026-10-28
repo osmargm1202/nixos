@@ -5,6 +5,9 @@
     { id = "netflix"; name = "Netflix"; url = "https://www.netflix.com/"; icon = "netflix"; }
     { id = "hbo-max"; name = "HBO MAX"; url = "https://hbomax.com"; icon = "video-television"; }
     { id = "crunchyroll"; name = "Crunchyroll"; url = "https://www.crunchyroll.com/"; icon = "crunchyroll"; }
+    { id = "disney-plus"; name = "Disney+"; url = "https://www.disneyplus.com/"; icon = "video-television"; }
+    { id = "kick"; name = "Kick"; url = "https://kick.com/"; icon = "applications-multimedia"; }
+    { id = "twitch"; name = "Twitch"; url = "https://www.twitch.tv/"; icon = "twitch"; }
   ];
   gaming = [
     { id = "poki"; name = "Poki"; url = "https://poki.com"; icon = "poki"; }

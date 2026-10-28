@@ -14,6 +14,15 @@ in
   inherit (historical) profiles;
   aliases = { };
   configurations = {
+    thinkpad11e = {
+      role = "desktop";
+      hostName = "thinkpad11e";
+      profileName = "i3";
+      profile = ./nixos/profiles/i3/lightweight.nix;
+      userName = "hm";
+      hardware = ./nixos/hosts/thinkpad11e/hardware-configuration.nix;
+      extraModules = [ ./nixos/hosts/thinkpad11e/default.nix ];
+    };
     envy = historical.configurations.envy;
     lenovo = historical.configurations.lenovo-ryoku;
     orgm = historical.configurations.orgm-hyprland;

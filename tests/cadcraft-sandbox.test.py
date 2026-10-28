@@ -2,6 +2,7 @@
 """Exercise the fixed client against a disposable, test-owned TCP endpoint."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import socket
 import tempfile
@@ -15,6 +16,27 @@ spec=importlib.util.spec_from_file_location('sandbox',PATH)
 sandbox=importlib.util.module_from_spec(spec);spec.loader.exec_module(sandbox)
 
 class Client(unittest.TestCase):
+    def test_current_vendor_session_token_is_forwarded(self):
+        port,requests,thread=self.exchange(lambda q:{'id':q['id'],'ok':True,'result':'pong'})
+        with tempfile.TemporaryDirectory() as tmp:
+            token=Path(tmp)/f'cadcraft-control-{port}.token'
+            token.write_text('private-session-token\n');token.chmod(0o600)
+            with patch.dict(os.environ,{'XDG_RUNTIME_DIR':tmp}),patch.object(sandbox.os,'readlink',return_value='net:[22222]'):
+                result=sandbox.call(self.request(port=port))
+        thread.join(2)
+        self.assertEqual(result['result'],'pong')
+        self.assertEqual(requests[0]['token'],'private-session-token')
+
+    def test_nonprivate_and_symlink_tokens_are_rejected_before_connect(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token=Path(tmp)/'cadcraft-control-47835.token'
+            token.write_text('token');token.chmod(0o644)
+            with patch.dict(os.environ,{'XDG_RUNTIME_DIR':tmp}),patch.object(sandbox.os,'readlink',return_value='net:[22222]'),patch.object(sandbox.socket,'create_connection') as connect:
+                with self.assertRaisesRegex(ValueError,'privados'):sandbox.call(self.request())
+                token.unlink();token.symlink_to(Path(tmp)/'other')
+                with self.assertRaises(OSError):sandbox.call(self.request())
+                connect.assert_not_called()
+
     def request(self,operation='ping',**kwargs):
         return {'host_netns':'net:[11111]','operation':operation,'port':47835,**kwargs}
     def test_shared_host_network_is_rejected_before_connect(self):

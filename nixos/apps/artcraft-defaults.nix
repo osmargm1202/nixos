@@ -1,16 +1,18 @@
 # Standard XDG preference order: missing/unassociated applications are skipped.
 { config, lib, pkgs, userName ? "osmarg", profileName ? null, ... }:
 let
+  lightweight = config.orgm.i3.lightweight or false;
   policy = builtins.fromJSON (builtins.readFile ./artcraft-mime-policy.json);
   # xdg.mime serializes lists to strings: mkBefore/mkAfter cannot merge them.
   # Override only this explicit format set, retaining profile-native fallbacks.
   native = mime:
     if builtins.elem mime [ "text/plain" "text/markdown" "text/x-markdown" ] then
-      [ (if profileName == "cinnamon" then "xed.desktop" else "org.gnome.TextEditor.desktop") ]
+      [ (if lightweight then "org.xfce.mousepad.desktop" else if profileName == "cinnamon" then "xed.desktop" else "org.gnome.TextEditor.desktop") ]
     else if mime == "application/pdf" then
-      [ (if profileName == "cinnamon" then "xreader.desktop" else "org.gnome.Evince.desktop") ]
+      [ (if lightweight then "mupdf.desktop" else if profileName == "cinnamon" then "xreader.desktop" else "org.gnome.Evince.desktop") ]
     else if builtins.elem mime [ "image/png" "image/jpeg" "image/webp" "image/gif" "image/svg+xml" ] then
-      [ (if profileName == "cinnamon" then "xviewer.desktop" else "org.gnome.Loupe.desktop") ]
+      [ (if lightweight then "org.xfce.ristretto.desktop" else if profileName == "cinnamon" then "xviewer.desktop" else "org.gnome.Loupe.desktop") ]
+    else if lightweight && lib.hasPrefix "video/" mime then [ "mpv.desktop" ]
     else if profileName == "cinnamon" && builtins.elem mime [ "video/mp4" "video/x-matroska" "video/webm" "video/x-msvideo" ] then
       [ "io.github.celluloid_player.Celluloid.desktop" ]
     else [];

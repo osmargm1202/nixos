@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+  <action>
+    <icon>preferences-desktop-wallpaper</icon>
+    <name>Set as Wallpaper</name>
+    <command>i3-set-wallpaper %f</command>
+    <description>Usar esta imagen como fondo estático</description>
+    <patterns>*.jpg;*.jpeg;*.png;*.webp</patterns>
+    <image-files/>
+  </action>
+  <action>
+    <icon>utilities-terminal</icon>
+    <name>Open Terminal Here</name>
+    <command>sh -c 'cd "$1" &amp;&amp; exec xterm' sh %f</command>
+    <description>Abrir Xterm en esta carpeta</description>
+    <patterns>*</patterns>
+    <directories/>
+  </action>
+</actions>

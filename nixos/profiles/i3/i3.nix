@@ -7,6 +7,7 @@
 }:
 
 let
+  lightweight = config.orgm.i3.lightweight;
   hasProgram = name: builtins.elem name config.orgm.user.programs;
 
   ngcbgI3Tools = pkgs.callPackage ./ngcbg-i3-tools.nix { };
@@ -109,7 +110,10 @@ let
   '';
   picomRunner = pkgs.writeShellApplication {
     name = "i3-picom-run";
-    runtimeInputs = [ pkgs.coreutils pkgs.picom-pijulius ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.picom-pijulius
+    ];
     text = ''
       state_file="''${XDG_STATE_HOME:-$HOME/.local/state}/i3/picom-effects-disabled"
       [[ -f "$state_file" ]] && exit 0
@@ -123,269 +127,294 @@ in
     ../../print/printer.nix
   ];
 
-  services.xserver = {
-    enable = true;
-    windowManager.i3.enable = true;
-  };
-  services.displayManager.defaultSession = "none+i3";
+  options.orgm.i3.lightweight = lib.mkEnableOption "resource-efficient i3 without visual effects";
 
-  # i3 is an X11 session. The KWin Wayland greeter exits immediately on this
-  # hardware, leaving SDDM running without a visible login screen.
-  services.displayManager.sddm.wayland.enable = lib.mkForce false;
-
-  # i3 is selected explicitly from SDDM; never sign in automatically.
-  services.displayManager.autoLogin.enable = lib.mkForce false;
-
-  # A manual i3 session must remain usable when the lid is closed. Logind
-  # cannot scope lid handling to a VT, so disable lid-initiated suspend for
-  # this profile entirely; idle time remains ignored as before.
-  services.logind.settings.Login = {
-    HandleLidSwitch = "ignore";
-    HandleLidSwitchExternalPower = "ignore";
-    HandleLidSwitchDocked = "ignore";
-    IdleAction = "ignore";
-  };
-  services.autorandr.enable = true;
-  programs.xfconf.enable = true;
-
-  # Autorandr's batch mode discards child failures. Dispatch hotplug handling to
-  # the graphical user's systemd manager so the helper can apply its XRandR
-  # fallback when a detected profile is stale or no profile matches.
-  systemd.services.autorandr.serviceConfig.ExecStart = lib.mkForce [
-    ""
-    "${pkgs.systemd}/bin/systemctl --user --machine=${userName}@.host start i3-monitor-hotplug.service"
-  ];
-
-
-  systemd.user.services.i3-clipcat = {
-    description = "Clipcat clipboard history for i3";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
-      Restart = "on-failure";
-      RestartSec = 3;
+  config = {
+    services.xserver = {
+      enable = true;
+      windowManager.i3.enable = true;
     };
-  };
+    services.displayManager.defaultSession = "none+i3";
 
-  systemd.user.services.picom = {
-    description = "Picom visual effects for i3";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${picomRunner}/bin/i3-picom-run";
-      Restart = "on-failure";
-      RestartSec = 3;
+    # i3 is an X11 session. The KWin Wayland greeter exits immediately on this
+    # hardware, leaving SDDM running without a visible login screen.
+    services.displayManager.sddm.wayland.enable = lib.mkForce false;
+
+    # i3 is selected explicitly from SDDM; never sign in automatically.
+    services.displayManager.autoLogin.enable = lib.mkForce false;
+
+    # A manual i3 session must remain usable when the lid is closed. Logind
+    # cannot scope lid handling to a VT, so disable lid-initiated suspend for
+    # this profile entirely; idle time remains ignored as before.
+    services.logind.settings.Login = {
+      HandleLidSwitch = "ignore";
+      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitchDocked = "ignore";
+      IdleAction = "ignore";
     };
-  };
+    services.autorandr.enable = true;
+    programs.xfconf.enable = true;
 
-  services.libinput.enable = true;
-  security.polkit.enable = true;
-  services.dbus.enable = true;
-  services.udisks2.enable = true;
-  services.upower = {
-    enable = true;
-    package = pkgs.upower;
-  };
-  services.gnome = {
-    gnome-keyring.enable = true;
-    gnome-online-accounts.enable = true;
-  };
-  services.power-profiles-daemon.enable = true;
-  nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
+    # Autorandr's batch mode discards child failures. Dispatch hotplug handling to
+    # the graphical user's systemd manager so the helper can apply its XRandR
+    # fallback when a detected profile is stale or no profile matches.
+    systemd.services.autorandr.serviceConfig.ExecStart = lib.mkForce [
+      ""
+      "${pkgs.systemd}/bin/systemctl --user --machine=${userName}@.host start i3-monitor-hotplug.service"
+    ];
+    # Display hotplug also runs before login. The session startup applies its
+    # initial layout; only dispatch subsequent events to a running i3 session.
+    systemd.services.autorandr.unitConfig.ConditionPathExistsGlob = "/run/user/${
+      toString config.users.users.${userName}.uid
+    }/i3/ipc-socket.*";
 
-  programs.dconf.enable = true;
-  services.pulseaudio.enable = false;
-
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config = {
-      common.default = [ "gtk" ];
-      i3.default = [ "gtk" ];
-    };
-  };
-
-  xdg.terminal-exec = {
-    enable = true;
-    settings = {
-      i3 = [ "kitty.desktop" ];
-      default = [ "kitty.desktop" ];
-    };
-  };
-
-  xdg.mime = {
-    enable = true;
-    defaultApplications = {
-      "inode/directory" = [ "thunar.desktop" ];
-      "text/plain" = [ "org.gnome.TextEditor.desktop" ];
-      "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
-      "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
-      "application/pdf" = [ "org.gnome.Evince.desktop" ];
-      "image/png" = [ "org.gnome.Loupe.desktop" ];
-      "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
-      "image/webp" = [ "org.gnome.Loupe.desktop" ];
-      "image/gif" = [ "org.gnome.Loupe.desktop" ];
-      "image/svg+xml" = [ "org.gnome.Loupe.desktop" ];
-      "application/zip" = [ "org.gnome.FileRoller.desktop" ];
-      "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
-      "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
-      "video/mp4" = [ "org.videolan.VLC.desktop" ];
-      "video/x-matroska" = [ "org.videolan.VLC.desktop" ];
-      "video/webm" = [ "org.videolan.VLC.desktop" ];
-      "video/quicktime" = [ "org.videolan.VLC.desktop" ];
-      "video/x-msvideo" = [ "org.videolan.VLC.desktop" ];
-      "video/mpeg" = [ "org.videolan.VLC.desktop" ];
-      "video/ogg" = [ "org.videolan.VLC.desktop" ];
-    };
-  };
-
-  environment.localBinInPath = true;
-
-  environment.sessionVariables = {
-    XDG_SESSION_TYPE = "x11";
-    XDG_SESSION_DESKTOP = "i3";
-    XDG_CURRENT_DESKTOP = "i3";
-    XCURSOR_SIZE = "24";
-    TERMINAL = "kitty";
-  };
-
-  environment.systemPackages = (
-    with pkgs;
-    [
-      # Xorg session and window manager.
-      xorg-server
-      xinit
-      xauth
-      xrdb
-      xrandr
-      xinput
-      xset
-      xsetroot
-      setxkbmap
-      xkill
-      i3
-      i3status
-      clipcat
-      ueberzugpp
-      ffmpegthumbnailer
-      mediainfo
-      poppler-utils
-      fontconfig
-      gnused
-      iproute2
-      procps
-      i3lock-color
-      ngcbgI3Tools.autotiling
-      ngcbgI3Tools.rootbtnd
-      ngcbgI3Tools.i3swallow
-      ngcbgI3Tools.xlogout
-      pkgs.picom-pijulius
-
-      # Launchers, notifications, wallpaper and X11 helpers.
-      (rofi.override { plugins = [ rofi-calc ]; })
-      rofimoji
-      networkmanager_dmenu
-      thunarWithoutWallpaperPlugin
-      tumbler
-      gnome-text-editor
-      gnome-online-accounts-gtk
-      evince
-      loupe
-      file-roller
-      # Clipboard history is supplied by the persistent Clipcat user service.
-      dunst
-      feh
-      mpv
-      xwinwrap
-      arandr
-      xdotool
-      xkb-switch
-
-      # Desktop integration.
-      xdg-utils
-      desktop-file-utils
-      xdg-desktop-portal
-      xdg-desktop-portal-gtk
-      shared-mime-info
-      stow
-
-      networkmanagerapplet
-      blueman
-      pavucontrol
-      pasystray
-      # i3bar hosts XEmbed only; bridge StatusNotifier items such as Tailscale.
-      snixembed
-      polkit_gnome
-      dex
-      xss-lock
-      udiskie
-      usbutils
-
-      # User controls and X11 screen recording.
-      flameshot
-      ffcast
-      ffmpeg
-      brightnessctl
-      pamixer
-      playerctl
-
-      # Runtime-selected GTK appearance and status interactions.
-      gsimplecal
-      lm_sensors
-      lxappearance
-      adwaita-icon-theme
-      hicolor-icon-theme
-      colloid-icon-theme
-      catppuccin-gtk
-      catppuccin-cursors.macchiatoTeal
-      catppuccin-cursors.latteTeal
-      gnome-themes-extra
-
-    ]
-  );
-
-  home-manager.users.${userName} = lib.mkMerge [
-    {
-      xfconf.settings.thunar = {
-        last-sort-column = "THUNAR_COLUMN_DATE_MODIFIED";
-        last-sort-order = "GTK_SORT_DESCENDING";
-        misc-directory-specific-settings = false;
+    systemd.user.services.i3-clipcat = {
+      description = "Clipcat clipboard history for i3";
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
+        Restart = "on-failure";
+        RestartSec = 3;
       };
-      systemd.user.services.i3-monitor-hotplug = {
-        Unit.Description = "Restore an Autorandr profile or select an external primary display";
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.bash}/bin/bash %h/.local/bin/i3-monitor-profile --apply --quiet";
-          Environment = "PATH=%h/.local/bin:${config.home-manager.users.${userName}.home.path}/bin:${lib.makeBinPath [
-            pkgs.bash pkgs.autorandr pkgs.xrandr pkgs.libnotify pkgs.feh pkgs.coreutils
-          ]}:/run/current-system/sw/bin";
+    };
+
+    systemd.user.services.picom = lib.mkIf (!lightweight) {
+      description = "Picom visual effects for i3";
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
+      serviceConfig = {
+        ExecStart = "${picomRunner}/bin/i3-picom-run";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+    };
+
+    services.libinput.enable = true;
+    security.polkit.enable = true;
+    services.dbus.enable = true;
+    services.udisks2.enable = true;
+    services.upower = {
+      enable = true;
+      package = pkgs.upower;
+    };
+    services.gnome = {
+      gnome-keyring.enable = true;
+      gnome-online-accounts.enable = !lightweight;
+    };
+    services.power-profiles-daemon.enable = true;
+    nixpkgs.config.permittedInsecurePackages = [ "libsoup-2.74.3" ];
+
+    programs.dconf.enable = true;
+    services.pulseaudio.enable = false;
+
+    xdg.portal = {
+      enable = true;
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      config = {
+        common.default = [ "gtk" ];
+        i3.default = [ "gtk" ];
+      };
+    };
+
+    xdg.terminal-exec = {
+      enable = true;
+      settings = {
+        i3 = [ (if lightweight then "xterm.desktop" else "kitty.desktop") ];
+        default = [ (if lightweight then "xterm.desktop" else "kitty.desktop") ];
+      };
+    };
+
+    xdg.mime = {
+      enable = true;
+      defaultApplications = {
+        "inode/directory" = [ "thunar.desktop" ];
+        "text/plain" = [ "org.gnome.TextEditor.desktop" ];
+        "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
+        "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
+        "application/pdf" = [ "org.gnome.Evince.desktop" ];
+        "image/png" = [ "org.gnome.Loupe.desktop" ];
+        "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
+        "image/webp" = [ "org.gnome.Loupe.desktop" ];
+        "image/gif" = [ "org.gnome.Loupe.desktop" ];
+        "image/svg+xml" = [ "org.gnome.Loupe.desktop" ];
+        "application/zip" = [ "org.gnome.FileRoller.desktop" ];
+        "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
+        "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
+        "video/mp4" = [ "org.videolan.VLC.desktop" ];
+        "video/x-matroska" = [ "org.videolan.VLC.desktop" ];
+        "video/webm" = [ "org.videolan.VLC.desktop" ];
+        "video/quicktime" = [ "org.videolan.VLC.desktop" ];
+        "video/x-msvideo" = [ "org.videolan.VLC.desktop" ];
+        "video/mpeg" = [ "org.videolan.VLC.desktop" ];
+        "video/ogg" = [ "org.videolan.VLC.desktop" ];
+      };
+    };
+
+    environment.localBinInPath = true;
+
+    environment.sessionVariables = {
+      XDG_SESSION_TYPE = "x11";
+      XDG_SESSION_DESKTOP = "i3";
+      XDG_CURRENT_DESKTOP = "i3";
+      XCURSOR_SIZE = "24";
+      TERMINAL = if lightweight then "xterm" else "kitty";
+    };
+
+    environment.systemPackages = (
+      with pkgs;
+      [
+        # Xorg session and window manager.
+        xorg-server
+        xinit
+        xauth
+        xrdb
+        xrandr
+        xinput
+        xset
+        xsetroot
+        setxkbmap
+        xkill
+        i3
+        i3status
+        clipcat
+        ffmpegthumbnailer
+        mediainfo
+        poppler-utils
+        fontconfig
+        gnused
+        iproute2
+        procps
+        i3lock-color
+        ngcbgI3Tools.autotiling
+        ngcbgI3Tools.rootbtnd
+        ngcbgI3Tools.i3swallow
+        ngcbgI3Tools.xlogout
+
+        # Launchers, notifications, wallpaper and X11 helpers.
+        (rofi.override { plugins = [ rofi-calc ]; })
+        rofimoji
+        networkmanager_dmenu
+        thunarWithoutWallpaperPlugin
+        tumbler
+        file-roller
+        # Clipboard history is supplied by the persistent Clipcat user service.
+        dunst
+        feh
+        mpv
+        arandr
+        xdotool
+        xkb-switch
+
+        # Desktop integration.
+        xdg-utils
+        desktop-file-utils
+        xdg-desktop-portal
+        xdg-desktop-portal-gtk
+        shared-mime-info
+        stow
+
+        networkmanagerapplet
+        blueman
+        pavucontrol
+        pasystray
+        # i3bar hosts XEmbed only; bridge StatusNotifier items such as Tailscale.
+        snixembed
+        polkit_gnome
+        dex
+        xss-lock
+        udiskie
+        usbutils
+
+        # User controls and X11 screen recording.
+        flameshot
+        ffcast
+        ffmpeg
+        brightnessctl
+        pamixer
+        playerctl
+
+        # Runtime-selected GTK appearance and status interactions.
+        gsimplecal
+        lm_sensors
+        lxappearance
+        adwaita-icon-theme
+        hicolor-icon-theme
+        colloid-icon-theme
+        catppuccin-gtk
+        catppuccin-cursors.macchiatoTeal
+        catppuccin-cursors.latteTeal
+        gnome-themes-extra
+
+      ]
+      ++ lib.optionals (!lightweight) [
+        picom-pijulius
+        xwinwrap
+        ueberzugpp
+        gnome-text-editor
+        gnome-online-accounts-gtk
+        evince
+        loupe
+      ]
+    );
+
+    home-manager.users.${userName} = lib.mkMerge [
+      (lib.mkIf (lightweight && hasProgram "orgm") {
+        xdg.configFile."i3/config.d/60-ai.conf".text = ''
+          bindsym $mod+a exec --no-startup-id $term -e orgmai new
+          bindsym $mod+Shift+a exec --no-startup-id $term -e orgmai prev
+          bindsym $mod+Ctrl+Shift+a exec --no-startup-id $term -e orgmai config
+          bindsym $mod+Shift+p exec --no-startup-id $run i3-pi-prompt
+        '';
+      })
+      {
+        xfconf.settings.thunar = {
+          last-sort-column = "THUNAR_COLUMN_DATE_MODIFIED";
+          last-sort-order = "GTK_SORT_DESCENDING";
+          misc-directory-specific-settings = false;
         };
-      };
-    }
-    (lib.mkIf (hasProgram "tailscale") {
-      xdg.configFile."i3/config.d/10-tailscale.conf".text = ''
-        # i3bar hosts XEmbed only; bridge Tailscale's StatusNotifier item.
-        exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
-      '';
-    })
-    (lib.mkIf (hasProgram "nextcloud") {
-      xdg.configFile."i3/config.d/20-nextcloud.conf".text = ''
-        exec --no-startup-id nextcloud --background
-      '';
-    })
-    (lib.mkIf (hasProgram "kdeconnect") {
-      xdg.configFile."i3/config.d/30-kdeconnect.conf".text = ''
-        exec --no-startup-id kdeconnect-indicator
-      '';
-    })
-    (lib.mkIf (hasProgram "webapps") {
-      xdg.configFile."i3/config.d/40-webapps.conf".text = ''
-        set $browser $run firefox-open-tab --restore-or-focus
-        exec --no-startup-id firefox
-        bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt
-        bindsym $mod+w exec --no-startup-id $browser
-      '';
-    })
-  ];
+        systemd.user.services.i3-monitor-hotplug = {
+          Unit.Description = "Restore an Autorandr profile or select an external primary display";
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.bash}/bin/bash %h/.local/bin/i3-monitor-profile --apply --quiet";
+            Environment = "PATH=%h/.local/bin:${config.home-manager.users.${userName}.home.path}/bin:${
+              lib.makeBinPath [
+                pkgs.bash
+                pkgs.autorandr
+                pkgs.xrandr
+                pkgs.libnotify
+                pkgs.feh
+                pkgs.coreutils
+              ]
+            }:/run/current-system/sw/bin";
+          };
+        };
+      }
+      (lib.mkIf (hasProgram "tailscale") {
+        xdg.configFile."i3/config.d/10-tailscale.conf".text = ''
+          # i3bar hosts XEmbed only; bridge Tailscale's StatusNotifier item.
+          exec --no-startup-id sh -c 'snixembed & for attempt in $(seq 1 50); do if busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; then exec tailscale systray --theme light; fi; sleep 0.1; done; printf "%s\n" "snixembed did not register a StatusNotifierWatcher" >&2'
+        '';
+      })
+      (lib.mkIf (hasProgram "nextcloud") {
+        xdg.configFile."i3/config.d/20-nextcloud.conf".text = ''
+          exec --no-startup-id nextcloud --background
+        '';
+      })
+      (lib.mkIf (hasProgram "kdeconnect") {
+        xdg.configFile."i3/config.d/30-kdeconnect.conf".text = ''
+          exec --no-startup-id kdeconnect-indicator
+        '';
+      })
+      (lib.mkIf (hasProgram "webapps") {
+        xdg.configFile."i3/config.d/40-webapps.conf".text = ''
+          set $browser $run firefox-open-tab --restore-or-focus
+          ${lib.optionalString (!lightweight) "exec --no-startup-id firefox"}
+          bindsym $mod+m exec --no-startup-id firefox-open-tab --new-tab --prompt
+          bindsym $mod+w exec --no-startup-id $browser
+        '';
+      })
+    ];
+  };
 }

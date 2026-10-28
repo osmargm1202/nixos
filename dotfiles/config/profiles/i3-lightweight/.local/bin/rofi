@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# All Rofi callers (Clipcat, symbols, AI, SSH and desktop menus) share sizing.
+# Size from the active display, not a specific laptop model. Keep every menu
+# scrollable when its item count exceeds the available vertical space.
+screen_width=1366
+screen_height=768
+if geometry="$(xrandr --listactivemonitors 2>/dev/null)"; then
+  read -r screen_width screen_height < <(awk '
+    NR > 1 {
+      split($3, part, /[\/x+]/)
+      if (!width || $2 ~ /\*/) { width=part[1]; height=part[3] }
+      if ($2 ~ /\*/) found=1
+      if (found) { print width, height; exit }
+    }
+    END { if (!found && width) print width, height }
+  ' <<<"$geometry") || true
+fi
+[[ "$screen_width" =~ ^[0-9]+$ ]] || screen_width=1366
+[[ "$screen_height" =~ ^[0-9]+$ ]] || screen_height=768
+width=$((screen_width * 85 / 100))
+((width <= 480)) || width=480
+limit=$(((screen_height * 45 / 100 - 80) / 32))
+((limit >= 3)) || limit=3
+((limit <= 10)) || limit=10
+
+
+# Honor shorter menus while capping callers which request 20 or 30 rows.
+lines=$limit
+skip=false
+for arg in "$@"; do
+  if $skip; then
+    if [[ "$arg" =~ ^[1-9][0-9]*$ ]] && ((arg < lines)); then lines=$arg; fi
+    skip=false
+  fi
+  case "$arg" in -l|-lines) skip=true;; esac
+  if [[ "$arg" =~ lines:[[:space:]]*([0-9]+) ]]; then
+    requested=${BASH_REMATCH[1]}
+    ((requested >= lines)) || lines=$requested
+  fi
+done
+theme="$HOME/.config/rofi/i3-menu.rasi"
+override="configuration {
+  font: \"JetBrainsMono Nerd Font 10.5\";
+  terminal: \"xterm\";
+  hover-select: true;
+  me-select-entry: \"\";
+  me-accept-entry: \"MousePrimary\";
+}
+* { bg-col: #000000; surface-col: #22363a; selected-col: #33494d; }
+window { width: ${width}px; padding: 8px; border-radius: 8px; }
+mainbox { padding: 0px; spacing: 6px; }
+inputbar { padding: 0px; margin: 0px; }
+prompt { padding: 6px; margin: 0px; border-radius: 4px; }
+entry { padding: 6px; margin: 0px; border-radius: 4px; }
+listview { padding: 0px; margin: 0px; spacing: 2px; fixed-height: false; dynamic: true; }
+element { padding: 4px; border-radius: 4px; cursor: pointer; }
+element-icon { size: 20px; padding: 0px 6px 0px 0px; }
+element-text { padding: 0px; }
+textbox { padding: 4px; }"
+
+args=()
+row_argument=false
+for arg in "$@"; do
+  if $row_argument; then
+    args+=("$lines")
+    row_argument=false
+    continue
+  fi
+  case "$arg" in -l|-lines) row_argument=true;; esac
+  [[ "$arg" == -normal-window ]] || args+=("$arg")
+done
+exec /run/current-system/sw/bin/rofi "${args[@]}" -dpi 96 -theme "$theme" -theme-str "$override listview { lines: $lines; }"

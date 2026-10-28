@@ -8,6 +8,8 @@ projection=r'''builtins.mapAttrs (_: s: let
  ctx=builtins.fromJSON c.environment.etc."orgm-dot/context.json".text;
  in if c.environment.etc ? "orgm-dot/context.json" then {
  desktop=true; inherit (ctx) user profile; defaults=c.xdg.mime.defaultApplications;
+ lightweight=c.orgm.i3.lightweight or false;
+ neovim=builtins.elem "neovim" c.orgm.user.programs;
  activation=c.home-manager.users.${ctx.user}.home.activation.artcraftFileDefaults.after or [];
  } else { desktop=false; defaults=c.xdg.mime.defaultApplications or {}; activation=[]; })'''
 result=subprocess.check_output(['nix','eval','--impure','--json',f'path:{ROOT}#nixosConfigurations','--apply',projection],text=True)
@@ -22,7 +24,9 @@ for host,c in json.loads(result).items():
  for mime,app in [('image/vnd.dwg','cadcraft'),('application/pdf','pdfcraft'),('image/svg+xml','vectorcraft'),('text/plain','wordcraft'),('text/csv','gridcraft')]:
   assert handlers(mime)[0]=='ai.storyteller.'+app+'.desktop',(host,mime,handlers(mime))
  assert 'org.gnome.Evince.desktop' in handlers('application/pdf'),host
- assert handlers('text/x-python')==['nvim.desktop'],host
+ assert handlers('text/x-python')==(['org.xfce.mousepad.desktop'] if c['lightweight'] and not c['neovim'] else ['nvim.desktop']),host
+ if c['lightweight']:
+  assert 'mupdf.desktop' in handlers('application/pdf'),host
  assert 'setPreferredFileHandlers' in c['activation'] and 'mimeAppsDefaults' in c['activation'],(host,c['user'],c['activation'])
  assert all('storyteller' not in app for mime in ('text/html','inode/directory','x-scheme-handler/https') for app in handlers(mime)),host
  print('PASS:',host,'ArtCraft preference, native fallback, code/browser preserved, correct user activation',flush=True)

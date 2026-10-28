@@ -1,10 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# A dedicated backend keeps each tmux pane's conversation discoverable through
+# its process tree. A shared daemon inherits the first pane's environment.
+tmux_args=()
+if [[ -n ${TMUX:-} ]]; then
+  case ${1:-} in
+    exec|e|review|login|logout|app-server|mcp|mcp-server|completion|sandbox|debug|apply|features|remote-control|agents|queue) ;;
+    *) tmux_args=(--no-daemon) ;;
+  esac
+fi
+# Codex rejects a repeated flag, and a tmux restore replays the saved one.
+flags=(--dangerously-bypass-approvals-and-sandbox)
+for arg in "$@"; do
+  [[ $arg != --no-daemon ]] || tmux_args=()
+  [[ $arg != --dangerously-bypass-approvals-and-sandbox ]] || flags=()
+done
+
 # Keep stdin attached to the caller; enumerate executables on a separate FD.
 while IFS= read -r -u 3 candidate; do
   [[ $candidate -ef $0 ]] && continue
-  exec "$candidate" --yolo "$@" 3<&-
+  exec "$candidate" "${flags[@]}" "${tmux_args[@]}" "$@" 3<&-
 done 3< <(type -aP codex)
 
 printf '%s\n' 'codex: executable not found outside ~/.local/bin' >&2

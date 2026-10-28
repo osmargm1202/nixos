@@ -1,9 +1,11 @@
 set $mod Mod4
 set $run $HOME/.local/bin/i3-run
-set $term kitty
+set_from_resource $term orgm.i3.terminal kitty
+set_from_resource $alternate_term orgm.i3.alternateTerminal zutty-fast
 set $files thunar "$HOME"
 set $launcher $run i3-rofi --drun
-set $status_command exec ~/.local/bin/i3status-localized
+set_from_resource $status_command orgm.i3.statusCommand exec ~/.local/bin/i3status-localized
+set_from_resource $bar_font orgm.i3.barFont JetBrainsMono Nerd Font 11
 
 # Selected program integrations and user-specific behavior live here.
 include ~/.config/i3/config.d/*.conf
@@ -28,8 +30,8 @@ exec --no-startup-id i3swallowd
 exec_always --no-startup-id i3-focus-last --watch
 
 bindsym $mod+Return exec --no-startup-id $term
-bindsym $mod+Shift+Return exec --no-startup-id zutty-fast
-bindsym $mod+Ctrl+Return exec --no-startup-id kitty -e tmux -u new-session -A -s main
+bindsym $mod+Shift+Return exec --no-startup-id $alternate_term
+bindsym $mod+Ctrl+Return exec --no-startup-id $term -e tmux -u new-session -A -s main
 bindsym $mod+space exec --no-startup-id $run i3-rofi --drun
 bindsym $mod+Tab workspace back_and_forth
 bindsym Mod1+Tab exec --no-startup-id $run i3-rofi --window
@@ -206,6 +208,7 @@ client.unfocused        #1f2335 #1a1b26 #565f89 #292e42 #1a1b26
 client.urgent           #f7768e #1a1b26 #ffffff #f7768e #1a1b26
 
 bar {
+  font pango:$bar_font
   tray_output HDMI-1
   tray_output primary
   status_command $status_command

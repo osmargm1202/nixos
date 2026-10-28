@@ -33,6 +33,7 @@
     ".local/bin/i3-wallpaper-base",
     ".local/bin/i3-wifi-toggle",
     ".local/bin/i3status-localized",
-    ".local/bin/i3status-personal"
+    ".local/bin/i3status-personal",
+    ".local/bin/rofi"
   ]
 }

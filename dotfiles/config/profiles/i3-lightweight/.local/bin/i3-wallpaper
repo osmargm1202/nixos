@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+state="${XDG_STATE_HOME:-$HOME/.local/state}/i3/static-wallpaper"
+case "${1:---random}" in
+  --set-active) image="${2:?Indica una imagen}" ;;
+  --restore) [[ -r "$state" ]] || exit 0; image="$(<"$state")" ;;
+  --random)
+    image="$(find "$HOME/Pictures" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) -print 2>/dev/null | shuf -n 1 || true)"
+    [[ -n "$image" ]] || exit 0
+    ;;
+  *) printf '%s\n' 'usage: i3-wallpaper [--random|--restore|--set-active IMAGE]' >&2; exit 2 ;;
+esac
+[[ -f "$image" ]] || exit 1
+feh --no-fehbg --bg-fill "$image"
+mkdir -p "$(dirname "$state")"
+printf '%s\n' "$image" >"$state"
