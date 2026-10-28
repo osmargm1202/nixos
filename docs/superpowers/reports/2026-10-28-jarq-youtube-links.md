@@ -1,5 +1,8 @@
 # Jarq: envío de videos exactos de YouTube
 
+Actualización posterior: el atajo pasó a envío HTTPS directo, con autorización
+propia y sin navegador; ver [la corrección](2026-10-28-youtube-direct-http.md).
+
 El mando incorpora **YouTube en Jarq**, con campo de enlace y botón Enviar.
 La ruta rápida solicitada funciona con la autorización del navegador:
 
