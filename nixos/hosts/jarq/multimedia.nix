@@ -14,7 +14,14 @@
   };
   boot.kernelPackages =
     inputs.nixpkgs-zen70.legacyPackages.${pkgs.stdenv.hostPlatform.system}.linuxPackages_zen;
+  # This role replaces the inherited parameters, including Plymouth's splash.
+  # Keep the hardware workarounds and explicitly restore the graphical boot.
   boot.kernelParams = lib.mkForce [
+    "quiet"
+    "splash"
+    "loglevel=3"
+    "udev.log_level=3"
+    "rd.udev.log_level=3"
     "intel_iommu=off"
     "iommu=soft"
     "intremap=off"

@@ -20,8 +20,13 @@
     "module_blacklist=i2c_designware_platform,i2c_designware_core"
   ];
 
-  # Disable Plymouth while debugging Jarq boot hangs so kernel/systemd errors stay visible.
-  boot.plymouth.enable = lib.mkForce false;
+  # Reuse Lenovo's UEFI BGRT image instead of leaving the boot console visible.
+  # Load Broadwell's display driver early so Plymouth can use the internal panel.
+  boot.plymouth = {
+    enable = lib.mkDefault true;
+    theme = lib.mkDefault "bgrt";
+  };
+  boot.initrd.kernelModules = [ "i915" ];
 
   # BCM4352 is supported by the open-source brcmfmac driver (part of the kernel)
   # with firmware from linux-firmware (enabled via enableRedistributableFirmware above).
