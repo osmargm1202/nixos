@@ -20,7 +20,7 @@ SID = '12345678-1234-1234-1234-123456789abc'
 
 class AgentsTest(unittest.TestCase):
     def test_cli_help_is_valid_for_all_subcommands(self):
-        for command in ('bind', 'launch', 'save', 'run'):
+        for command in ('bind', 'launch', 'save', 'run', 'restore'):
             result = subprocess.run([sys.executable, str(ROOT / 'nixos/tmux/agents.py'), command, '--help'],
                                     text=True, capture_output=True, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -62,6 +62,21 @@ class AgentsTest(unittest.TestCase):
             chdir.assert_called_once_with('/tmp')
             execute.assert_called_once_with('codex', ['codex', '--model', 'test-model',
                                                      'resume', SID, agents.CONTINUE])
+
+    def test_wrapper_flags_do_not_accumulate_across_restores(self):
+        args = ['--dangerously-skip-permissions'] * 4 + ['--model', 'opus', '--resume', SID]
+        self.assertEqual(agents.context_args('claude', args),
+                         ['--dangerously-skip-permissions', '--model', 'opus'])
+
+    def test_resume_refuses_a_conversation_that_is_already_running(self):
+        data = dict(tool='claude', id=SID, cwd='/tmp', args=[])
+        token = base64.urlsafe_b64encode(json.dumps(data).encode()).decode()
+        running = {1: dict(pid=1, argv=['/home/u/.bun/bin/claude', '--resume', SID])}
+        with patch.object(agents, 'processes', return_value=running), \
+                patch.object(agents, 'tmux', return_value='on'), \
+                patch.object(os, 'chdir'), patch.object(os, 'execvp') as execute:
+            agents.resume(token)
+            execute.assert_not_called()
 
     def test_attach_only_does_not_send_a_prompt(self):
         data = dict(tool='claude', id=SID, cwd='/tmp', args=[])

@@ -19,10 +19,10 @@ fi
 
 if [[ ${1:-} == plugins ]]; then
   tmux source-file "$HOME/.config/tmux/persistence.conf"
-  # tmux-only preserves login profiles, which may replace PATH. Restore through
-  # the installed helper's absolute path, then rebuild user tool paths there.
-  restore_strategy=$(python3 -c 'import shlex,sys; print(shlex.quote("tmux-agent-resume->" + shlex.quote(sys.argv[1]) + " *"))' "$HOME/.local/bin/tmux-agent-resume")
-  tmux set-option -g @resurrect-processes "$restore_strategy"
+  # tmux-only preserves login profiles, which may replace PATH. Respawn agent
+  # panes through the installed helper's absolute path, with user tool paths.
+  tmux set-option -g @resurrect-hook-post-restore-all \
+    "$(printf '%q' "$HOME/.local/bin/tmux-agent-resume") restore \"\$_RESURRECT_DIR/last\""
   tmux set-environment -g PATH "$PATH"
 fi
 # shellcheck source=/dev/null

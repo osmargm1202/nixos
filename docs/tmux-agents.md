@@ -32,6 +32,20 @@ la última tarea autorizada; si ya terminó, se pausó o necesita información,
 el agente debe esperar. Se mantienen los controles de cada cliente y sus
 opciones de modelo, perfil y permisos reconocidas por el helper.
 
+Los agentes no se teclean en el shell nuevo: resurrect lo haría con
+`send-keys … C-m`, y al arrancar la PC ble.sh puede no estar listo y dejar el
+comando escrito sin ejecutar. Con `@resurrect-processes 'false'`, el hook
+`@resurrect-hook-post-restore-all` ejecuta `tmux-agent-resume restore`, que
+reemplaza cada panel guardado con `respawn-pane` (solo si ese panel tiene un
+shell y ningún agente). Al salir del agente queda el shell normal; el comando
+tampoco entra en el historial, donde podía reabrirse en otro panel.
+
+Una conversación nunca se abre dos veces: si su ID ya corre en otro proceso,
+`tmux-agent-resume run` deja el shell e informa el PID. Los wrappers
+`claude` y `codex` añaden su flag de permisos solo si no viene ya en los
+argumentos, y los flags repetidos se guardan una vez (Codex rechaza
+`--dangerously-bypass-approvals-and-sandbox` repetido).
+
 Para restaurar las conversaciones esperando tu intervención, cambia en
 `~/.config/tmux/persistence.conf`:
 

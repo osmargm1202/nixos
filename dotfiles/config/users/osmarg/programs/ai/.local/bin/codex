@@ -10,14 +10,17 @@ if [[ -n ${TMUX:-} ]]; then
     *) tmux_args=(--no-daemon) ;;
   esac
 fi
+# Codex rejects a repeated flag, and a tmux restore replays the saved one.
+flags=(--dangerously-bypass-approvals-and-sandbox)
 for arg in "$@"; do
   [[ $arg != --no-daemon ]] || tmux_args=()
+  [[ $arg != --dangerously-bypass-approvals-and-sandbox ]] || flags=()
 done
 
 # Keep stdin attached to the caller; enumerate executables on a separate FD.
 while IFS= read -r -u 3 candidate; do
   [[ $candidate -ef $0 ]] && continue
-  exec "$candidate" --dangerously-bypass-approvals-and-sandbox "${tmux_args[@]}" "$@" 3<&-
+  exec "$candidate" "${flags[@]}" "${tmux_args[@]}" "$@" 3<&-
 done 3< <(type -aP codex)
 
 printf '%s\n' 'codex: executable not found outside ~/.local/bin' >&2

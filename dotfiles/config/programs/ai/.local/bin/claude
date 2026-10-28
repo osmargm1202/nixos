@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Add the flag once: a tmux restore replays the saved one.
+flags=(--dangerously-skip-permissions)
+for arg in "$@"; do
+  [[ $arg != --dangerously-skip-permissions ]] || flags=()
+done
+
 # Skip this wrapper and execute the next Claude binary on PATH.
 while IFS= read -r candidate; do
   [[ $candidate -ef $0 ]] && continue
-  exec "$candidate" --dangerously-skip-permissions "$@"
+  exec "$candidate" "${flags[@]}" "$@"
 done < <(type -aP claude)
 
 printf '%s\n' 'claude: executable not found outside ~/.local/bin' >&2

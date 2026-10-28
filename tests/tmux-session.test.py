@@ -99,6 +99,8 @@ time.sleep(300)
         session('start')
         assert tmux('list-sessions', '-F', '#S') == 'main'
         assert tmux('show-option', '-gqv', '@continuum-restore') == 'off'
+        # Agents are respawned by the post-restore hook, never typed into a shell.
+        assert tmux('show-option', '-gqv', '@resurrect-processes') == 'false'
         first = tmux('list-panes', '-F', '#{pane_id}')
         for i, sid in enumerate(IDS):
             tool = TOOLS[i]

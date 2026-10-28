@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import uuid
@@ -211,7 +212,9 @@ def context_args(tool, args):
                 result.extend((arg, value))
         elif arg.split('=', 1)[0] in values and '=' in arg:
             result.append(arg)
-        elif arg in flags:
+        elif arg in flags and arg not in result:
+            # Wrappers such as ~/.local/bin/claude add their flag on every
+            # launch; keep one copy so restores do not accumulate it.
             result.append(arg)
     return result
 
@@ -298,11 +301,20 @@ def resume(token):
     os.chdir(data['cwd'])
     os.environ.update({k: v for k, v in data.get('env', {}).items()
                        if k in (*CLIENT_ENV, 'OPENCODE_TUI_CONFIG')})
-    args = [tool, *data.get('args', [])]
+    # Older snapshots repeated wrapper flags; normalise them before replaying.
+    args = [tool, *context_args(tool, data.get('args', []))]
     target = data.get('sessionFile', data['id'])
     selectors = {'codex': ['resume', data['id']], 'claude': ['--resume', data['id']],
                  'pi': ['--session', target], 'omp': ['--resume', target],
                  'opencode': ['--session', data['id']]}
+    # A conversation must never run twice: duplicate agents would continue the
+    # same history concurrently. Leave the pane with its shell instead.
+    for other in processes().values():
+        if other['pid'] != os.getpid() and data['id'] in other['argv'] and any(
+                Path(arg).name == tool for arg in other['argv'][:2]):
+            print(f"tmux-agent-resume: {tool} {data['id']} ya está activo "
+                  f"(PID {other['pid']}); no se abre otra copia", file=sys.stderr)
+            return
     args.extend(selectors[tool])
     if tmux('show-option', '-gqv', '@orgm-agent-auto-continue') == 'on':
         if tool == 'opencode':
@@ -319,6 +331,42 @@ def resume(token):
             args.append(CONTINUE)
     print(f"Restaurando {tool}: {data['id']}", flush=True)
     os.execvp(tool, args)
+
+
+def restore(snapshot):
+    # Resurrect types restore commands into the new shell with send-keys and
+    # C-m. A line editor that is still starting (ble.sh at boot) can leave the
+    # command unexecuted, so agent panes are respawned directly instead.
+    shell = tmux('show-option', '-gqv', 'default-shell') or os.environ.get('SHELL', '/bin/sh')
+    after = tmux('show-option', '-gqv', 'default-command') or shlex.quote(shell) + ' -l'
+    shells = {Path(shell).name, 'bash', 'sh', 'zsh', 'fish'}
+    # The portable launcher loads this file with runpy and extends PATH first;
+    # rerun the same file with this interpreter and hand the pane that PATH.
+    resume_cmd = shlex.join([sys.executable, str(Path(sys.argv[0]).resolve())])
+    table = processes()
+    for line in snapshot.read_text().splitlines():
+        fields = line.split('\t')
+        if len(fields) != 11 or fields[0] != 'pane':
+            continue
+        words = fields[10].removeprefix(':').split()
+        if words[:2] != ['tmux-agent-resume', 'run'] or len(words) != 3:
+            continue
+        target = f'={fields[1]}:{fields[2]}.{fields[5]}'
+        try:
+            current, pid = tmux('display-message', '-p', '-t', target,
+                                '#{pane_current_command}\t#{pane_pid}').split('\t')
+        except (subprocess.CalledProcessError, ValueError):
+            continue
+        # Never replace a pane that already runs something, e.g. a manual restore.
+        # A respawned agent pane reports its shell, so look for the agent too;
+        # a shell that is still starting may have short-lived helper children.
+        if current not in shells or agent_process(pid, table):
+            continue
+        # Resurrect stores the directory with escaped spaces.
+        directory = fields[7].removeprefix(':').replace('\\ ', ' ')
+        tmux('respawn-pane', '-k', '-t', target, '-c', directory,
+             '-e', 'PATH=' + os.environ.get('PATH', ''),
+             f'{resume_cmd} run {shlex.quote(words[2])}; exec {after}')
 
 
 def parse_jsonc(text):
@@ -391,6 +439,7 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('save').add_argument('snapshot', type=Path)
     sub.add_parser('run').add_argument('token')
+    sub.add_parser('restore', help='respawn agent panes after a resurrect restore').add_argument('snapshot', type=Path)
     register = sub.add_parser('bind', help='bind an already running shared-daemon conversation')
     register.add_argument('tool', choices=TOOLS)
     register.add_argument('id')
@@ -402,6 +451,8 @@ def main():
     args = parser.parse_args()
     if args.command == 'save':
         save(args.snapshot)
+    elif args.command == 'restore':
+        restore(args.snapshot)
     elif args.command == 'bind':
         bind(args.tool, args.id, args.pane)
     elif args.command == 'launch':
