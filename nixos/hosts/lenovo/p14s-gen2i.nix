@@ -43,7 +43,7 @@ let
 in
 {
   # p14s-gen2i-base.nix is selected by nixos/dns/hosts.nix for every Lenovo role.
-  imports = [ ../../apps/deskflow.nix ];
+  imports = [ ../../apps/deskflow.nix ../../apps/nextcloud-server.nix ];
 
   config = {
     # Retain the current deployment and two rollbacks. Shared sort keys keep the

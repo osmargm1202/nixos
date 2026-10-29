@@ -1,5 +1,15 @@
 # Lenovo: server, Windows y monitor externo
 
+`lenovo-server` es una configuración independiente de consola, sin Ryoku ni
+sus especializaciones de escritorio. Conserva el servidor SSH, Tailscale,
+Syncthing, [Nextcloud](../../apps/nextcloud-server.md), Podman y Windows con
+VFIO. El usuario y las rutas de datos existentes siguen siendo los mismos.
+La configuración `lenovo` conserva el escritorio y sus modos anteriores.
+Al instalar `lenovo-server` con `boot`, su entrada se convierte en la
+predeterminada; las generaciones anteriores siguen disponibles como respaldo
+hasta que las retire la política de generaciones. Los atajos de Lenovo
+`os`, `osboot` y `osb` apuntan a `lenovo-server`.
+
 El modo `server` es la entrada predeterminada de cada nueva generación de
 Lenovo. Arranca en `multi-user.target`, sin escritorio ni login automático;
 mantiene SSH y NetworkManager. Las otras entradas siguen disponibles.

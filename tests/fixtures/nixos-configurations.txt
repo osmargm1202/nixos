@@ -3,5 +3,7 @@ ero
 jarq
 jarq-multimedia
 lenovo
+lenovo-server
 orgm
 orgm-ryoku
+thinkpad11e

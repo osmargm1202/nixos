@@ -25,6 +25,13 @@ in
     };
     envy = historical.configurations.envy;
     lenovo = historical.configurations.lenovo-ryoku;
+    lenovo-server = {
+      role = "terminal";
+      hostName = "lenovo";
+      userName = "osmarg";
+      hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+      extraModules = [ ./nixos/hosts/lenovo/server.nix ];
+    };
     orgm = historical.configurations.orgm-hyprland;
     orgm-ryoku = historical.configurations.orgm-ryoku;
     ero = historical.configurations.ero-i3;
