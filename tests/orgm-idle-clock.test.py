@@ -19,10 +19,15 @@ class IdleTest(unittest.TestCase):
         self.bin = self.root / 'bin'; self.bin.mkdir()
         self.log = self.root / 'log'
         self.status = self.root / 'media'; self.status.write_text('Paused\n')
+        self.caffeine = self.root / '.local/state/waybar/caffeine'; self.caffeine.parent.mkdir(parents=True)
+        self.caffeine.write_text('deactivated\n')
+        self.clients = self.root / 'clients'; self.clients.write_text('[]')
         self.env = dict(os.environ, HOME=str(self.root), XDG_RUNTIME_DIR=str(self.root),
-                        PATH=f'{self.bin}:{Path(sys.executable).parent}:/run/current-system/sw/bin', TEST_MEDIA=str(self.status), TEST_LOG=str(self.log))
+                        XDG_STATE_HOME=str(self.root / '.local/state'),
+                        PATH=f'{self.bin}:{Path(sys.executable).parent}:/run/current-system/sw/bin', TEST_MEDIA=str(self.status), TEST_LOG=str(self.log), TEST_CLIENTS=str(self.clients))
         for name, code in {
             'playerctl': 'cat "$TEST_MEDIA"',
+            'hyprctl': 'cat "$TEST_CLIENTS"',
             'systemd-inhibit': 'echo inhibit >> "$TEST_LOG"; exec sleep 300',
             'systemctl': 'printf "systemctl %s\\n" "$*" >> "$TEST_LOG"',
             'orgm-qylock': 'printf "lock %s\\n" "$ORGM_QY_IDLE_CLOCK" >> "$TEST_LOG"',
@@ -66,6 +71,21 @@ class IdleTest(unittest.TestCase):
         self.wait(lambda: 'systemctl --user restart orgm-hyprland-idle.service' in self.entries())
         self.call('show')
         self.wait(lambda: self.entries().count('clock') == 2)
+
+    def test_caffeine_clock_respects_media_and_video_inhibitors(self):
+        self.call('show-caffeine')
+        self.assertNotIn('clock', self.entries())
+        self.caffeine.write_text('activated\n')
+        self.clients.write_text('[{"mapped":true,"hidden":false,"inhibitingIdle":true}]')
+        self.call('show-caffeine')
+        self.assertNotIn('clock', self.entries())
+        self.clients.write_text('[]')
+        self.status.write_text('Playing\n')
+        self.call('show-caffeine')
+        self.assertNotIn('clock', self.entries())
+        self.status.write_text('Paused\n')
+        self.call('show-caffeine')
+        self.wait(lambda: 'clock' in self.entries())
 
 
 if __name__ == '__main__':

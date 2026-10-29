@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Coordinate the idle clock, media inhibition, and the existing session lock."""
+import json
 import os
 from pathlib import Path
 import select
@@ -19,6 +20,20 @@ def playing():
         result = subprocess.run(['playerctl', '--all-players', 'status'], capture_output=True, text=True, timeout=2)
         return any(line.strip() == 'Playing' for line in result.stdout.splitlines())
     except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def caffeine_clock_allowed():
+    state = Path(os.environ.get('XDG_STATE_HOME', Path.home() / '.local/state')) / 'waybar/caffeine'
+    try:
+        if state.read_text().strip() != 'activated' or playing():
+            return False
+        # Caffeine is a Waybar layer-surface inhibitor. Other visible client
+        # inhibitors may be non-MPRIS video players and must retain priority.
+        result = subprocess.run(['hyprctl', '-j', 'clients'], capture_output=True, text=True, timeout=2, check=True)
+        clients = json.loads(result.stdout)
+        return not any(client.get('inhibitingIdle') and client.get('mapped') and not client.get('hidden') for client in clients)
+    except (OSError, ValueError, subprocess.SubprocessError):
         return False
 
 
@@ -99,8 +114,9 @@ def daemon():
                 conn.settimeout(2)
                 command = conn.recv(128).decode().strip()
                 ok = True
-                if command == 'show':
-                    if not playing() and (clock is None or clock.poll() is not None):
+                if command in ('show', 'show-caffeine'):
+                    allowed = not playing() if command == 'show' else caffeine_clock_allowed()
+                    if allowed and (clock is None or clock.poll() is not None):
                         clock = subprocess.Popen(['qs', '--no-duplicate', '--path', str(config)],
                                                  stdin=subprocess.DEVNULL)
                 elif command in ('hide', 'wake'):
@@ -136,7 +152,7 @@ if __name__ == '__main__':
         command = sys.argv[1] if len(sys.argv) == 2 else ''
         if command == 'daemon':
             sys.exit(daemon())
-        if command not in ('ping', 'show', 'hide', 'wake', 'lock', 'suspend'):
+        if command not in ('ping', 'show', 'show-caffeine', 'hide', 'wake', 'lock', 'suspend'):
             raise ValueError('uso: orgm-idle-clock daemon|show|hide|lock|suspend|ping')
         sys.exit(0 if send(command) else 1)
     except (OSError, ValueError, subprocess.TimeoutExpired) as error:
