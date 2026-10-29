@@ -41,6 +41,8 @@ in
     # Runtime del CLI y de `bun`/`npm install -g`.
     nodejs_22
     bun
+    # Codex busca bwrap en PATH para el sandbox de Linux.
+    bubblewrap
     codexInstall
   ];
   };
