@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Desktop launchers do not run the interactive shell that adds these paths.
+export PATH="$PATH:${BUN_INSTALL:-$HOME/.bun}/bin:${NPM_CONFIG_PREFIX:-$HOME/.npm-global}/bin:${FNM_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/fnm}/aliases/default/bin"
+
 # Keep the terminal and stdin intact while adding tmux's session recorder.
 while IFS= read -r -u 3 candidate; do
   [[ $candidate -ef $0 ]] && continue
