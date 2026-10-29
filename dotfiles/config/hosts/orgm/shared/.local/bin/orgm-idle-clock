@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Coordinate the idle clock, media inhibition, and the existing session lock."""
+import os
+from pathlib import Path
+import select
+import signal
+import socket
+import subprocess
+import sys
+import time
+
+runtime = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}'))
+sockpath = runtime / 'orgm-idle-clock.sock'
+config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config')) / 'hypr/idle-clock/shell.qml'
+
+
+def playing():
+    try:
+        result = subprocess.run(['playerctl', '--all-players', 'status'], capture_output=True, text=True, timeout=2)
+        return any(line.strip() == 'Playing' for line in result.stdout.splitlines())
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def send(command):
+    with socket.socket(socket.AF_UNIX) as client:
+        client.settimeout(15)
+        client.connect(str(sockpath))
+        client.sendall(command.encode() + b'\n')
+        return client.recv(128).strip() == b'ok'
+
+
+def daemon():
+    runtime.mkdir(parents=True, exist_ok=True)
+    if sockpath.exists():
+        try:
+            if send('ping'):
+                return 0
+        except OSError:
+            sockpath.unlink()
+    clock = None
+    inhibitor = None
+    media = False
+    stop = False
+
+    def shutdown(*_):
+        nonlocal stop
+        stop = True
+
+    def hide():
+        nonlocal clock
+        if clock is not None and clock.poll() is None:
+            clock.terminate()
+            try:
+                clock.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                clock.kill()
+                clock.wait()
+        clock = None
+
+    def release_inhibitor(process):
+        if process is not None and process.poll() is None:
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=3)
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, shutdown)
+    server = socket.socket(socket.AF_UNIX)
+    try:
+        server.bind(str(sockpath))
+        os.chmod(sockpath, 0o600)
+        server.listen(5)
+        next_check = 0.0
+        while not stop:
+            now = time.monotonic()
+            if now >= next_check:
+                current = playing()
+                if current and not media:
+                    hide()
+                    inhibitor = subprocess.Popen(['systemd-inhibit', '--what=idle', '--mode=block',
+                        '--who=ORGM multimedia', '--why=Reproducción activa', 'sleep', 'infinity'],
+                        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        start_new_session=True)
+                elif media and not current:
+                    if inhibitor is not None:
+                        release_inhibitor(inhibitor)
+                        inhibitor = None
+                    # Recreate idle listeners so playback time is never counted
+                    # towards a new clock, lock, or suspend deadline.
+                    subprocess.run(['systemctl', '--user', 'restart', 'orgm-hyprland-idle.service'],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+                media = current
+                next_check = time.monotonic() + 2
+            readable, _, _ = select.select([server], [], [], min(1, max(0, next_check - time.monotonic())))
+            if not readable:
+                continue
+            conn, _ = server.accept()
+            with conn:
+                conn.settimeout(2)
+                command = conn.recv(128).decode().strip()
+                ok = True
+                if command == 'show':
+                    if not playing() and (clock is None or clock.poll() is not None):
+                        clock = subprocess.Popen(['qs', '--no-duplicate', '--path', str(config)],
+                                                 stdin=subprocess.DEVNULL)
+                elif command in ('hide', 'wake'):
+                    hide()
+                    if command == 'wake':
+                        subprocess.run(['orgm-qylock', 'dismiss-clock'], stdout=subprocess.DEVNULL,
+                                       stderr=subprocess.DEVNULL, timeout=5)
+                elif command == 'lock':
+                    if not playing():
+                        env = dict(os.environ, ORGM_QY_IDLE_CLOCK='1')
+                        result = subprocess.run(['orgm-qylock', 'lock'], env=env, timeout=15)
+                        if result.returncode == 0:
+                            hide()
+                        else:
+                            ok = False
+                elif command == 'suspend':
+                    if not playing():
+                        ok = subprocess.run(['systemctl', 'suspend'], timeout=20).returncode == 0
+                elif command != 'ping':
+                    ok = False
+                conn.sendall(b'ok\n' if ok else b'error\n')
+    finally:
+        hide()
+        if inhibitor is not None:
+            release_inhibitor(inhibitor)
+        server.close()
+        sockpath.unlink(missing_ok=True)
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        command = sys.argv[1] if len(sys.argv) == 2 else ''
+        if command == 'daemon':
+            sys.exit(daemon())
+        if command not in ('ping', 'show', 'hide', 'wake', 'lock', 'suspend'):
+            raise ValueError('uso: orgm-idle-clock daemon|show|hide|lock|suspend|ping')
+        sys.exit(0 if send(command) else 1)
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+        print(f'orgm-idle-clock: {error}', file=sys.stderr)
+        sys.exit(1)

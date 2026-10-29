@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Prefer the system package once it includes the idle-clock IPC. Until the next
+# rebuild, use the separately rooted package installed for this feature.
+system_lock=/run/current-system/sw/bin/orgm-qylock
+system_qml=/run/current-system/sw/share/orgm-qylock/qml/lock.qml
+if [[ -x $system_lock && -r $system_qml ]] && grep -q 'function dismissClock' "$system_qml"; then
+  exec "$system_lock" "$@"
+fi
+exec "$HOME/.local/state/orgm-idle-clock/qylock-profile/bin/orgm-qylock" "$@"

@@ -30,7 +30,7 @@ in
       Type = "dbus";
       BusName = spec.busName;
     };
-  }) {
+  }) ({
     orgm-hyprland-menus = { description = "Preloaded Quickshell desktop menus"; command = "${home}/.local/bin/orgm-hyprland-desktop menus-daemon"; };
     orgm-desktop-widgets = { description = "Ryoku-derived desktop clock and calendar"; command = "${home}/.local/bin/orgm-desktop-widgets daemon"; };
     orgm-hyprland-notifications = { description = "Desktop notification center"; command = "${pkgs.swaynotificationcenter}/bin/swaync"; busName = "org.freedesktop.Notifications"; };
@@ -41,6 +41,8 @@ in
     hyprpolkitagent = { description = "Hyprland graphical authentication"; command = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"; };
     orgm-hyprland-idle = { description = "Idle screen lock"; command = "${pkgs.hypridle}/bin/hypridle"; };
     orgm-hyprland-clipboard = { description = "Clipboard history"; command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"; };
-  });
+  } // lib.optionalAttrs (config.networking.hostName == "orgm") {
+    orgm-hyprland-media-idle = { description = "Idle clock and media inhibitor"; command = "${home}/.local/bin/orgm-idle-clock daemon"; };
+  }));
   environment.systemPackages = [ (import ../sway/quickshell.nix { inherit pkgs; }) pkgs.swaynotificationcenter pkgs.hyprshot pkgs.ffmpeg ];
 }

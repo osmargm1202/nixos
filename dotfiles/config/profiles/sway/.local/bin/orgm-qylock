@@ -293,6 +293,15 @@ def main(args):
     if command == '_supervise' and len(args) == 3:
         return supervise(args[1], int(args[2]))
     metadata = package_metadata()
+    if command == 'dismiss-clock' and len(args) == 1:
+        _, _, information = runtime_paths()
+        if not information.is_file():
+            return 0
+        details = json.loads(information.read_text())
+        subprocess.run([metadata['qs'], 'ipc', '--pid', str(int(details['pid'])),
+                        'call', 'orgm-lock', 'dismissClock'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
+        return 0
     if command == 'lock' and len(args) <= 1:
         return lock(metadata)
     if command == 'themes' and len(args) == 1:

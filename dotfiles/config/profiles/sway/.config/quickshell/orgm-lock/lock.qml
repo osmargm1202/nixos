@@ -12,6 +12,7 @@ ShellRoot {
     property bool authenticated: false
     property bool emergency: false
     property bool ending: false
+    property bool clockVisible: Quickshell.env("ORGM_QY_IDLE_CLOCK") === "1"
     property int surfaceCount: 0
     readonly property var sddm: backendAuth.sddm
     readonly property var config: backendAuth.config
@@ -55,12 +56,14 @@ ShellRoot {
         // Deliberately no IPC unlock/authenticate method.
         function status(): string {
             return JSON.stringify({secure: session.secure, authenticated: root.authenticated,
-                theme: root.settings.id || "", fallback: root.emergency, user: root.settings.user || "",
+                theme: root.settings.id || "", fallback: root.emergency, clock: root.clockVisible, user: root.settings.user || "",
                 surfaces: root.surfaceCount,
                 submitting: backendAuth.submitting, feedback: backendAuth.feedback,
                 passwordWaiting: backendAuth.passwordWaiting, passwordActive: backendAuth.passwordActive,
                 promptCount: backendAuth.promptCount})
         }
+        // This only reveals the authentication UI; it never unlocks.
+        function dismissClock(): void { root.clockVisible = false }
     }
     WlSessionLock {
         id: session
@@ -84,7 +87,7 @@ ShellRoot {
                 // potentially heavy skin/video; before-sleep must not wait on it.
                 active: session.secure && root.configured && !root.emergency
                 source: root.settings.themeUrl ? root.settings.themeUrl + "/Main.qml" : ""
-                onLoaded: item.forceActiveFocus()
+                onLoaded: if (root.clockVisible) idleClock.forceActiveFocus(); else item.forceActiveFocus()
             }
             Fallback {
                 anchors.fill: parent
@@ -97,6 +100,21 @@ ShellRoot {
                 anchors.fill: parent
                 visible: root.emergency || theme.status !== Loader.Ready
                 onVisibleChanged: if (!visible) hide()
+            }
+            FlipClock {
+                id: idleClock
+                anchors.fill: parent
+                visible: root.clockVisible && session.secure
+                twelveHour: Quickshell.env("ORGM_CLOCK_12H") === "1"
+                z: 100
+                onVisibleChanged: {
+                    if (visible) forceActiveFocus()
+                    else if (theme.item) theme.item.forceActiveFocus()
+                }
+                onDismissed: {
+                    root.clockVisible = false
+                    if (theme.item) theme.item.forceActiveFocus()
+                }
             }
             Text {
                 anchors.right: parent.right; anchors.bottom: parent.bottom

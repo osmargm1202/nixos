@@ -1,0 +1,13 @@
+[Unit]
+Description=Idle clock and media inhibitor
+PartOf=orgm-hyprland-session.target
+ConditionEnvironment=HYPRLAND_INSTANCE_SIGNATURE
+
+[Service]
+Environment=PATH=%h/.local/bin:/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin
+ExecStart=%h/.local/bin/orgm-idle-clock daemon
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=orgm-hyprland-session.target

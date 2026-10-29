@@ -5,6 +5,7 @@ ORGM_TEST_QYLOCK_PACKAGE=/nix/store/... ORGM_TEST_QYLOCK_PAM=/nix/store/.../lib/
 No real password is supplied, no production PAM policy is invoked, no sensor.
 """
 import json
+import hashlib
 import os
 from pathlib import Path
 import pwd
@@ -120,6 +121,32 @@ try:
 
     if os.environ.get('ORGM_TEST_QYLOCK_TOUCH_ONLY'):
         touch_test();raise SystemExit(0)
+    if os.environ.get('ORGM_TEST_QYLOCK_IDLE_CLOCK_ONLY'):
+        env['ORGM_QY_IDLE_CLOCK'] = '1'
+        winter = next(i for i in items if i['id'] == os.environ.get('ORGM_TEST_QYLOCK_IDLE_THEME', 'winter'))
+        ready = HOME/'idle-ready'
+        locker = launch(Path(META['lockQml']), settings(winter), ready)
+        wait(lambda:(s if (s:=status(locker,'orgm-lock')) and s['secure'] and s['surfaces']==2 and s['clock'] else None), 'secure clock on both monitors')
+        assert ready.read_text() == 'secure'
+        command('swaymsg','focus','output','HEADLESS-1').check_returncode()
+        time.sleep(.8)
+        key('-k','Escape')
+        session_key = hashlib.sha256((env['WAYLAND_DISPLAY']+'\0'+env['SWAYSOCK']).encode()).hexdigest()[:20]
+        info = runtime/('orgm-qylock-'+session_key+'.json')
+        info.write_text(json.dumps({'pid': locker.pid}))
+        command(str(PACKAGE/'bin/orgm-qylock'), 'dismiss-clock').check_returncode()
+        info.unlink()
+        wait(lambda:not status(locker,'orgm-lock')['clock'], 'dismiss secure clock')
+        assert status(locker,'orgm-lock')['secure'] and not status(locker,'orgm-lock')['authenticated']
+        key('-k','F2')
+        wait(lambda:status(locker,'orgm-lock')['fallback'], 'fallback after clock')
+        key('incorrect-test-token'); key('-k','Return')
+        wait(lambda:not status(locker,'orgm-lock')['submitting'], 'fake PAM rejection')
+        assert status(locker,'orgm-lock')['secure'] and not status(locker,'orgm-lock')['authenticated']
+        key('QYLOCK_TEST_ONLY_NOT_A_REAL_PASSWORD'); key('-k','Return')
+        assert locker.wait(timeout=5) == 0
+        print('PASS: idle clock stays securely locked after dismissal and requires fake PAM authentication', flush=True)
+        raise SystemExit(0)
     candidates = [settings(i) for i in items]
     preview = launch(ROOT/'dotfiles/config/profiles/sway/.config/quickshell/orgm-lock/preview.qml', dict(candidates=candidates))
     wait(lambda:status(preview,'lock-preview'),'preview IPC')
