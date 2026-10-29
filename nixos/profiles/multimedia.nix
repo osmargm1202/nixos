@@ -240,6 +240,13 @@ in
     orgm.tablet.enable = lib.mkForce false;
 
     system.nixos.label = "jarq-multimedia";
+    # Keep the appliance's own rebuild shortcuts independent of desktop dotfiles.
+    programs.nh.enable = true;
+    environment.shellAliases = {
+      os = "nh os switch /home/${userName}/Hobby/nixos --hostname jarq-multimedia";
+      osboot = "nh os boot /home/${userName}/Hobby/nixos --hostname jarq-multimedia";
+      osb = "nh os build /home/${userName}/Hobby/nixos --hostname jarq-multimedia";
+    };
     system.stateVersion = "25.11";
     nixpkgs.config.allowUnfree = true;
     nix.settings.experimental-features = [
