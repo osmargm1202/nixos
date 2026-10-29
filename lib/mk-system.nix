@@ -86,6 +86,7 @@ let
         ../nixos/tablet.nix
         ../nixos/orgm/default.nix
         ../nixos/apps/terminal-visuals.nix
+        ../nixos/apps/youtube-music-cli.nix
       ]
       ++ roleModules
       ++ extraModules;
