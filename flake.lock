@@ -1,22 +1,5 @@
 {
   "nodes": {
-    "amux-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1793294266,
-        "narHash": "sha256-NKLIBQ+Ybadk1sLymNO3Gyf1dsIXEifD74/+peMwgK8=",
-        "owner": "mixpeek",
-        "repo": "amux",
-        "rev": "bf176d56c32fa20259d3e9b26910486788eaf594",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mixpeek",
-        "repo": "amux",
-        "rev": "bf176d56c32fa20259d3e9b26910486788eaf594",
-        "type": "github"
-      }
-    },
     "bibataMaterialSrc": {
       "flake": false,
       "locked": {
@@ -47,6 +30,23 @@
       "original": {
         "owner": "linuxmint",
         "repo": "cinnamon-spices-extensions",
+        "type": "github"
+      }
+    },
+    "codeman-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793193031,
+        "narHash": "sha256-hZ34ozrnF0CGTyUHiY7n8WF9G5Afyib5Z84nSO9W/rU=",
+        "owner": "Ark0N",
+        "repo": "Codeman",
+        "rev": "f1f7eec4d6a54c73822d118262712535eea5fd28",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Ark0N",
+        "repo": "Codeman",
+        "rev": "f1f7eec4d6a54c73822d118262712535eea5fd28",
         "type": "github"
       }
     },
@@ -389,18 +389,17 @@
     },
     "orgm-amux": {
       "inputs": {
-        "amux-src": "amux-src",
+        "codeman-src": "codeman-src",
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay"
+        ]
       },
       "locked": {
-        "lastModified": 1793320573,
-        "narHash": "sha256-oLceRPLUyshAhBPHJorOrt4ruEBE9UA5u1cCoZNAWZA=",
+        "lastModified": 1793356760,
+        "narHash": "sha256-aiYXdTHEqI7eZkjVNxMTRp/qbNo9jh2h8KX0n4DSCX8=",
         "ref": "refs/heads/main",
-        "rev": "7efa77ab193ec1171a358c840f78e1420dc24104",
-        "revCount": 4,
+        "rev": "ae93ab08051a69515c6741909b8b5f51006d9e86",
+        "revCount": 5,
         "type": "git",
         "url": "https://github.com/osmargm1202/orgm-amux"
       },
@@ -533,27 +532,6 @@
         "orgm-multimedia": "orgm-multimedia",
         "ryoku": "ryoku",
         "sops-nix": "sops-nix"
-      }
-    },
-    "rust-overlay": {
-      "inputs": {
-        "nixpkgs": [
-          "orgm-amux",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1793261817,
-        "narHash": "sha256-fAvtOccUXHVAH5wXK+ABYUUC47W2qTb9T9EefLcS9ME=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "afcefd09c71e63663a46e4ce5e09968584f2c709",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
       }
     },
     "ryoku": {

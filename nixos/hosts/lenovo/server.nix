@@ -20,7 +20,7 @@ in {
     ../../tmux
     ../../apps/sops.nix
     ../../apps/nextcloud-server.nix
-    ../../apps/orgm-amux.nix
+    ../../apps/orgm-agents.nix
     ../../apps/orgm-automation.nix
   ];
 
@@ -36,7 +36,7 @@ in {
 
   # ORGM agent hub (code.or-gm.com). Only the active hub manages the DNS record;
   # when legion-server takes over, move these two lines there.
-  services.orgm-amux = {
+  services.orgm-agents = {
     enable = true;
     dns.manage = true;
   };
