@@ -10,11 +10,18 @@ if [[ -n ${TMUX:-} ]]; then
     *) tmux_args=(--no-daemon) ;;
   esac
 fi
-# Codex rejects a repeated flag, and a tmux restore replays the saved one.
+# Default to no approvals and no sandbox, unless the caller already chose a
+# policy: Codex rejects a repeated flag (a tmux restore replays the saved one)
+# and refuses the bypass next to an explicit approval or sandbox mode (amux
+# launches workers with `-a never --sandbox workspace-write`).
 flags=(--dangerously-bypass-approvals-and-sandbox)
 for arg in "$@"; do
-  [[ $arg != --no-daemon ]] || tmux_args=()
-  [[ $arg != --dangerously-bypass-approvals-and-sandbox ]] || flags=()
+  case $arg in
+    --no-daemon) tmux_args=() ;;
+    --dangerously-bypass-approvals-and-sandbox | --yolo | --full-auto | \
+      -a | -a?* | --ask-for-approval | --ask-for-approval=* | \
+      -s | -s?* | --sandbox | --sandbox=*) flags=() ;;
+  esac
 done
 
 # Keep stdin attached to the caller; enumerate executables on a separate FD.
