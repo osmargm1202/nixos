@@ -21,6 +21,7 @@ in {
     ../../apps/sops.nix
     ../../apps/nextcloud-server.nix
     ../../apps/orgm-amux.nix
+    ../../apps/orgm-automation.nix
   ];
 
   # Retain headless services and CLI tools without building a desktop session.

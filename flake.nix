@@ -43,6 +43,7 @@
     # };
     # ORGM agent hub (amux packaged as a NixOS module). Private repo, fetched
     # over HTTPS with the user's gh credential helper (build with nh / as osmarg).
+    orgm-automation.url = "git+https://github.com/osmargm1202/orgm-automation";
     orgm-amux = {
       url = "git+https://github.com/osmargm1202/orgm-amux";
       inputs.nixpkgs.follows = "nixpkgs";

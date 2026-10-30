@@ -409,6 +409,21 @@
         "url": "https://github.com/osmargm1202/orgm-amux"
       }
     },
+    "orgm-automation": {
+      "locked": {
+        "lastModified": 1793351929,
+        "narHash": "sha256-y+7uoFMA77qoU0fpdjvweu3UjzRGnalsKG4Cg8Y4Ges=",
+        "ref": "refs/heads/main",
+        "rev": "ff555fafc20f498e2b59be159c5f3ec9bbcd127c",
+        "revCount": 14,
+        "type": "git",
+        "url": "https://github.com/osmargm1202/orgm-automation"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/osmargm1202/orgm-automation"
+      }
+    },
     "orgm-multimedia": {
       "flake": false,
       "locked": {
@@ -514,6 +529,7 @@
         "nixpkgs-tailscale": "nixpkgs-tailscale",
         "nixpkgs-zen70": "nixpkgs-zen70",
         "orgm-amux": "orgm-amux",
+        "orgm-automation": "orgm-automation",
         "orgm-multimedia": "orgm-multimedia",
         "ryoku": "ryoku",
         "sops-nix": "sops-nix"
