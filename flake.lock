@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "amux-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793294266,
+        "narHash": "sha256-NKLIBQ+Ybadk1sLymNO3Gyf1dsIXEifD74/+peMwgK8=",
+        "owner": "mixpeek",
+        "repo": "amux",
+        "rev": "bf176d56c32fa20259d3e9b26910486788eaf594",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mixpeek",
+        "repo": "amux",
+        "rev": "bf176d56c32fa20259d3e9b26910486788eaf594",
+        "type": "github"
+      }
+    },
     "bibataMaterialSrc": {
       "flake": false,
       "locked": {
@@ -370,6 +387,28 @@
         "type": "github"
       }
     },
+    "orgm-amux": {
+      "inputs": {
+        "amux-src": "amux-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1793319345,
+        "narHash": "sha256-Roz8esJKiJxJ4+5y6aEJHUvBZRHgPM7NoHpnzMiHUcg=",
+        "ref": "refs/heads/main",
+        "rev": "c7bdedbd9ccda3c738c3b0d7d62efad9e8bf8c34",
+        "revCount": 3,
+        "type": "git",
+        "url": "https://github.com/osmargm1202/orgm-amux"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/osmargm1202/orgm-amux"
+      }
+    },
     "orgm-multimedia": {
       "flake": false,
       "locked": {
@@ -474,9 +513,31 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-tailscale": "nixpkgs-tailscale",
         "nixpkgs-zen70": "nixpkgs-zen70",
+        "orgm-amux": "orgm-amux",
         "orgm-multimedia": "orgm-multimedia",
         "ryoku": "ryoku",
         "sops-nix": "sops-nix"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "orgm-amux",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793261817,
+        "narHash": "sha256-fAvtOccUXHVAH5wXK+ABYUUC47W2qTb9T9EefLcS9ME=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "afcefd09c71e63663a46e4ce5e09968584f2c709",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     },
     "ryoku": {

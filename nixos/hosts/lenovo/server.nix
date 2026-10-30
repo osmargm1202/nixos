@@ -20,6 +20,7 @@ in {
     ../../tmux
     ../../apps/sops.nix
     ../../apps/nextcloud-server.nix
+    ../../apps/orgm-amux.nix
   ];
 
   # Retain headless services and CLI tools without building a desktop session.
@@ -31,6 +32,13 @@ in {
     import ../../syncthing/user-service.nix { inherit pkgs; };
 
   system.nixos.label = "lenovo-server";
+
+  # ORGM agent hub (code.or-gm.com). Only the active hub manages the DNS record;
+  # when legion-server takes over, move these two lines there.
+  services.orgm-amux = {
+    enable = true;
+    dns.manage = true;
+  };
   systemd.defaultUnit = "multi-user.target";
   # Keep the existing server mode's network access for its deployed services.
   networking.firewall.allowedTCPPorts = [ 80 443 7236 24800 27015 27036 27037 53317 ];

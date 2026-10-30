@@ -41,6 +41,12 @@
     #   # (quickshell isn't in stable nixpkgs) -- do not add nixpkgs.follows.
     #   url = "github:Darkkal44/qylock";
     # };
+    # ORGM agent hub (amux packaged as a NixOS module). Private repo, fetched
+    # over HTTPS with the user's gh credential helper (build with nh / as osmarg).
+    orgm-amux = {
+      url = "git+https://github.com/osmargm1202/orgm-amux";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     herdr = {
       # tmux replacement (agent multiplexer). Retain upstream's own nixpkgs
       # pin so its Zig toolchain follows the version tested by the project.
