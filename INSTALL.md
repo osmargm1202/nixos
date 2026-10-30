@@ -91,6 +91,46 @@ y el siguiente comando; no escribe archivos en el destino, no descarga módulos,
 no particiona, no instala ni solicita privilegios. En una instalación nueva se
 puede usar después de preparar los montajes y generar la configuración de hardware.
 
+## Generaciones y mantenimiento
+
+La integración `development` instala `nix-keep` en `~/.local/bin`. En un
+checkout que todavía no se haya activado, puede ejecutarse directamente como
+`./dotfiles/config/programs/development/.local/bin/nix-keep`.
+
+```bash
+nix-keep --dry-run  # Mostrar qué conservaría; no solicita sudo ni elimina nada.
+nix-keep           # Conservar las últimas 2 generaciones.
+nix-keep 3         # Conservar las últimas 3.
+nix-keep 1         # Conservar la última.
+```
+
+Además de las últimas N, siempre protege la generación seleccionada, la del
+sistema activo y la del sistema arrancado. Esto puede conservar más de N.
+Reconoce los sistemas activos dentro de especializaciones mediante `boot.json`;
+si no puede determinar su generación padre, se niega a eliminar generaciones.
+La eliminación del perfil NixOS solicita sudo y después regenera el menú de
+arranque desde el perfil base, sin cambiar la sesión activa.
+
+En Lenovo se conservan las especializaciones `gaming`, `battery`, `server` y
+`windows-vfio` dentro de cada generación retenida. No se eliminan sus
+declaraciones ni la configuración de passthrough de la T500. El límite actual
+de systemd-boot es de 3 generaciones visibles, independiente de N.
+
+El comando no ejecuta garbage collection. Para liberar las rutas que ya no
+tengan referencias, usar después `sudo nix-collect-garbage`, **sin `-d`**:
+`-d` eliminaría otras generaciones anteriores y rompería la política de
+retención. Tampoco cambia la limpieza automática existente de `nh` (3
+generaciones y 30 días).
+
+`bash tests/nix-keep.bats.sh` comprueba el comando con perfiles Nix reales en
+directorios temporales: retención, rollback, especializaciones activas,
+simulación y rechazo de estados desconocidos. No modifica el perfil del sistema.
+
+En i3 se mantienen Thunar y Tumbler, Evince, Loupe, File Roller y Text Editor;
+los manejadores MIME no deben apuntar a aplicaciones ausentes. Los usuarios
+que seleccionan `containers` también reciben `podman-compose`, necesario para
+los comandos Compose de `windows-rdp`.
+
 ## Qué significa el cifrado de disco
 
 LUKS cifra los datos de una partición. Sin una clave válida, retirar el disco y
