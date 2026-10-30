@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  printf 'Uso: nix-keep [N] [--dry-run]\nConserva las últimas N generaciones NixOS (2 por defecto), además de las que estén en uso.\n'
+}
+keep=2
+dry=0
+count_set=0
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) dry=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *)
+      if ((count_set)) || [[ ! "$argument" =~ ^[1-9][0-9]*$ ]]; then
+        usage >&2
+        exit 2
+      fi
+      keep="$argument"
+      count_set=1
+      ;;
+  esac
+done
+# Alternate roots permit exercising the same deletion logic on isolated profiles.
+profile="${NIX_KEEP_PROFILE:-/nix/var/nix/profiles/system}"
+run_dir="${NIX_KEEP_RUN_DIR:-/run}"
+system_profile=0
+[[ "$profile" != /nix/var/nix/profiles/system ]] || system_profile=1
+if ((system_profile && !dry && EUID != 0)); then
+  sudo_cmd="$(command -v sudo)"
+  [[ ! -x /run/wrappers/bin/sudo ]] || sudo_cmd=/run/wrappers/bin/sudo
+  exec "$sudo_cmd" -- "$(readlink -e "$0")" "$@"
+fi
+
+profile_target="$(readlink -e "$profile")"
+ids=()
+for link in "$profile"-*-link; do
+  [[ -L "$link" ]] || continue
+  id="${link#"$profile"-}"
+  id="${id%-link}"
+  [[ ! "$id" =~ ^[0-9]+$ ]] || ids+=("$id")
+done
+((${#ids[@]})) || { printf 'No hay generaciones en %s\n' "$profile" >&2; exit 1; }
+mapfile -t ids < <(printf '%s\n' "${ids[@]}" | sort -nr)
+available="${#ids[@]}"
+if ((${#keep} > ${#available})) || { ((${#keep} == ${#available})) && [[ "$keep" > "$available" ]]; }; then
+  keep="$available"
+fi
+declare -A retained=()
+for ((index=0; index<${#ids[@]} && index<keep; index++)); do
+  retained[${ids[index]}]=1
+done
+
+for state in profile current-system booted-system; do
+  if [[ "$state" == profile ]]; then
+    target="$profile_target"
+  else
+    [[ -e "$run_dir/$state" ]] || continue
+    target="$(readlink -e "$run_dir/$state")"
+  fi
+  found=0
+  for id in "${ids[@]}"; do
+    base="$(readlink -e "$profile-$id-link")"
+    if [[ "$base" == "$target" ]] || { [[ -f "$base/boot.json" ]] && jq -e --arg target "$target" \
+      'any(.. | objects | .["org.nixos.bootspec.v1"]? | .toplevel?; . == $target)' "$base/boot.json" >/dev/null; }; then
+      retained[$id]=1
+      found=1
+      printf 'Protegida generación %s: %s (incluye especializaciones).\n' "$id" "$state"
+      break
+    fi
+  done
+  if ((!found)); then
+    printf 'No se encontró la generación padre de %s; no se elimina nada.\n' "$state" >&2
+    exit 1
+  fi
+done
+
+remove=()
+printf 'Conservar:'
+for id in "${ids[@]}"; do
+  if [[ -v retained[$id] ]]; then
+    printf ' %s' "$id"
+  else
+    remove+=("$id")
+  fi
+done
+printf '\n'
+if ((${#remove[@]})); then
+  printf 'Eliminar:'; printf ' %s' "${remove[@]}"; printf '\n'
+  if ((!dry)); then
+    [[ "$(readlink -e "$profile")" == "$profile_target" ]] || {
+      printf 'El perfil cambió durante la planificación; no se elimina nada.\n' >&2
+      exit 1
+    }
+    nix-env --profile "$profile" --delete-generations "${remove[@]}"
+    if ((system_profile)); then
+      # Use the BASE profile: current-system can be a VFIO child without siblings.
+      "$profile/bin/switch-to-configuration" boot
+    fi
+  fi
+else
+  printf 'No hay generaciones sobrantes.\n'
+fi
+if ((dry)); then
+  printf 'Simulación: no se ha eliminado ninguna generación.\n'
+else
+  printf 'No se ejecutó GC. Para liberar rutas no referenciadas: sudo nix-collect-garbage (sin -d).\n'
+fi

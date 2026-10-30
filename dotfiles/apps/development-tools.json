@@ -11,6 +11,7 @@
     ".local/bin/list-op",
     ".local/bin/memclean-dev",
     ".local/bin/nixclean",
+    ".local/bin/nix-keep",
     ".local/bin/switch-preview"
   ]
 }
