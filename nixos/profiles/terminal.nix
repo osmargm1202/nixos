@@ -12,6 +12,10 @@
 
 let
   hasProgram = program: builtins.elem program config.orgm.user.programs;
+  # Same superfile launcher as common.nix.
+  spf = pkgs.writeShellScriptBin "spf" ''
+    exec ${pkgs.superfile}/bin/superfile "$@"
+  '';
   sshAuthorizedKeys = [
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD3E7OGvfciRdntcDX3SpWlnu5pBw+RycYPIQO4a7h6Zz5WeUc8gB2YbUXZPdQFTVbvjZnAjMqQGhi89GG3K+xlbAZyXl69fL8+75dbicbzygPK3UJi/57zEIANp1u1EF3+w5WBXBXkIKBUbu5IsNAClYr3jX/yQEl1MOZ+o1q1MwAGFS9eJNnyNEroN9cnoFKXmXIS1INKSoPjDL4CE0dWaenQySkNGJY7gRe3w+/YMR4B6vx5G4JfuRBoegF/O0+x7aEPN2RL1MCNzZ6LAM9KwIC72BVyIW1lDsUv6+UzN/S0LGrAV11KcxaEDFtnenX7L5o2i04jd8BAxZLlDvuz4802qIfiHqC8Q/ez9LNIdXLFTPMe04u6HOSxgJVP3Mfh31ZjVmRKUn93oUQwQYmyAq4TvtyNmGQVDOMLboQsU48lMx4k8HObGm4SuUbLNkIOVqnnnax+XhOuylPou9lV77Wtonxj2lgbKufvbnULIdp5+TXPGGPl/+/mLvKCvKoETGFEkQx7hTJg3rwbt/wcpVLyp3lfzKZQt84cD42qQW1bK4/3C4DDZ8XVmSVucM8PEFKPE5uSubF6j1tN/J8CFnhvGGgjRihX8GVhL8UbiVeutTowf/eooQsx2/tymWMF6F3nHXOi4qODR6JI26eMLDBfK0wThHMsFYxJnYaQ== osmarg@orgm"
   ];
@@ -26,6 +30,7 @@ in
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ]
     ++ [
       ../apps/lazyvim.nix
+      ../apps/bitwarden-cli.nix
       ../dns/hosts.nix
       ../apps/tailscale.nix
       ../functions/clean.nix
@@ -99,6 +104,29 @@ in
       fi
     '';
   };
+  # Same as common.nix: the NixOS module installs Atuin and initializes it
+  # after Blesh, so Atuin uses Blesh's history integration.
+  programs.atuin = lib.mkIf (hasProgram "shell") {
+    enable = true;
+    enableBashIntegration = true;
+  };
+  environment.etc."atuin/config.toml".text = "";
+  programs.mtr.enable = true;
+
+  # Same thresholds as common.nix. Headless: no desktop notifications, and the
+  # Windows VM, the agent hub and remote access are never the first victim.
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 4;
+    freeMemKillThreshold = 2;
+    freeSwapThreshold = 100;
+    freeSwapKillThreshold = 100;
+    extraArgs = [
+      "--sort-by-rss"
+      "--avoid"
+      "^(qemu-system-x86|amux-server-rs|sshd|tailscaled|nginx)$"
+    ];
+  };
   programs.git.enable = hasProgram "git";
 
   hardware.enableRedistributableFirmware = true;
@@ -170,6 +198,17 @@ in
         bash-completion
         blesh
         zellij
+        yazi
+        mise
+        ffmpeg
+        imagemagick
+        tesseract
+        openssl
+        libqalculate
+        inxi
+        lm_sensors
+        pciutils
+        usbutils
         fzf
         fd
         ripgrep
@@ -182,6 +221,17 @@ in
         trash-cli
         fastfetch
         htop
+        btop
+        ncdu
+        spf
+        file # MIME detection used by shell preview helpers.
+        git-lfs
+        zip
+        unzip
+        unrar
+        just
+        figlet
+        termdown
         parted
         gptfdisk
         e2fsprogs
@@ -198,6 +248,7 @@ in
     )
     ++ lib.optionals (hasProgram "git") [ pkgs.git ]
     ++ lib.optionals (hasProgram "tmux") [ pkgs.tmux ]
+    ++ lib.optionals (hasProgram "sops") [ pkgs.sops ]
     ++ lib.optionals (hasProgram "development") [
       pkgs.python3
       pkgs.uv
@@ -215,9 +266,19 @@ in
       pkgs.gh
       pkgs.lazygit
       pkgs.helix
+      # CLI half of common.nix's personal-development set.
+      pkgs.jujutsu
+      pkgs.lsd
+      pkgs.chafa
+      pkgs.ouch
+      pkgs.aichat
+      pkgs.freerdp
     ]
     ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
-    ++ lib.optionals (hasProgram "containers") [ pkgs.distrobox ];
+    ++ lib.optionals (hasProgram "containers") [
+      pkgs.distrobox
+      pkgs.podman-compose
+    ];
 
   # Nerd font glyphs for yazi/starship/fastfetch in the terminal.
   fonts.fontconfig.enable = true;

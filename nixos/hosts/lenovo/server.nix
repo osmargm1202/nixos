@@ -25,7 +25,7 @@ in {
   # Retain headless services and CLI tools without building a desktop session.
   orgm.user.programs = lib.mkForce [
     "shell" "git" "tmux" "development" "personal-development" "syncthing"
-    "containers" "orgm" "ai" "sops" "nextcloud" "tailscale"
+    "containers" "orgm" "ai" "sops" "nextcloud" "tailscale" "neovim" "bitwarden-cli"
   ];
   home-manager.users.${userName}.systemd.user.services.syncthing =
     import ../../syncthing/user-service.nix { inherit pkgs; };
