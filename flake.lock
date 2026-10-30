@@ -396,11 +396,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1793319345,
-        "narHash": "sha256-Roz8esJKiJxJ4+5y6aEJHUvBZRHgPM7NoHpnzMiHUcg=",
+        "lastModified": 1793320573,
+        "narHash": "sha256-oLceRPLUyshAhBPHJorOrt4ruEBE9UA5u1cCoZNAWZA=",
         "ref": "refs/heads/main",
-        "rev": "c7bdedbd9ccda3c738c3b0d7d62efad9e8bf8c34",
-        "revCount": 3,
+        "rev": "7efa77ab193ec1171a358c840f78e1420dc24104",
+        "revCount": 4,
         "type": "git",
         "url": "https://github.com/osmargm1202/orgm-amux"
       },
