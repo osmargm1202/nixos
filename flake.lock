@@ -395,11 +395,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793414592,
-        "narHash": "sha256-SUmjAJcmfSJmDuSs6W0UDKF2oswid6WfjodjrYK69/c=",
+        "lastModified": 1793415764,
+        "narHash": "sha256-sju85/l8dVDLWLCDXGTVsEL2g9Hb+5EHVJ9hDFn12bw=",
         "ref": "refs/heads/main",
-        "rev": "61a45a427e880764dcad5639110ecf7f351fa05e",
-        "revCount": 11,
+        "rev": "3cb1e1fc595e0ac0c62efb0e6f65c6e9b313f528",
+        "revCount": 12,
         "type": "git",
         "url": "https://github.com/osmargm1202/orgm-amux"
       },
