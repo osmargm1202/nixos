@@ -40,6 +40,8 @@ projection = r'''s: let c=s.config; in {
   bootTheme=c.boot.plymouth.theme;
   earlyGpu=c.boot.initrd.kernelModules;
   prebuiltEditor=c.orgm.neovim.prebuilt;
+  hmPackages=map (p: p.pname or (s.pkgs.lib.getName p)) c.home-manager.users.hm.home.packages;
+  peerNotifications=c.orgm.tailscale.peerNotifications.enable;
   packages=map (p: p.pname or (s.pkgs.lib.getName p)) c.environment.systemPackages;
 }'''
 c = json.loads(subprocess.check_output([
@@ -70,3 +72,14 @@ assert c["plymouth"] and c["bootTheme"] == "thinkpad-bgrt"
 assert "i915" in c["earlyGpu"]
 assert c["prebuiltEditor"] and "neovim" in c["context"]["programs"]
 assert {"neovim", "galculator", "xfce4-taskmanager", "gnome-disk-utility", "gucharmap", "mousepad"} <= set(c["packages"])
+
+# hm carries Osmarg's terminal and CLI tooling, but no personal secrets, sync or
+# heavy desktop applications; Flatpak apps are installed from the store on demand.
+assert {"shell", "development-cli", "personal-cli", "containers", "bitwarden-cli", "rmatrix", "tailscale"} <= set(c["context"]["programs"])
+assert not {"sops", "nextcloud", "syncthing", "development", "personal-development", "discord", "obsidian"} & set(c["context"]["programs"])
+installed = set(c["packages"]) | set(c["hmPackages"])
+assert {"starship", "btop", "bazaar", "uv", "gcc-wrapper", "jujutsu", "gh", "lsd", "chafa", "ouch", "rmatrix", "mupdf"} <= installed
+assert not {"vscode", "gnome-software", "evince", "totem", "nextcloud-client", "localsend"} & installed
+assert not c["peerNotifications"]
+assert c["flatpaks"] and not any("Discord" in app or "Obsidian" in app for app in c["flatpaks"])
+print("PASS: thinkpad11e terminal tooling, Bazaar store, MuPDF and no heavy desktop applications")

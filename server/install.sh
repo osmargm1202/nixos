@@ -153,7 +153,7 @@ if ((!INSTALL_TMUX_ONLY)); then
         'server/dotfiles/.config/bash/fzf-widgets.bash'
         'dotfiles/config/users/osmarg/programs/shell/.config/bash/completions.bash'
         'dotfiles/config/users/osmarg/programs/shell/.blerc'
-        'dotfiles/config/users/osmarg/common/.config/starship.toml'
+        'dotfiles/config/programs/shell/.config/starship.toml'
         'server/dotfiles/.local/bin/terminal-preview'
         'server/dotfiles/.local/bin/terminal-preview'
     )

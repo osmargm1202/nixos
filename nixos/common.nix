@@ -75,34 +75,25 @@ let
     ++ lib.optionals (hasProgram "kitty") [ pkgs.kitty ]
     ++ lib.optionals (hasProgram "sops") [ pkgs.sops ]
     ++ x11TerminalPackages;
-  developmentPackages = with pkgs; [
+  # "development-cli" and "personal-cli" select only the terminal tools of
+  # "development" and "personal-development" for small machines.
+  developmentCliPackages = with pkgs; [
     python3
     uv
     gcc
     gnumake
     nodejs_22
     bun
-    vscode
   ];
-  personalDevelopmentPackages = with pkgs; [
-    android-tools
-    freerdp
+  personalCliPackages = with pkgs; [
     jujutsu
     gum
-    gnome-calculator
-    gnome-software
-    localsend
     gh
     # Personal preview scripts and the existing Alt+A AI widget use these CLIs.
     lsd
     chafa
     ouch
     aichat
-    # Standalone user applications must survive a change of desktop shell.
-    gnome-system-monitor
-    gnome-network-displays
-    sushi
-    totem
     pamixer
     pulsemixer
     (pkgs.writeShellApplication {
@@ -115,14 +106,28 @@ let
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
   ];
+  personalDesktopPackages = with pkgs; [
+    android-tools
+    freerdp
+    gnome-calculator
+    gnome-software
+    localsend
+    # Standalone user applications must survive a change of desktop shell.
+    gnome-system-monitor
+    gnome-network-displays
+    sushi
+    totem
+  ];
   desktopUserPackages =
     lib.optionals (hasProgram "nextcloud") [ pkgs.nextcloud-client ]
     ++ lib.optionals (hasProgram "syncthing") [ pkgs.syncthing ]
     ++ lib.optionals (hasProgram "syncthing" && profileName != "ryoku"
       && config.networking.hostName != "envy"
       && !(config.networking.hostName == "orgm" && profileName == "hyprland")) [ pkgs.syncthingtray ]
-    ++ lib.optionals (hasProgram "development") developmentPackages
-    ++ lib.optionals (hasProgram "personal-development") personalDevelopmentPackages
+    ++ lib.optionals (hasProgram "development" || hasProgram "development-cli") developmentCliPackages
+    ++ lib.optionals (hasProgram "development") [ pkgs.vscode ]
+    ++ lib.optionals (hasProgram "personal-development" || hasProgram "personal-cli") personalCliPackages
+    ++ lib.optionals (hasProgram "personal-development") personalDesktopPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]
     ++ lib.optionals (hasProgram "containers") [ pkgs.podman-compose ]
     ++ lib.optionals (!builtins.elem profileName [ "hyprland" "i3" "ryoku" "sway" ]) [ pkgs.thunar ];

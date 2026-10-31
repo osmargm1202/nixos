@@ -51,6 +51,21 @@ La barra conserva los iconos, los colores, los controles y la fecha completa del
 estilo i3 compartido mediante `i3status-localized`, con actualización cada cinco
 segundos y sin control de compositor.
 
+Herramientas de terminal de Osmarg: hm selecciona `shell` (starship, zoxide, eza,
+bat, fzf, btop, zellij…), `development-cli` (uv, gcc, make, Node.js, Bun),
+`personal-cli` (jujutsu, gum, gh, lsd, chafa, ouch, aichat, pamixer, pulsemixer,
+`ns`), `containers` (Podman con alias `docker`), `bitwarden-cli`, `rmatrix` y
+`tailscale`. Los dotfiles de starship y btop viven en `programs/shell`, por lo que
+los recibe cualquier usuario con `shell`; Jarq conserva su propio `starship.toml`.
+Tailscale requiere autenticación manual (`sudo tailscale up`) y sus avisos de
+conexión de pares están desactivados para ahorrar RAM.
+Quedan fuera a propósito: Nextcloud, los Flatpak de Osmarg, VS Code, Discord,
+Obsidian, KDE Connect, Deskflow, OpenRGB, `sops` (secretos de Osmarg) y las
+aplicaciones GNOME de `personal-development`. Syncthing queda pendiente: ningún
+arranque de i3 lo inicia todavía. Las aplicaciones Flatpak se instalan desde Bazaar
+(tienda de Flathub, sin PackageKit; sustituye a GNOME Software), y MuPDF sigue
+siendo el visor de PDF.
+
 CADCraft 0.13.0 mostraba una ventana negra con OpenGL acelerado en Bay Trail.
 La excepción de este host usa OpenGL por software (llvmpipe), dos hilos y vsync;
 se comprobó que dibuja la interfaz. El resto de aplicaciones conserva aceleración

@@ -9,6 +9,8 @@
   programs.gamemode.enable = true;
   orgm.neovim.prebuilt = true;
   orgm.chromium.enable = true;
+  # Peer polling and alerts cost RAM on a 4 GB machine; tailscale itself stays.
+  orgm.tailscale.peerNotifications.enable = false;
   # Keep profiles on disk on a 4 GB machine instead of copying them into RAM.
   home-manager.users.hm.systemd.user = {
     services.psd.Install.WantedBy = pkgs.lib.mkForce [ ];
@@ -24,6 +26,9 @@
     pkgs.xfce4-taskmanager
     pkgs.gnome-disk-utility
     pkgs.gucharmap
+    # Flathub-first store for the Flatpak catalogue; lighter than GNOME Software
+    # (no PackageKit), which this machine does not install.
+    pkgs.bazaar
   ];
   # User choices, independent of the machine and its hardware.
   orgm.artcraft.launcher = {
@@ -37,6 +42,12 @@
       "tmux"
       "xterm"
       "neovim"
+      "development-cli"
+      "personal-cli"
+      "containers"
+      "bitwarden-cli"
+      "rmatrix"
+      "tailscale"
       "orgm"
       "ai"
       "webapps"
