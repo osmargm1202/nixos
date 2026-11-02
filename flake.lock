@@ -426,17 +426,17 @@
     "orgm-multimedia": {
       "flake": false,
       "locked": {
-        "lastModified": 1793596929,
-        "narHash": "sha256-cy8qYSFbOuJM0lgG9JdC+CJI45cwaBDMuLvmPCnOMTQ=",
+        "lastModified": 1793662433,
+        "narHash": "sha256-tlSVb87jQVXj5kU9eL134/sQyjnsMJlHFKDiNklg+qA=",
         "owner": "osmargm1202",
         "repo": "orgm-multimedia",
-        "rev": "60df11217d22abcaa9dbc0004b9c19f5d41b4091",
+        "rev": "9de9eaef42f493a733f2d98adf5ce7fad93f8083",
         "type": "github"
       },
       "original": {
         "owner": "osmargm1202",
         "repo": "orgm-multimedia",
-        "rev": "60df11217d22abcaa9dbc0004b9c19f5d41b4091",
+        "rev": "9de9eaef42f493a733f2d98adf5ce7fad93f8083",
         "type": "github"
       }
     },
