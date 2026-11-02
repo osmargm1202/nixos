@@ -635,6 +635,8 @@ in
             type filter hook output priority 0; policy accept;
             meta skuid 1100 ct state established,related accept
             meta skuid 1100 ip daddr 127.0.0.1 tcp dport 8765 accept
+            # Session agent -> Chrome DevTools, only the fixed catalogue ports.
+            meta skuid 1100 ip daddr 127.0.0.1 tcp dport { ${lib.concatMapStringsSep ", " (app: toString (32000 + lib.toInt app.workspace)) (builtins.filter (app: app.type == "chrome") apps)} } accept
             # UxPlay's YouTube HLS player reads playlists from its own server.
             meta skuid 1100 ip daddr 127.0.0.1 tcp dport 7001 accept
             meta skuid 1100 ip6 daddr ::1 tcp dport 7001 accept
