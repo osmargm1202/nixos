@@ -1,6 +1,33 @@
 { pkgs, ... }:
 
 let
+  # Scope the ACP profile and mixer path to this exact USB adapter. Old saved
+  # IEC958 profiles cannot be restored because they are not exposed by this set.
+  mpowMic = pkgs.writeTextDir "orgm-mpow-mic.conf" (builtins.readFile ./audio/mpow-mic.conf);
+  mpowProfile = pkgs.writeText "orgm-mpow-profile.conf" ''
+    [General]
+    auto-profiles = no
+
+    [Mapping analog-stereo]
+    device-strings = front:%f hw:%f
+    channel-map = left,right
+    direction = output
+    paths-output = analog-output analog-output-headphones
+    priority = 15
+
+    [Mapping mono-fallback]
+    device-strings = hw:%f
+    channel-map = mono
+    direction = input
+    paths-input = ${mpowMic}/orgm-mpow-mic
+    priority = 1
+
+    [Profile output:analog-stereo+input:mono-fallback]
+    description = Mpow headset (analog stereo + microphone)
+    output-mappings = analog-stereo
+    input-mappings = mono-fallback
+    priority = 6501
+  '';
   setOrgmDefaultAudio = pkgs.writeShellApplication {
     name = "pipewire-orgm-default-audio";
     runtimeInputs = [
@@ -39,8 +66,33 @@ in
     ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="1b1c", ATTR{idProduct}=="0a86", ATTR{power/autosuspend}="-1"
   '';
 
+  # Discord must not silently increase the physical microphone's gain.
+  # These match both its Flatpak clients and the native Discord executable.
+  services.pipewire.extraConfig.pipewire-pulse."90-orgm-discord-capture" = {
+    "pulse.rules" = [ {
+      matches = [
+        { "application.process.binary" = "Discord"; }
+        { "application.process.binary" = "discord"; }
+        { "pipewire.access.portal.app_id" = "com.discordapp.Discord"; }
+      ];
+      actions.quirks = [ "block-source-volume" ];
+    } ];
+  };
+
   services.pipewire.wireplumber.extraConfig."90-orgm-audio-policy" = {
     "monitor.alsa.rules" = [
+      {
+        matches = [ {
+          "device.name" = "alsa_card.usb-C-Media_Electronics_Inc._Mpow_HC_20170817-00";
+        } ];
+        actions.update-props = {
+          "api.alsa.use-acp" = true;
+          "api.alsa.use-ucm" = false;
+          "device.profile-set" = "${mpowProfile}";
+          "device.profile" = "output:analog-stereo+input:mono-fallback";
+        };
+      }
+
       {
         matches = [
           {
