@@ -8,6 +8,9 @@ let
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
   retireOrgmTrays = hostName == "orgm" && profileName == "hyprland";
+  backgroundSyncthing = programEnabled "syncthing" && (
+    profileName == "ryoku" || builtins.elem hostName [ "envy" "lenovo" ] || retireOrgmTrays
+  );
   retiredTrayNames = [ "tailscale-systray.desktop" "syncthingtray.desktop" ];
   retiredTrayManifest = pkgs.writeText "orgm-retired-trays.json" (builtins.toJSON {
     autostart = retiredTrayNames;
@@ -60,6 +63,8 @@ in {
     description = "Mutable checkout used by orgm-dot; never imported into the Nix store.";
   };
   config = {
+    # Syncthing must start at boot even if no user logs in and tmux is disabled.
+    users.users.${userName}.linger = lib.mkIf backgroundSyncthing true;
     environment.systemPackages = [ dotPackage ] ++ lib.optionals (programEnabled "tmux") [
       pkgs.tmuxPlugins.resurrect pkgs.tmuxPlugins.continuum
     ];
@@ -132,9 +137,9 @@ in {
       );
 
       # Keep synchronization independent of the selected shell and tray.
-      # Ryoku console modes and Envy's return to Hyprland retain the same unit.
+      # Ryoku console modes, Lenovo's terminal server and Envy retain this unit.
       systemd.user.services.syncthing = lib.mkIf
-        (programEnabled "syncthing" && (profileName == "ryoku" || hostName == "envy" || retireOrgmTrays))
+        backgroundSyncthing
         (import ./syncthing/user-service.nix { inherit pkgs; });
 
       # Keep user-level MIME preferences in sync with declarative defaults,

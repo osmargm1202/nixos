@@ -29,9 +29,6 @@ in {
     "shell" "git" "tmux" "development" "personal-development" "syncthing"
     "containers" "orgm" "ai" "sops" "nextcloud" "tailscale" "neovim" "bitwarden-cli"
   ];
-  home-manager.users.${userName}.systemd.user.services.syncthing =
-    import ../../syncthing/user-service.nix { inherit pkgs; };
-
   system.nixos.label = "lenovo-server";
 
   # ORGM agent hub (code.or-gm.com). Only the active hub manages the DNS record;
