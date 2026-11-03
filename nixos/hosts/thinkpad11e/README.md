@@ -49,7 +49,9 @@ en el SSD; no se sincronizan a RAM. Win+Enter utiliza Xterm y la barra i3status
 usa letra de 9.5 puntos. Xterm permite escritura OSC 52 para copiar desde SSH/tmux.
 La barra conserva los iconos, los colores, los controles y la fecha completa del
 estilo i3 compartido mediante `i3status-localized`, con actualización cada cinco
-segundos y sin control de compositor.
+segundos y sin control de compositor. Win+V abre el historial Clipcat en Rofi;
+el arranque importa DISPLAY/XAUTHORITY de la sesión antes de iniciar su servicio,
+con socket e historial temporales en un directorio privado del usuario.
 
 Herramientas de terminal de Osmarg: hm selecciona `shell` (starship, zoxide, eza,
 bat, fzf, btop, zellij…), `development-cli` (uv, gcc, make, Node.js, Bun),

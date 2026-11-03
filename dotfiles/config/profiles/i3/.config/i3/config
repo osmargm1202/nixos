@@ -18,7 +18,7 @@ exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id i3-polkit-agent
 exec --no-startup-id nm-applet
 exec --no-startup-id blueman-applet
-exec --no-startup-id systemctl --user start i3-clipcat.service
+exec --no-startup-id $run i3-clipboard --start
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $run i3-lock -n
 exec --no-startup-id $run i3-caffeine-toggle off
 exec --no-startup-id $run i3-idle-inhibit

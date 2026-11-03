@@ -173,6 +173,9 @@ in
       wantedBy = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
       serviceConfig = {
+        RuntimeDirectory = "clipcat";
+        RuntimeDirectoryMode = "0700";
+        UMask = "0077";
         ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
         Restart = "on-failure";
         RestartSec = 3;

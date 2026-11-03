@@ -28,7 +28,8 @@ mkdir -p "$tmp/bin" "$tmp/home/.config/clipcat" "$tmp/home/.config/rofi" "$tmp/r
 cp "$MENU_TEMPLATE" "$tmp/home/.config/clipcat/clipcat-menu.toml"
 cat >"$tmp/bin/systemctl" <<'STUB'
 #!/usr/bin/env bash
-exit 0
+printf '%s\n' "$*" >>"$CLIPCAT_SYSTEMCTL"
+[[ "$*" != '--user is-active --quiet i3-clipcat.service' ]]
 STUB
 cat >"$tmp/bin/clipcat-menu" <<'STUB'
 #!/usr/bin/env bash
@@ -36,10 +37,17 @@ printf '%s\n' "$@" >"$CLIPCAT_ARGS"
 STUB
 chmod +x "$tmp/bin/systemctl" "$tmp/bin/clipcat-menu"
 
-CLIPCAT_ARGS="$tmp/args" HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" PATH="$tmp/bin:$PATH" "$HELPER"
+CLIPCAT_SYSTEMCTL="$tmp/systemctl" CLIPCAT_ARGS="$tmp/args" HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" PATH="$tmp/bin:$PATH" "$HELPER"
 grep -Fq -- "--rofi-extra-arguments=-theme,$tmp/home/.config/rofi/i3-menu.rasi,-theme-str," "$tmp/args" ||
   fail 'Clipcat must receive Rofi theme options as a single argument'
 grep -Fq "server_endpoint = \"$tmp/runtime/clipcat/grpc.sock\"" "$tmp/runtime/clipcat-menu.toml" ||
   fail 'Clipcat menu must use the active runtime socket'
 
-printf 'PASS: Win+V opens Clipcat history in themed Rofi\n'
+# Startup imports the active session before starting the watcher, with no menu.
+rm "$tmp/args"
+CLIPCAT_SYSTEMCTL="$tmp/startup" CLIPCAT_ARGS="$tmp/args" HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" DISPLAY=:fixture XAUTHORITY="$tmp/xauth" PATH="$tmp/bin:$PATH" "$HELPER" --start
+[[ ! -e "$tmp/args" ]] || fail 'startup opened a clipboard menu'
+printf '%s\n' '--user import-environment DISPLAY' '--user import-environment XAUTHORITY' '--user is-active --quiet i3-clipcat.service' '--user start i3-clipcat.service' >"$tmp/expected"
+cmp "$tmp/expected" "$tmp/startup" || fail 'X11 environment must be imported before the daemon starts'
+grep -Fq 'exec --no-startup-id $run i3-clipboard --start' "$CONFIG" || fail 'i3 startup bypasses the session-aware clipboard helper'
+printf 'PASS: Win+V opens Clipcat history; session environment precedes daemon startup\n'

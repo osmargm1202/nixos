@@ -2,6 +2,22 @@
 set -euo pipefail
 
 runtime_dir="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required for Clipcat}"
+# The user manager may have started before LightDM supplied this X11 session.
+# Import only the display variables, never the full shell environment.
+if [[ -n "${DISPLAY:-}" ]]; then
+  systemctl --user import-environment DISPLAY
+fi
+if [[ -n "${XAUTHORITY:-}" ]]; then
+  systemctl --user import-environment XAUTHORITY
+fi
+
+if ! systemctl --user is-active --quiet i3-clipcat.service; then
+  systemctl --user start i3-clipcat.service
+fi
+
+if [[ "${1:-}" == --start ]]; then
+  exit 0
+fi
 config_template="$HOME/.config/clipcat/clipcat-menu.toml"
 runtime_config="$runtime_dir/clipcat-menu.toml"
 theme="$HOME/.config/rofi/i3-menu.rasi"
@@ -10,10 +26,6 @@ window { width: 600px; }
 listview { lines: 8; }
 element { padding: 5px; cursor: pointer; }
 element-icon { size: 24px; }'
-
-if ! systemctl --user is-active --quiet i3-clipcat.service; then
-  systemctl --user start i3-clipcat.service
-fi
 
 sed "s|@RUNTIME_SOCKET@|$runtime_dir/clipcat/grpc.sock|" "$config_template" > "$runtime_config"
 exec clipcat-menu --config "$runtime_config" --finder rofi \
