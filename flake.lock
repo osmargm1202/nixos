@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "app-login": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793756934,
+        "narHash": "sha256-P5lKxoBOLph53QjxyybXk2nF9DiLJs+IxKvWniLSP6c=",
+        "ref": "refs/heads/main",
+        "rev": "ab1b527ff28d5df4b0985265d7d68c919990758d",
+        "revCount": 16,
+        "type": "git",
+        "url": "https://github.com/osmargm1202/app-login"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/osmargm1202/app-login"
+      }
+    },
     "bibataMaterialSrc": {
       "flake": false,
       "locked": {
@@ -395,11 +415,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793416120,
-        "narHash": "sha256-o/lyQVA8plU41ppnZdCxczxT+k+EQXZPNfshP5rvXSo=",
+        "lastModified": 1793756937,
+        "narHash": "sha256-Pmludbeo2ehjmwi+NR5o3yvQU43d0e8uWKqUFWLda7c=",
         "ref": "refs/heads/main",
-        "rev": "25c9ea8e98bd4a182166a97f16453af9b21377fb",
-        "revCount": 13,
+        "rev": "731d494a9965e4a3893f1f2fadf6d0393b2000b0",
+        "revCount": 14,
         "type": "git",
         "url": "https://github.com/osmargm1202/orgm-amux"
       },
@@ -518,6 +538,7 @@
     },
     "root": {
       "inputs": {
+        "app-login": "app-login",
         "cinnamon-spices-extensions": "cinnamon-spices-extensions",
         "dms": "dms",
         "flake-parts": "flake-parts",

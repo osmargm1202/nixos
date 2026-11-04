@@ -48,6 +48,10 @@
       url = "git+https://github.com/osmargm1202/orgm-amux";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    app-login = {
+      url = "git+https://github.com/osmargm1202/app-login";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     herdr = {
       # tmux replacement (agent multiplexer). Retain upstream's own nixpkgs
       # pin so its Zig toolchain follows the version tested by the project.
