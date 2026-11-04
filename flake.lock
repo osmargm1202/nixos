@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793756934,
-        "narHash": "sha256-P5lKxoBOLph53QjxyybXk2nF9DiLJs+IxKvWniLSP6c=",
+        "lastModified": 1793772853,
+        "narHash": "sha256-cpbBoQesbS074VhX7JC03+fuIiqGi8Ha6ParLO69ajM=",
         "ref": "refs/heads/main",
-        "rev": "ab1b527ff28d5df4b0985265d7d68c919990758d",
-        "revCount": 16,
+        "rev": "00156f41c9703df173c3339a9809db9ef9f750a6",
+        "revCount": 18,
         "type": "git",
         "url": "https://github.com/osmargm1202/app-login"
       },
