@@ -39,3 +39,12 @@ y se conservó. Autorizaciones intactas; guardia de rollback desarmada.
 Fuente exacta archivada en ~/.local/state/orgm-multimedia/20261104-touch-shortcut,
 /home/jarq/Hobby/nixos-multimedia-touch-shortcut y /tmp/orgm-touch-shortcut/source
 (Lenovo). Captura nativa de prueba en /tmp/orgm-touch-shortcut/touch-toggle-on.png.
+
+Actualización de etiquetas: generación 67,
+`/nix/store/vng7mbbw9a9smzvjhghprm5y6cgjiii3-nixos-system-jarq-jarq-multimedia`,
+app `4a62f064a5e60f8a08cedf344e2ee93101ba7bfd`. La tecla muestra «Auto» / «Fija».
+Dos verificaciones de assets y build completo aprobados; etiquetas servidas,
+modo y autorizaciones conservados. Ante un fallo DNS del constructor se descargó
+la fuente fijada desde ORGM, se transfirió el NAR y se compiló offline en Lenovo.
+Fuente exacta: ~/.local/state/orgm-multimedia/20261104-touch-label/source y
+/home/jarq/Hobby/nixos-multimedia-touch-label. Rollback desarmado.
