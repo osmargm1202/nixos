@@ -71,6 +71,8 @@ let
   });
   dimScreen = pkgs.writeShellScript "orgm-home-dim-screen" ''
     set -eu
+    # Session preference is shared with the media agent and survives reboot.
+    [ ! -f "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-home/touch-always-on" ] || exit 0
     target="$1"
     current=$(${pkgs.brightnessctl}/bin/brightnessctl --device=intel_backlight get)
     maximum=$(${pkgs.brightnessctl}/bin/brightnessctl --device=intel_backlight max)
@@ -87,6 +89,7 @@ let
     ${quickshell}/bin/qs --path ${app}/${pkgs.python3.sitePackages}/orgm_home/touch/shell.qml ipc call -- touch controls || true
   '';
   idleScreen = pkgs.writeShellScript "orgm-home-idle-screen" ''
+    ${wakeScreen}
     exec ${touchIdle}/bin/swayidle -w \
       timeout 1 '${pkgs.coreutils}/bin/true' resume '${wakeScreen}' \
       timeout 20 '${dimScreen} 20' \

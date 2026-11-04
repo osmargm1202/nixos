@@ -25,7 +25,7 @@
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
     orgm-multimedia = {
-      url = "github:osmargm1202/orgm-multimedia/45f6c6fb652113201c134dc9dfaa9d38aeb871e3";
+      url = "github:osmargm1202/orgm-multimedia/736778046c7eb278c1d26338271b5d829996c2ac";
       flake = false;
     };
     cinnamon-spices-extensions = {
