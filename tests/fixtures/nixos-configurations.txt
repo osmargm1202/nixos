@@ -7,3 +7,4 @@ lenovo-server
 orgm
 orgm-ryoku
 thinkpad11e
+x13
