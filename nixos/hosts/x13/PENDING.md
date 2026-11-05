@@ -30,7 +30,7 @@ available; these repository files are the continuity record.
 | Swap | Zram; no disk swap or hibernation configured |
 | Normal | Shared GNOME, Wayland; real graphical session and SSH verified |
 | Server | Real headless boot, Wi-Fi and SSH verified; user confirmed console login |
-| Boot menu | Generation 2 Normal default; timeout 1 second; Server available |
+| Boot menu | Generation 3 installed by NH; Normal default, timeout 1 second; Server available |
 | Kernel | Stock Linux 6.18.56 at the verified deployment, not shared Zen |
 | Login | SDDM retained; Astronaut/Black hole previews shown; no new theme applied |
 | Extensions | Inherited GNOME extension packages moved to user scope; no custom enabled list selected |
@@ -94,7 +94,8 @@ or the live installer's state for evidence about the installed system.
   absent from all handoff files. Changing the account password does not change LUKS.
 - The user now confirms entering GNOME ("ya inicie"). Later SSH verified hostname
   `x13`, user `osmarg`, available `nh` and the original `nppd5fyx93pz42ivg58fd3rdkiqnsx6g`
-  running system. The new GNOME follow-up configuration has NOT been activated.
+  prior running system. Follow-ups are now activated as generation3/rg664; the
+  same GNOME Wayland session stayed active throughout the switch.
   Normal remains the persistent default.
 - Returning to Normal can start the inherited Flatpak installer again. The stop
   performed for the Server test was temporary, not a persistent mask.
@@ -255,7 +256,7 @@ and runtime observations may become stale: check them, rather than trusting note
 as live state. Past publishing, formatting or private-key permissions are historical,
 not new operational consent.
 
-## New GNOME follow-ups: implemented, NOT activated
+## New GNOME follow-ups: applied as generation 3
 
 Read [the follow-up tracker](../../../odd/tasks/x13-gnome-followups.md).
 Source is on local `feat/x13-gnome-followups` in `.worktrees/x13-gnome-followups`.
@@ -268,14 +269,28 @@ Actual evaluated Shell is 50.5. Locked GNOME 4x UI Improvements release25 suppor
 45–49, so only X13 excludes it. The new native shortcut extension requires the
 first logout/login; no session logout or unsafe Shell mode was attempted.
 
-Writer tests passed, including baseline other-host tray behavior. Independent
-callback/helper/merge/webapp/compatibility checks passed, but full system/consumer
-checks are UNAVAILABLE: its safe scratch copy excluded encrypted
-`secrets/shared/api-keys.yaml`, required by ordinary Nix evaluation. No full build,
-source transfer or `nh os switch` has been performed. Do not retry an unavailable
-verifier or bypass the earlier denied secret-name search; request an explicit safer
-plan for ordinary Nix use of the encrypted dependency, without enumeration or
-decryption. No source defect was reproduced by that independent pass.
+Writer and independent tests passed, including exact ORGM/Envy/Ryoku baseline
+service/selection/package/activation parity. The earlier missing encrypted input
+was resolved by explicit human authorization for ordinary Nix dependency use only;
+no secret-name search or direct decryption is authorized. Full build succeeded:
+`/nix/store/rg664lncdzql7inpg0ihhzc7iqxllzy7-nixos-system-x13-gnome`, including Server.
+
+Applied successfully via `nh os switch` on X13, generation3. The running system
+is the exact rg664 closure above. Baseline-hash-guarded patch updated only11 task
+source files in the existing `/home/osmarg/Hobby/nixos`, preserving other files.
+Backups: `.x13-deploy/6391933-gnome/backup` under that source root. An optional
+store-copy attempt rejected one unsigned evaluator output; normal target-local
+build recreated it without weakening signature policy. A preflight capture issue
+was corrected by combining stdout/stderr, retaining the same strict no-GNOME-restart
+guard. Actual switch exit0, postcheckexit0: Home Manager, SDDM, Tailscale and
+Syncthing active, six desktop menu entries and both tray autostart masks present,
+native close setting exactly Super+Q, shortcut login unit enabled/successful,
+zero failed system/user units. Same live GNOME Wayland session preserved.
+
+No forced logout occurred. First logout/login and physical shortcut testing still
+belong to the user; no actual endpoint authentication or browser launch was claimed.
+The newly built Server closure was not physically reboot-tested in this update;
+the earlier Server boot proof belongs to generation2.
 
 Camera app/error identity and Tailscale SOPS key-name/authentication scope remain
 blocked; neither permission guards nor automatic authentication were changed.

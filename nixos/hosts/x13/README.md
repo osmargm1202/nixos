@@ -10,10 +10,13 @@ the `server` specialisation provides headless SSH rescue.
 Read [PENDING.md](PENDING.md) and the
 [follow-up tracker](../../../odd/tasks/x13-gnome-followups.md) before operating on
 this laptop. New [shortcuts](../../../docs/x13-shortcuts.md) and
-[SLC/ORGM webapps](../../../docs/x13-webapps.md) are implemented locally but have
-not been activated: full independent system verification is blocked on a safe
-plan for the encrypted SOPS evaluation dependency. No `nh os switch` or forced
-logout has occurred. First-install shortcut discovery requires the next login.
+[SLC/ORGM webapps](../../../docs/x13-webapps.md) passed independent verification
+and full builds on both machines, producing the same system closure. They are
+applied on X13 as generation 3 via `nh os switch`; Home Manager and both background
+services are active, with no failed system/user units and the live GNOME Wayland
+session preserved. First-install shortcut discovery requires the next login;
+physical shortcut acceptance and authenticated webapp use are not claimed.
+Camera permissions and automatic Tailscale authentication remain unchanged.
 
 ## Install and rebuild
 
