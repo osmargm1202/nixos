@@ -23,6 +23,15 @@ in
       hardware = ./nixos/hosts/thinkpad11e/hardware-configuration.nix;
       extraModules = [ ./nixos/hosts/thinkpad11e/default.nix ];
     };
+    x13 = {
+      role = "desktop";
+      hostName = "x13";
+      profileName = "gnome";
+      profile = ./nixos/hosts/x13/gnome.nix;
+      userName = "osmarg";
+      hardware = ./nixos/hosts/x13/hardware-configuration.nix;
+      extraModules = [ ./nixos/hosts/x13/default.nix ];
+    };
     envy = historical.configurations.envy;
     lenovo = historical.configurations.lenovo-ryoku;
     lenovo-server = {
