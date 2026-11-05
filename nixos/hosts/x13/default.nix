@@ -8,6 +8,7 @@ in
 {
   imports = [
     ./server.nix
+    ./webapps.nix
     ../../hardware/gpu/intel.nix
     ../../gaming/steam.nix
     ../../gaming/emulators.nix

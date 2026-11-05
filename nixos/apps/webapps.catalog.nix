@@ -23,6 +23,11 @@
     { id = "banco-popular"; name = "Banco Popular"; url = "https://ib.bpd.com.do"; icon = "banco-popular"; }
   ];
   development = [
+    { id = "slc-daily"; name = "SLC Daily"; url = "https://daily.slci.stream"; icon = "applications-internet"; }
+    { id = "slc-vill-docs"; name = "SLC Vill Docs"; url = "https://vill-docs.slci.stream"; icon = "applications-internet"; }
+    { id = "orgm-adm"; name = "ORGM Administration"; url = "https://adm.or-gm.com"; icon = "applications-internet"; }
+    { id = "orgm-automation"; name = "ORGM Automation"; url = "https://automation.or-gm.com"; icon = "applications-internet"; }
+    { id = "orgm-code"; name = "ORGM Code"; url = "https://code.or-gm.com"; icon = "applications-internet"; }
     { id = "github"; name = "Github"; url = "https://github.com/osmargm1202"; icon = "github-webapp"; }
     { id = "google-cloud"; name = "Google Cloud Console"; url = "https://console.cloud.google.com"; icon = "google-cloud-console"; }
     { id = "neon"; name = "Neon"; url = "https://console.neon.tech/"; icon = "neon-db"; }
