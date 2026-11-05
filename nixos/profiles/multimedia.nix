@@ -44,6 +44,19 @@ let
       client_max_body_size 8k;
     '';
   };
+  remoteLocations."/api/remote/live" = {
+    proxyPass = "http://127.0.0.1:8765";
+    proxyWebsockets = true;
+    extraConfig = ''
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header Cf-Access-Jwt-Assertion $http_cf_access_jwt_assertion;
+      proxy_read_timeout 30m;
+      proxy_send_timeout 30m;
+      proxy_buffering off;
+    '';
+  };
+  liveBackend = import ../apps/wayvnc-private.nix { inherit pkgs; };
   oskEngine = import ../osk/package.nix { inherit pkgs; };
   quickshell = import ./sway/quickshell.nix { inherit pkgs; };
   mirror = pkgs.wl-mirror.override { installExampleScripts = false; };
@@ -501,6 +514,7 @@ in
         ORGM_BIND = "127.0.0.1";
         ORGM_AIRPLAY_NAME = cfg.airplayName;
         ORGM_PREVIEW_DIR = "/var/lib/orgm-home/previews";
+        ORGM_VNC_CLIENT = "${pkgs.novnc}/share/webapps/novnc";
         ORGM_REQUIRE_ACCESS = if cfg.exposure == "tailscale" then "false" else "true";
         ORGM_BOMBA_COMMAND = "${bomba}/bin/bomba";
         BOMBA_CONFIG = "/etc/bomba/config.json";
@@ -544,6 +558,25 @@ in
       after = [ "graphical-session-pre.target" ];
     };
     systemd.user.services = {
+      orgm-home-live = {
+        description = "On-demand private live screen for the authorized web remote";
+        partOf = [ "orgm-home-session.target" ];
+        bindsTo = [ "orgm-home-agent.service" ];
+        after = [ "orgm-home-agent.service" ];
+        unitConfig.ConditionUser = "media";
+        serviceConfig = {
+          # Input continues through the agent's persistent keyboard and bounded
+          # pointer API. Avoid a second virtual keyboard changing Chrome's map.
+          ExecStartPre = "${pkgs.coreutils}/bin/rm -f /run/orgm-home/live.sock /run/orgm-home/live-control.sock";
+          ExecStart = "${liveBackend}/bin/wayvnc -C /dev/null --disable-input --disable-resizing --render-cursor -f 20 -o eDP-1 -S /run/orgm-home/live-control.sock unix:/run/orgm-home/live.sock";
+          ExecStopPost = "${pkgs.coreutils}/bin/rm -f /run/orgm-home/live.sock /run/orgm-home/live-control.sock";
+          UMask = "0077";
+          NoNewPrivileges = true;
+          RestrictAddressFamilies = [ "AF_UNIX" ];
+          LimitCORE = 0;
+          TimeoutStopSec = 5;
+        };
+      };
       orgm-home-agent = sessionService "orgm-home-agent";
       orgm-home-kiosk = sessionService "orgm-home-kiosk";
       orgm-home-display = sessionService "orgm-home-display";
