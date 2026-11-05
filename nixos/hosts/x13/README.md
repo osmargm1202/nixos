@@ -2,7 +2,8 @@
 
 `x13` is Osmarg's Lenovo X13 Gen 4 (Intel i7-1365U, Iris Xe, 16 GB RAM).
 It starts with the shared GNOME profile and Osmarg's applications, without
-Nextcloud, a Windows VM, passthrough or boot-mode specialisations.
+Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
+the `server` specialisation provides headless SSH rescue.
 
 ## Install and rebuild
 
@@ -29,6 +30,45 @@ The installed SSH account is `osmarg`; root SSH login is disabled. Installer
 connections use disposable known-host storage. Verify the installed host's
 SSH fingerprint independently before trusting its new identity; do not clear
 unrelated known-host entries or disable host-key verification permanently.
+
+## Headless server rescue
+
+Select the generation's `server` entry in systemd-boot (the menu timeout remains
+one second; hold Space at startup to open the menu). Normal keeps GNOME and all
+existing applications. Server boots to `multi-user.target` without GNOME, GOA,
+display-manager/autologin, X/Xwayland, Steam/gaming sessions or Flatpak installers.
+The user's application catalog remains declared; rescue does not uninstall apps.
+
+SSH and NetworkManager remain enabled. Connect as `osmarg` using the existing
+credentials and network profile; root SSH stays disabled and sudo still requires
+a password. A working network connection/profile is required for SSH access.
+
+**This is operational rescue, not independent root recovery.** It shares the
+same LUKS device, Btrfs root and other essential mounts with normal. LUKS still
+requires physical unlocking before either mode can reach SSH. A broken root or
+initrd can still require the installer.
+
+Only server tolerates an unavailable EFI partition: `/boot` uses `nofail` and
+`x-systemd.device-timeout=10s`. Both modes use the observed EFI PARTUUID
+`5512d8ef-bc51-4ea9-a3f6-cf575351fa72` with restrictive FAT masks. Normal keeps
+`/boot` required, so bootloader failures are not silently ignored.
+
+**Before any rebuild or bootloader repair, ensure the real ESP is mounted.**
+Do not write boot files into an ordinary unmounted `/boot` directory:
+
+```bash
+sudo mount /boot
+findmnt --mountpoint /boot -o TARGET,SOURCE,FSTYPE,OPTIONS
+lsblk -o NAME,PARTUUID,FSTYPE,MOUNTPOINTS
+```
+
+Proceed only when `/boot` is a mounted `vfat` filesystem whose source partition
+has the PARTUUID above. If mounting fails or the identity differs, stop and
+repair the mount/device first; do not rebuild against the empty directory.
+
+Verify both evaluated boot configurations (including complete derivations) with
+`python3 tests/x13-server.test.py`. Building/deploying and a real rescue boot
+remain separate acceptance steps.
 
 ## What is configured
 

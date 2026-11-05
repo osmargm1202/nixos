@@ -46,7 +46,8 @@
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/AAB4-8899";
+    { # FAT UUID changed after installation; the GPT partition identity is stable.
+      device = "/dev/disk/by-partuuid/5512d8ef-bc51-4ea9-a3f6-cf575351fa72";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };

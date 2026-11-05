@@ -101,7 +101,8 @@ assert all(c[k] for k in ("gnome", "goa", "firefox", "printing", "ai", "graphics
 assert c["session"] == "gnome"
 assert {"nautilus", "gnome-text-editor", "loupe", "evince", "gnome-console"} <= set(c["packages"])
 assert {"kitty", "orgmai"} <= set(c["packages"] + c["hmPackages"])
-assert not any(c[k] for k in ("gamescope", "gamescopeTty", "remotePlay", "dedicatedServer", "openrgb", "openrgbNotify", "specialisations", "vms"))
+assert not any(c[k] for k in ("gamescope", "gamescopeTty", "remotePlay", "dedicatedServer", "openrgb", "openrgbNotify", "vms"))
+assert c["specialisations"] == ["server"]
 assert c["emulators"] == {"tier": "all", "backend": "flatpak"}
 assert c["directory"] == "org.gnome.Nautilus.desktop"
 assert "i915" in c["earlyGpu"]
@@ -114,6 +115,7 @@ for mount, subvol in {"/": "@", "/home": "@home", "/nix": "@nix", "/var/log": "@
     assert (fs["fsType"], fs["device"]) == ("btrfs", "/dev/mapper/cryptroot")
     assert {f"subvol={subvol}", "compress=zstd", "noatime"} <= set(fs["options"])
 assert c["mounts"]["/boot"]["fsType"] == "vfat"
+assert c["mounts"]["/boot"]["device"] == "/dev/disk/by-partuuid/5512d8ef-bc51-4ea9-a3f6-cf575351fa72", "EFI mount must use the observed stable partition identity"
 for name in ("default.nix", "gnome.nix"):
     source = (root / "nixos/hosts/x13" / name).read_text()
     assert not re.search(r"(?i)(password|authorizedKeys|privateKey)\s*=", source)

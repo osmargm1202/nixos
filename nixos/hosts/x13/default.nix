@@ -7,6 +7,7 @@ let
 in
 {
   imports = [
+    ./server.nix
     ../../hardware/gpu/intel.nix
     ../../gaming/steam.nix
     ../../gaming/emulators.nix
