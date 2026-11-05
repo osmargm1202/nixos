@@ -1,5 +1,5 @@
 # X13 GNOME follow-ups
-Status: authorized implementation and activation, scoped to X13/osmarg unless a shared definition has no effect until selected.
+Status: implementation committed locally; activation BLOCKED on required independent system proof and a safer encrypted-dependency plan. Scope X13/osmarg unless a shared definition has no effect until selected.
 Preserve the original tree's unfinished Starship and local-memory changes. No new publishing authorized. No callable Engram mirror is available.
 
 ## Specs
@@ -15,13 +15,17 @@ S8. User: "ya se aplico el nh os switch?" then "dale aplica" after explanation n
 
 ## Tasks
 
-T1 | S7 | bounded writer webapps | done | Five new catalog records, existing cloud-orgm identity, X13 selection. RED observed then both focused/new+Chromium regressions GREEN; 143 authored lines; commit: pending.
-T2 | S2,S5,S6 | bounded writer GNOME | done | Tray masks/package retirement retaining daemons; native focus extension and close binding; Shell50.5 vs 4xrelease25 supports45-49 -> X13 exclusion. RED/GREEN, x13/server and baseline differential passed. First-login actual hotkey acceptance pending; commit: pending.
+T1 | S7 | bounded writer webapps | done | Five new catalog records, existing cloud-orgm identity, X13 selection. RED observed then both focused/new+Chromium regressions GREEN; commit: 455edb5 (177 diff lines including feature tracker).
+T2 | S2,S5,S6 | bounded writer GNOME | done | Tray masks/package retirement retaining daemons; native focus extension and close binding; Shell50.5 vs 4xrelease25 supports45-49 -> X13 exclusion. RED/GREEN, x13/server and baseline differential passed. First-login actual hotkey acceptance pending; commit: 6391933 (310 diff lines).
 T3 | S2,S5-S7 | independent verifier + parent assessment | blocked | Independent callbacks/webapps/compatibility PASS but full S2/S5 consumer/system evaluations UNAVAILABLE: isolated copy omitted secrets/shared/api-keys.yaml. No rerun or extra verifier. Await explicit safer plan allowing only ordinary Nix use of existing encrypted dependency, never metadata search/decryption; full build not run.
 T4 | S8 | parent deployment | pending | Pinned password SSH and sudo passed, hostnamex13/userosmarg/nh path/oldsystemnppd verified. No source transfer, full build or nh os switch performed. Depends on T3 required proof. Never restart live GNOME automatically.
-T5 | S1,S3,S4,S8 | parent handoff | in_progress | Save blocked verification/application state and new GNOME confirmation, retain camera/auth and first-login keyboard acceptance as unproven; commit: pending.
+T5 | S1,S3,S4,S8 | parent handoff | done | Updated PENDING, AGENTS and host README with user GNOME confirmation, both source commits, incomplete proof/no switch, camera/auth blockers and first-login acceptance; original-tree continuity mirror saved. Commit: handoff-only unit after 6391933.
 
 ## Log
+
+L9. Bounded stop: one Needs your decision result for safe ordinary Nix consumption of encrypted dependency; no new verifier run, full build, source transfer, switch or publishing. PENDING updated in both worktrees, original tracker mirror saved for discovery, AGENTS/README link active follow-up. Original Starship test/docs drafts preserved. Handoff-only next commit must remain its own below400line slice; it does not claim the whole feature or T3/T4 complete.
+
+L8. Reviewable local work-unit commits: master7ab99a5 -> 455edb5 (webapps+tracker,177 diff lines) -> 6391933 (GNOME/trays,310 diff lines). Preserve this approved X13 feature-chain boundary; do not package accumulated487lines as a single review candidate/PR. Each unit is below~400. Next handoff-only unit contains copied local continuity documents and evidence, not more source changes. No push authorized/performed. Full build and activation remain not run; no unavailable proof rerun.
 
 L7. Independent verifier mw3v7aiu-5-2gw0: S7 generated/legacy webapps PASS, S6 actualversionmetadata PASS, S2 cleanuphelper probe PASS, S5 nativecallbacks/enabled-listmerge PASS; complete S2/S5 and baseline differential UNAVAILABLE because its isolated workspace excluded secrets and Nix requires secrets/shared/api-keys.yaml. Three systemtests and differential exited1 missingdependency, not a reproduced code blocker. Do not call them green or retry/escalate unavailable verifier. No full build/deployment performed. Exact dependency-use saferplan needs fresh human decision; it does not authorize denied secret-name enumeration/decryption. Verifier scratch /tmp/x13-verify.9DaKRH remains; no removal attempted outside permitted scope. Parent SSH with installed hostkey and previously authorized temporary credential exited0: hostnamex13, userosmarg, nh at /run/current-system/sw/bin/nh, current system oldnppd5fyx93pz42ivg58fd3rdkiqnsx6g, sudo succeeds. Camera process name probe returned no match, not proof of absence or resolution. Preserve source work in reviewable local commits, no push; activation stays pending.
 

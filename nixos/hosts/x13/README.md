@@ -5,6 +5,16 @@ It starts with the shared GNOME profile and Osmarg's applications, without
 Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
 the `server` specialisation provides headless SSH rescue.
 
+## GNOME follow-ups and local handoff
+
+Read [PENDING.md](PENDING.md) and the
+[follow-up tracker](../../../odd/tasks/x13-gnome-followups.md) before operating on
+this laptop. New [shortcuts](../../../docs/x13-shortcuts.md) and
+[SLC/ORGM webapps](../../../docs/x13-webapps.md) are implemented locally but have
+not been activated: full independent system verification is blocked on a safe
+plan for the encrypted SOPS evaluation dependency. No `nh os switch` or forced
+logout has occurred. First-install shortcut discovery requires the next login.
+
 ## Install and rebuild
 
 The internal WD SN740 (serial `232949803515`) was explicitly authorized for
