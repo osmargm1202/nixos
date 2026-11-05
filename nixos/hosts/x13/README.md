@@ -26,6 +26,16 @@ appropriate for this host. After installation, rebuild from a checkout with:
 sudo nixos-rebuild switch --flake .#x13
 ```
 
+Before first user activation, provision the editable source tree at
+`/home/osmarg/Hobby/nixos`, including `dotfiles/apps`, owned by Osmarg. The
+inherited `orgmDotBootstrap` expects this path; placing sources only in
+`/etc/nixos` does not satisfy it. Initial provisioning can use a source snapshot;
+use a proper repository clone there for later version-controlled editing.
+
+After networking and DNS are ready, check `home-manager-osmarg.service` and
+`flatpak-managed-install.service`. Flatpak downloads are asynchronous; declared
+applications are not necessarily installed yet.
+
 The installed SSH account is `osmarg`; root SSH login is disabled. Installer
 connections use disposable known-host storage. Verify the installed host's
 SSH fingerprint independently before trusting its new identity; do not clear
