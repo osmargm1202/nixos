@@ -104,7 +104,8 @@ assert {"kitty", "orgmai"} <= set(c["packages"] + c["hmPackages"])
 assert not any(c[k] for k in ("gamescope", "gamescopeTty", "remotePlay", "dedicatedServer", "openrgb", "openrgbNotify", "specialisations", "vms"))
 assert c["emulators"] == {"tier": "all", "backend": "flatpak"}
 assert c["directory"] == "org.gnome.Nautilus.desktop"
-assert "i915" in c["earlyGpu"] and 5 <= c["timeout"] <= 10
+assert "i915" in c["earlyGpu"]
+assert c["timeout"] == 1, f"boot menu must be 1 second, got {c['timeout']}"
 assert c["rootSsh"] == "no"
 assert c["sops"] == "/home/osmarg/.config/sops/age/keys.txt"
 assert c["luks"] == "/dev/disk/by-uuid/dde6b70b-af6f-4eba-8cd0-8825ddcb5968"

@@ -21,7 +21,7 @@ in
   boot.initrd.kernelModules = [ "i915" ];
   hardware.firmware = [ pkgs.sof-firmware ];
   services.thermald.enable = true;
-  boot.loader.timeout = lib.mkForce 5;
+  boot.loader.timeout = lib.mkForce 1;
   zramSwap.enable = true;
 
   # Generated hardware owns devices/subvolumes; policy is host-local.
