@@ -1,0 +1,7 @@
+{
+  "uuid": "x13-focus-shortcuts@orgm.local",
+  "name": "X13 focus shortcuts",
+  "description": "Focus existing Console, Firefox and Files windows, or launch if absent.",
+  "shell-version": ["50"],
+  "settings-schema": "org.gnome.shell.extensions.x13-focus-shortcuts"
+}

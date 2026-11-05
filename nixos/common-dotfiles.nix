@@ -7,9 +7,9 @@ let
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
-  retireOrgmTrays = hostName == "orgm" && profileName == "hyprland";
+  retireTrays = hostName == "x13" || (hostName == "orgm" && profileName == "hyprland");
   backgroundSyncthing = programEnabled "syncthing" && (
-    profileName == "ryoku" || builtins.elem hostName [ "envy" "lenovo" ] || retireOrgmTrays
+    profileName == "ryoku" || builtins.elem hostName [ "envy" "lenovo" ] || retireTrays
   );
   retiredTrayNames = [ "tailscale-systray.desktop" "syncthingtray.desktop" ];
   retiredTrayManifest = pkgs.writeText "orgm-retired-trays.json" (builtins.toJSON {
@@ -89,7 +89,7 @@ in {
         source = "${builtins.head (builtins.filter (p: p.name == "nvim.desktop") config.home.packages)}/share/applications/nvim.desktop";
       };
       xdg.configFile = lib.mkMerge [
-        (lib.optionalAttrs (programEnabled "tailscale" && !ryokuEnabled && hostName != "envy" && !retireOrgmTrays) {
+        (lib.optionalAttrs (programEnabled "tailscale" && !ryokuEnabled && hostName != "envy" && !retireTrays) {
           # GNOME and Cinnamon launch this in the light variant. i3, Hyprland,
           # and Labwc start the same command explicitly.
           "autostart/tailscale-systray.desktop".text = ''
@@ -103,7 +103,7 @@ in {
             OnlyShowIn=GNOME;X-Cinnamon;
           '';
         })
-        (lib.optionalAttrs (programEnabled "syncthing" && !ryokuEnabled && hostName != "envy" && !retireOrgmTrays) {
+        (lib.optionalAttrs (programEnabled "syncthing" && !ryokuEnabled && hostName != "envy" && !retireTrays) {
           # The setup wizard can create this file before Home Manager owns it.
           # Replace only the autostart entry, not the user's syncthingtray.ini.
           "autostart/syncthingtray.desktop" = {
@@ -120,7 +120,7 @@ in {
             '';
           };
         })
-        (lib.optionalAttrs retireOrgmTrays (lib.genAttrs (map (name: "autostart/${name}") retiredTrayNames) (_: {
+        (lib.optionalAttrs retireTrays (lib.genAttrs (map (name: "autostart/${name}") retiredTrayNames) (_: {
           force = true;
           text = "[Desktop Entry]\nType=Application\nHidden=true\n";
         })))
@@ -128,7 +128,7 @@ in {
 
       # Archive existing launchers before Home Manager owns the two masks.
       # The small cleanup utility is shared with Ryoku; no Ryoku runtime is loaded.
-      home.activation.orgmRetiredTrayBackups = lib.mkIf retireOrgmTrays (
+      home.activation.orgmRetiredTrayBackups = lib.mkIf retireTrays (
         lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
           $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./profiles/ryoku/cleanup.py} \
             "$HOME" "''${XDG_STATE_HOME:-$HOME/.local/state}/orgm-desktop" \
