@@ -14,6 +14,8 @@
       splix
       epson-escpr
       epson-escpr2
+      brlaser # Brother laser printers
+      brgenml1cupswrapper # Brother generic driver (includes the LPR backend)
     ];
   };
 

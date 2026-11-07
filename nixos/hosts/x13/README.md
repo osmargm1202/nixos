@@ -5,6 +5,13 @@ It starts with the shared GNOME profile and Osmarg's applications, without
 Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
 the `server` specialisation provides headless SSH rescue.
 
+## Local agent handoff
+
+Read [PENDING.md](PENDING.md) before resuming development. It records verified
+boots, the repaired EFI identity, remaining application/hardware work, Git state
+and recovery precautions. The exact requirements and evidence are in
+[`odd/tasks/x13-bootstrap.md`](../../../odd/tasks/x13-bootstrap.md).
+
 ## Install and rebuild
 
 The internal WD SN740 (serial `232949803515`) was explicitly authorized for

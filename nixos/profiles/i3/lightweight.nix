@@ -7,10 +7,9 @@
 }:
 {
   imports = [ ./i3.nix ];
-  # These broad desktop stacks are optional for a small X11 machine.
+  # Use LightDM on a small X11 machine; retain the shared print/scan stack.
   disabledModules = [
     ../../sddm/sddm.nix
-    ../../print/printer.nix
   ];
 
   orgm.i3.lightweight = true;

@@ -90,3 +90,24 @@ root por SSH permanece desactivado. `authorized_keys` contiene únicamente la
 clave pública autorizada durante la instalación.
 
 Consultar `nixos/profiles/i3/README.md` para replicar la variante en otro equipo.
+
+Impresión activada en hm el 2026-11-07: el perfil ligero conserva el módulo
+compartido `nixos/print/printer.nix`, con CUPS, Avahi/mDNS, ipp-usb y SANE.
+Incluye los controladores Brother `brlaser` y `brgenml1cupswrapper` (con backend
+LPR), además de los backends de escaneo Brother existentes. Construcción local
+y activación remota verificadas; generación activa:
+`/nix/store/032nlhwqsbkl1i3l4hdda5bfjxdybydq-nixos-system-thinkpad11e-i3`.
+CUPS, cups-browsed y Avahi activos, cero unidades del sistema fallidas, y
+`lpinfo -m` enumera modelos Brother. En esa comprobación no había colas ni
+impresoras descubiertas por IPP/IPPS o USB; ipp-usb estaba cargado e inactivo.
+La impresión física y el escaneo siguen pendientes de conectar una impresora.
+
+Win+V reparado en la sesión de hm el 2026-11-07: Clipcat estaba activo pero no
+capturaba una copia de prueba. Se actualizó el helper mutable `i3-clipboard` a
+la versión del repositorio y solo su línea de arranque en la configuración i3
+(importa DISPLAY/XAUTHORITY antes de iniciar el servicio). Se reinició Clipcat
+y se recargó i3 sin cerrar la sesión. Prueba real con xclip y Win+V mediante
+xdotool: captura, menú visible y selección al portapapeles correctos. Se retiró
+el texto de prueba; respaldo previo en
+`~/.local/state/orgm-backups/clipboard-20261107/`. Las dos pruebas existentes
+`i3-clipboard-history.bats.sh` e `i3-dunst-rofi-clipboard.bats.sh` pasaron.

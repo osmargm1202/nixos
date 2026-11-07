@@ -2,13 +2,17 @@
 """Native Bash REPL in a private PTY/HOME; never touches the parent terminal."""
 import os, pathlib, shlex, shutil, subprocess, sys, tempfile
 root=pathlib.Path(__file__).resolve().parents[1]
-with tempfile.TemporaryDirectory(prefix='shell-native-') as tmp:
-    home=pathlib.Path(tmp);(home/'.cache').mkdir()
+with tempfile.TemporaryDirectory(prefix='shell-native-', dir='/tmp') as tmp:
+    private=pathlib.Path(tmp)
+    repo=private/'repo'
+    shutil.copytree(root/'dotfiles',repo/'dotfiles',symlinks=True)
+    home=private/'home';home.mkdir();(home/'.cache').mkdir()
+    tmp=str(home)
     env=dict(os.environ,HOME=tmp,XDG_CONFIG_HOME=tmp+'/.config',XDG_CACHE_HOME=tmp+'/.cache',XDG_STATE_HOME=tmp+'/.state',XDG_DATA_HOME=tmp+'/.data',HISTFILE=tmp+'/history',_ZO_DATA_DIR=tmp+'/zoxide',TERM='xterm-256color')
     for key in list(env):
         if key.startswith(('BLE_','_ble_','ATUIN_','__ORGM','__RYOKU','__DOTFILES','__ETC_BASHRC')) or key in ('BASH_ENV','NOSYSBASHRC'):env.pop(key,None)
     env['ATUIN_CONFIG_DIR']=tmp+'/.config/atuin'
-    subprocess.run(['orgm-dot','--repo',str(root),'--home',tmp,'--host','orgm','--profile','hyprland','pull','bash'],env=env,check=True,capture_output=True)
+    subprocess.run(['orgm-dot','--repo',str(repo),'--home',tmp,'--host','orgm','--profile','hyprland','pull','bash'],env=env,check=True,capture_output=True)
     (home/'probe.bash').write_text(r"""
 for fn in z zi __zoxide_hook ble-attach atuin-bind fzf-history-widget fzf-file-preview-widget fzf-cd-preview-widget fzf-ps-widget _orgm_aichat_widget _fzf_complete; do
   declare -F "$fn" >/dev/null || { printf 'MISSING:%s\n' "$fn"; exit 61; }
