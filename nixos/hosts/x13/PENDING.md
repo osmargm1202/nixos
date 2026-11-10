@@ -689,3 +689,11 @@ runtime check initially ran before its parallel build finished; rerun after
 successful build passed without changing production code. Installer defaults
 and current installation guides now reference main. Physical login/shortcut
 acceptance remains separate from configuration and fixture verification.
+
+Installer verification limit: both full installer suites fail identically on
+pre-rename HEAD as on the branch-reference change. Desktop installer inventory
+expects Sway while its menu omits it; server installer expects Starship's netns
+setting which is absent. Both baseline failures were reproduced in isolated
+fixtures; no unrelated installer/Starship behavior was changed. Shell syntax
+checks and the main default-flake URL assertion passed. These failures do not
+change the successful integrated system builds or focused desktop checks.
