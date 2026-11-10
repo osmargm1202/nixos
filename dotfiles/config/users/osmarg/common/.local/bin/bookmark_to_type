@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 set -o pipefail
 
+menu_command=rofi
+desktop="${XDG_CURRENT_DESKTOP:-}"
+case "${desktop,,}" in *gnome*) menu_command=orgm-menu ;; esac
+
 [[ -r .bookmarks ]] || exit 0
-rofi -dmenu -p bookmarks < .bookmarks | tr -d '\n' | wtype -
+bookmark=$("$menu_command" -dmenu -p bookmarks < .bookmarks) || exit 0
+[[ -n "$bookmark" ]] || exit 0
+if [[ "$menu_command" == orgm-menu ]]; then
+  printf '%s' "$bookmark" | wl-copy || exit 1
+  notify-send Bookmarks 'Marcador copiado. Usa Ctrl+V para pegarlo.'
+else
+  printf '%s' "$bookmark" | wtype -
+fi

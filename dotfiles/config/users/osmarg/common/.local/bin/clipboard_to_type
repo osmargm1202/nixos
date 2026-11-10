@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
 set -o pipefail
 
-cliphist list | rofi -dmenu -p clipboard | cliphist decode | wtype -
+desktop="${XDG_CURRENT_DESKTOP:-}"
+if [[ "${desktop,,}" == *gnome* ]]; then
+  # Clipboard Indicator owns GNOME history; never start a second collector.
+  exec orgm-clipboard-menu
+fi
+menu_command=rofi
+
+clip=$(cliphist list | "$menu_command" -dmenu -p clipboard) || exit 0
+[[ -n "$clip" ]] || exit 0
+printf '%s\n' "$clip" | cliphist decode | wtype -

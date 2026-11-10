@@ -82,10 +82,12 @@ ensure_state() {
 backend() {
   case "${ORGM_VISUAL_PROFILE_BACKEND:-}" in
     hypr|hyprland) printf '%s\n' hypr ;;
+    gnome) printf '%s\n' gnome ;;
     i3) printf '%s\n' i3 ;;
     sway) printf '%s\n' sway ;;
     '')
       case "${XDG_CURRENT_DESKTOP:-}" in
+        *GNOME*|*gnome*) printf '%s\n' gnome ;;
         *sway*|*Sway*) printf '%s\n' sway ;;
         *Hyprland*) printf '%s\n' hypr ;;
         *) if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then printf '%s\n' hypr; else printf '%s\n' i3; fi ;;
@@ -97,6 +99,7 @@ backend() {
 current_wallpaper() {
   local selected=''
   case "$(backend)" in
+    gnome) selected="$(gsettings get org.gnome.desktop.background picture-uri | python3 -c 'import ast,sys,urllib.parse; print(urllib.parse.unquote(urllib.parse.urlparse(ast.literal_eval(sys.stdin.read())).path))')" ;;
     hypr) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-wallpaper/current" ;;
     i3) [[ -r "${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ]] && IFS= read -r selected <"${XDG_STATE_HOME:-$HOME/.local/state}/i3/wallpaper" ;;
     sway) [[ -r "$config_home/sway/wallpaper" ]] && IFS= read -r selected <"$config_home/sway/wallpaper" ;;
@@ -108,6 +111,13 @@ current_wallpaper() {
 set_wallpaper() {
   local wallpaper="$1"
   case "$(backend)" in
+    gnome)
+      case "${wallpaper,,}" in *.mp4|*.mkv|*.webm|*.mov|*.m4v|*.avi) return 1 ;; esac
+      local uri
+      uri="$(python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).resolve().as_uri())' "$wallpaper")"
+      gsettings set org.gnome.desktop.background picture-uri "$uri"
+      gsettings set org.gnome.desktop.background picture-uri-dark "$uri"
+      ;;
     hypr) hypr-wallpaper set "$wallpaper" ;;
     i3) i3-wallpaper --set "$wallpaper" ;;
     sway) orgm-sway wallpaper-set "$wallpaper" ;;
@@ -194,7 +204,7 @@ refresh_surfaces() {
   if [[ "$(backend)" == sway || "$(backend)" == hypr ]]; then
     # Reload CSS only: keep notification history and the user's DND selection.
     command -v swaync-client >/dev/null 2>&1 && swaync-client --reload-css --skip-wait >/dev/null 2>&1 || true
-  else
+  elif [[ "$(backend)" != gnome ]]; then
     command -v dunstctl >/dev/null 2>&1 && dunstctl reload >/dev/null 2>&1 || true
   fi
   if [[ "$(backend)" == hypr ]] && command -v systemctl >/dev/null 2>&1; then
@@ -241,6 +251,12 @@ record_wallpaper() {
   write_profile "$id" "$mode" "$wallpaper"
 }
 
+gnome_random_wallpaper() {
+  local image
+  image=$(find -L "$1" -type f \( -iname '*.avif' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.jpeg' -o -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) -print0 | shuf -z -n 1 | tr -d '\0')
+  [[ -n "$image" ]] && set_wallpaper "$image"
+}
+
 random_wallpaper() {
   local id directory
   ensure_state; id="$(current_id)"; directory="$pictures_root/$id"
@@ -249,6 +265,7 @@ random_wallpaper() {
   case "$(backend)" in
     hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
     i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+    gnome) gnome_random_wallpaper "$directory" ;;
     sway) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 orgm-sway wallpaper-random "$directory" ;;
     *) return 2 ;;
   esac
@@ -276,6 +293,7 @@ set_profile() {
       case "$(backend)" in
         hypr) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 hypr-wallpaper random "$directory" ;;
         i3) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 I3_WALLPAPER_DIR="$directory" i3-wallpaper --random ;;
+        gnome) gnome_random_wallpaper "$directory" ;;
         sway) ORGM_VISUAL_PROFILE_SKIP_RECORD=1 orgm-sway wallpaper-random "$directory" ;;
         *) return 2 ;;
       esac
@@ -296,9 +314,10 @@ set_profile() {
 }
 
 menu() {
-  local selected id
+  local selected id menu_command=rofi
+  [[ "$(backend)" != gnome ]] || menu_command=orgm-menu
   ensure_state; id="$(current_id)"
-  selected="$(printf '%s\n' "slc$([[ "$id" == slc ]] && printf ' (actual)')" "orgm$([[ "$id" == orgm ]] && printf ' (actual)')" "osmar$([[ "$id" == osmar ]] && printf ' (actual)')" | rofi -dmenu -i -p 'Visual profile' || true)"
+  selected="$(printf '%s\n' "slc$([[ "$id" == slc ]] && printf ' (actual)')" "orgm$([[ "$id" == orgm ]] && printf ' (actual)')" "osmar$([[ "$id" == osmar ]] && printf ' (actual)')" | "$menu_command" -dmenu -i -p 'Visual profile' || true)"
   selected="${selected%% *}"
   valid_id "$selected" && set_profile "$selected"
 }

@@ -2,6 +2,8 @@
 set -euo pipefail
 
 backend="hyprland"
+desktop="${XDG_CURRENT_DESKTOP:-}"
+[[ "${desktop,,}" != *gnome* ]] || backend=gnome
 if [[ "${1:-}" == "--backend" ]]; then
   [[ "$#" -ge 2 ]] || exit 2
   backend="$2"
@@ -9,12 +11,15 @@ if [[ "${1:-}" == "--backend" ]]; then
 fi
 
 case "$backend" in
-  hyprland|i3|labwc|sway) ;;
+  hyprland|i3|labwc|sway|gnome) ;;
   *) exit 2 ;;
 esac
 
+menu_command=rofi
+[[ "$backend" != gnome ]] || menu_command=orgm-menu
+
 if [[ "${1:-}" != "--internal-run" ]]; then
-  seconds="$(printf '' | rofi -dmenu -p 'Segundos')" || exit 0
+  seconds="$(printf '' | "$menu_command" -dmenu -p 'Segundos')" || exit 0
   [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || exit 0
 
   token="$(< /proc/sys/kernel/random/uuid)"
@@ -104,6 +109,7 @@ cleanup_state() {
 
 focus_previous() {
   case "$backend" in
+    gnome) : ;; # Keep the current workspace; GNOME controls window focus.
     hyprland)
       hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })'
       ;;

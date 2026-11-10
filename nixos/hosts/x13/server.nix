@@ -18,6 +18,7 @@
     services.desktopManager.gnome.enable = lib.mkForce false;
     services.gnome.gnome-online-accounts.enable = lib.mkForce false;
     services.displayManager.sddm.enable = lib.mkForce false;
+    services.displayManager.gdm.enable = lib.mkForce false;
     services.displayManager.autoLogin.enable = lib.mkForce false;
     services.xserver = {
       enable = lib.mkForce false;

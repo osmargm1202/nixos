@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -o pipefail
 
-clip=$(cliphist list | rofi -dmenu -p 'clipboard delete item') || exit 0
+desktop="${XDG_CURRENT_DESKTOP:-}"
+if [[ "${desktop,,}" == *gnome* ]]; then
+  # Clipboard Indicator owns GNOME history; never start a second collector.
+  exec orgm-clipboard-menu
+fi
+menu_command=rofi
+
+clip=$(cliphist list | "$menu_command" -dmenu -p 'clipboard delete item') || exit 0
 [[ -n $clip ]] || exit 0
 printf '%s\n' "$clip" | cliphist delete
-dunstify Clipboard "Clip '$clip' was deleted" -t 2000
+notify-send Clipboard "Clip '$clip' was deleted" -t 2000

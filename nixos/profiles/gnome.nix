@@ -4,6 +4,7 @@
   imports = [
     ../sddm/sddm.nix
     ../print/printer.nix
+    ./gnome/menus.nix
   ];
 
   services.xserver.enable = true;

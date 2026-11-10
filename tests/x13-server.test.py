@@ -25,6 +25,7 @@ projection = r'''s: let
       gnome = x.services.desktopManager.gnome.enable;
       goa = x.services.gnome.gnome-online-accounts.enable;
       sddm = x.services.displayManager.sddm.enable;
+      gdm = x.services.displayManager.gdm.enable;
       autoLogin = x.services.displayManager.autoLogin.enable;
       xserver = x.services.xserver.enable;
       lightdm = x.services.xserver.displayManager.lightdm.enable;
@@ -87,8 +88,9 @@ assert server["marker"] == "server\n"
 assert normal["target"] == "graphical.target"
 assert server["target"] == "multi-user.target"
 assert not any(server["graphical"].values()), server["graphical"]
-for name in ("gnome", "goa", "sddm", "xserver", "displayManager", "steam", "gamemode"):
+for name in ("gnome", "goa", "gdm", "xserver", "displayManager", "steam", "gamemode"):
     assert normal["graphical"][name], name
+assert not normal["graphical"]["sddm"]
 # The inherited GNOME configuration does not enable this standalone option.
 assert not normal["graphical"]["xwayland"]
 assert not normal["graphical"]["gamescope"]

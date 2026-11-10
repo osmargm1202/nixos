@@ -130,7 +130,8 @@ let
     ++ lib.optionals (hasProgram "personal-development") personalDesktopPackages
     ++ lib.optionals (hasProgram "steam") [ pkgs.steam-run ]
     ++ lib.optionals (hasProgram "containers") [ pkgs.podman-compose ]
-    ++ lib.optionals (!builtins.elem profileName [ "hyprland" "i3" "ryoku" "sway" ]) [ pkgs.thunar ];
+    ++ lib.optionals (config.networking.hostName != "x13"
+      && !builtins.elem profileName [ "hyprland" "i3" "ryoku" "sway" ]) [ pkgs.thunar ];
 in
 {
   # Boot menu shows "Generation N <label>, built on <date>" -- date is

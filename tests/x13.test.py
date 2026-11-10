@@ -42,6 +42,11 @@ in {
   webapps = c.orgm.user.webapps;
   expectedWebapps = original.orgm.user.webapps ++ [ "slc-daily" "slc-vill-docs" "orgm-adm" "orgm-automation" "orgm-code" ];
   enabledExtensions = hm.dconf.settings."org/gnome/shell".enabled-extensions or [];
+  gdm = c.services.displayManager.gdm.enable;
+  sddm = c.services.displayManager.sddm.enable;
+  lockDisabled = hm.dconf.settings."org/gnome/desktop/lockdown".disable-lock-screen;
+  lockEnabled = hm.dconf.settings."org/gnome/desktop/screensaver".lock-enabled;
+  lockBinding = hm.dconf.settings."org/gnome/settings-daemon/plugins/media-keys".screensaver;
   gnome = c.services.desktopManager.gnome.enable;
   session = c.services.displayManager.defaultSession;
   goa = c.services.gnome.gnome-online-accounts.enable;
@@ -102,6 +107,10 @@ assert sorted(c["userExtensions"]) == sorted(c["expectedExtensions"])
 assert not c["enabledExtensions"]
 assert all(c[k] for k in ("gnome", "goa", "browser", "printing", "ai", "graphics", "steam", "deskflow", "zram", "stockKernel", "efi", "mutable", "credentialsUnset"))
 assert c["session"] == "gnome"
+assert c["gdm"] and not c["sddm"]
+assert not c["lockDisabled"] and c["lockEnabled"]
+assert c["lockBinding"] == "@as ['<Super>l']"
+assert "thunar" not in c["packages"] + c["hmPackages"]
 assert {"nautilus", "gnome-text-editor", "loupe", "evince", "gnome-console"} <= set(c["packages"])
 assert {"kitty", "orgmai"} <= set(c["packages"] + c["hmPackages"])
 assert not any(c[k] for k in ("gamescope", "gamescopeTty", "remotePlay", "dedicatedServer", "openrgb", "openrgbNotify", "vms"))

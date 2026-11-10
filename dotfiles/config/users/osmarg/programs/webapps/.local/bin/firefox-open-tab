@@ -46,11 +46,15 @@ normalize_url() {
 }
 
 prompt_url() {
+  local desktop="${XDG_CURRENT_DESKTOP:-}"
+  if [[ "${desktop,,}" == *gnome* ]]; then
+    orgm-menu -dmenu -p "Abrir web" </dev/null
+    return
+  fi
   command -v rofi >/dev/null 2>&1 || {
     notify "Rofi is not installed"
     return 1
   }
-  local desktop="${XDG_CURRENT_DESKTOP:-}"
   case "${desktop,,}" in
     *sway*|*hyprland*) "${ORGM_ROFI:-$HOME/.local/bin/orgm-rofi}" -dmenu -i -p "Abrir web" ;;
     *) rofi -dmenu -i -p "Abrir web" ;;
