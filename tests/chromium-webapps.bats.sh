@@ -123,7 +123,7 @@ with tempfile.TemporaryDirectory(prefix="chromium-webapps-regression-") as tempo
           orgm.user = {{ programs = [ "webapps" ]; webapps = selected; }};
         }};
       }};
-    in builtins.attrNames module.config.content.home-manager.users.osmarg.xdg.desktopEntries'''
+    in builtins.attrNames ((module.config.content.home-manager.users.osmarg) {{ inherit lib; }}).xdg.desktopEntries'''
     cases = [
         ('{ id = "Bad_ID"; name = "Bad"; url = "https://example.com"; icon = "web"; }',
          "Invalid Chromium webapp id 'Bad_ID'"),

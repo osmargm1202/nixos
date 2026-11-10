@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Native Origin package, isolated from the system package/kernel pin.
+    nixpkgs-browser.url = "github:NixOS/nixpkgs/ac588ef1c914865dad517b337ea0eb9694a4021c";
     # Track current Tailscale releases without moving the system off stable.
     nixpkgs-tailscale.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts = {
@@ -126,7 +128,7 @@
             inherit system;
             config.allowUnfree = true;
           };
-          braveOrigin = pkgs.callPackage ./nixos/apps/brave-origin.nix { };
+          braveOrigin = import ./nixos/apps/brave-origin.nix { inherit inputs system; };
           engram = pkgs.callPackage ./nixos/apps/engram.nix { };
           orgmPackages = import ./nixos/orgm/packages.nix { inherit pkgs; };
           fingerprintPackages = import ./nixos/hardware/fingerprint/synatudor.nix { inherit pkgs; };

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Exercise Firefox fallback regardless of the browser installed on the test host.
+export ORGM_BROWSER_COMMAND=orgm-browser-not-installed-in-fixture
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER="${FIREFOX_OPEN_TAB_HELPER:-$ROOT/dotfiles/config/users/osmarg/programs/webapps/.local/bin/firefox-open-tab}"

@@ -3,7 +3,8 @@
 { config, pkgs, lib, userName ? "osmarg", profileName ? "hyprland", ... }:
 let
   hostName = config.networking.hostName;
-  htmlDesktop = if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop";
+  browserDesktop = if config.orgm.browser.enable then "brave-origin.desktop" else "firefox.desktop";
+  htmlDesktop = if config.orgm.chromium.enable then "chromium-browser.desktop" else browserDesktop;
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);
@@ -151,8 +152,8 @@ in {
         ${lib.optionalString (profileName != "terminal") ''
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${htmlDesktop} text/html
           $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${htmlDesktop} application/xhtml+xml
-          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/http
-          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default firefox.desktop x-scheme-handler/https
+          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${browserDesktop} x-scheme-handler/http
+          $DRY_RUN_CMD ${pkgs.xdg-utils}/bin/xdg-mime default ${browserDesktop} x-scheme-handler/https
         ''}
         ${lib.concatStringsSep "\n" (lib.mapAttrsToList (mime: handlers:
           lib.optionalString (handlers != [ ])

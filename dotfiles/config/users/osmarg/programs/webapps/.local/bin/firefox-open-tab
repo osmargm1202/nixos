@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if command -v "${ORGM_BROWSER_COMMAND:-orgm-browser}" >/dev/null 2>&1; then
+  exec "${ORGM_BROWSER_COMMAND:-orgm-browser}" "$@"
+fi
+
 notify() {
   command -v notify-send >/dev/null 2>&1 &&
     notify-send "Firefox" "$1" 2>/dev/null || true

@@ -142,7 +142,10 @@ in
   environment.etc."orgm/desktop-profile".text = lib.mkDefault "normal\n";
 
   # Chromium is the browser backend for selected web applications.
-  orgm.chromium.enable = hasProgram "webapps";
+  orgm.chromium.enable = hasProgram "webapps" && !config.orgm.browser.enable;
+  orgm.browser.enable = hasProgram "webapps" && userName == "osmarg"
+    && builtins.elem config.networking.hostName [ "x13" "orgm" ]
+    && builtins.elem profileName [ "hyprland" "gnome" ];
 
   # The Logitech RGB daemon is personal hardware integration, not a desktop
   # baseline. It stays off for users that did not select it.
@@ -173,6 +176,7 @@ in
       ./common-dotfiles.nix
       ./tmux
       ./apps/chromium.nix
+      ./apps/browser.nix
       ./apps/firefox/firefox.nix
       ./apps/webapps.nix
       ./apps/rmatrix.nix

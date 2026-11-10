@@ -43,7 +43,7 @@ in {
   gnome = c.services.desktopManager.gnome.enable;
   session = c.services.displayManager.defaultSession;
   goa = c.services.gnome.gnome-online-accounts.enable;
-  firefox = c.programs.firefox.enable;
+  browser = c.orgm.browser.enable;
   printing = c.services.printing.enable;
   ai = c.programs.nix-ld.enable;
   graphics = c.hardware.graphics.enable && c.hardware.graphics.enable32Bit;
@@ -97,7 +97,7 @@ assert {"org.libretro.RetroArch", "org.DolphinEmu.dolphin-emu", "org.duckstation
 assert not c["systemExtensions"]
 assert sorted(c["userExtensions"]) == sorted(c["expectedExtensions"])
 assert not c["enabledExtensions"]
-assert all(c[k] for k in ("gnome", "goa", "firefox", "printing", "ai", "graphics", "steam", "deskflow", "zram", "stockKernel", "efi", "mutable", "credentialsUnset"))
+assert all(c[k] for k in ("gnome", "goa", "browser", "printing", "ai", "graphics", "steam", "deskflow", "zram", "stockKernel", "efi", "mutable", "credentialsUnset"))
 assert c["session"] == "gnome"
 assert {"nautilus", "gnome-text-editor", "loupe", "evince", "gnome-console"} <= set(c["packages"])
 assert {"kitty", "orgmai"} <= set(c["packages"] + c["hmPackages"])

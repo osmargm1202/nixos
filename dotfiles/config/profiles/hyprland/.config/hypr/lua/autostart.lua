@@ -4,8 +4,8 @@ local exec_once = {
   "hypr-tray-applets",
   "orgm-hyprland-session",
   "hyprpolkitagent",
-  -- Firefox's declarative startup policy restores the previous session.
-  "firefox",
+  -- The default browser restores its previous session.
+  "sh -c 'if command -v orgm-browser >/dev/null 2>&1; then exec orgm-browser; else exec firefox; fi'",
   "sh -lc 'mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts\"; hypr-battery-alerts daemon >>\"${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log\" 2>&1'",
 }
 
