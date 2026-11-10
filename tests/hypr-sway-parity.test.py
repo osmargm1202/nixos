@@ -93,6 +93,29 @@ class Backend(unittest.TestCase):
         with patch.dict(os.environ, XDG_STATE_HOME='/tmp/private-state'):
             self.assertEqual(shell['wallpaper_state'](), Path('/tmp/private-state/hypr-wallpaper/current'))
 
+    def test_screenshots_open_editor_with_captured_png(self):
+        entry = ROOT/'dotfiles/config/profiles/hyprland/.local/bin/orgm-hyprland'
+        for mode, capture_mode in [('region', 'region'), ('full', 'output'), ('window', 'window')]:
+            with self.subTest(mode=mode):
+                shell = runpy.run_path(str(entry))
+                with patch.object(subprocess, 'run', return_value=
+                        subprocess.CompletedProcess([], 0, b'PNG image')) as run:
+                    shell['main'](['screenshot', mode])
+                self.assertEqual(run.call_args_list, [
+                    unittest.mock.call(('hyprshot', '-m', capture_mode, '--raw'), check=True, capture_output=True),
+                    unittest.mock.call(('swappy', '-f', '-'), check=True, input=b'PNG image')])
+
+    def test_cancelled_or_failed_capture_does_not_open_editor(self):
+        entry = ROOT/'dotfiles/config/profiles/hyprland/.local/bin/orgm-hyprland'
+        shell = runpy.run_path(str(entry))
+        with patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'')) as run:
+            shell['main'](['screenshot', 'region'])
+            self.assertEqual(run.call_count, 1)
+        with patch.object(subprocess, 'run', side_effect=subprocess.CalledProcessError(1, 'hyprshot')) as run:
+            with self.assertRaises(subprocess.CalledProcessError):
+                shell['main'](['screenshot', 'region'])
+            self.assertEqual(run.call_count, 1)
+
     def test_waybar_matches_sway_without_sway_ipc(self):
         source = ROOT/'dotfiles/config/profiles/sway/.config/waybar/config'
         target = ROOT/'dotfiles/config/users/osmarg/profiles/hyprland/.config/waybar-hypr/config'

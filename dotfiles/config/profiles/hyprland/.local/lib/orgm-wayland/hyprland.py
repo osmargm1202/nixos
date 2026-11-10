@@ -157,7 +157,10 @@ def install_shell(namespace, backend=None):
             mode = args[1] if len(args) > 1 else 'region'
             if mode not in ('region', 'full', 'window'):
                 raise ValueError('Modo de captura no válido')
-            run('hyprshot', '-m', {'region': 'region', 'full': 'output', 'window': 'window'}[mode], '--clipboard-only')
+            image = run('hyprshot', '-m', {'region': 'region', 'full': 'output', 'window': 'window'}[mode],
+                        '--raw', capture_output=True).stdout
+            if image:
+                run('swappy', '-f', '-', input=image)
         elif action in ('appearance', 'wallpaper-restore'):
             wallpaper()
         else:

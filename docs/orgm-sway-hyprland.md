@@ -29,7 +29,12 @@ Hyprland para clientes, monitores, foco, workspaces, fondos y capturas.
 
 El selector de ventanas Hyprland usa **iconos, no miniaturas capturadas**:
 no se reemplaza una captura de ventana por un recorte del escritorio que pueda
-mostrar otra ventana. La captura interactiva usa Hyprshot.
+mostrar otra ventana. La captura interactiva usa Hyprshot y abre Swappy para
+editar antes de compartir: `Print` o `Alt+Print` seleccionan un área;
+`Ctrl+Print` selecciona un monitor. En Swappy, `Ctrl+C` copia la imagen editada
+y `Ctrl+S` la guarda en `~/Pictures/Screenshots`. `Esc` cancela la selección
+sin abrir el editor. La captura original no se copia al portapapeles ni se
+guarda automáticamente.
 
 ## Widgets
 

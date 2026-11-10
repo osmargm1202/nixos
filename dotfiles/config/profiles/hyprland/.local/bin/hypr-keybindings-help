@@ -73,8 +73,8 @@ entries() {
       entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
       entry 'Win+V' 'Clipboard' 'cliphist + rofi'
       entry 'Win+Ctrl+.' 'Símbolos, emoji e iconos Nerd Font' 'rofi-symbols'
-      entry 'Print' 'Screenshot área' 'grim/slurp/swappy'
-      entry 'Ctrl+Print' 'Screenshot pantalla' 'grim/swappy'
+      entry 'Print' 'Capturar y editar área' 'hyprshot/swappy'
+      entry 'Ctrl+Print' 'Capturar y editar pantalla' 'hyprshot/swappy'
       ;;
     windows)
       entry 'Win+Tab' 'Última ventana' 'focus last'
