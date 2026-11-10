@@ -2,7 +2,7 @@
 # Install the portable ORGM Bash and tmux configuration for one user.
 set -Eeuo pipefail
 
-BASE_URL=${ORGM_DOTFILES_BASE_URL:-https://raw.githubusercontent.com/osmargm1202/nixos/master}
+BASE_URL=${ORGM_DOTFILES_BASE_URL:-https://raw.githubusercontent.com/osmargm1202/nixos/main}
 SOURCE_DIR=
 TARGET_HOME=${HOME:?HOME must be set}
 DRY_RUN=0
@@ -64,7 +64,7 @@ Options:
   --help         Show this help.
 
 Remote source defaults to:
-  https://raw.githubusercontent.com/osmargm1202/nixos/master
+  https://raw.githubusercontent.com/osmargm1202/nixos/main
 Override it with ORGM_DOTFILES_BASE_URL. Downloads use HTTPS and fail closed.
 EOF
 }

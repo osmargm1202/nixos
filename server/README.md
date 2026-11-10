@@ -284,14 +284,14 @@ Eliminar un known host desde ese selector también limpia su historial reciente.
 
 ## Publicación en custom.or-gm.com/install
 
-Primero publicar estos cambios en `osmargm1202/nixos`, rama `master`.
+Primero publicar estos cambios en `osmargm1202/nixos`, rama `main`.
 Después crear DNS proxied y una regla de redirect HTTPS exacta:
 
 ```text
 Host: custom.or-gm.com
 Path: /install
 Status: 302 o 307
-Location: https://raw.githubusercontent.com/osmargm1202/nixos/master/server/install.sh
+Location: https://raw.githubusercontent.com/osmargm1202/nixos/main/server/install.sh
 ```
 
 La regla no debe reenviar los otros paths a servicios privados. DNS solo no hace
@@ -306,7 +306,7 @@ bash /tmp/orgm-dotfiles-install.sh --dry-run --no-plugins
 bash /tmp/orgm-dotfiles-install.sh --packages
 ```
 
-Por defecto los dotfiles se obtienen de `master`. Para una revisión inmutable,
+Por defecto los dotfiles se obtienen de `main`. Para una revisión inmutable,
 usar el mismo commit tanto para el script como para sus recursos:
 
 ```bash

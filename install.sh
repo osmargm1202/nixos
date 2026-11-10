@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ORGMOS Installer
-# curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh | bash
+# curl -fsSL https://raw.githubusercontent.com/osmargm1202/nixos/main/install.sh | bash
 set -euo pipefail
 
-REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos/master}"
+REPO_URL="${ORGMOS_REPO_URL:-github:osmargm1202/nixos/main}"
 NIXOS_DIR="${ORGMOS_NIXOS_DIR:-/etc/nixos}"
 NIXOS_DIR_EXPLICIT=false
 if [ -n "${ORGMOS_NIXOS_DIR+x}" ]; then

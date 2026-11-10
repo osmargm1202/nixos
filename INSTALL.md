@@ -11,14 +11,14 @@ Para Ubuntu/Debian o Arch y solo dotfiles, usar `server/install.sh`.
 
 ## Publicación
 
-Publicar el instalador y los módulos actuales del repositorio en `master` antes
+Publicar el instalador y los módulos actuales del repositorio en `main` antes
 de probarlo desde otro equipo. Configurar una redirección HTTPS exacta:
 
 ```text
 Host: nixos.or-gm.com
 Path: /install
 Status: 302 o 307
-Location: https://raw.githubusercontent.com/osmargm1202/nixos/master/install.sh
+Location: https://raw.githubusercontent.com/osmargm1202/nixos/main/install.sh
 ```
 
 Verificar que la descarga final devuelve HTTP 200 y contiene Bash:

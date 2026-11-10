@@ -671,3 +671,21 @@ active, zero failed system/user units. Desktop/lock/shared image is
 HTTPS default remains brave-origin.desktop. The greeter user had no active
 D-Bus socket for a live manager check; the next greeter start reads the verified
 installed instance drop-in. Physical login appearance pending. No publishing.
+
+## 2026-11-10: integrated and published main branch
+
+User authorized commits, push, merge into main and a single primary branch.
+Origin commit 0333f62, existing X13 webapp/GNOME history through 4473c7d,
+and deployed X13 desktop/menus/login settings (082b45a) are integrated on main.
+Remote master input updates through c4f7ec2 were retained. GitHub default is
+main and remote master was removed only after ancestry verification. The
+original worktrees and unfinished printer/other branches are preserved.
+Main is now the canonical integrated source; earlier statements requiring
+x13-gnome-followups instead of the original root are historical. No new NH
+activation was performed for Git consolidation. Both integrated system builds
+and focused Origin, Chromium fallback, GNOME menus, X13 normal/server,
+native-desktop, wallpaper/resource and ThinkPad contracts passed. The wallpaper
+runtime check initially ran before its parallel build finished; rerun after
+successful build passed without changing production code. Installer defaults
+and current installation guides now reference main. Physical login/shortcut
+acceptance remains separate from configuration and fixture verification.
