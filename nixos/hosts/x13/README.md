@@ -5,12 +5,18 @@ It starts with the shared GNOME profile and Osmarg's applications, without
 Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
 the `server` specialisation provides headless SSH rescue.
 
-## Local agent handoff
+## GNOME follow-ups and local handoff
 
-Read [PENDING.md](PENDING.md) before resuming development. It records verified
-boots, the repaired EFI identity, remaining application/hardware work, Git state
-and recovery precautions. The exact requirements and evidence are in
-[`odd/tasks/x13-bootstrap.md`](../../../odd/tasks/x13-bootstrap.md).
+Read [PENDING.md](PENDING.md) and the
+[follow-up tracker](../../../odd/tasks/x13-gnome-followups.md) before operating on
+this laptop. New [shortcuts](../../../docs/x13-shortcuts.md) and
+[SLC/ORGM webapps](../../../docs/x13-webapps.md) passed independent verification
+and full builds on both machines, producing the same system closure. They are
+applied on X13 as generation 3 via `nh os switch`; Home Manager and both background
+services are active, with no failed system/user units and the live GNOME Wayland
+session preserved. First-install shortcut discovery requires the next login;
+physical shortcut acceptance and authenticated webapp use are not claimed.
+Camera permissions and automatic Tailscale authentication remain unchanged.
 
 ## Install and rebuild
 
@@ -102,6 +108,23 @@ remain separate acceptance steps.
 | Applications | Existing Osmarg Flatpaks, integration services, printing and AI |
 | Hardware | Stock NixOS kernel, early i915, Intel microcode, SOF firmware |
 
+### Shared Brother printing support
+
+The existing [print/scan module](../../print/printer.nix), already imported by
+GNOME, now also selects `brlaser` (GPL, supported Brother laser models) and the
+legacy generic BrGenML1 pair `brgenml1lpr`/`brgenml1cupswrapper`. BrGenML1 is
+limited to x86 because its vendor binaries are i386, despite broad Linux package
+metadata; its LPR component is unfree redistributable and its CUPS wrapper is GPL.
+These drivers do not cover every Brother model. `brscan4`/`brscan5` are scanner
+backends, not printing drivers.
+
+The six existing drivers, SANE backends, Avahi/mDNS, IPP-over-USB and system-owned
+printer/scanner GUIs remain selected. CUPS retains localhost-only, nonshared,
+standard authentication and its default closed firewall policy. No queue, device
+URI or default printer is declared. This is source configuration only: the new
+Brother selection has not been activated on X13; deployment awaits connectivity,
+and physical printing/scanning still requires device-specific testing.
+
 User extension packaging does not enable a new extension selection. The final
 extension list, personal shortcuts and touch-oriented Quickshell/Hyprland/Sway
 experiment remain separate decisions. Modern emulators may exceed this GPU's
@@ -129,3 +152,14 @@ Run `python3 tests/x13.test.py` to evaluate the host contract, then build
 After first boot, verify LUKS unlocking, Wi-Fi, audio/microphone, camera capture,
 touch, suspend/resume, printer discovery, Firefox, Flatpak installation and
 Steam. USB/input enumeration alone does not prove these features work.
+
+## Native screen locking
+
+X13 selects GDM for GNOME’s native Lock action and Super+L. Home Manager
+enables screen locking and declares the shortcut; Server disables GDM.
+Nautilus remains the file manager and X13 no longer selects Thunar.
+
+For the initial SDDM-to-GDM migration, prepare the next boot with
+`nh os boot /home/osmarg/Hobby/nixos -H x13 --no-specialisation`, then reboot
+when ready. This preserves the current graphical session until reboot.
+After boot, physically verify the Lock action, Super+L and password unlock.

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.x13-focus-shortcuts" path="/org/gnome/shell/extensions/x13-focus-shortcuts/">
+    <key name="console" type="as"><default>['&lt;Super&gt;Return']</default><summary>Focus or open Console</summary></key>
+    <key name="firefox" type="as"><default>['&lt;Super&gt;w']</default><summary>Focus or open Firefox</summary></key>
+    <key name="files" type="as"><default>['&lt;Super&gt;e']</default><summary>Focus or open Files</summary></key>
+  </schema>
+</schemalist>

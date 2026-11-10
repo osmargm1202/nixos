@@ -27,8 +27,8 @@ T3 | S2,S5-S7,S9 | independent verifier + parent assessment | done | Same verifi
 T4 | S8 | parent deployment | done | Controller and X13 full builds exactrg664, source11files guarded/backedup, complete dry-run onlyHMgrrestart, nh os switch job10exit0 and postchecksjob11exit0. Generation3, liveGNOMEWayland preserved, HM/SDDM/Tailscale/Syncthing active, six menus/masks/nativeclose verified, no failed system/user units.
 T5 | S1,S3,S4,S8 | parent handoff | done | PENDING/AGENTS/README and original-tree mirror updated, structural links/credential-free mirrorchecks and git diff --check PASS. Activation evidence saved in final documentation work-unit after8227b5b; camera/auth and physical first-login acceptance explicitly remain separate blockers.
 
-T6 | S10-S11 | bounded security writer | pending | GDM X13-only authorized, implementation not started. Prepare/test source offline after target-disambiguation/security stop; preserve printing/currentapps, nativeSuperL and ServerGDMdisable. No clipboard/printing-HM changes forX13; riskitem2 independent verification required.
-T7 | S10-S11 | parent deployment and real lock acceptance | blocked | X13 is not connected; .63 is a DIFFERENT machine. Await actualX13 address/connectivity. Install GDM for nextboot only without killing live session, then actual login/lock/unlock proof with human.
+T6 | S10-S12 | inline implementation | done | X13-only GDM, native lock/Super+L and no Thunar; configuration tests and both full builds passed. See 2026-11-07 evidence below.
+T7 | S10-S12 | deployment and real lock acceptance | pending acceptance | Generation 4 installed with nh os boot on verified X13 .67, session preserved. Await human reboot/login/lock/unlock proof.
 
 ## Log
 
@@ -84,3 +84,42 @@ GDM Wayland login session13 observed. Parent disclosed the interruption. GDM
 D-Bus, ScreenSaver GetActive, dconf Super+L and zero failed units verified;
 physical lock/password unlock pending. See latest PENDING entry for details.
 Both deployed source directories lack Git metadata, no Git mutation/publish.
+
+Native-menus follow-up: user "DALE CON LA ADPATACION" authorized the proposed
+GTK adaptation. Implemented and applied via NH switch on X13 .67 as 8laz,
+with exact unchanged display-manager unit/PID and existing Wayland session
+preserved. Fourteen guarded source files and nine mutable script copies updated
+with backups. Existing GNOME Clipboard Indicator retained; bridge requires next
+logout/login, no second history collector. Package/dialog/regression/system
+checks passed; actual GTK input/list/cancel tested on isolated Xvfb. See latest
+PENDING entry for scope, backup path, evidence and physical acceptance limits.
+No unrelated printing changes deployed, no publishing or forced logout.
+
+## 2026-11-10: Origin migration
+
+User authorized native Brave Origin/shared-profile migration and NH application
+on X13 and ORGM. Native 1.99.55 package, separate Wayland desktop identities,
+shared session and exact dock launch/focus validated in real isolated fixtures;
+both NH switches succeeded without ending the graphical sessions. Browser data
+preserved, old windows left open, no measured RAM claim. Full deployment,
+source/backups and next-login X13 extension limits are in PENDING.md's matching
+entry. No unrelated printing deployment or publishing.
+
+2026-11-10 new scope: user authorizes the recommended X13-only cleanup (including
+GNOME Maps) and a GNOME microphone recorder, retaining Snapshot for camera.
+Browser/webapp work belongs to another agent. Add camera/microphone applications
+to OTHER Osmarg profiles in a FUTURE task only; explicitly deferred by user.
+See PENDING.md's new cross-profile handoff for selected packages and boundaries.
+
+X13 cleanup applied as slmm closure via NH switch; same Wayland session/GDM PID
+preserved. Snapshot retained and Sound Recorder added. Focused X13 checks and
+Normal/Server builds pass; broad historical-host eval unavailable on private
+orgm-amux input, not claimed passing. No browser/webapp source touched or Flatpak
+uninstalled. Cross-profile camera/recorder rollout stays pending per user.
+Full evidence and source/backup paths in latest PENDING.md entry.
+
+2026-11-10 shared-login-wallpaper follow-up: Origin/webapp improvements confirmed
+present in the running cleanup closure. New X13 login-background.nix uses one
+Amber-dark image for desktop/lock/GDM, with an immutable GDM-instance-only GLib
+CSS overlay. Build and real Gio lookup tests pass. No browser/webapp changes.
+Physical GDM appearance awaits next voluntary logout/reboot; see PENDING.md.

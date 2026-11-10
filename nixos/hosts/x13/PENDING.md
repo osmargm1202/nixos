@@ -396,3 +396,278 @@ session/Syncthing active, zero failed system/user units. Shortcut login helper
 Result=success/ExecMainStatus=0. Actual keyboard lock/password unlock remain
 human acceptance; do not claim physically tested. Reboot is no longer required
 to start GDM, since it is now actually running after the live switch.
+
+## 2026-11-07: GNOME native application menus applied
+
+User explicitly accepted adapting Rofi-dependent apps to native GTK dialogs.
+Fresh pinned SSH confirmed X13 .67 running cb79 before work. Source remains
+in `.worktrees/x13-gnome-followups`, preserving unrelated Starship/printing drafts.
+GNOME now packages Zenity, orgm-menu, orgm-clipboard-menu, Python and playerctl.
+Rofi remains installed for compatibility; adapted GNOME paths do not invoke it.
+
+Updated Osmarg scripts: Firefox URL entry; windows-rdp remote selection/free-text
+and masked password entry; bookmark selection/deletion; visual-profile menus;
+video timer. Other desktops keep Rofi. Native GNOME visual-profile operations use
+GSettings wallpaper URIs and interface settings instead of i3 commands. Video
+timer keeps GNOME's current workspace and uses playerctl. Bookmark typing copies
+exact text with wl-copy and asks the user to paste with Ctrl+V; no wtype injection.
+
+GNOME Clipboard Indicator 71 was verified installed, enabled, state1/error empty.
+No reply arrived to the optional history preference, so the stated recommended
+assumption was applied: preserve this existing native history, add no collector.
+The three legacy clipboard menu scripts route to its native panel menu through a
+narrow ShowClipboard D-Bus method added to the existing X13 shortcut extension.
+The method exposes no history data, accepts no arbitrary commands and refuses
+locked/greeter sessions. It unexports on disable. The running extension still
+uses its old code: the new bridge requires the user's next logout/login. Until
+then the helper reports using Clipboard Indicator from the top bar. No logout,
+Shell restart, unsafe Eval, real clipboard/history inspection or destructive
+clipboard action was invoked. Native deletion/selection happen in that menu.
+
+Checks passed: tests/gnome-menus.test.py (selection/index, duplicate/tab labels,
+no values in argv, password masking, cancellation/invalid index, exact bookmark
+copy and native history routing, mocked GNOME visual operations); extended
+x13-focus-shortcuts Node tests (D-Bus lifecycle/missing extension/locked guard);
+existing firefox-open-tab, windows-rdp-client and visual-profiles regressions;
+x13 and x13-server evaluations/complete derivations, git diff --check. Actual
+GTK entry/list/cancel also passed in isolated Xvfb using the selected Zenity4.2.2.
+The GUI fixture needed viewable-window focus and corrected keyboard selection;
+these harness issues were resolved, with no effect on the user's real display.
+Normal and Server full builds completed locally and on X13 (local build retained
+unrelated existing printer edits; those edits were not deployed).
+
+Fourteen source files and nine existing mutable runtime scripts passed original
+hash/symlink guards and were backed up before task-only replacement. A follow-up
+bookmark correction preserves exact text without a trailing newline, also backed
+up under the same stage. Backups and manifest remain in
+`/home/osmarg/Hobby/nixos/.x13-deploy/20261107-gnome-menus`.
+Target-local build and user-run `nh os switch` succeeded; running closure:
+`/nix/store/8lazvh0nxb39ycnwwrp4a681rkzk3iq0-nixos-system-x13-gnome`.
+An exact display-manager unit comparison preceded activation; its actual MainPID
+and active user Wayland session13 survived the switch. Home Manager, GDM,
+Tailscale, user graphical target and Syncthing active; zero failed system/user
+units. New package executables and updated runtime scripts verified. No reboot,
+new Git repository, commit or publishing. Physical menu/endpoint/password use and
+native clipboard bridge activation after next login remain human acceptance.
+
+## 2026-11-10: read-only GNOME duplication audit
+
+User asked to review duplicate GNOME components before further configuration,
+starting with the mounting tray. No application/service/settings changes or
+rebuild were performed. Fresh pinned SSH to osmarg@10.0.0.67 verified hostname
+X13, same running 8laz closure and active Wayland session13. Original root is
+now at 2bbf6ba with unrelated Hyprland edits; do not treat its older X13 source
+as the deployed GNOME configuration. The follow-ups worktree remains dirty at
+1689dc7 with the task changes from prior turns. All unrelated edits preserved.
+
+Confirmed active redundancy: systemd user udiskie.service is running with
+--automount --notify --tray while GNOME media-handling automount/automount-open
+are both true and its GVfs UDisks2 monitor is active. Removable Drive Menu is
+also enabled, providing another disk menu. Blueman applet/tray processes and
+blueman.desktop autostart are present alongside GNOME's native Bluetooth UI.
+Recommended future cleanup: disable udiskie and Blueman only in X13 GNOME,
+retaining UDisks2, BlueZ, GVfs (including MTP/AFC) and native GNOME interfaces.
+Do not implement this recommendation until it becomes the requested task.
+
+Installed overlap, verified through actual desktop entries/commands/Flatpak
+inventory: Rofi remains installed after GTK adaptation; Epiphany alongside
+Firefox and the Chromium webapp engine; Totem and Showtime alongside preferred
+VLC; Evince and Papers alongside PDFCraft; Simple Scan installed natively and
+as org.gnome.SimpleScan Flatpak; GNOME Connections alongside Remmina and the
+existing remote helper; GNOME Maps alongside selected Google Maps webapp.
+GNOME Music and Decibels are optional extra local-audio apps, not equivalent
+to Spotify's streaming service. Native Discord and Discord Flatpak coexist;
+keep Discord, but its packaging choice needs a decision before deduplication.
+
+Preference exclusions: user explicitly wanted both GNOME Console and Kitty;
+Chromium supports chosen isolated webapps; Firefox/VLC/Thunderbird/ArtCraft,
+webapps, KDE Connect, gaming/Flatpak catalogs are personal selections. mpv is
+used by the YouTube Music CLI and is not a free-standing cleanup candidate.
+Printing/HP utilities have specific functions and drivers must be retained.
+
+False positives checked: both System Monitor desktop files resolve to the
+same package; one is OnlyShowIn=KDE and the other NotShowIn=KDE, so GNOME does
+not have a duplicate monitor. GTK and GNOME portals cooperate; GNOME keyring,
+Seahorse, GVfs monitors, UDisks2/BlueZ are infrastructure, not duplicate tray
+apps. No cliphist/dunst/swaync commands or competing processes were found;
+Clipboard Indicator remains the single enabled history. Syncthing/Tailscale
+tray autostart masks are still Hidden=true while background services remain.
+Power-profiles-daemon active; tlp/auto-cpufreq inactive.
+
+Effective MIME defaults observed: directory Nautilus; PDF PDFCraft; audio/video
+VLC; text WordCraft. Do not change these as an accidental consequence of a
+future package cleanup. Actual Flatpak inventory now includes ArtCraft and its
+apps (installed, not authenticated/runtime acceptance); earlier download notes
+are historical, and this audit did not validate the full emulator/catalog use.
+
+## 2026-11-10: Brave Origin shared-profile webapps
+
+User authorized checking native nixpkgs support, implementation and NH switch
+on X13 and ORGM. Official release-26.05 PR #584546 merged 2026-11-07 adds
+brave-origin 1.99.55. Existing system pin lacks it; new nixpkgs-browser input
+is fixed at ac588ef1c914865dad517b337ea0eb9694a4021c, without updating the
+system/kernel or other locked inputs. The old local beta builder now delegates
+to the official package. Enablement is limited to Osmarg's canonical X13/GNOME
+and ORGM/Hyprland configurations; other hosts/profiles retain their backend.
+
+Current Origin supports distinct URL-app identities in a shared Default
+profile: brave-<host>_<path-with-slashes-replaced>-Default. Launchers use
+--app=URL, --profile-directory=Default and native Wayland; desktop filenames
+and StartupWMClass match the observed identity. No per-app user-data-dir or
+disable-sync flag for Origin. Existing Chromium profile directories remain
+untouched. No cookies/passwords were copied between browser profiles.
+
+Verified real fixtures: two apps share one browser process and a loopback
+session cookie; actual nwg-dock clicks focus exact windows across workspaces
+and reopen the correct closed app. Isolated GNOME Shell 50 on X13 also
+associates two shared-process app windows with two separate desktop IDs.
+These are real fixture runtime tests, not physical user acceptance of every
+selected endpoint. Profile/pin migration tests and unchanged Chromium
+Hyprland/i3 regressions passed. Firefox fallback/helper and X13 shortcut
+callback tests passed; full builds completed on controller and target.
+
+NH switch completed on both hosts. ORGM running
+/nix/store/qiwmx9qm5zrv8hwpric2r1hlrxs8rgrr-nixos-system-orgm-hyprland;
+X13 running /nix/store/f5bcn1cqgng36v8c66v0jsvrqa11q7l1-nixos-system-x13-gnome.
+Exact display-manager unit comparisons passed before activation. X13 kept
+GDM MainPID25927 and active Wayland session13. Both hosts' Home Manager and
+display-manager are active with no failed system/user units. Origin executable,
+HTTPS MIME default and vertical-tabs setting verified; Origin opened in both
+actual sessions. No logout/reboot or closure of old browser windows.
+
+GNOME favorites and nwg pins migrated with backups; duplicate Firefox/Chromium
+browser pins collapse into Origin while unrelated entries/order survive.
+Existing Origin preferences are preserved except the requested vertical-tabs
+and free Linux-tier choices, with private same-profile backups; never written
+while SingletonLock is present. No profile data printed in logs or notes.
+Guarded mutable Firefox helper updates preserve its GNOME dialogs; ORGM's
+runtime menu/autostart patches preserve existing local Obsidian/other startup
+additions rather than replacing them with the older repository snapshots.
+
+X13 source/runtime backups: NH_FLAKE/.x13-deploy/20261110-origin, with original
+source hash manifest. Only scoped browser files were transferred; unrelated
+printer/clipboard/other changes were preserved. X13 canonical local source
+remains .worktrees/x13-gnome-followups, not the older original-root X13 files.
+ORGM mutable-file/pin backups: ~/.local/state/orgm-origin. The X13 focus
+extension's source now targets brave-origin.desktop; its already-loaded code
+can retain Firefox until next GNOME login. No Shell restart/Eval was used.
+User acceptance of current GNOME shortcut behavior is separate from installed
+source. Old browser windows remain open: closing them voluntarily is needed
+to reclaim their RAM. No RAM saving percentage was measured. No publishing.
+
+## Pending for another agent: camera and microphone recorder across Osmarg profiles
+
+User explicitly requested GNOME camera and microphone recording applications
+for the other `osmarg` profiles, then limited the CURRENT implementation to X13:
+"pero trabaja solo en x13 y deja en memoria local pendiente esto para que cuando
+otro agente lo trabaje lo agregue". Keep this cross-profile rollout PENDING.
+
+Chosen X13 applications: `pkgs.snapshot` (GNOME Camera, photos/video; already
+installed on X13 and now explicitly retained) and `pkgs.gnome-sound-recorder`
+(GNOME Sound Recorder / Vocalis, microphone recording; selected locked version
+43.beta). The other-profile agent should add these to Osmarg's shared desktop
+application selection, with proper desktop entries and required PipeWire/portal
+integration for each compositor, without enabling a GNOME session or applying
+X13's desktop cleanup to other hosts/users. Evaluate actual selected package
+versions again at that time. Do not install two alternative camera/recorders.
+No camera or microphone capture was performed by this task; physical runtime
+acceptance and the older X13 camera permission complaint remain unverified.
+Never weaken camera/microphone privacy guards as a package-install workaround.
+
+The user explicitly states another agent owns the browser/webapp work. Do not
+edit, restore or redeploy that agent's flake/browser/webapp/shared-source changes.
+Current X13 cleanup is isolated in `nixos/hosts/x13/native-desktop.nix`, imported
+only by the X13 GNOME wrapper, in `.worktrees/x13-gnome-followups`. It does not
+remove browser packages/Rofi or choose a Discord package format. The original
+working tree and this worktree both now have concurrent browser-agent edits;
+inspect Git status and preserve them before any future source delivery.
+
+## 2026-11-10: X13 native-desktop cleanup activated
+
+Only two task-owned source files were transferred with baseline hashes/backups:
+X13 gnome.nix import plus new native-desktop.nix. Stage/backup path:
+`/home/osmarg/Hobby/nixos/.x13-deploy/20261110-native-cleanup`.
+The module filters final system and HM package lists only in X13, avoiding edits
+to shared/browser/webapp files under concurrent development. Removed from X13
+profiles: udiskie, Blueman, GNOME Maps/Connections, Totem/Showtime, Papers and
+native Simple Scan. Evince remains as native PDF fallback; installed preferred
+Simple Scan Flatpak, VLC, Remmina, PDFCraft and other personal apps retained.
+Browser packages/Rofi and the native-vs-Flatpak Discord choice remain outside
+this cleanup, respecting concurrent work/preferences. No Flatpak was uninstalled.
+
+Snapshot50.0 explicitly retained, GNOME Sound Recorder43.beta newly added.
+Recorder --help passed without microphone capture; desktop entries and runtime
+hardware acceptance must be distinguished. No camera permissions, portal guards,
+biometric/authentication or default file handlers were intentionally changed.
+
+X13 Normal and Server full builds passed on target. New focused test
+`tests/x13-native-desktop.test.py` passed on target, checking package exclusion,
+required apps, GDM/Server policy, UDisks2/BlueZ/GVfs/printing/SANE and preferred
+Flatpaks. Module ownership and source import are X13-only. An initial attempt to
+evaluate module declarations across ALL historical hosts hit an unavailable
+private orgm-amux Git dependency (lenovo-server); no credentials/fetch bypass
+attempted. Broad cross-host evaluation is NOT claimed green. The test was scoped
+to the requested X13 plus a structural sole-import check; this passed.
+
+Target-local user-run `nh os switch` succeeded. Running closure:
+`/nix/store/slmmrangfjymg95lc5d5xryl99drv7wp-nixos-system-x13-gnome`.
+Display-manager unit exact-match preflight, actual MainPID and existing active
+Wayland session13 all preserved. Home Manager, GDM, UDisks2 and Bluetooth active;
+user graphical target active; udiskie inactive/masked and no failed system/user
+units. Blueman's already-running UI survived package removal; owned applet/tray
+processes were subsequently terminated (not bluetoothd). No reboot/logout.
+
+The other Osmarg profiles' camera/microphone-recorder rollout remains pending
+as requested in the preceding handoff. No commit/push/merge in this task.
+
+## 2026-11-10: shared desktop/login wallpaper implementation
+
+User asked whether Origin/webapp improvements survived the cleanup and requested
+GDM share the desktop wallpaper instead of gray. Fresh pinned SSH verified the
+running slmm closure has brave-origin, HTTPS default brave-origin.desktop and
+installed brave-<host>_<path>-Default webapp desktop identities. Thus the prior
+browser-agent deployment is included; no browser/webapp source was edited here.
+
+Desktop effective wallpaper before this task: GNOME Amber light/dark JXL files,
+prefer-dark active. New X13-only login-background.nix imports from the X13 GNOME
+wrapper and declares Amber dark once as the shared desktop/screensaver/GDM image.
+The existing public GNOME background is converted losslessly to PNG at Nix build
+time for Shell CSS compatibility; no personal photos/private files are copied.
+A single Nix binding is the source of truth. Changing wallpaper only through
+GNOME Settings does NOT dynamically synchronize GDM: change the shared Nix image
+and rebuild to change all three. No privileged wallpaper-watching daemon added.
+
+GNOME50.5 normally paints #lockDialogGroup gray. The task preserves stock CSS
+and appends only its background properties to dark/light CSS through GLib's
+G_RESOURCE_OVERLAYS. A systemd user drop-in targets ONLY org.gnome.Shell@gdm,
+never org.gnome.Shell@user. High-contrast resources stay stock. No Shell package
+rebuild/patch, extension requirement, PAM/login logic, GDM manager environment
+or authentication gate changes. restartIfChanged=false preserves a live greeter.
+The service's generated environment is forced empty to avoid overriding the
+inherited greeter PATH; only the resource overlay and normal locale metadata
+remain in the generated drop-in.
+
+Source delivery changed only X13 gnome.nix plus new login-background.nix, with
+baseline guards/backups under NH_FLAKE/.x13-deploy/20261110-login-background.
+Normal/Server full builds passed on X13. New tests/x13-login-background.test.py
+passed on target: shared immutable valid PNG URI, GDM-only instance/drop-in,
+user and Server isolation, Origin still enabled, original CSS retained and
+actual Gio global resource URI lookups honor both overlays. Initial test
+projection attempted to serialize unset service metadata; narrowed to the
+specific options rather than adding arbitrary service defaults. No physical
+GDM login image acceptance is claimed until the next greeter starts.
+
+No forced logout/reboot/Shell restart. New greeter appearance needs the next
+login screen lifecycle (voluntary logout or reboot). Existing active user session
+must be preserved; use exact GDM-manager and Shell-template comparisons during
+any activation. The Origin shortcut extension's earlier next-login requirement
+also remains distinct from browser/webapp installed-state verification.
+
+Final wallpaper activation: user-run NH switch completed to
+`/nix/store/mjlw3k7r5gzd5yslkci03s6z4vxs7ff5-nixos-system-x13-gnome`.
+Same GDM MainPID and active Wayland session13 preserved; GDM/Home Manager
+active, zero failed system/user units. Desktop/lock/shared image is
+`/nix/store/li7gihcd29pgiwbcc6lnxmn21g6n5wmz-x13-shared-wallpaper/background.png`.
+HTTPS default remains brave-origin.desktop. The greeter user had no active
+D-Bus socket for a live manager check; the next greeter start reads the verified
+installed instance drop-in. Physical login appearance pending. No publishing.

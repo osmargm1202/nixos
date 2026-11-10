@@ -38,7 +38,9 @@ in {
   hmPackages = names hm.home.packages;
   systemExtensions = extensions c.environment.systemPackages;
   userExtensions = extensions hm.home.packages;
-  expectedExtensions = extensions base.environment.systemPackages;
+  expectedExtensions = builtins.filter (uuid: uuid != "gnome-ui-tune@itstime.tech") (extensions base.environment.systemPackages);
+  webapps = c.orgm.user.webapps;
+  expectedWebapps = original.orgm.user.webapps ++ [ "slc-daily" "slc-vill-docs" "orgm-adm" "orgm-automation" "orgm-code" ];
   enabledExtensions = hm.dconf.settings."org/gnome/shell".enabled-extensions or [];
   gnome = c.services.desktopManager.gnome.enable;
   session = c.services.displayManager.defaultSession;
@@ -84,6 +86,7 @@ assert result.returncode == 0, result.stderr
 c = json.loads(result.stdout)
 assert (c["host"], c["context"]["user"], c["context"]["profile"]) == ("x13", "osmarg", "gnome")
 assert c["programs"] == c["expectedPrograms"]
+assert sorted(c["webapps"]) == sorted(c["expectedWebapps"])
 assert c["autostart"] == c["expectedAutostart"]
 assert not any("nextcloud" in p.lower() for p in c["programs"] + c["autostart"] + c["packages"] + c["hmPackages"])
 assert set(c["expectedFlatpaks"]) <= set(c["flatpaks"])

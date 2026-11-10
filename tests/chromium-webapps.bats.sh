@@ -28,7 +28,8 @@ assert wayland_app_id("https://claude.ai") == "chrome-claude.ai__-Default"
 catalog = evaluate("--file", str(root / "nixos/apps/webapps.catalog.nix"))
 apps = [app for group in catalog.values() for app in group]
 ids = {app["id"] for app in apps}
-assert len(apps) == len(ids) == 31, "Catalog must retain 31 unique applications"
+assert len(apps) == len(ids) == 36, "Catalog must contain 36 unique applications"
+x13_only = {"slc-daily", "slc-vill-docs", "orgm-adm", "orgm-automation", "orgm-code"}
 perplexity = next(app for app in apps if app["id"] == "perplexity")
 assert perplexity["name"] == "Perplexity"
 assert perplexity["url"] == "https://www.perplexity.ai/"
@@ -51,10 +52,17 @@ for configuration, native_wayland in (("hyprland", True), ("i3", False)):
         "--apply",
         expression,
     )
-    identities = {"orgm-webapp-" + id for id in ids}
+    # Catalog additions must not silently expand existing consumers' selections.
+    selected = evaluate(
+        "--impure", "--file", str(root / "tests/fixtures/legacy-configurations.nix"),
+        f"{configuration}.config.orgm.user.webapps",
+    )
+    assert set(selected) == ids - x13_only and len(selected) == 31
+    selected_apps = [app for app in apps if app["id"] in selected]
+    identities = {"orgm-webapp-" + id for id in selected}
     desktop_ids = {
         wayland_app_id(app["url"]) if native_wayland else "orgm-webapp-" + app["id"]
-        for app in apps
+        for app in selected_apps
     }
     assert set(hm["entries"]) == desktop_ids
     launchers = [p for p in hm["packages"] if p["name"] in identities]
@@ -64,7 +72,7 @@ for configuration, native_wayland in (("hyprland", True), ("i3", False)):
     assert {p["name"] for p in desktops} == {id + ".desktop" for id in desktop_ids}
     scripts = {p["name"]: p["text"] for p in launchers}
     profiles = set()
-    for app in apps:
+    for app in selected_apps:
         identity = "orgm-webapp-" + app["id"]
         desktop_id = wayland_app_id(app["url"]) if native_wayland else identity
         entry = hm["entries"][desktop_id]
