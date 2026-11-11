@@ -159,23 +159,35 @@ suite results or rely on an unverified reason for missing checks. Read the actua
 report/drafts before resuming. No meaningful production RED was observed. Preserve
 these drafts; do not discard, merge or publish them as a completed prompt repair.
 
-### 3. Fingerprint — eligibility investigation only
+### 3. Fingerprint — user confirms working; expanded uses prepared, not deployed
 
-USB ID `27c6:6594`, Goodix MOC. `fprintd` was not enabled. Envy instead uses
-Synaptics `06cb:00c9` with a specific synatudor setup: do not copy that backend,
-pairing state, firmware assumptions or device rules to X13.
+Fresh 2026-11-10 activation enables stock fprintd 1.94.5/libfprint 1.94.10.
+The selected release's Goodix MOC source ID table contains USB `27c6:6594`.
+Actual fprintd D-Bus discovery recognizes `Goodix MOC Fingerprint Sensor`,
+scan type `press`, at `/net/reactivated/Fprint/Device/0`.
 
-The exact Goodix ID appears in the upstream supported-device table:
-<https://fprint.freedesktop.org/supported-devices.html>.
-Earlier source research reported libfprint 1.94.10, but the actual selected lock
-version was not independently verified; do not treat that lookup as pinned-release
-proof. The exact selected release ID table and working device recognition remain
-unproven. Upstream recognition is not enrollment/runtime success. The sensor's
-physical placement in the power button was not verified.
+Only the native GDM `gdm-fingerprint` PAM conversation uses pam_fprintd.
+Generic fingerprint PAM is forced off for every service: sudo, SSH, su, console
+and polkit remain password-only. GDM's password conversation stays unchanged.
+Server disables fprintd with GDM. No TOD/Synaptics backend, firmware update,
+storage reset or biometric enrollment was performed. Never copy Envy's
+Synaptics06cb:00c9/synaTudor backend or pairing state to this Goodix sensor.
 
-No biometric enrollment, PAM/login/sudo change, storage reset or firmware update
-was performed. Clarify authentication scope before implementing. Fingerprint does
-not automatically unlock LUKS or a password-protected keyring.
+User now reports fingerprint working physically. Autologin is enabled in the
+last observed runtime, so initial automatic login does not request a finger;
+lockscreen authentication remains useful. No template/enrollment list or
+biometric data was inspected. fprintd is D-Bus activated and may exit normally
+when idle. LUKS/keyring are separate.
+
+Current user authorizes Win+A matching Hyprland and the four fingerprint uses:
+GDM login/unlock, sudo, polkit authorizations and Bitwarden Desktop/extension.
+The root working tree now enables generic PAM only for sudo/polkit-1, installs
+Bitwarden Desktop and an official-extension-only native manifest at Brave
+Origin's own NativeMessagingHosts path. These additions have NOT been deployed:
+SSH/ping to .67 timed out during the new deployment attempt. Runtime last
+verified above still has only GDM fingerprint PAM. See latest log entry.
+No vault or browser preferences changed. Physical sudo/polkit/Bitwarden tests
+and private Desktop/extension settings remain pending.
 
 ### 4. SDDM themes — previews shown, selection pending
 
@@ -697,3 +709,86 @@ setting which is absent. Both baseline failures were reproduced in isolated
 fixtures; no unrelated installer/Starship behavior was changed. Shell syntax
 checks and the main default-flake URL assertion passed. These failures do not
 change the successful integrated system builds or focused desktop checks.
+
+## 2026-11-10: X13 stock Goodix fingerprint foundation activated
+
+User: "quiero ver si puedo desbloquear con huella usando la extension de
+bitwarden de brave, pero primero lo primero". Parent stated the first phase:
+GNOME login/unlock, sudo password retained, physical enrollment left to user.
+Main3310064 is now canonical; the dirty older follow-ups worktree was preserved
+and not used for this new implementation. No publishing in this task.
+
+New host-only fingerprint.nix extends the PAM submodule to force generic
+fprintAuth=false everywhere, while stock GDM retains its explicit separate
+required pam_fprintd rule. Stock fprintd enables only when GDM enables; headless
+Server stays off. libfprint1.94.10 source was fetched through ordinary Nix and
+its goodixmoc/goodix.c:1653 exact 27c6/6594 entry verified. No driver substitution,
+firmware handling, device reset, enrollment or biometric-list inspection.
+
+Focused tests/x13-fingerprint.test.py passed locally and on X13, including full
+PAM scope for Normal/Server; existing x13 and x13-server tests passed. Full local
+and target system builds completed. Initial test-only Nix lambda spacing was
+corrected after a string/function parsing error; production config unchanged.
+
+Only X13 gnome.nix and fingerprint.nix copied to target with baseline hash and
+backups at NH_FLAKE/.x13-deploy/20261110-fingerprint. User-run nh os switch
+succeeded. Exact GDM unit/MainPID and active GNOME Wayland session3 preserved
+(the user rebooted since the earlier session13; fresh runtime was inspected).
+Running closure:
+`/nix/store/285rl8z4g6a99ffqd8b6h5h0awgd9rck-nixos-system-x13-gnome`.
+Checksums of /etc/pam.d/{sudo,su,sshd,login,gdm-password} identical before/after;
+normal sudo elevation still works. Only /etc/pam.d/gdm-fingerprint references
+pam_fprintd. fprintd-enroll/verify installed, GDM/Home Manager active and no failed
+system/user units. Real GetDevices returns a device and its name/scan-type are
+Goodix MOC Fingerprint Sensor/press. No EnrollStart or VerifyStart was invoked.
+
+Actual finger enrollment, matching, Win+L/GDM unlock and password fallback need
+human physical tests. Bitwarden Desktop/native-messaging/polkit integration is
+pending that acceptance. Official reference:
+https://bitwarden.com/help/biometrics/ .
+
+## 2026-11-10: Win+A and four fingerprint uses prepared; X13 unreachable
+
+User requests Win+A to open the same AI console as Hyprland and authorizes the
+four fingerprint uses. Human explicitly reports the reader already working.
+Current main working tree adds ai-shortcut.nix/ai-shortcut-enable.py and
+bitwarden.nix and expands fingerprint.nix only for sudo/polkit-1. GDM's dedicated
+parallel conversation and password fallback remain; SSH/su/console and Server
+retain their prior policy. Autologin is intentionally unchanged.
+
+Super+A native GNOME custom binding launches Kitty --class orgmai-chat with
+160c/42c geometry and orgmai new, clears the default application-grid conflict,
+and merges existing custom shortcut paths idempotently through actual Gio.
+This requires no logout/Shell restart. Win+Enter stays Console.
+
+Bitwarden Desktop2026.8.0 includes upstream com.bitwarden.Bitwarden.unlock
+polkit action with allow_active=auth_self, not an authorization bypass.
+Declarative com.8bit.bitwarden.json at BraveSoftware/Brave-Origin/
+NativeMessagingHosts uses its immutable desktop_proxy and only official Chrome
+extension nngceckbapebfimnlniiiahkandclblb. Upstream's automatic Linux discovery
+recognizes standard Brave's directory but not Origin. No vault or browser
+preferences accessed. Private Desktop login, system-authentication/browser
+integration settings and extension biometric unlock remain human steps.
+
+Focused fingerprint and AI/Bitwarden tests passed locally (including real Gio
+memory-backend merge, executable proxy, upstream XML policy and launcher syntax).
+Existing X13/Server tests and complete Normal/Server build passed. Local closure
+qg2n544hyar071ckj5lb9mpbvdsx8kli-nixos-system-x13-gnome. Bitwarden GUI smoke passed
+with isolated HOME/D-Bus/Xvfb and no vault. git diff --check passed.
+
+Deployment did not start: SSH to pinned 10.0.0.67 timed out; ping also failed and
+neighbor state FAILED. No target source, PAM, browser manifest or system closure
+was changed by this attempt. Task-only guarded archive and script prepared at
+local .git/x13-four-uses-stage.sh with before hashes in
+.git/x13-four-uses-before.json; planned remote stage
+NH_FLAKE/.x13-deploy/20261110-fingerprint-bitwarden-ai does not yet exist.
+Resume by verifying runtime/Git and connectivity, applying only the five guarded
+host files, target-building/testing, then comparing exact GDM units and dry
+activation before user-run NH switch. Preserve session and unrelated source.
+After activation avoid automatic sudo fingerprint tests needing a human touch.
+Actual sudo/polkit/Brave integration acceptance remains unproven. No publishing.
+
+Publication follow-up: user explicitly requests "commit push" for this prepared
+X13 source. Publish on canonical main with focused tests passing; this changes
+source publication status only. Win+A/sudo/polkit/Bitwarden runtime activation
+and human acceptance remain pending as described above.

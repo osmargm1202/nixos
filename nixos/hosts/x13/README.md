@@ -163,3 +163,43 @@ For the initial SDDM-to-GDM migration, prepare the next boot with
 `nh os boot /home/osmarg/Hobby/nixos -H x13 --no-specialisation`, then reboot
 when ready. This preserves the current graphical session until reboot.
 After boot, physically verify the Lock action, Super+L and password unlock.
+
+## Fingerprint enrollment
+
+Deployment status: GDM fingerprint is active and the user reports it working.
+The sudo/polkit/Bitwarden and Win+A additions below are prepared locally; their
+activation is pending X13 connectivity. See `PENDING.md` for the latest evidence.
+
+X13 uses the stock Goodix MOC driver for USB `27c6:6594`. fprintd recognizes
+the reader, but the user must enroll and verify their own finger physically.
+In GNOME open **Settings → System → Users → Fingerprint Login**, select a finger
+and follow the prompts. Then test Super+L and GDM login, keeping password login
+available. No logout or biometric recording is forced by deployment.
+
+Fingerprint authentication is enabled for GDM login/screen unlock, sudo and
+polkit authorizations, including Bitwarden Desktop's system authentication.
+Password fallback remains available; SSH, console and su keep password-only
+PAM. Server keeps fprintd disabled. Autologin remains enabled: no fingerprint is
+requested at automatic login, but Super+L still locks the session. Fingerprints
+do not unlock LUKS or decrypt a password-protected GNOME keyring.
+
+Bitwarden Desktop is installed with its upstream `auth_self` polkit policy.
+A declarative native-messaging manifest connects the official extension to the
+packaged desktop proxy in Brave Origin's own configuration directory. The app's
+automatic integration only recognizes standard Brave's directory. Existing
+vault data and browser preferences are not modified.
+
+To finish privately, open Bitwarden Desktop and sign in to the same server as
+the extension, unlock the vault, then enable **Settings → Security → Unlock with
+system authentication** and **Settings → App settings → Allow browser
+integration**. In the Brave extension enable **Settings → Account security →
+Unlock with biometrics** and approve the connection. Keep Desktop running; if
+Brave requests the native-app permission, allow it for Bitwarden. Test locking
+and unlocking the extension. A fresh Desktop start still requires the initial
+master-password/PIN unlock; biometrics do not replace that first unlock.
+See https://bitwarden.com/help/biometrics/ for current UI instructions.
+
+Test sudo physically with `sudo -k` followed by `sudo -v`, then touch the sensor
+when prompted. The serial PAM conversation may wait for fingerprint failure or
+timeout before password fallback. No enrollment, biometric test or vault login
+is performed automatically by deployment.

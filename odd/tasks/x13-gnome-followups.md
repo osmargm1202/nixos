@@ -123,3 +123,26 @@ present in the running cleanup closure. New X13 login-background.nix uses one
 Amber-dark image for desktop/lock/GDM, with an immutable GDM-instance-only GLib
 CSS overlay. Build and real Gio lookup tests pass. No browser/webapp changes.
 Physical GDM appearance awaits next voluntary logout/reboot; see PENDING.md.
+
+## 2026-11-10 fingerprint foundation
+
+User wants eventual Bitwarden extension biometric unlock in Brave, "primero lo
+primero". Implemented first-stage X13-only stock fprintd for native GDM
+login/screen unlock. All generic PAM fingerprint paths remain disabled (sudo,
+SSH, console, su, polkit password-only); Server fprintd disabled. New focused
+Normal/Server PAM tests, existing X13 tests and both full builds pass. NH switch
+completed as 285rl8 closure with same active session/GDM PID. Exact password PAM
+hashes preserved; actual Goodix27c6:6594 is discovered as press sensor. Human
+finger enrollment/matching/unlock tests pending; no biometric operation invoked.
+Bitwarden desktop/extension/native-messaging integration remains a later phase.
+Full evidence, backup path and enrollment instructions in PENDING.md/README.md.
+
+## 2026-11-10: AI shortcut and expanded fingerprint integration prepared
+
+User confirms fingerprint working and authorizes Win+A matching Hyprland plus
+four uses (GNOME login/unlock, sudo, polkit, Bitwarden app/extension). Local code,
+focused tests, full Normal/Server build and isolated Bitwarden GUI smoke pass.
+Deployment has NOT occurred: X13 .67 unreachable by SSH/ping. See latest PENDING
+entry for exact source/staging/runtime boundary. Autologin unchanged; private
+Bitwarden settings and physical runtime tests remain pending. No vault access,
+forced logout or publishing.

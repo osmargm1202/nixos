@@ -7,6 +7,7 @@ activation on Wayland; they do not depend on favorites order or X11 tools.
 | --- | --- |
 | Super+Q | Close the active window through GNOME's window-manager binding; not logout |
 | Super+Return | Focus GNOME Console, or open it if absent |
+| Super+A | Open Kitty with `orgmai new`, matching the Hyprland AI console |
 | Super+W | Focus Firefox, or open it if absent; no extra tab/window when one exists |
 | Super+E | Focus Files (Nautilus), or open it if absent |
 | Super+L | Lock the screen through GNOME’s native screensaver binding |
@@ -95,3 +96,16 @@ Checks: `python3 tests/gnome-menus.test.py`,
 profile regressions and X13 Normal/Server tests. Actual GTK entry, list selection
 and cancellation were also exercised in an isolated Xvfb display. Real endpoint
 connections and the post-login native clipboard menu still require user checks.
+
+## Native AI shortcut
+
+X13's Super+A uses GNOME's custom-keybinding service and the same Kitty class,
+window geometry and `orgmai new` command as Hyprland. The default application
+view binding is cleared to free Super+A; the normal Super overview remains.
+Home Manager applies the shortcut to the running session, and a login oneshot
+merges its path into the current custom-keybindings list without replacing
+manual shortcuts. This addition requires no Shell restart or logout. AI account
+credentials and successful provider requests remain separate from launching it.
+
+Checks: `python3 tests/x13-ai-bitwarden.test.py` verifies the launcher arguments
+and actual Gio settings merge with preservation/idempotence in a memory backend.

@@ -7,7 +7,7 @@ base // {
   # Native GNOME locking requires GDM. Keep printing, but omit the shared
   # SDDM module (including its greeter-specific environment and PAM settings).
   imports = builtins.filter (p: p != ../../sddm/sddm.nix) base.imports
-    ++ [ ./focus-shortcuts.nix ./native-desktop.nix ./login-background.nix ];
+    ++ [ ./focus-shortcuts.nix ./native-desktop.nix ./login-background.nix ./fingerprint.nix ./ai-shortcut.nix ./bitwarden.nix ];
   services = base.services // {
     displayManager = base.services.displayManager // {
       sddm.enable = lib.mkForce false;
