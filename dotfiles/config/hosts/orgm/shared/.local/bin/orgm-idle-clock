@@ -23,6 +23,14 @@ def playing():
         return False
 
 
+def gaming():
+    state = Path(os.environ.get('XDG_STATE_HOME', Path.home() / '.local/state')) / 'hypr/game-mode'
+    try:
+        return state.read_text().rstrip('\n') == 'activated'
+    except OSError:
+        return False
+
+
 def caffeine_clock_allowed():
     state = Path(os.environ.get('XDG_STATE_HOME', Path.home() / '.local/state')) / 'waybar/caffeine'
     try:
@@ -89,6 +97,8 @@ def daemon():
         while not stop:
             now = time.monotonic()
             if now >= next_check:
+                if gaming():
+                    hide()
                 current = playing()
                 if current and not media:
                     hide()
@@ -115,7 +125,7 @@ def daemon():
                 command = conn.recv(128).decode().strip()
                 ok = True
                 if command in ('show', 'show-caffeine'):
-                    allowed = not playing() if command == 'show' else caffeine_clock_allowed()
+                    allowed = not gaming() and (not playing() if command == 'show' else caffeine_clock_allowed())
                     if allowed and (clock is None or clock.poll() is not None):
                         clock = subprocess.Popen(['qs', '--no-duplicate', '--path', str(config)],
                                                  stdin=subprocess.DEVNULL)

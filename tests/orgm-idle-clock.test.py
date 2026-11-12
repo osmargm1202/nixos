@@ -21,17 +21,20 @@ class IdleTest(unittest.TestCase):
         self.status = self.root / 'media'; self.status.write_text('Paused\n')
         self.caffeine = self.root / '.local/state/waybar/caffeine'; self.caffeine.parent.mkdir(parents=True)
         self.caffeine.write_text('deactivated\n')
+        self.gaming = self.root / '.local/state/hypr/game-mode'; self.gaming.parent.mkdir(parents=True)
+        self.gaming.write_text('deactivated\n')
+        self.clock_pid = self.root / 'clock-pid'
         self.clients = self.root / 'clients'; self.clients.write_text('[]')
         self.env = dict(os.environ, HOME=str(self.root), XDG_RUNTIME_DIR=str(self.root),
                         XDG_STATE_HOME=str(self.root / '.local/state'),
-                        PATH=f'{self.bin}:{Path(sys.executable).parent}:/run/current-system/sw/bin', TEST_MEDIA=str(self.status), TEST_LOG=str(self.log), TEST_CLIENTS=str(self.clients))
+                        PATH=f'{self.bin}:{Path(sys.executable).parent}:/run/current-system/sw/bin', TEST_MEDIA=str(self.status), TEST_LOG=str(self.log), TEST_CLIENTS=str(self.clients), TEST_CLOCK_PID=str(self.clock_pid))
         for name, code in {
             'playerctl': 'cat "$TEST_MEDIA"',
             'hyprctl': 'cat "$TEST_CLIENTS"',
             'systemd-inhibit': 'echo inhibit >> "$TEST_LOG"; exec sleep 300',
             'systemctl': 'printf "systemctl %s\\n" "$*" >> "$TEST_LOG"',
             'orgm-qylock': 'printf "lock %s\\n" "$ORGM_QY_IDLE_CLOCK" >> "$TEST_LOG"',
-            'qs': 'echo clock >> "$TEST_LOG"; exec sleep 300',
+            'qs': 'echo $$ > "$TEST_CLOCK_PID"; echo clock >> "$TEST_LOG"; exec sleep 300',
         }.items():
             path = self.bin / name
             path.write_text('#!/usr/bin/env bash\n' + code + '\n'); path.chmod(0o755)
@@ -86,6 +89,26 @@ class IdleTest(unittest.TestCase):
         self.status.write_text('Paused\n')
         self.call('show-caffeine')
         self.wait(lambda: 'clock' in self.entries())
+
+    def test_gaming_blocks_both_clock_listeners_and_restores_after_exit(self):
+        self.gaming.write_text('activated\n')
+        self.caffeine.write_text('activated\n')
+        self.call('show')
+        self.call('show-caffeine')
+        self.assertNotIn('clock', self.entries())
+        self.gaming.write_text('deactivated\n')
+        self.call('show')
+        self.wait(lambda: 'clock' in self.entries())
+        self.call('hide')
+        self.call('show-caffeine')
+        self.wait(lambda: self.entries().count('clock') == 2)
+
+    def test_entering_gaming_hides_an_existing_clock(self):
+        self.call('show')
+        self.wait(lambda: 'clock' in self.entries())
+        pid = int(self.clock_pid.read_text())
+        self.gaming.write_text('activated\n')
+        self.wait(lambda: not Path(f'/proc/{pid}').exists())
 
 
 if __name__ == '__main__':

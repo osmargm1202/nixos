@@ -8,6 +8,12 @@ Mostrar un reloj de tarjetas abatibles similar a Fliqlo cuando ORGM esté inacti
 
 El primer umbral propuesto es **3 minutos**; los diez minutos se cuentan desde la última interacción, no desde que aparece el reloj. El diseño y el primer umbral se podrán ajustar antes de implementar.
 
+El modo gaming de Hyprland impide mostrar el reloj de los 3 minutos, también
+con Caffeine activado. Si el reloj ya está visible, se cierra en la siguiente
+comprobación del coordinador (cada 2 segundos). Al salir de gaming, los
+eventos de inactividad vuelven a poder mostrarlo. Esta excepción solo afecta
+al reloj previo al bloqueo; conserva los plazos de bloqueo y suspensión.
+
 ## Situación actual
 
 - ORGM usa Hyprland y `hypridle`, con `orgm-qylock lock` a los 600 segundos y suspensión a los 900. El bloqueo manual y el previo a suspensión usan Qylock.
