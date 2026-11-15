@@ -47,7 +47,8 @@ in
     enable = lib.mkEnableOption "shared-profile Brave Origin browsing and webapps";
     package = lib.mkOption {
       type = lib.types.package;
-      default = native.override { commandLineArgs = "--ozone-platform=wayland"; };
+      # The same package is used from the primary Wayland desktop and i3/X11.
+      default = native;
     };
   };
   config = lib.mkIf cfg.enable {
@@ -69,6 +70,13 @@ in
       ] (_: [ "brave-origin.desktop" ]);
     };
     home-manager.users.${userName} = { lib, ... }: {
+      # Keep user launchers in sync too, including a live session whose system
+      # generation still contains the former Wayland-only package.
+      home.file = {
+        ".local/bin/brave-origin".source = lib.getExe cfg.package;
+        ".local/bin/orgm-browser".source = "${browser}/bin/orgm-browser";
+        ".local/share/applications/brave-origin.desktop".source = "${cfg.package}/share/applications/brave-origin.desktop";
+      };
       # Set requested preferences (including Widevine) with private backups; never write a live profile.
       home.activation.originInitialPreferences = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./browser-profile.py}

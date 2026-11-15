@@ -30,6 +30,7 @@ PROJECTION = '''s: let
   x11=x.services.xserver.enable;
   sessions=x.services.displayManager.sessionData.sessionNames or [];
   targets=builtins.attrNames x.systemd.user.targets;
+  gameTargets=x.orgm.i3GameActivation.targets;
  };
 in {
  inherit (c.services.displayManager.sessionData) sessionNames;
@@ -42,6 +43,8 @@ in {
   wantedBy=c.systemd.user.services.i3-light-notifications.wantedBy;
   busName=c.systemd.user.services.i3-light-notifications.serviceConfig.BusName;
  };
+ gameTargets=c.orgm.i3GameActivation.targets;
+ gameService=c.home-manager.users.osmarg.systemd.user.services.orgm-i3-game-activation.Unit;
  oskTargets=if c.orgm.osk.enable then c.systemd.user.services.orgm-osk.wantedBy else [];
  server=headless c.specialisation.server.configuration;
  gaming=if c.specialisation ? gaming then headless c.specialisation.gaming.configuration else null;
@@ -64,11 +67,14 @@ for host, default in [('envy', 'sway'), ('x13', 'gnome')]:
     assert c['x11'] and c['portal'] in ('gtk', ['gtk']) and not c['assertions'], (host, c['x11'], c['portal'], c['assertions'])
     assert 'XDG_SESSION_TYPE' not in c['variables']
     assert c['notifications']['wantedBy'] == ['orgm-i3-light-session.target']
+    assert c['gameTargets'] == ['orgm-i3-light-session.target']
+    assert c['gameService']['ConditionEnvironment'] == 'XDG_CURRENT_DESKTOP=i3'
     assert 'orgm-i3-light-session.target' not in c['oskTargets']
     for mode in [c['server'], c['gaming']]:
         if mode is not None:
             assert not mode['x11'] and 'orgm-i3-light' not in mode['sessions']
             assert 'orgm-i3-light-session' not in mode['targets']
+            assert mode['gameTargets'] == []
     if host == 'envy':
         assert 'orgm-i3-light' in c['windows']
     package = run(['nix', 'build', '--impure', '--no-link', '--print-out-paths', '--expr',

@@ -158,3 +158,16 @@ Widevine under brave://settings/extensions and restart Brave when prompted, or
 close it for a fresh migration. Actual Netflix playback pending. Earlier
 Win+A/sudo/polkit/Bitwarden activation stays pending, not included in this switch.
 See PENDING.md for source/backup and scope evidence. No new publishing.
+
+## 2026-11-14: optional i3, preparation only
+
+User requests an additional very light i3 session on X13 and Envy, explicitly
+waiting to apply until they report both machines powered on. Sources now add
+`i3 ligero (X11)` without changing GNOME/GDM or Sway/SDDM defaults. No wallpaper,
+compositor, OSK, server monitors or app preloads; local detailed bar/caffeine,
+Rofi and password locking retained. Focused invariance/launcher/config tests,
+packaged-bar smoke with empty HOME, ORGM regression, existing X13 Normal/Server
+tests and full builds of both laptops/modes passed locally. General Envy tests
+have a stale six-output inventory assertion; documented in Envy/PENDING.md.
+No SSH, source delivery or activation was performed. Physical first-login,
+lock/brightness/external-display checks wait for the later authorized deployment.

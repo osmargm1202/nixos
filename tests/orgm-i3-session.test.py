@@ -21,11 +21,14 @@ projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  minimalConfig=toString c.home-manager.users.osmarg.xdg.configFile."i3/orgm-minimal.conf".source;
  autorandr=c.services.autorandr.enable;
  dunst=c.home-manager.users.osmarg.systemd.user.services.orgm-i3-dunst;
+ gameTargets=c.orgm.i3GameActivation.targets;
+ gameService=c.home-manager.users.osmarg.systemd.user.services.orgm-i3-game-activation.Unit;
  guards=map (unit: c.home-manager.users.osmarg.xdg.configFile."systemd/user/${unit}.d/90-orgm-session.conf".text)
  [ "picom.service" "orgm-osk.service" "orgm-hyprland-notifications.service" "xdg-desktop-portal-hyprland.service" ];
  bootstrap=c.home-manager.users.osmarg.home.activation.orgmI3Dotfiles.data;
  server={x11=r.services.xserver.enable;hypr=r.programs.hyprland.enable;
- packages=map toString r.services.displayManager.sessionPackages;};
+ packages=map toString r.services.displayManager.sessionPackages;
+ gameTargets=r.orgm.i3GameActivation.targets;};
 }'''
 r=subprocess.run(['nix','eval','--impure','--json',f'path:{root}#nixosConfigurations.orgm','--apply',projection],capture_output=True,text=True)
 assert r.returncode==0,r.stderr
@@ -68,6 +71,9 @@ assert 'exec steam -silent' in personal
 assert 'orgm-visual-profile' not in personal and 'set $status_command' not in personal
 assert c['dunst']['Install']['WantedBy']==['orgm-i3-session.target']
 assert c['dunst']['Service']['BusName']=='org.freedesktop.Notifications'
+assert c['gameTargets']==['orgm-i3-session.target']
+assert c['gameService']['ConditionEnvironment']=='XDG_CURRENT_DESKTOP=i3'
+assert c['server']['gameTargets']==[]
 # The personal bar keeps the detailed status and caffeine without visual
 # selectors that could start effects or restore a wallpaper.
 statusSource=root/'dotfiles/config/users/osmarg/profiles/i3/.local/bin/i3status-personal'

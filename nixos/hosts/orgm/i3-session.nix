@@ -134,8 +134,10 @@ let
       '';
 in
 {
+  imports = [ ../../profiles/i3/game-activation.nix ];
   options = lib.optionalAttrs (profileName == "hyprland") existing.options;
   config = lib.mkIf enabled {
+    orgm.i3GameActivation.targets = [ target ];
     # SDDM must decide the type before starting Xorg. Fixing it in the i3
     # launcher is too late: PAM's global Wayland value selects the wrong path.
     environment.sessionVariables.XDG_SESSION_TYPE = lib.mkForce null;

@@ -86,8 +86,9 @@ let
       )
       ++ lib.optionals (!nativeWayland) [ "--class=${identity}" ]
       ++ lib.optionals (!origin) [ "--disable-sync" ]
-      ++ [
-        "--no-default-browser-check"
+      ++ [ "--no-default-browser-check" ]
+      # Origin detects the active session at launch, including optional i3.
+      ++ lib.optionals (!origin) [
         # Native Wayland keeps Nautilus file transfer inside one protocol.
         # X11 desktops retain the explicit WM_CLASS used by their launchers.
         "--ozone-platform=${if nativeWayland then "wayland" else "x11"}"
@@ -115,9 +116,13 @@ let
 in
 {
   config = lib.mkIf enabled {
-    home-manager.users.${userName} = { lib, ... }: {
+    home-manager.users.${userName} = { config, lib, ... }: {
       home.packages = map (app: app.launcher) webapps;
       xdg.desktopEntries = lib.listToAttrs (map (app: app.entry) webapps);
+      home.file = lib.mkIf origin (lib.listToAttrs (map (app:
+        lib.nameValuePair ".local/share/applications/${app.entry.name}.desktop" {
+          source = "${config.home.path}/share/applications/${app.entry.name}.desktop";
+        }) webapps));
       home.activation.originLauncherPins = lib.mkIf origin (
         lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           $DRY_RUN_CMD ${pkgs.coreutils}/bin/env PATH=${lib.makeBinPath [ pkgs.glib ]}:$PATH \

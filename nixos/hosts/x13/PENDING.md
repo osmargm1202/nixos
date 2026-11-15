@@ -8,6 +8,37 @@ available; these repository files are the continuity record.
 
 ## Start here
 
+### 2026-11-14: optional lightweight i3 prepared, NOT deployed
+
+User requests i3 as an additional fast session on X13 and Envy and explicitly
+defers applying until they report the laptops powered on. Do not attempt SSH,
+source delivery, switch, logout or reboot under this preparation-only request.
+
+X13 imports `../../profiles/i3/light-session.nix` and enables
+`orgm.i3LightSession.enable`. GDM/GNOME remain the default; the new
+**i3 ligero (X11)** choice has Rofi, Kitty, local detailed status/caffeine,
+password locking, multimedia and brightness keys. It does not start OSK,
+compositor, wallpaper, server polling or applications. It uses immutable config
+instead of existing personal i3 dotfiles/autostarts. Server omits it entirely.
+No hardware, GPU, fingerprint/PAM, storage, default MIME or catalog policy was
+replaced. GNOME's native locking and biometric acceptance remain separate.
+
+Local checks passed: `tests/i3-light-session.test.py` (both laptops, invariance
+against disabled-module baseline, real i3 parse, mocked launcher/cleanup),
+existing X13 Normal/Server tests, and full X13 Normal/Server build:
+`/nix/store/v9q0vdmq0xvradmbl7x1cb4csn6k878a-nixos-system-x13-gnome`.
+The packaged bar also produced local details/caffeine with an empty temporary
+HOME and no visual/server controls. This is local configuration/build evidence,
+not installation or a physical session/lock/monitor test. Before later delivery,
+recheck Git/source/runtime and the original deployment/mount safeguards below.
+
+2026-11-15 addition: the prepared i3 option reuses a session-scoped IPC listener
+for Dota/Steam-game attention requests, without changing global focus policy or
+polling windows. The isolated real i3/X11 activation test and laptop regression
+passed; local full X13 build `mqidscpram96s8zphy9p8l21vp1xbgm2` passed.
+No X13 connection, deployment or physical runtime test occurred; still wait
+for the user's power-on notice before applying.
+
 1. Inspect `git status` before switching branches or updating files. Unfinished
    Starship diagnostics are deliberately separate from the published X13 base.
 2. Read the feature tracker and [host README](README.md); reconcile observations

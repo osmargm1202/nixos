@@ -3,6 +3,43 @@
 Actualizado: 2026-10-16. Estado: **abierto; proveedor DPMS corregido en la configuración; despliegue y validación visual pendientes**.
 Este archivo es seguimiento versionado; no ejecuta acciones al desplegar.
 
+## 2026-11-14: i3 ligero opcional preparado, sin aplicar
+
+El usuario pide una sesión i3 rápida adicional en Envy y X13, y avisa que se
+aplicará cuando confirme que están encendidas. No conectar por SSH ni desplegar,
+reiniciar o cerrar sesiones durante esta preparación.
+
+Envy importa `../../profiles/i3/light-session.nix`. Sway/SDDM siguen siendo el
+escritorio/selector principales; **i3 ligero (X11)** se añade también en
+windows-vfio, pero no en gaming ni Server. Rofi, Kitty, barra local detallada
+y cafeína, bloqueo con contraseña y controles de brillo/audio. Sin compositor,
+teclado virtual, fondos, widgets, monitorización de servidores o precarga de apps.
+No se modifican kernel, PRIME/VFIO, huella, credenciales, discos ni los otros modos.
+
+Pasó `tests/i3-light-session.test.py`: configuración de ambas laptops, comparación
+contra el módulo deshabilitado, parseo real de i3, aislamiento X11 y limpieza al
+salir. La barra empaquetada también funcionó con HOME temporal vacío. Primer
+inicio, bloqueo, brillo, monitores y suspensión siguen pendientes de aceptación;
+las incidencias ENVY-DISPLAY-001 de abajo no quedan resueltas por añadir i3.
+No copiar a XRandR la regla Sway de DP-1 sin verificar los nombres reales.
+
+Las pruebas generales `envy-sway.bats.sh` y `envy-modes.bats.sh` fallan porque
+todavía esperan un inventario de seis salidas y el flake ya tiene diez. No se
+cambió `configurations.nix` en este trabajo ni se ocultó ese fallo modificando
+sus expectativas. La prueba nueva verifica por separado Sway, GPU y todos los
+modos relevantes. Compilación completa local de Envy y sus tres especializaciones
+correcta, sin despliegue:
+`/nix/store/qsqbp3yjja4mwkxfizw3salqcp1pbqgs-nixos-system-envy-sway`.
+La derivación coincide con la evaluación final del árbol actual. También pasó
+la regresión de la sesión i3 de ORGM tras extender el decorador compartido con
+rutas explícitas de configuración/cafeína para las sesiones nuevas.
+
+2026-11-15: la sesión ligera preparada incorpora también activación por petición
+de juegos (Dota/steam_app_NUM), mediante un suscriptor IPC sin sondeo ni cambio
+global de foco. Prueba real aislada Xvfb/i3 y regresión de laptops correctas;
+build Envy `cx1y1nbyiki04h4a67pvy71i5s0l66a3`. No se conectó ni aplicó en Envy:
+se mantiene la espera del aviso del usuario y la aceptación física pendiente.
+
 ## ENVY-DISPLAY-001 — Parpadeo y apagado tras lock/sleep
 
 ### Petición y síntomas

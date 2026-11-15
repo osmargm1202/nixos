@@ -89,8 +89,10 @@ let
       '';
 in
 {
+  imports = [ ./game-activation.nix ];
   options.orgm.i3LightSession.enable = lib.mkEnableOption "an optional lightweight i3 X11 session";
   config = lib.mkIf enabled {
+    orgm.i3GameActivation.targets = [ target ];
     # Do not enable the standalone i3 profile, change the login manager or
     # select i3 by default. Console/gaming specialisations omit this session.
     services.xserver.enable = lib.mkOverride 90 true;

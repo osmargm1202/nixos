@@ -26,6 +26,14 @@ el agente polkit. `xss-lock` usa i3lock antes de suspender. No cambia la políti
 biométrica ni el bloqueo nativo de los otros escritorios. Archivos y navegador
 usan los manejadores predeterminados del host.
 
+`game-activation.nix` añade un suscriptor IPC ligero para que Dota y las clases
+de juego Steam recuperen el foco al solicitar atención desde otro escritorio.
+Conserva la política global de i3 y no da permiso adicional al cliente Steam.
+No sondea ventanas ni vuelve al juego por un Alt+Tab normal; termina con el
+target de la sesión. `tests/i3-game-activation.test.py` verifica la conducta
+con i3/X11 reales en una pantalla privada. Envy/X13 conservan este cambio solo
+en las fuentes hasta su despliegue autorizado.
+
 **Preparado localmente, no desplegado.** Esperar a que el usuario avise que las
 laptops están encendidas antes de conectarse o aplicar. Tras desplegar, elegir
 la sesión en SDDM (Envy) o en GDM (X13); con autologin, cerrar sesión primero.
