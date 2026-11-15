@@ -72,7 +72,7 @@ las ediciones locales; `diff`, `pull` y `push` trabajan por aplicación. `ryoku-
 permite guardar los ajustes `desktop.json` y `shell.json` del Hub sin copiar su
 runtime completo. Véase [la guía](../../../dotfiles/README.md).
 
-Envy usa Sway de forma permanente. La salida `envy` selecciona el perfil
+Envy usa Sway como escritorio principal. La salida `envy` selecciona el perfil
 `nixos/profiles/sway/sway.nix`; no existen alternativas Envy para Ryoku o
 Hyprland ni una salida separada `envy-sway`. Véase [la guía de Sway](../../../docs/envy-sway.md).
 
@@ -297,7 +297,13 @@ ahora el host declara autoNumlock=true y General.Numlock=on, con contrato Nix
 RED/GREEN. Esta modificación aún NO se ha desplegado ni se ha reiniciado SDDM;
 el greeter activo no se declara corregido hasta aplicar y comprobar un login.
 
-Por decisión del usuario, Envy tiene un solo perfil de escritorio con Sway.
+Envy conserva Sway como perfil principal y añade **i3 ligero (X11)** como sesión
+opcional en SDDM, sin otra salida de flake ni entrada de arranque. La sesión
+ligera usa Rofi y una barra detallada con cafeína, sin fondo, efectos, teclado
+virtual ni precarga de aplicaciones. Véase [la guía de i3](../../profiles/i3/README.md).
+La configuración está preparada localmente, **sin aplicar**: el usuario avisará
+cuando encienda Envy. Primer inicio, bloqueo con contraseña, brillo y pantallas
+X11 siguen pendientes de prueba física.
 Se conservan gaming, windows-vfio y server dentro de la salida `envy`;
 no se publican salidas alternativas de escritorio para este host.
 

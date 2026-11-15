@@ -7,6 +7,7 @@ let
 in
 {
   imports = [
+    ../../profiles/i3/light-session.nix
     ./server.nix
     ./webapps.nix
     ../../hardware/gpu/intel.nix
@@ -14,6 +15,8 @@ in
     ../../gaming/emulators.nix
     ../../apps/deskflow.nix
   ];
+
+  orgm.i3LightSession.enable = true;
 
   orgm.user.programs = lib.mkForce (builtins.filter (p: p != "nextcloud") original.orgm.user.programs);
   orgm.user.autostart = lib.mkForce (builtins.filter (p: !(lib.hasPrefix "nextcloud" p)) original.orgm.user.autostart);

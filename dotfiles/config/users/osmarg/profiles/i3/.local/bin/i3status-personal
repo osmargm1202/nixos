@@ -17,6 +17,9 @@ CAFFEINE_OFF = "#565f89"
 NETWORK = "#7aa2f7"
 PICOM_EFFECTS_ON = "#bb9af7"
 PICOM_EFFECTS_OFF = "#565f89"
+SHOW_PICOM_EFFECTS = os.environ.get("I3_STATUS_PICOM", "1") != "0"
+SHOW_VISUAL_PROFILE = os.environ.get("I3_STATUS_VISUAL_PROFILE", "1") != "0"
+SHOW_SERVERS = os.environ.get("I3_STATUS_SERVERS", "1") != "0"
 ICON_KEYBOARD = ""
 ICON_CAFFEINE_ON = ""
 ICON_CAFFEINE_OFF = "󰅶"
@@ -86,7 +89,7 @@ def system_battery():
 def click_action(click):
     name = click.get("name")
     button = click.get("button")
-    if name == "visual-profile" and button in {1, 3}:
+    if SHOW_VISUAL_PROFILE and name == "visual-profile" and button in {1, 3}:
         helper = Path.home() / ".local" / "bin" / "orgm-visual-profile"
         action = "menu" if button == 1 else "toggle-mode"
         subprocess.Popen(
@@ -101,12 +104,14 @@ def click_action(click):
     if click.get("name") == "caffeine":
         toggle = Path.home() / ".local" / "bin" / "i3-caffeine-toggle"
         subprocess.Popen(
-            [str(toggle), "toggle"],
+            [os.environ.get("I3_CAFFEINE_COMMAND", str(toggle)), "toggle"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
     elif click.get("name") == "picom-effects":
+        if not SHOW_PICOM_EFFECTS:
+            return
         toggle = Path.home() / ".local" / "bin" / "i3-picom-effects"
         subprocess.Popen(
             [str(toggle), "toggle"],
@@ -118,6 +123,8 @@ def click_action(click):
         subprocess.Popen(["xkb-switch", "-n"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     elif click.get("name") == "orgm-status":
+        if not SHOW_SERVERS:
+            return
         helper = Path.home() / ".local" / "bin" / "orgm-status"
         try:
             subprocess.Popen(
@@ -342,7 +349,10 @@ def decorate(blocks, cpu_usage, infrastructure_status):
     if keyboard is not None:
         regular.append(keyboard)
     total_kib, available_kib = memory_sample()
-    return [visual_profile_block(), infrastructure_status.current()] + regular + [picom_effects_block()] + resource_blocks(
+    visual = [visual_profile_block()] if SHOW_VISUAL_PROFILE else []
+    effects = [picom_effects_block()] if SHOW_PICOM_EFFECTS else []
+    servers = [infrastructure_status.current()] if SHOW_SERVERS else []
+    return visual + servers + regular + effects + resource_blocks(
         cpu_usage.percent(),
         total_kib,
         available_kib,
@@ -366,13 +376,13 @@ def handle_clicks():
 def main():
     threading.Thread(target=handle_clicks, daemon=True).start()
     status = subprocess.Popen(
-        ["i3status", "-c", str(Path.home() / ".config" / "i3" / "i3status.conf")],
+        ["i3status", "-c", os.environ.get("I3STATUS_CONFIG", str(Path.home() / ".config" / "i3" / "i3status.conf"))],
         env={**os.environ, "LC_TIME": "C"},
         stdout=subprocess.PIPE,
         text=True,
     )
     cpu_usage = CpuUsage()
-    infrastructure_status = InfrastructureStatus()
+    infrastructure_status = InfrastructureStatus() if SHOW_SERVERS else None
     wrote_header = False
     wrote_array = False
     first_update = True

@@ -5,6 +5,14 @@ It starts with the shared GNOME profile and Osmarg's applications, without
 Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
 the `server` specialisation provides headless SSH rescue.
 
+Optional **i3 ligero (X11)** is prepared in the source for fast sessions,
+retaining GNOME/GDM as the default. It has Rofi and the detailed local i3status
+bar with caffeine, without wallpaper, compositor, OSK or application preloads.
+See [the session guide](../../profiles/i3/README.md). It has **not been deployed**:
+wait for the user to report the laptop powered on before connecting or applying.
+First physical i3 login, lock and display checks remain pending separately from
+the existing GNOME and Server acceptance notes.
+
 ## GNOME follow-ups and local handoff
 
 Read [PENDING.md](PENDING.md) and the
@@ -203,3 +211,21 @@ Test sudo physically with `sudo -k` followed by `sudo -v`, then touch the sensor
 when prompted. The serial PAM conversation may wait for fingerprint failure or
 timeout before password fallback. No enrollment, biometric test or vault login
 is performed automatically by deployment.
+
+## Netflix and protected video in Brave Origin
+
+Chromium webapps explicitly enable `enableWideVine`. Brave Origin's selected
+package has no equivalent Nix override; its own opt-in is the Local State
+preference `brave.widevine_opted_in`. The shared Origin preference migration
+sets it true while the browser is closed, retaining private backups and other
+preferences. It never edits a running profile. This setting lets Brave download
+its Widevine CDM; it does not bundle a second browser or a different CDM.
+
+For an already open browser, go to `brave://settings/extensions`, enable
+**Widevine**, then restart Brave when prompted. Check Widevine CDM under
+`brave://components` and retry Netflix. If Widevine was already enabled but DRM
+still fails, Brave documents toggling it off/on and relaunching. Browser restart
+is a user step; system activation does not close existing browser/webapp windows.
+Configuration/deployment success alone does not prove Netflix playback.
+
+Reference: https://support.brave.app/hc/en-us/articles/360023851591-How-do-I-view-DRM-protected-content .

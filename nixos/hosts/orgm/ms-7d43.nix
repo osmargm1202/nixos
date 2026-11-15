@@ -1,7 +1,7 @@
 { lib, profileName ? null, ... }:
 
 {
-  imports = [ ./audio.nix ../../apps/youtube-send.nix ];
+  imports = [ ./audio.nix ./i3-session.nix ../../apps/youtube-send.nix ];
 
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.
@@ -29,6 +29,7 @@
   # The base desktop configuration is ORGM's normal boot mode. Its server
   # specialization retains the same board support and networking while
   # replacing every graphical login path with the server role.
+  boot.loader.systemd-boot.configurationLimit = 2;
   boot.loader.systemd-boot.sortKey = "nixos-00-normal";
   specialisation.server.configuration = {
     imports = [ ../../profiles/server.nix ];

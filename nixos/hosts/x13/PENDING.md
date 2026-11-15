@@ -792,3 +792,55 @@ Publication follow-up: user explicitly requests "commit push" for this prepared
 X13 source. Publish on canonical main with focused tests passing; this changes
 source publication status only. Win+A/sudo/polkit/Bitwarden runtime activation
 and human acceptance remain pending as described above.
+
+## 2026-11-11: Brave Origin Widevine/Netflix configuration deployed
+
+User reports Netflix videos fail in Brave Origin and recalls Chromium's enabled
+option. Verified existing chromium.nix/webapps.nix use enableWideVine=true.
+Pinned nixpkgs-browser Brave Origin1.99.55 make-brave.nix has no enableWideVine
+argument. Brave v1.99.55 source defines kWidevineEnabled as
+brave.widevine_opted_in, registered false by default in Local State. Origin's
+current X13 profile has no enabled opt-in and no downloaded Widevine manifest.
+Only that relevant setting/component presence was inspected, not browser history,
+cookies, credentials, extensions or vault data.
+
+Shared browser-profile.py now sets the Widevine opt-in alongside free tier and
+vertical tabs. It supports multiple settings per JSON file and retains the live
+SingletonLock guard, other preferences, mode0600 backups and idempotent writes.
+Existing browser-profile tests expanded to cover disabled opt-in,
+Local State preservation/backup, unchanged live profile and idempotence. They
+pass locally and on X13. Existing X13/Server tests and full local Normal/Server
+build pass (local main also contains the previously committed pending AI and
+Bitwarden changes; do not confuse this with target source).
+
+X13 connectivity recovered at .67 with pinned SSH identity. Target still uses
+source snapshot, no Git metadata. Only browser-profile.py and browser.nix copied
+with hash guards and backups under
+NH_FLAKE/.x13-deploy/20261111-origin-widevine. No other source deployed, including
+previously pending Win+A/sudo/polkit/Bitwarden additions. Target full build and
+user-run NH switch passed. Exact GDM unit and Shell template unchanged; same GDM
+MainPID and active GNOME Wayland session preserved, zero failed system/user
+units. Running closure:
+/nix/store/lkiia2wq56sanw6b826qf4d1slw4zjwg-nixos-system-x13-gnome .
+
+Origin remains running, so the migration correctly skips live profile writes.
+Runtime Widevine opt-in is STILL FALSE and no CDM manifest is installed.
+User action pending: brave://settings/extensions → Widevine On, allow official
+component download, restart Brave when prompted, then retry Netflix. Alternatively
+close Origin and rerun activation/profile migration before reopening. Merely
+closing/reopening does not rerun the Home Manager migration by itself. No forced
+browser close/logout/reboot. Netflix account playback remains unverified.
+
+Official source/reference:
+https://github.com/brave/brave-core/blob/v1.99.55/components/constants/pref_names.h
+https://github.com/brave/brave-core/blob/v1.99.55/browser/widevine/widevine_utils.cc
+https://support.brave.app/hc/en-us/articles/360023851591-How-do-I-view-DRM-protected-content
+No new commit/push requested for this follow-up.
+
+Verification limit: an isolated Origin/Xvfb profile with the opt-in did download
+a Widevine manifest in one run. The EME probe never reached a secure test page
+(about:blank, isSecureContext=false), and a follow-up explicit CDP navigation
+timed out. These are NOT passing DRM/EME or Netflix playback tests. Only the
+preference-preservation tests, complete builds and safe NH activation are
+claimed passing. Isolated probe processes were cleaned up in finally blocks;
+real user browser/vault data was not used.

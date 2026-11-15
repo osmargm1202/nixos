@@ -69,7 +69,7 @@ in
       ] (_: [ "brave-origin.desktop" ]);
     };
     home-manager.users.${userName} = { lib, ... }: {
-      # Set two requested preferences with private backups; never write a live profile.
+      # Set requested preferences (including Widevine) with private backups; never write a live profile.
       home.activation.originInitialPreferences = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./browser-profile.py}
       '';

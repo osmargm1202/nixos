@@ -1,5 +1,45 @@
 # i3 y su variante ligera
 
+## Sesión opcional en Envy y X13
+
+`light-session.nix` agrega **i3 ligero (X11)** al selector existente: Sway sigue
+como escritorio principal de Envy y GNOME el de X13. No crea otra salida de
+flake ni especialización. Envy conserva i3 también en windows-vfio; gaming y
+Server, y el Server de X13, no incorporan esta sesión.
+
+`light-config` se carga desde el almacén Nix sin importar los autostarts o
+personalizaciones del escritorio principal. No arranca Picom, teclado virtual,
+fondo, dock, widgets ni aplicaciones como Steam o el navegador. Las aplicaciones
+existentes siguen disponibles en Rofi. La barra conserva detalles locales y
+cafeína, sin controles visuales ni servidores ni su consulta periódica.
+Los paquetes son del nixpkgs bloqueado; solo se generan wrappers/configuración
+pequeños, sin parches del gestor de ventanas ni versiones nuevas por este cambio.
+
+Atajos: Win+Enter terminal, Win+Espacio aplicaciones, Alt+Tab ventanas,
+Win+C calculadora, Win+E archivos, Win+W navegador, Win+N red, Win+B Bluetooth,
+Win+F10 audio, Win+Shift+C cafeína, Win+L bloqueo con contraseña,
+Win+Shift+E cerrar sesión. Hay espacios 1–10, teclas multimedia y brillo.
+La cafeína también se alterna desde su indicador en la barra.
+
+El lanzador separa el entorno X11 del de Sway/GNOME; su target inicia Dunst y
+el agente polkit. `xss-lock` usa i3lock antes de suspender. No cambia la política
+biométrica ni el bloqueo nativo de los otros escritorios. Archivos y navegador
+usan los manejadores predeterminados del host.
+
+**Preparado localmente, no desplegado.** Esperar a que el usuario avise que las
+laptops están encendidas antes de conectarse o aplicar. Tras desplegar, elegir
+la sesión en SDDM (Envy) o en GDM (X13); con autologin, cerrar sesión primero.
+El primer inicio físico, bloqueo, brillo y monitores requieren pruebas por host.
+No asumir que los conectores XRandR de Envy coinciden con Sway ni copiar su
+regla de DP-1 sin verificarla.
+
+`python3 tests/i3-light-session.test.py` compara escritorio, GPU, catálogo y
+autostart antes/después, comprueba los modos sin gráficos, construye las sesiones
+y valida la configuración con i3 real. Prueba el lanzador con sustitutos de
+systemd/D-Bus/i3 sin tocar ninguna sesión real.
+
+## Perfil i3 principal
+
 `i3.nix` mantiene el escritorio existente. `lightweight.nix` importa esa misma
 base, conserva autotiling, swallowing, atajos, portapapeles y monitor externo,
 y selecciona aplicaciones pequeñas, Xterm, LightDM GTK, i3status y bloqueo

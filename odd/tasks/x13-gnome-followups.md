@@ -146,3 +146,15 @@ Deployment has NOT occurred: X13 .67 unreachable by SSH/ping. See latest PENDING
 entry for exact source/staging/runtime boundary. Autologin unchanged; private
 Bitwarden settings and physical runtime tests remain pending. No vault access,
 forced logout or publishing.
+
+## 2026-11-11: Origin Netflix/Widevine follow-up
+
+Shared preference migration now opts into Widevine in Brave's Local State,
+corresponding to Chromium's previous enableWideVine behavior. Tests and local
+Normal/Server build pass. Only browser-profile.py/browser.nix deployed to X13;
+NH switch passed as lkiia2w closure with same session/GDM PID and no failed units.
+Browser remains open, so runtime preference is still false: user must enable
+Widevine under brave://settings/extensions and restart Brave when prompted, or
+close it for a fresh migration. Actual Netflix playback pending. Earlier
+Win+A/sudo/polkit/Bitwarden activation stays pending, not included in this switch.
+See PENDING.md for source/backup and scope evidence. No new publishing.
