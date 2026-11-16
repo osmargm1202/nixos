@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  userName,
   ...
 }:
 let
@@ -54,6 +55,13 @@ let
     playerctl = "${pkgs.playerctl}/bin/playerctl";
     brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
     open = "${pkgs.xdg-utils}/bin/xdg-open";
+    browser =
+      if (config.orgm.browser.enable or false) then
+        "${
+          config.home-manager.users.${userName}.home.file.".local/bin/orgm-browser".source
+        } --restore-or-focus"
+      else
+        "${pkgs.xdg-utils}/bin/xdg-open https://www.google.com";
     nmtui = "${pkgs.networkmanager}/bin/nmtui";
     bluetooth = "${pkgs.bluetui}/bin/bluetui";
     audio = "${pkgs.pavucontrol}/bin/pavucontrol";

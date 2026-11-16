@@ -65,6 +65,14 @@ assert 'i3-monitor-profile --apply' not in minimal
 assert '/bin/orgm-i3-status' in minimal
 assert '/bin/rofi -show drun' in minimal and '/bin/rofi -show window' in minimal
 assert 'exec_always --no-startup-id autotiling' in minimal
+assert 'bindsym $mod+l exec --no-startup-id /nix/store/' in minimal
+assert '/bin/i3lock -c 000000' in minimal and 'bindsym $mod+l focus right' not in minimal
+assert 'for_window [class="(?i)^rofi$"] floating enable' in minimal
+browserConfig=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
+ if line.startswith('include /nix/store/') and line.endswith('orgm-i3-browser.conf')).read_text()
+assert 'orgm-browser --restore-or-focus' in browserConfig
+assert 'bindsym $mod+w exec --no-startup-id $browser' in browserConfig
+assert 'firefox' not in browserConfig
 personal=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
  if line.startswith('include /nix/store/') and line.endswith('orgm-i3-personal.conf')).read_text()
 assert 'exec steam -silent' in personal

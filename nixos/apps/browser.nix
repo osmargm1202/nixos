@@ -14,32 +14,15 @@ let
   };
   browser = pkgs.writeShellApplication {
     name = "orgm-browser";
-    runtimeInputs = [ pkgs.jq ];
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.i3
+    ];
     text = ''
-      case "''${1:-}" in
-        --focus|--restore-or-focus)
-          if [[ "''${XDG_CURRENT_DESKTOP:-}" == *Hyprland* ]]; then
-            address="$(hyprctl -j clients | jq -r '[.[] | select(.class == "brave-origin")] | sort_by(.focusHistoryID) | .[0].address // empty')"
-            if [[ -n "$address" ]]; then
-              exec hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })"
-            fi
-          fi
-          shift ;;
-        --new) shift ;;
-        --new-tab) shift ;;
-      esac
-      if [[ "''${1:-}" == --prompt ]]; then
-        shift
-        if [[ "''${XDG_CURRENT_DESKTOP:-}" == *GNOME* ]]; then
-          url="$(${pkgs.zenity}/bin/zenity --entry --title='Abrir web' --text='Dirección o búsqueda')" || exit 0
-        else
-          url="$("$HOME/.local/bin/orgm-rofi" -dmenu -i -p 'Abrir web')" || exit 0
-        fi
-        [[ -n "$url" ]] || exit 0
-        set -- "$url" "$@"
-      fi
-      exec ${lib.getExe cfg.package} "$@"
-    '';
+      export ORGM_BROWSER_EXECUTABLE=${lib.getExe cfg.package}
+      export ORGM_BROWSER_ZENITY=${pkgs.zenity}/bin/zenity
+    ''
+    + builtins.readFile ./browser-launch.sh;
   };
 in
 {
@@ -75,7 +58,8 @@ in
       home.file = {
         ".local/bin/brave-origin".source = lib.getExe cfg.package;
         ".local/bin/orgm-browser".source = "${browser}/bin/orgm-browser";
-        ".local/share/applications/brave-origin.desktop".source = "${cfg.package}/share/applications/brave-origin.desktop";
+        ".local/share/applications/brave-origin.desktop".source =
+          "${cfg.package}/share/applications/brave-origin.desktop";
       };
       # Set requested preferences (including Widevine) with private backups; never write a live profile.
       home.activation.originInitialPreferences = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

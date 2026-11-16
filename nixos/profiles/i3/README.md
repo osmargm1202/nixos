@@ -21,6 +21,11 @@ Win+F10 audio, Win+Shift+C cafeína, Win+L bloqueo con contraseña,
 Win+Shift+E cerrar sesión. Hay espacios 1–10, teclas multimedia y brillo.
 La cafeína también se alterna desde su indicador en la barra.
 
+Las ventanas Rofi se mantienen flotantes y centradas incluso al usar
+`-normal-window`. En hosts con Origin seleccionado, Win+W usa orgm-browser para
+enfocar su ventana principal existente o abrirla; no confunde una webapp con el
+navegador. En los demás se conserva el manejador predeterminado del host.
+
 El lanzador separa el entorno X11 del de Sway/GNOME; su target inicia Dunst y
 el agente polkit. `xss-lock` usa i3lock antes de suspender. No cambia la política
 biométrica ni el bloqueo nativo de los otros escritorios. Archivos y navegador

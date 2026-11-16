@@ -21,6 +21,12 @@ let
   target = "orgm-i3-session.target";
   home = config.users.users.${userName}.home;
   dot = pkgs.callPackage ../../orgm/orgm-dot.nix { };
+  lock = "${pkgs.i3lock}/bin/i3lock -c 000000";
+  browserConfig = pkgs.writeText "orgm-i3-browser.conf" ''
+    set $browser $run orgm-browser --restore-or-focus
+    bindsym $mod+w exec --no-startup-id $browser
+    bindsym $mod+m exec --no-startup-id $run orgm-browser --new-tab --prompt
+  '';
   # Reuse the existing startup and bindings; omit only visual/OSK integration.
   personalLines = lib.splitString "\n" (
     builtins.readFile ../../../dotfiles/config/users/osmarg/profiles/i3/.config/i3/config.d/90-osmarg.conf
@@ -36,7 +42,12 @@ let
     lib.concatMapStrings
       (
         program:
-        lib.optionalString (builtins.elem program.name config.orgm.user.programs) "include ${home}/.config/i3/config.d/${program.file}\n"
+        lib.optionalString (builtins.elem program.name config.orgm.user.programs) (
+          if program.name == "webapps" && config.orgm.browser.enable then
+            "include ${browserConfig}\n"
+          else
+            "include ${home}/.config/i3/config.d/${program.file}\n"
+        )
       )
       [
         {
@@ -94,14 +105,23 @@ let
         "set_from_resource $status_command orgm.i3.statusCommand exec ~/.local/bin/i3status-localized"
         "i3-rofi --drun"
         "i3-rofi --window"
+        "bindsym $mod+l focus right"
+        "i3-lock"
       ]
       [
         "${integrations}include ${personalConfig}"
         "set $status_command ${statusBar}/bin/orgm-i3-status"
         "${pkgs.rofi}/bin/rofi -show drun"
         "${pkgs.rofi}/bin/rofi -show window"
+        "bindsym $mod+l exec --no-startup-id ${lock}"
+        lock
       ]
       (lib.concatStringsSep "\n" minimalLines)
+    + ''
+
+      # Rofi menus use normal X11 windows; keep them centered and floating.
+      for_window [class="(?i)^rofi$"] floating enable, border pixel 0, move position center
+    ''
   );
   session = pkgs.writeShellApplication {
     name = "orgm-i3-session";

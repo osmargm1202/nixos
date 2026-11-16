@@ -138,3 +138,61 @@ No se cerró/reinició el escritorio, Steam ni el juego real. La prueba de una
 petición real de Dota queda para el próximo evento del usuario. El módulo de
 sesión ligera de Envy/X13 reutiliza la misma adaptación en las fuentes; ambas
 laptops siguen **sin despliegue**, esperando el aviso del usuario.
+
+## 2026-11-15: Win+L, Rofi flotante y Win+W
+
+Se reprodujeron las causas en la configuración activa: Win+L aún era navegación
+a la derecha; el menú principal usa Rofi con `-normal-window`, pero su regla de
+flotación se había perdido al omitir el fragmento OSK; el include 40-webapps
+todavía definía Firefox como navegador. orgm-browser solo implementaba foco
+existente para Hyprland, sin backend i3.
+
+La configuración generada de ORGM ahora asigna Win+L a i3lock nativo con negro
+uniforme, conserva navegación derecha con Win+Right y aplica el mismo bloqueo
+simple a los otros atajos/xss-lock. Una regla específica de clase Rofi mantiene
+los menús centrados, flotantes y sin borde, sin reactivar OSK. El include de
+navegador es inmutable y usa orgm-browser para Win+W y la entrada de URL Win+M;
+ya no precarga Firefox por ese fragmento.
+
+browser-launch.sh implementa foco por ID numérico en i3: clase principal
+Brave-origin insensible a mayúsculas, excluyendo las clases de webapps. Enfoca
+una ventana existente o abre el navegador si no hay ninguna; una respuesta IPC
+fallida también permite abrir. Se mantienen los caminos Hyprland/GNOME y la
+configuración/perfil de Brave. La sesión ligera de laptops añade la misma regla
+Rofi y usa este helper en Win+W cuando Origin está seleccionado.
+
+Pasó tests/i3-desktop-actions.test.py con i3/Xvfb privados: eventos reales Win+L
+contra un ejecutable de bloqueo sustituido solo en la prueba (sin autenticación),
+Win+W entre escritorios sin relanzar la ventana principal, caso solo-webapp que
+abre navegador y Rofi real -normal-window flotante. No se bloqueó el escritorio
+real. Pasaron también las regresiones ORGM/laptops y el build ORGM completo:
+`/nix/store/fi136q5afcjz0yk1202avz5fv87gyxij-nixos-system-orgm-hyprland`.
+
+Aplicado localmente mediante copia protegida/recarga IPC y actualización del
+helper de usuario. La única diferencia previa entre config mutable y administrada
+era la ruta del paquete de estado; no se descartaron cambios de atajos del usuario.
+Backup: `~/.local/state/orgm-i3-actions/20261115-061335`; raíz GC del home-files
+nuevo: `~/.local/state/orgm-i3-actions/home-files`. i3 sigue abierto y no hay
+unidades fallidas; autotiling/rootbtnd conservaron sus únicos procesos existentes.
+
+**Para el siguiente inicio** falta `nh os switch . -H orgm`: sudo aún requiere
+contraseña. La generación global conserva el lanzador que apunta a su anterior
+configuración inmutable; la recarga local no modifica ese archivo del Store.
+Los cambios están en las fuentes Nix y en la sesión actual, pero no se debe
+declarar probado/persistido el próximo inicio antes de ese switch. El bloqueo
+real con contraseña queda para el usuario. No se aplicó nada en Envy/X13.
+
+## 2026-11-15: EarlyOOM deshabilitado en las fuentes de ORGM
+
+El usuario solicita quitar EarlyOOM o poder apagarlo al jugar. Se eligió la
+primera opción: `ms-7d43.nix` fuerza services.earlyoom.enable=false solo para
+ORGM, incluyendo sus perfiles; la política compartida de otros equipos no cambia.
+Evaluación: ORGM=false, Envy=true, X13=true; unidad EarlyOOM ausente de la nueva
+configuración. Build completo correcto:
+`/nix/store/klz3hfrns018wz1na6pwfzfq0i5x38ds-nixos-system-orgm-hyprland`.
+
+No se detuvo el servicio real: sudo requiere contraseña y EarlyOOM sigue activo
+en la generación anterior. Desde una terminal del usuario, `sudo systemctl stop
+earlyoom.service` lo detiene de inmediato; `nh os switch /home/osmarg/Hobby/nixos
+-H orgm` instala la desactivación permanente, junto con los otros cambios de
+fuente pendientes del host. No se desplegó nada a las laptops.

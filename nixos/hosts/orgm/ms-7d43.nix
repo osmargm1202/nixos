@@ -13,6 +13,9 @@
   services.fstrim.enable = lib.mkDefault true;
   services.smartd.enable = lib.mkDefault true;
 
+  # This desktop should not have games terminated by the shared EarlyOOM policy.
+  services.earlyoom.enable = lib.mkForce false;
+
   # Load NVIDIA KMS in initrd so Plymouth can render on the primary GPU early.
   boot.initrd.kernelModules = [
     "nvidia"
