@@ -24,8 +24,14 @@
     NIXOS_OZONE_WL = "1";
     MOZ_ENABLE_WAYLAND = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
-    GDK_BACKEND = "wayland,x11";
+    # Do not force GDK_BACKEND: GTK picks Wayland under GNOME by itself, and
+    # xdg-desktop-portal-gnome refuses to serve dialogs (FileChooser,
+    # Notification...) when it is set, which makes Brave cancel every download.
   };
+
+  # Belt and braces: an X11 session started earlier (i3) may leave GDK_BACKEND
+  # in the systemd user environment; the GNOME portal must never inherit it.
+  systemd.user.services.xdg-desktop-portal-gnome.serviceConfig.UnsetEnvironment = [ "GDK_BACKEND" ];
 
   xdg.mime = {
     enable = true;
