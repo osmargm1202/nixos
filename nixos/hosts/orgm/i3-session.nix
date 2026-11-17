@@ -98,6 +98,24 @@ let
       text = "[Unit]\nConditionEnvironment=${condition}\n";
     }
   ) sessionGuards;
+  # Under X11, Sunshine captures with X11 + NVENC, which needs libcuda from the
+  # driver path. The CAP_SYS_ADMIN wrapper (for Wayland KMS capture) runs in
+  # secure-exec mode and cannot load it, so bypass the wrapper only under X11.
+  sunshineLauncher = pkgs.writeShellScript "orgm-sunshine" ''
+    if [ "''${XDG_SESSION_TYPE:-}" = x11 ]; then
+      export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      exec ${config.services.sunshine.package}/bin/sunshine "$@"
+    fi
+    exec /run/wrappers/bin/sunshine "$@"
+  '';
+  # Sorts after a hand-made override.conf so its ExecStart wins.
+  sunshineFiles = lib.optionalAttrs config.services.sunshine.enable {
+    "systemd/user/sunshine.service.d/zz-orgm-session.conf".text = ''
+      [Service]
+      ExecStart=
+      ExecStart=${sunshineLauncher}
+    '';
+  };
   i3Config = pkgs.writeText "orgm-i3-minimal.conf" (
     lib.replaceStrings
       [
@@ -196,7 +214,7 @@ in
     home-manager.users.${userName} = lib.mkMerge [
       existing.config.home-manager.users.${userName}
       ({ lib, ... }: {
-        xdg.configFile = guardFiles // {
+        xdg.configFile = guardFiles // sunshineFiles // {
           "i3/orgm-minimal.conf".source = i3Config;
         };
         systemd.user.services.orgm-i3-dunst = {

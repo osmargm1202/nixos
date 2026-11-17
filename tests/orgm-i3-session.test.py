@@ -8,6 +8,7 @@ projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  x11=c.services.xserver.enable; hypr=c.programs.hyprland.enable;
  default=c.services.displayManager.defaultSession;
  autoLogin=c.services.displayManager.autoLogin;
+ sunshineDropin=c.home-manager.users.osmarg.xdg.configFile."systemd/user/sunshine.service.d/zz-orgm-session.conf".text;
  serverAutoLogin=c.specialisation.server.configuration.services.displayManager.autoLogin.enable;
  sunshine=c.services.sunshine.enable; tailscale=c.services.tailscale.enable;
  dropins=builtins.attrNames c.home-manager.users.osmarg.xdg.configFile;
@@ -37,6 +38,7 @@ assert r.returncode==0,r.stderr
 c=json.loads(r.stdout)
 assert c['x11'] and c['hypr'] and c['greeter']
 assert c['default']=='orgm-i3' and c['specialisations']==['server']
+assert 'ExecStart=\nExecStart=/nix/store/' in c['sunshineDropin']
 assert c['autoLogin']=={'enable':True,'user':'osmarg'} and c['serverAutoLogin'] is False
 assert 'orgm-i3' in c['sessions'] and 'hyprland' in c['sessions'] and 'orgm-gaming' not in c['sessions']
 assert c['sunshine'] and c['tailscale']
