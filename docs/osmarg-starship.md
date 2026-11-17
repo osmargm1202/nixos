@@ -1,4 +1,46 @@
-# Starship de osmarg: reproducción antes de cambiar el prompt
+# Terminal de osmarg: restauración y evidencia del prompt
+
+## Restauración aplicada en ORGM — 2026-11-17
+
+A petición del propietario se restauraron las copias reales de `kitty`,
+`btop` y `starship` con `orgm-dot --profile hyprland pull APP`. Los seeds del
+repositorio ya eran correctos; bootstrap conserva las copias existentes y el
+rebuild anterior no había eliminado los restos de Ryoku.
+
+Kitty conservaba Space Grotesk a 11 puntos, `current-font.conf` y el include
+`user.conf` → `orgm-ryoku.conf` con opacidad 0.85. Ahora usa RobotoMono Nerd
+Font Mono a 14 puntos, opacidad 1.0 y la configuración ordinaria del repositorio.
+btop seleccionaba `ryoku`; ahora selecciona `Default`. Starship ya contenía
+Mythos; se sincronizó también con su seed, sin reemplazar Bash.
+
+Respaldos creados por orgm-dot:
+
+- `20261117T073855.687869017-kitty-pull`
+- `20261117T073855.784225585-btop-pull`
+- `20261117T073855.876940373-starship-pull`
+
+Después del pull, los tres `orgm-dot diff` quedaron vacíos. El parser instalado
+de Kitty confirmó fuente, tamaño y opacidad; se solicitó recarga con SIGUSR1
+al proceso Kitty del usuario. Ya no había un proceso btop abierto al aplicar
+la restauración. Una PTY con el HOME real y Bash interactivo, tras ejecutar
+un comando, verificó lambda, píldoras y colores oro/pizarra de Mythos. Esto
+comprueba configuración y render del prompt, no aceptación visual de la
+ventana física. No se operaron otros hosts.
+
+## Ajuste posterior del símbolo en ORGM
+
+El propietario aclaró que quiere conservar Starship y quitar únicamente `λ`.
+Se añadió el override de equipo
+`dotfiles/config/hosts/orgm/shared/.config/starship.toml` con `❯` para éxito
+y error. Se aplicó al HOME real con `orgm-dot --profile hyprland pull starship`
+(respaldo `20261117T074756.718809279-starship-pull`). Ambos estados renderizan
+`❯` sin lambda. El cambio del símbolo no afecta los seeds de otros equipos.
+
+La prueba de PTY se actualizó para el override de ORGM y pasó para GNOME e
+Hyprland. En esta validación no se ejecutó Ryoku porque su fuente nativa fijada
+no estaba disponible en el store local; la prueba completa mantiene ese requisito.
+
+## Investigación anterior (sin despliegue en esa etapa)
 
 El baseline de T10/S15 ya renderiza Mythos en Bash interactivo para GNOME,
 Hyprland y Ryoku. Esta investigación no cambia la configuración ni declara

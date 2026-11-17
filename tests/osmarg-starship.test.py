@@ -62,7 +62,7 @@ class Prompt(unittest.TestCase):
                         'pull', app], env=env, capture_output=True, text=True)
                     self.assertEqual(pulled.returncode, 0, pulled.stdout + pulled.stderr)
                 self.assertEqual((home / '.config/starship.toml').read_bytes(),
-                                 (ROOT / 'dotfiles/config/programs/shell/.config/starship.toml').read_bytes())
+                                 (ROOT / 'dotfiles/config/hosts/orgm/shared/.config/starship.toml').read_bytes())
                 (home / 'prompt-proof').mkdir()
                 # Each newline returns to the REPL. Inspect the prompt AFTER cd,
                 # bounded by non-echoed control-byte markers, not command output.
@@ -81,14 +81,14 @@ class Prompt(unittest.TestCase):
                                 output.extend(chunk)
 
                     try:
-                        receive('λ'.encode())
+                        receive('❯'.encode())
                         output.clear()
                         terminal.stdin.write(b'builtin cd "$HOME/prompt-proof"; printf "\\036BEGIN\\037"\n')
                         terminal.stdin.flush()
                         receive(b'\x1eBEGIN\x1f')
                         # Do not feed all lines then EOF: Blesh consumes that as
                         # terminal input rather than a sequence of REPL commands.
-                        receive('λ'.encode(), output.index(b'\x1eBEGIN\x1f') + len(b'\x1eBEGIN\x1f'))
+                        receive('❯'.encode(), output.index(b'\x1eBEGIN\x1f') + len(b'\x1eBEGIN\x1f'))
                         rendered = output.decode(errors='replace').split('\x1eBEGIN\x1f', 1)[1]
                         output.clear()
                         terminal.stdin.write(b'printf "%s" "${STARSHIP_CONFIG:-unset}" > "$HOME/effective-config"; printf "\\036END\\037"\n')
@@ -103,12 +103,12 @@ class Prompt(unittest.TestCase):
                             terminal.terminate()
                             terminal.wait(timeout=5)
                 plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', rendered)
-                for expected in ('λ', '', '', '󰉋', 'prompt-proof'):
+                for expected in ('❯', '', '', '󰉋', 'prompt-proof'):
                     self.assertIn(expected, plain, (profile, repr(rendered[-4000:])))
                 for color in ('38;2;236;167;91', '48;2;35;37;46'):
                     self.assertIn(color, rendered, (profile, repr(rendered[-4000:])))
                 self.assertEqual((home / 'effective-config').read_text(), 'unset')
-                print(f'PASS: {profile}: real post-command Mythos lambda, directory pills, gold/slate; default config')
+                print(f'PASS: {profile}: real post-command Mythos chevron, directory pills, gold/slate; default config')
 
 
 if __name__ == '__main__':
