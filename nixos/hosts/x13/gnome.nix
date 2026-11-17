@@ -28,6 +28,13 @@ base // {
       "org/gnome/desktop/lockdown".disable-lock-screen = false;
       "org/gnome/desktop/screensaver".lock-enabled = true;
       "org/gnome/settings-daemon/plugins/media-keys".screensaver = [ "<Super>l" ];
+      # Win+V opens Clipboard Indicator's history (Windows-style); the
+      # notification list stays on Win+M.
+      "org/gnome/shell/keybindings".toggle-message-tray = [ "<Super>m" ];
+      "org/gnome/shell/extensions/clipboard-indicator" = {
+        enable-keybindings = true;
+        toggle-menu = [ "<Super>v" ];
+      };
     };
   };
 }
