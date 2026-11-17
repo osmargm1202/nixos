@@ -1,4 +1,4 @@
-{ lib, userName, profileName ? null, ... }:
+{ lib, pkgs, userName, profileName ? null, ... }:
 
 {
   imports = [ ./audio.nix ./i3-session.nix ../../apps/youtube-send.nix ];
@@ -26,6 +26,15 @@
     };
     defaultSession = lib.mkForce "orgm-i3";
   };
+  # Headless streaming: Xorg (the i3 session only; Hyprland does not read it)
+  # always sees a 1920x1080 monitor on DFP-5, the LG's usual port, so Sunshine
+  # has a full-size desktop without a display attached. With the LG plugged
+  # in, i3 also runs it at 1920x1080 60 Hz.
+  services.xserver.screenSection = lib.mkIf (profileName == "hyprland") ''
+    Option "ConnectedMonitor" "DFP-5"
+    Option "CustomEDID" "DFP-5:${pkgs.edid-generator}/lib/firmware/edid/1920x1080.bin"
+    Option "MetaModes" "DFP-5: 1920x1080 +0+0"
+  '';
 
   # Load NVIDIA KMS in initrd so Plymouth can render on the primary GPU early.
   boot.initrd.kernelModules = [
