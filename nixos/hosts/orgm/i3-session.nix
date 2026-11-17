@@ -103,8 +103,11 @@ let
   # secure-exec mode and cannot load it, so bypass the wrapper only under X11.
   sunshineLauncher = pkgs.writeShellScript "orgm-sunshine" ''
     if [ "''${XDG_SESSION_TYPE:-}" = x11 ]; then
+      # i3-session.sh clears Wayland variables to empty strings; Sunshine
+      # treats a defined WAYLAND_DISPLAY as Wayland and never tries X11.
+      unset WAYLAND_DISPLAY WAYLAND_SOCKET
       export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-      exec ${config.services.sunshine.package}/bin/sunshine "$@"
+      exec ${config.services.sunshine.package}/bin/sunshine capture=x11 "$@"
     fi
     exec /run/wrappers/bin/sunshine "$@"
   '';
