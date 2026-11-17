@@ -7,6 +7,8 @@ root=Path(__file__).resolve().parents[1]
 projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  x11=c.services.xserver.enable; hypr=c.programs.hyprland.enable;
  default=c.services.displayManager.defaultSession;
+ autoLogin=c.services.displayManager.autoLogin;
+ serverAutoLogin=c.specialisation.server.configuration.services.displayManager.autoLogin.enable;
  sunshine=c.services.sunshine.enable; tailscale=c.services.tailscale.enable;
  dropins=builtins.attrNames c.home-manager.users.osmarg.xdg.configFile;
  greeter=c.services.displayManager.sddm.wayland.enable;
@@ -34,7 +36,8 @@ r=subprocess.run(['nix','eval','--impure','--json',f'path:{root}#nixosConfigurat
 assert r.returncode==0,r.stderr
 c=json.loads(r.stdout)
 assert c['x11'] and c['hypr'] and c['greeter']
-assert c['default']=='hyprland' and c['specialisations']==['server']
+assert c['default']=='orgm-i3' and c['specialisations']==['server']
+assert c['autoLogin']=={'enable':True,'user':'osmarg'} and c['serverAutoLogin'] is False
 assert 'orgm-i3' in c['sessions'] and 'hyprland' in c['sessions'] and 'orgm-gaming' not in c['sessions']
 assert c['sunshine'] and c['tailscale']
 assert not any('90-orgm-gaming' in p for p in c['dropins'])

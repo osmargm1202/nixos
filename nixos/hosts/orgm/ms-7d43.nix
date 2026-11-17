@@ -1,4 +1,4 @@
-{ lib, profileName ? null, ... }:
+{ lib, userName, profileName ? null, ... }:
 
 {
   imports = [ ./audio.nix ./i3-session.nix ../../apps/youtube-send.nix ];
@@ -15,6 +15,17 @@
 
   # This desktop should not have games terminated by the shared EarlyOOM policy.
   services.earlyoom.enable = lib.mkForce false;
+
+  # Temporary server use: boot straight into the lightweight i3 (X11) session
+  # so Sunshine, Syncthing, Nextcloud and Tailscale come up unattended.
+  # Hyprland stays selectable from SDDM after logging out.
+  services.displayManager = lib.mkIf (profileName == "hyprland") {
+    autoLogin = {
+      enable = true;
+      user = userName;
+    };
+    defaultSession = lib.mkForce "orgm-i3";
+  };
 
   # Load NVIDIA KMS in initrd so Plymouth can render on the primary GPU early.
   boot.initrd.kernelModules = [
