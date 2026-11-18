@@ -38,25 +38,5 @@ base // {
       # Let GNOME's sliders go past 100% (up to 150%).
       "org/gnome/desktop/sound".allow-volume-above-100-percent = true;
     };
-    # Start every session with output and microphone at 150%.
-    systemd.user.services.x13-volume-boost = {
-      Unit = {
-        Description = "Set default speaker and microphone volume to 150%";
-        After = [ "wireplumber.service" ];
-        Wants = [ "wireplumber.service" ];
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.writeShellScript "x13-volume-boost" ''
-          for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
-            ${pkgs.wireplumber}/bin/wpctl inspect @DEFAULT_AUDIO_SINK@ >/dev/null 2>&1 && break
-            ${pkgs.coreutils}/bin/sleep 1
-          done
-          ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1.5
-          ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 1.5
-        ''}";
-      };
-    };
   };
 }
