@@ -8,8 +8,11 @@
 let
   enabled = builtins.elem "flatpak" config.orgm.user.programs;
   discordEnabled = builtins.elem "discord" config.orgm.user.programs;
-  # Shared desktop baseline: install system-wide, independently of the user's
-  # personal app list. ArtCraft publishes bundles, not a Flathub application.
+  # Shared desktop baseline, independent of the user's personal app list.
+  # ArtCraft publishes bundles, not a Flathub application. The pinned bundle is
+  # only the first-install seed: the launcher updates itself and its apps, so
+  # Nix must not own it (nix-flatpak would put the pinned version back).
+  artcraftId = "ai.storyteller.artcraft-launcher";
   artcraftVersion = config.orgm.artcraft.launcher.version;
   artcraftSha256 = config.orgm.artcraft.launcher.sha256;
   artcraftBundle = pkgs.fetchurl {
@@ -18,16 +21,17 @@ let
   };
   packages =
     config.orgm.user.flatpakPackages
-    ++ lib.optional config.orgm.flatpak.remmina.enable "org.remmina.Remmina"
-    ++ [
-      # One common remote-desktop client, including users without personal extras.
-      {
-        appId = "ai.storyteller.artcraft-launcher";
-        origin = "artcraft-launcher-origin";
-        bundle = "${artcraftBundle}";
-        sha256 = artcraftSha256;
-      }
-    ];
+    ++ lib.optional config.orgm.flatpak.remmina.enable "org.remmina.Remmina";
+  # Install the launcher for the user only when no installation has it. A user
+  # install lets "Update and restart" replace it without a polkit prompt.
+  artcraftBootstrap = pkgs.writeShellScript "orgm-artcraft-launcher-bootstrap" ''
+    flatpak=${pkgs.flatpak}/bin/flatpak
+    if $flatpak info --user ${artcraftId} >/dev/null 2>&1 \
+      || $flatpak info --system ${artcraftId} >/dev/null 2>&1; then
+      exit 0
+    fi
+    exec $flatpak install --user --noninteractive --assumeyes ${artcraftBundle}
+  '';
   discord = pkgs.callPackage ./discord-webrtc.nix { };
   windowsFontNames = pkgs.callPackage ../packages/windows-font-names.nix {
     microsoftOfficeFonts = pkgs.callPackage ../packages/microsoft-office-fonts.nix { };
@@ -37,11 +41,12 @@ in
   options.orgm.artcraft.launcher = {
     version = lib.mkOption {
       type = lib.types.str;
-      default = "0.5.1";
+      default = "0.19.2";
+      description = "Launcher bundle installed when it is missing; later updates are the launcher's own.";
     };
     sha256 = lib.mkOption {
       type = lib.types.str;
-      default = "08fc5d5ec7498292b238ff7ea0bfdd0d880f282cefb64a9980db135f3db95f8b";
+      default = "238825b7ad3f1b16374428357d2acc7c97c7dbc5d36b1d53123d604a969969bd";
     };
   };
   options.orgm.flatpak.remmina.enable = lib.mkOption {
@@ -136,6 +141,22 @@ in
           };
         })
       ];
+    };
+
+    systemd.user.services.orgm-artcraft-launcher-bootstrap = {
+      description = "Install ArtCraft Launcher once; it updates itself afterwards";
+      wantedBy = [ "default.target" ];
+      unitConfig = {
+        StartLimitIntervalSec = 3600;
+        StartLimitBurst = 10;
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = artcraftBootstrap;
+        # The first login may come before the network that fetches the runtime.
+        Restart = "on-failure";
+        RestartSec = 120;
+      };
     };
 
     # A fresh machine installs the bundles after the first HM activation.

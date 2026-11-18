@@ -41,6 +41,7 @@
     };
     systemd.services.flatpak-managed-install.enable = lib.mkForce false;
     systemd.services.orgm-artcraft-integrations.enable = lib.mkForce false;
+    systemd.user.services.orgm-artcraft-launcher-bootstrap.enable = lib.mkForce false;
 
     # Only rescue tolerates a missing ESP. Inherit its device and FAT masks.
     fileSystems."/boot".options = [ "nofail" "x-systemd.device-timeout=10s" ];

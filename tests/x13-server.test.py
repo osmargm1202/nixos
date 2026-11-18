@@ -40,7 +40,8 @@ projection = r'''s: let
     flatpak = x.services.flatpak.enable;
     flatpakPackages = map (p: if builtins.isString p then p else p.appId) x.services.flatpak.packages;
     installers = map (n: x.systemd.services.${n}.enable or false)
-      [ "flatpak-managed-install" "orgm-artcraft-integrations" ];
+      [ "flatpak-managed-install" "orgm-artcraft-integrations" ]
+      ++ [ (x.systemd.user.services.orgm-artcraft-launcher-bootstrap.enable or false) ];
     ssh = {
       inherit (x.services.openssh) enable openFirewall ports;
       inherit (x.services.openssh.settings) PermitRootLogin PasswordAuthentication;
@@ -99,7 +100,7 @@ assert normal["flatpak"] and all(normal["installers"])
 assert not server["flatpak"] and not any(server["installers"])
 assert server["flatpakPackages"] == []
 assert set(config["expectedCatalog"]) <= set(normal["flatpakPackages"])
-assert "ai.storyteller.artcraft-launcher" in normal["flatpakPackages"]
+assert "ai.storyteller.artcraft-launcher" not in normal["flatpakPackages"]
 assert {"nautilus", "gnome-text-editor", "loupe", "evince", "gnome-console"} <= set(normal["packages"])
 for mode in (normal, server):
     assert mode["failedAssertions"] == []

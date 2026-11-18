@@ -28,7 +28,7 @@ in {
   expectedAutostart = builtins.filter (p: !(lib.hasPrefix "nextcloud" p)) original.orgm.user.autostart;
   flatpaks = map (p: if builtins.isString p then p else p.appId) c.services.flatpak.packages;
   expectedFlatpaks = original.orgm.user.flatpakPackages;
-  artcraft = builtins.filter (p: builtins.isAttrs p && p.appId == "ai.storyteller.artcraft-launcher") c.services.flatpak.packages;
+  artcraft = c.systemd.user.services ? orgm-artcraft-launcher-bootstrap;
   artcraftIntegrations = builtins.hasAttr "orgm-artcraft-integrations" c.systemd.services;
   failedAssertions = map (a: a.message) (builtins.filter (a: !a.assertion) c.assertions);
   systemdInitrd = c.boot.initrd.systemd.enable;
@@ -95,10 +95,8 @@ assert sorted(c["webapps"]) == sorted(c["expectedWebapps"])
 assert c["autostart"] == c["expectedAutostart"]
 assert not any("nextcloud" in p.lower() for p in c["programs"] + c["autostart"] + c["packages"] + c["hmPackages"])
 assert set(c["expectedFlatpaks"]) <= set(c["flatpaks"])
-assert "ai.storyteller.artcraft-launcher" in c["flatpaks"]
-assert len(c["artcraft"]) == 1
-assert c["artcraft"][0]["sha256"] == "08fc5d5ec7498292b238ff7ea0bfdd0d880f282cefb64a9980db135f3db95f8b"
-assert c["artcraft"][0]["bundle"].startswith("/nix/store/")
+assert "ai.storyteller.artcraft-launcher" not in c["flatpaks"]
+assert c["artcraft"]
 assert c["failedAssertions"] == []
 assert all(c[k] for k in ("artcraftIntegrations", "systemdInitrd", "noEmbeddedLuksKey", "accountRecovery"))
 assert {"org.libretro.RetroArch", "org.DolphinEmu.dolphin-emu", "org.duckstation.DuckStation", "org.ppsspp.PPSSPP", "net.pcsx2.PCSX2", "info.cemu.Cemu", "io.github.ryubing.Ryujinx", "net.rpcs3.RPCS3", "net.shadps4.shadPS4"} <= set(c["flatpaks"])
