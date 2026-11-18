@@ -22,6 +22,17 @@ let
   home = config.users.users.${userName}.home;
   dot = pkgs.callPackage ../../orgm/orgm-dot.nix { };
   lock = "${pkgs.i3lock}/bin/i3lock -c 000000";
+  # i3bar only hosts XEmbed icons; StatusNotifier apps (Nextcloud, Sunshine)
+  # must start after snixembed owns the watcher or they never show in the tray.
+  waitForTray = pkgs.writeShellScript "orgm-wait-for-tray" ''
+    for _ in $(${pkgs.coreutils}/bin/seq 1 300); do
+      ${pkgs.systemd}/bin/busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1 && exit 0
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+  '';
+  nextcloudConfig = pkgs.writeText "orgm-i3-nextcloud.conf" ''
+    exec --no-startup-id sh -c '${waitForTray}; exec nextcloud --background'
+  '';
   browserConfig = pkgs.writeText "orgm-i3-browser.conf" ''
     set $browser $run orgm-browser --restore-or-focus
     bindsym $mod+w exec --no-startup-id $browser
@@ -45,6 +56,8 @@ let
         lib.optionalString (builtins.elem program.name config.orgm.user.programs) (
           if program.name == "webapps" && config.orgm.browser.enable then
             "include ${browserConfig}\n"
+          else if program.name == "nextcloud" then
+            "include ${nextcloudConfig}\n"
           else
             "include ${home}/.config/i3/config.d/${program.file}\n"
         )
@@ -106,6 +119,7 @@ let
       # i3-session.sh clears Wayland variables to empty strings; Sunshine
       # treats a defined WAYLAND_DISPLAY as Wayland and never tries X11.
       unset WAYLAND_DISPLAY WAYLAND_SOCKET
+      ${waitForTray}
       export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       exec ${config.services.sunshine.package}/bin/sunshine capture=x11 "$@"
     fi
@@ -128,6 +142,7 @@ let
         "i3-rofi --window"
         "bindsym $mod+l focus right"
         "i3-lock"
+        "exec --no-startup-id dex --autostart --environment i3"
       ]
       [
         "${integrations}include ${personalConfig}"
@@ -136,6 +151,7 @@ let
         "${pkgs.rofi}/bin/rofi -show window"
         "bindsym $mod+l exec --no-startup-id ${lock}"
         lock
+        "exec --no-startup-id sh -c '${waitForTray}; exec dex --autostart --environment i3'"
       ]
       (lib.concatStringsSep "\n" minimalLines)
     + ''
