@@ -111,6 +111,43 @@ let
       text = "[Unit]\nConditionEnvironment=${condition}\n";
     }
   ) sessionGuards;
+  # Headless desktop size for streaming. The virtual DFP-5 monitor only offers
+  # 1920x1080, so NVIDIA renders the desktop at the requested size
+  # (ViewPortIn) and scales it to that output; Sunshine captures the full
+  # desktop. Without an argument it uses the size Moonlight asked for.
+  resolution = pkgs.writeShellApplication {
+    name = "orgm-resolution";
+    runtimeInputs = [ config.hardware.nvidia.package.settings pkgs.xorg.xrandr ];
+    text = ''
+      size="''${1:-''${SUNSHINE_CLIENT_WIDTH:-}x''${SUNSHINE_CLIENT_HEIGHT:-}}"
+      case "$size" in
+        reset|x|1920x1080) mode="DFP-5: 1920x1080 +0+0" ;;
+        *)
+          if ! [[ "$size" =~ ^([0-9]{3,4})x([0-9]{3,4})$ ]] ||
+            ((BASH_REMATCH[1] < 640 || BASH_REMATCH[1] > 3840 ||
+              BASH_REMATCH[2] < 480 || BASH_REMATCH[2] > 2400)); then
+            echo "usage: orgm-resolution [WIDTHxHEIGHT|reset] (640x480 to 3840x2400)" >&2
+            exit 2
+          fi
+          mode="DFP-5: 1920x1080 +0+0 {ViewPortIn=$size}" ;;
+      esac
+      nvidia-settings --assign CurrentMetaMode="$mode" >/dev/null
+      xrandr --query | head -n 1
+    '';
+  };
+  resolutionMenu = pkgs.writeShellScript "orgm-resolution-menu" ''
+    choice="$(printf '%s\n' 2560x1440 1920x1080 3840x2160 2560x1600 1920x1200 |
+      ${pkgs.rofi}/bin/rofi -dmenu -i -p 'Resolución')" || exit 0
+    [ -n "$choice" ] && exec ${resolution}/bin/orgm-resolution "$choice"
+  '';
+  # Sunshine runs these around every stream: size the desktop to the client
+  # on start, return to 1920x1080 when the stream app quits.
+  sunshinePrep = builtins.toJSON [
+    {
+      do = "${resolution}/bin/orgm-resolution";
+      undo = "${resolution}/bin/orgm-resolution reset";
+    }
+  ];
   # Under X11, Sunshine captures with X11 + NVENC, which needs libcuda from the
   # driver path. The CAP_SYS_ADMIN wrapper (for Wayland KMS capture) runs in
   # secure-exec mode and cannot load it, so bypass the wrapper only under X11.
@@ -121,7 +158,8 @@ let
       unset WAYLAND_DISPLAY WAYLAND_SOCKET
       ${waitForTray}
       export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-      exec ${config.services.sunshine.package}/bin/sunshine capture=x11 "$@"
+      exec ${config.services.sunshine.package}/bin/sunshine capture=x11 \
+        global_prep_cmd=${lib.escapeShellArg sunshinePrep} "$@"
     fi
     exec /run/wrappers/bin/sunshine "$@"
   '';
@@ -155,6 +193,9 @@ let
       ]
       (lib.concatStringsSep "\n" minimalLines)
     + ''
+
+      # Desktop size for streaming (Sunshine also sets it per client).
+      bindsym $mod+F11 exec --no-startup-id ${resolutionMenu}
 
       # Rofi menus use normal X11 windows; keep them centered and floating.
       for_window [class="(?i)^rofi$"] floating enable, border pixel 0, move position center
@@ -207,6 +248,7 @@ in
       ++ [
         desktop
         session
+        resolution
       ]
       ++ lib.optional (builtins.elem "syncthing" config.orgm.user.programs) pkgs.syncthingtray;
     programs.xfconf.enable = true;
