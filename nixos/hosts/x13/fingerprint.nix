@@ -3,11 +3,11 @@
 {
   # Enabling fprintd otherwise enables the generic fingerprint PAM rule in
   # every service. GDM has a dedicated parallel gdm-fingerprint conversation;
-  # enable the requested sudo/polkit uses while keeping SSH/console password-only.
+  # keep fingerprint authentication for Polkit and require a password for sudo.
   options.security.pam.services = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
       config.fprintAuth = lib.mkForce (
-        config.services.fprintd.enable && builtins.elem name [ "sudo" "polkit-1" ]
+        config.services.fprintd.enable && name == "polkit-1"
       );
     }));
   };

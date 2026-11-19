@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stock Goodix, scoped GDM/sudo/polkit fingerprint PAM and headless rescue policy."""
+"""Stock Goodix, scoped GDM/Polkit fingerprint PAM and password-only sudo."""
 import json
 from pathlib import Path
 import subprocess
@@ -29,17 +29,17 @@ assert not c['assertions']
 normal,server=c['normal'],c['server']
 assert normal['enabled'] and normal['gdm'] and not normal['tod']
 assert normal['package']==c['stock']
-assert {name for name,enabled in normal['generic'].items() if enabled}=={'sudo','polkit-1'},normal['generic']
+assert {name for name,enabled in normal['generic'].items() if enabled}=={'polkit-1'},normal['generic']
 assert normal['wheelNeedsPassword']
 readers=[name for name,text in normal['pam'].items() if 'pam_fprintd.so' in text]
-assert readers==['gdm-fingerprint','polkit-1','sudo'],readers
+assert readers==['gdm-fingerprint','polkit-1'],readers
 for name in ['sudo','polkit-1']:
  assert 'pam_unix.so' in normal['pam'][name], 'password fallback required'
 assert 'required' in normal['pam']['gdm-fingerprint']
-for name in ['su','sshd','login','gdm-password']:
+for name in ['sudo','su','sshd','login','gdm-password']:
  assert name in normal['pam'] and 'pam_fprintd.so' not in normal['pam'][name]
 assert not server['enabled'] and not server['gdm'] and not server['tod']
 assert not any(server['generic'].values())
 assert not any('pam_fprintd.so' in text for text in server['pam'].values())
-print('PASS: stock fprintd/libfprint, GDM/sudo/polkit fingerprint with password fallback; password-only SSH/console and headless Server')
+print('PASS: stock fprintd/libfprint, GDM/Polkit fingerprint, password-only sudo/SSH/console and headless Server')
 print('Selected libfprint:',c['libfprint'])

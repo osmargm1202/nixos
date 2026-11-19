@@ -174,9 +174,9 @@ After boot, physically verify the Lock action, Super+L and password unlock.
 
 ## Fingerprint enrollment
 
-Deployment status: GDM fingerprint is active and the user reports it working.
-The sudo/polkit/Bitwarden and Win+A additions below are prepared locally; their
-activation is pending X13 connectivity. See `PENDING.md` for the latest evidence.
+The running installation has working GDM fingerprint authentication and requires
+the account password for sudo. The Polkit/Bitwarden and Win+A integrations are
+configured in this repository and await activation on X13.
 
 X13 uses the stock Goodix MOC driver for USB `27c6:6594`. fprintd recognizes
 the reader, but the user must enroll and verify their own finger physically.
@@ -184,9 +184,9 @@ In GNOME open **Settings → System → Users → Fingerprint Login**, select a 
 and follow the prompts. Then test Super+L and GDM login, keeping password login
 available. No logout or biometric recording is forced by deployment.
 
-Fingerprint authentication is enabled for GDM login/screen unlock, sudo and
-polkit authorizations, including Bitwarden Desktop's system authentication.
-Password fallback remains available; SSH, console and su keep password-only
+Fingerprint authentication is configured for GDM login/screen unlock and
+Polkit authorizations, including Bitwarden Desktop's system authentication.
+Password fallback remains available. Sudo, SSH, console and su use password-only
 PAM. Server keeps fprintd disabled. Autologin remains enabled: no fingerprint is
 requested at automatic login, but Super+L still locks the session. Fingerprints
 do not unlock LUKS or decrypt a password-protected GNOME keyring.
