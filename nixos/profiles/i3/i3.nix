@@ -175,7 +175,10 @@ in
       serviceConfig = {
         RuntimeDirectory = "clipcat";
         RuntimeDirectoryMode = "0700";
+        RuntimeDirectoryPreserve = "restart";
         UMask = "0077";
+        # Clipcat selects Wayland even when WAYLAND_DISPLAY is an empty string.
+        UnsetEnvironment = [ "WAYLAND_DISPLAY" "WAYLAND_SOCKET" ];
         ExecStart = "${lib.getExe' pkgs.clipcat "clipcatd"} --no-daemon --config %h/.config/clipcat/clipcatd.toml --grpc-socket-path %t/clipcat/grpc.sock --history-file %t/clipcat/history";
         Restart = "on-failure";
         RestartSec = 3;

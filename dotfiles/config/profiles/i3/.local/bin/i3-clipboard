@@ -20,13 +20,33 @@ if [[ "${1:-}" == --start ]]; then
 fi
 config_template="$HOME/.config/clipcat/clipcat-menu.toml"
 runtime_config="$runtime_dir/clipcat-menu.toml"
+socket="$runtime_dir/clipcat/grpc.sock"
 theme="$HOME/.config/rofi/i3-menu.rasi"
-theme_override='configuration { font: "JetBrainsMono Nerd Font 12"; }
-window { width: 600px; }
-listview { lines: 8; }
-element { padding: 5px; cursor: pointer; }
-element-icon { size: 24px; }'
+theme_override='configuration { font: "JetBrainsMono Nerd Font 11"; }
+window { width: 500px; }
+inputbar { margin: 0px 5px; }
+prompt { padding: 6px; }
+entry { padding: 6px; }
+listview { fixed-height: false; scrollbar: true; }
+element { padding: 4px; cursor: pointer; }
+element-icon { size: 18px; }
+@media (max-width: 550px) { window { width: 92%; } }'
 
-sed "s|@RUNTIME_SOCKET@|$runtime_dir/clipcat/grpc.sock|" "$config_template" > "$runtime_config"
+for _ in {1..10}; do
+  if count="$(clipcatctl --server-endpoint "$socket" length 2>/dev/null)"; then
+    break
+  fi
+  count=''
+  sleep 0.1
+done
+case "$count" in
+  0) message='El historial está vacío. Copia algo con Ctrl+C.' ;;
+  '') message='El servicio del portapapeles no responde.' ;;
+esac
+if [[ -n "${message:-}" ]]; then
+  exec rofi -e "$message" -theme "$theme" -theme-str "$theme_override"
+fi
+
+sed "s|@RUNTIME_SOCKET@|$socket|" "$config_template" > "$runtime_config"
 exec clipcat-menu --config "$runtime_config" --finder rofi \
   --rofi-extra-arguments="-theme,$theme,-theme-str,$theme_override"

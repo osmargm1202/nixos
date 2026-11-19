@@ -3,9 +3,9 @@ finder = "rofi"
 preview_length = 80
 
 [rofi]
-line_length = 100
-menu_length = 30
-menu_prompt = "Clipcat"
+line_length = 72
+menu_length = 6
+menu_prompt = "Portapapeles"
 extra_arguments = ["-theme", ".config/rofi/i3-menu.rasi"]
 
 [dmenu]

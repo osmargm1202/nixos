@@ -14,6 +14,8 @@ fail() {
 
 grep -Fq 'description = "Clipcat clipboard history for i3";' "$PROFILE" ||
   fail 'i3 must run Clipcat as a persistent user service'
+grep -Fq 'UnsetEnvironment = [ "WAYLAND_DISPLAY" "WAYLAND_SOCKET" ];' "$PROFILE" ||
+  fail 'Clipcat must select X11 even when the user manager exports empty Wayland variables'
 grep -Fq 'bindsym $mod+v exec --no-startup-id $run i3-clipboard' "$CONFIG" ||
   fail 'Win+V must launch the i3 clipboard helper'
 grep -Fq 'clipcat-menu --config "$runtime_config" --finder rofi' "$HELPER" ||
@@ -21,6 +23,8 @@ grep -Fq 'clipcat-menu --config "$runtime_config" --finder rofi' "$HELPER" ||
 grep -Fq -- '--rofi-extra-arguments="-theme,$theme,-theme-str,$theme_override"' "$HELPER" ||
   fail 'Rofi arguments must be bound to Clipcat as one option value'
 bash -n "$HELPER"
+grep -Fxq 'menu_length = 6' <(sed -n '/^\[rofi\]$/,/^\[/p' "$MENU_TEMPLATE") ||
+  fail 'Clipcat must limit visible Rofi rows through its menu length setting'
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -35,7 +39,16 @@ cat >"$tmp/bin/clipcat-menu" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$@" >"$CLIPCAT_ARGS"
 STUB
-chmod +x "$tmp/bin/systemctl" "$tmp/bin/clipcat-menu"
+cat >"$tmp/bin/clipcatctl" <<'STUB'
+#!/usr/bin/env bash
+[[ "$*" == "--server-endpoint $XDG_RUNTIME_DIR/clipcat/grpc.sock length" ]] || exit 2
+printf '%s\n' "${CLIPCAT_COUNT:-2}"
+STUB
+cat >"$tmp/bin/rofi" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$@" >"$ROFI_ARGS"
+STUB
+chmod +x "$tmp/bin/"{systemctl,clipcat-menu,clipcatctl,rofi}
 
 CLIPCAT_SYSTEMCTL="$tmp/systemctl" CLIPCAT_ARGS="$tmp/args" HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" PATH="$tmp/bin:$PATH" "$HELPER"
 grep -Fq -- "--rofi-extra-arguments=-theme,$tmp/home/.config/rofi/i3-menu.rasi,-theme-str," "$tmp/args" ||
@@ -50,4 +63,10 @@ CLIPCAT_SYSTEMCTL="$tmp/startup" CLIPCAT_ARGS="$tmp/args" HOME="$tmp/home" XDG_R
 printf '%s\n' '--user import-environment DISPLAY' '--user import-environment XAUTHORITY' '--user is-active --quiet i3-clipcat.service' '--user start i3-clipcat.service' >"$tmp/expected"
 cmp "$tmp/expected" "$tmp/startup" || fail 'X11 environment must be imported before the daemon starts'
 grep -Fq 'exec --no-startup-id $run i3-clipboard --start' "$CONFIG" || fail 'i3 startup bypasses the session-aware clipboard helper'
+
+CLIPCAT_COUNT=0 CLIPCAT_SYSTEMCTL="$tmp/empty" CLIPCAT_ARGS="$tmp/args" ROFI_ARGS="$tmp/rofi" HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" PATH="$tmp/bin:$PATH" "$HELPER"
+[[ ! -e "$tmp/args" ]] || fail 'empty history unexpectedly invoked Clipcat menu'
+grep -Fxq 'El historial está vacío. Copia algo con Ctrl+C.' "$tmp/rofi" ||
+  fail 'empty history should explain how to populate the menu'
+
 printf 'PASS: Win+V opens Clipcat history; session environment precedes daemon startup\n'
