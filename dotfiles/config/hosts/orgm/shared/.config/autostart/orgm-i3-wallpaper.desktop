@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Restaurar fondo de pantalla de i3
+Exec=sh -c "exec ~/.local/bin/orgm-i3-wallpaper --restore"
+Terminal=false

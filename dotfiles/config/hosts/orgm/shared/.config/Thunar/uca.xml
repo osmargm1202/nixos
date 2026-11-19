@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+  <action>
+    <icon>preferences-desktop-wallpaper</icon>
+    <name>Establecer como fondo de pantalla</name>
+    <unique-id>i3-set-wallpaper</unique-id>
+    <command>sh -c 'exec "$HOME/.local/bin/orgm-i3-wallpaper" "$1"' sh %f</command>
+    <description>Aplicar el fondo en el monitor activo de i3</description>
+    <patterns>*.jpg;*.jpeg;*.png;*.webp;*.mp4;*.mkv;*.webm;*.mov;*.m4v;*.avi</patterns>
+    <range>1</range>
+    <image-files/>
+    <video-files/>
+  </action>
+  <action>
+    <icon>utilities-terminal</icon>
+    <name>Open Terminal Here</name>
+    <unique-id>i3-open-terminal-here</unique-id>
+    <command>kitty --directory %f</command>
+    <description>Open Kitty in the selected folder</description>
+    <patterns>*</patterns>
+    <directories/>
+  </action>
+  <action>
+    <icon>emblem-shared</icon>
+    <name>Compartir enlace de Nextcloud</name>
+    <unique-id>nextcloud-share-link</unique-id>
+    <command>sh -c 'exec "$HOME/.local/bin/thunar-nextcloud-share" "$1"' sh %f</command>
+    <description>Abrir el diálogo de compartir de Nextcloud</description>
+    <patterns>*</patterns>
+    <range>1</range>
+    <directories/>
+    <audio-files/>
+    <image-files/>
+    <other-files/>
+    <text-files/>
+    <video-files/>
+  </action>
+</actions>

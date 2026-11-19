@@ -2,6 +2,7 @@
   "version": 1,
   "name": "autostart",
   "paths": [
-    ".config/autostart/autorandr.desktop"
+    ".config/autostart/autorandr.desktop",
+    ".config/autostart/orgm-i3-wallpaper.desktop"
   ]
 }

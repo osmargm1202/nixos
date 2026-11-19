@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import os
+import socket
+import subprocess
+import sys
+
+
+def share(path):
+    # Nextcloud's socket API reads newline-terminated UTF-8 commands and trims whitespace.
+    path = os.path.abspath(path)
+    if "\n" in path or "\r" in path or path != path.rstrip():
+        return "El nombre contiene un salto de línea o termina en un espacio."
+
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(3)
+            client.connect(os.path.join(runtime, "Nextcloud", "socket"))
+            client.sendall(f"SHARE:{path}\n".encode("utf-8"))
+            with client.makefile("rb") as replies:
+                for reply in replies:
+                    if reply.startswith(b"SHARE:"):
+                        break
+                else:
+                    return "Nextcloud cerró la conexión antes de responder."
+    except (FileNotFoundError, ConnectionRefusedError):
+        return "Abre Nextcloud Desktop e inténtalo de nuevo."
+    except TimeoutError:
+        return "Nextcloud Desktop tardó demasiado en responder."
+    except (OSError, UnicodeError) as error:
+        return f"No se pudo enviar la solicitud a Nextcloud: {error}"
+
+    status = reply.split(b":", 2)[1]
+    if status == b"OK":
+        return None
+    return {
+        b"NOP": "El elemento no está en una carpeta sincronizada o no se puede compartir.",
+        b"NOTCONNECTED": "La cuenta de Nextcloud está desconectada.",
+        b"NOTSYNCED": "Espera a que Nextcloud termine de sincronizar el elemento.",
+        b"CANNOTSHAREROOT": "Selecciona un archivo o subcarpeta dentro de Nextcloud.",
+    }.get(status, "Nextcloud Desktop rechazó la solicitud de compartir.")
+
+
+if __name__ == "__main__":
+    error = share(sys.argv[1]) if len(sys.argv) == 2 else "Selecciona un archivo o carpeta."
+    if error:
+        print(error, file=sys.stderr)
+        try:
+            subprocess.run(["notify-send", "Compartir enlace de Nextcloud", error], check=False)
+        except OSError:
+            pass
+        sys.exit(1)

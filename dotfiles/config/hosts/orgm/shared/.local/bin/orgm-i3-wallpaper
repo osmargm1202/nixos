@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ ${XDG_CURRENT_DESKTOP:-} == i3 ]] || exit 0
+if (($# != 1)); then
+  printf 'usage: %s FILE|--restore\n' "${0##*/}" >&2
+  exit 2
+fi
+
+restore_enabled="${XDG_STATE_HOME:-$HOME/.local/state}/i3/orgm-wallpaper-restore"
+run="$HOME/.local/bin/i3-run"
+if [[ $1 == --restore ]]; then
+  [[ -f "$restore_enabled" ]] || exit 0
+  exec "$run" i3-wallpaper --restore
+fi
+
+"$run" i3-set-wallpaper "$1"
+touch -- "$restore_enabled"

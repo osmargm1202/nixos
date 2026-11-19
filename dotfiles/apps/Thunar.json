@@ -2,6 +2,8 @@
   "version": 1,
   "name": "Thunar",
   "paths": [
-    ".config/Thunar"
+    ".config/Thunar",
+    ".local/bin/thunar-nextcloud-share",
+    ".local/bin/orgm-i3-wallpaper"
   ]
 }
