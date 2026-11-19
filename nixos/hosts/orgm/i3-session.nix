@@ -38,14 +38,17 @@ let
     bindsym $mod+w exec --no-startup-id $browser
     bindsym $mod+m exec --no-startup-id $run orgm-browser --new-tab --prompt
   '';
-  # Reuse the existing startup and bindings; omit only visual/OSK integration.
+  # Adapt the shared personal bindings for the ORGM i3 session.
   personalLines = lib.splitString "\n" (
     builtins.readFile ../../../dotfiles/config/users/osmarg/profiles/i3/.config/i3/config.d/90-osmarg.conf
   );
   personalConfig = pkgs.writeText "orgm-i3-personal.conf" (
     lib.concatStringsSep "\n" (
       builtins.filter (
-        line: !(lib.hasInfix "orgm-visual-profile" line || lib.hasPrefix "set $status_command " line)
+        line:
+        !(lib.hasInfix "orgm-visual-profile" line
+          || lib.hasPrefix "set $status_command " line
+          || lib.hasPrefix "exec --no-startup-id syncthingtray " line)
       ) personalLines
     )
   );
@@ -64,10 +67,6 @@ let
       )
       [
         {
-          name = "tailscale";
-          file = "10-tailscale.conf";
-        }
-        {
           name = "nextcloud";
           file = "20-nextcloud.conf";
         }
@@ -84,7 +83,11 @@ let
     builtins.readFile ../../../dotfiles/config/profiles/i3/.config/i3/config
   );
   minimalLines = builtins.filter (
-    line: !(lib.hasPrefix "exec --no-startup-id $run i3-monitor-profile" line)
+    line:
+    !(lib.hasPrefix "exec --no-startup-id $run i3-monitor-profile" line)
+    # An active display may lack a RandR primary output. Let i3bar choose
+    # an active output for the tray.
+    && !(lib.hasPrefix "tray_output " (lib.trim line))
   ) baseLines;
   statusBar = pkgs.writeShellApplication {
     name = "orgm-i3-status";
@@ -183,7 +186,7 @@ let
         "exec --no-startup-id dex --autostart --environment i3"
       ]
       [
-        "${integrations}include ${personalConfig}"
+        "exec --no-startup-id ${pkgs.snixembed}/bin/snixembed\n${integrations}include ${personalConfig}"
         "set $status_command ${statusBar}/bin/orgm-i3-status"
         "${pkgs.rofi}/bin/rofi -show drun"
         "${pkgs.rofi}/bin/rofi -show window"
@@ -249,8 +252,7 @@ in
         desktop
         session
         resolution
-      ]
-      ++ lib.optional (builtins.elem "syncthing" config.orgm.user.programs) pkgs.syncthingtray;
+      ];
     programs.xfconf.enable = true;
     programs.i3lock.enable = true;
     xdg.portal.config.i3.default = [ "gtk" ];

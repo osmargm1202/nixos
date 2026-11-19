@@ -11,6 +11,7 @@ projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  sunshineDropin=c.home-manager.users.osmarg.xdg.configFile."systemd/user/sunshine.service.d/zz-orgm-session.conf".text;
  serverAutoLogin=c.specialisation.server.configuration.services.displayManager.autoLogin.enable;
  sunshine=c.services.sunshine.enable; tailscale=c.services.tailscale.enable;
+ syncthing=c.home-manager.users.osmarg.systemd.user.services ? syncthing;
  dropins=builtins.attrNames c.home-manager.users.osmarg.xdg.configFile;
  greeter=c.services.displayManager.sddm.wayland.enable;
  sessions=c.services.displayManager.sessionData.sessionNames;
@@ -41,7 +42,7 @@ assert c['default']=='orgm-i3' and c['specialisations']==['server']
 assert 'ExecStart=\nExecStart=/nix/store/' in c['sunshineDropin']
 assert c['autoLogin']=={'enable':True,'user':'osmarg'} and c['serverAutoLogin'] is False
 assert 'orgm-i3' in c['sessions'] and 'hyprland' in c['sessions'] and 'orgm-gaming' not in c['sessions']
-assert c['sunshine'] and c['tailscale']
+assert c['sunshine'] and c['tailscale'] and c['syncthing']
 assert not any('90-orgm-gaming' in p for p in c['dropins'])
 assert c['clipcat']==['orgm-i3-session.target'] and not c['picom']
 assert c['oskTargets']==['orgm-hyprland-session.target']
@@ -67,6 +68,9 @@ assert build.returncode==0,build.stderr
 minimal=Path(c['minimalConfig']).read_text()
 assert '18-osk.conf' not in minimal and '90-osmarg.conf' not in minimal
 assert 'i3-monitor-profile --apply' not in minimal
+assert not any(line.lstrip().startswith('tray_output ') for line in minimal.splitlines())
+assert '10-tailscale.conf' not in minimal and 'tailscale systray' not in minimal
+assert len(re.findall(r'^exec --no-startup-id /nix/store/[^/]+/bin/snixembed$',minimal,re.M))==1
 assert '/bin/orgm-i3-status' in minimal
 assert '/bin/rofi -show drun' in minimal and '/bin/rofi -show window' in minimal
 assert 'exec_always --no-startup-id autotiling' in minimal
@@ -81,6 +85,7 @@ assert 'firefox' not in browserConfig
 personal=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
  if line.startswith('include /nix/store/') and line.endswith('orgm-i3-personal.conf')).read_text()
 assert 'exec steam -silent' in personal
+assert 'syncthingtray' not in personal
 assert 'orgm-visual-profile' not in personal and 'set $status_command' not in personal
 assert c['dunst']['Install']['WantedBy']==['orgm-i3-session.target']
 assert c['dunst']['Service']['BusName']=='org.freedesktop.Notifications'
