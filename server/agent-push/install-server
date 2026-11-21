@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+unit_dir=/usr/local/lib/systemd/system
+nginx_dropin="$unit_dir/nginx.service.d/agent-push.conf"
+install -d -m 0755 /etc/agent-push "$unit_dir" \
+  "$unit_dir/multi-user.target.wants" "$unit_dir/timers.target.wants" \
+  "$unit_dir/nginx.service.d"
+install -d -m 0700 /var/lib/agent-push/{data,acme}
+install -d -m 0750 -g nginx /var/lib/agent-push/nginx-tls
+install -m 0644 renew-tls nginx-config nginx-vhost.conf /etc/agent-push/
+
+image="$(sed -nE 's@^ExecStart=.* (docker\.io/[^ ]+).*@\1@p' agent-push-ntfy.service)"
+if ! podman image exists "$image"; then
+  podman pull "$image"
+fi
+
+if [[ ! -x /var/lib/agent-push/lego/bin/lego ]]; then
+  lego_path="$(command -v lego || true)"
+  if [[ -z "$lego_path" ]]; then
+    printf 'Install or pin lego at /var/lib/agent-push/lego/bin/lego before deploying.\n' >&2
+    exit 1
+  fi
+  lego_package="$(dirname "$(dirname "$(readlink -f "$lego_path")")")"
+  nix-store --add-root /var/lib/agent-push/lego --realise "$lego_package" >/dev/null
+fi
+
+bash /etc/agent-push/renew-tls --no-reload
+install -d -m 0750 -o nginx -g nginx /run/nginx
+systemd-run --wait --collect --pipe -p User=nginx -p Group=nginx \
+  -p AmbientCapabilities=CAP_NET_BIND_SERVICE \
+  /run/current-system/sw/bin/bash /etc/agent-push/nginx-config check
+
+install -m 0644 ./*.service ./*.timer "$unit_dir/"
+# NixOS manages /etc/systemd/system as a read-only store link.
+ln -sfn ../agent-push-ntfy.service "$unit_dir/multi-user.target.wants/agent-push-ntfy.service"
+ln -sfn ../agent-push-tls.timer "$unit_dir/timers.target.wants/agent-push-tls.timer"
+
+first_install=false
+if [[ ! -f "$nginx_dropin" ]]; then
+  first_install=true
+fi
+install -m 0644 nginx-agent-push.conf "$nginx_dropin"
+systemctl daemon-reload
+if "$first_install"; then
+  if ! systemctl restart nginx.service; then
+    unlink "$nginx_dropin"
+    systemctl daemon-reload
+    systemctl restart nginx.service
+    exit 1
+  fi
+else
+  systemctl reload nginx.service
+fi
+
+install -m 0644 server.yml /etc/agent-push/
+systemctl restart agent-push-ntfy.service agent-push-tls.timer

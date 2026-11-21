@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+source_name="${1:?Provide the client name}"
+case "$source_name" in
+  slci|lenovo|orgm|osmar) ;;
+  *) printf 'Invalid client name: %s\n' "$source_name" >&2; exit 2 ;;
+esac
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/agent-push"
+install -d -m 0700 "$config_dir"
+install -d "$HOME/.local/bin"
+install -m 0600 netrc "$config_dir/netrc"
+printf '%s\n' "$source_name" > source
+install -m 0600 source "$config_dir/source"
+install -m 0755 agent-push "$HOME/.local/bin/agent-push"
+
+install_skill() {
+  local skills_dir="$1" instructions="$2"
+  install -d "$skills_dir/agent-push"
+  install -m 0644 SKILL.md "$skills_dir/agent-push/SKILL.md"
+  if ! grep -Fq '<!-- agent-push -->' "$instructions" 2>/dev/null; then
+    cat >> "$instructions" <<'EOF'
+
+<!-- agent-push -->
+Cuando una pregunta al usuario impida continuar o termines por completo un loop
+u objetivo solicitado, usa la skill `agent-push` para avisarle en el celular.
+El comando también está disponible directamente en `~/.local/bin/agent-push`.
+<!-- /agent-push -->
+EOF
+  fi
+}
+
+codex_dir="${CODEX_HOME:-$HOME/.codex}"
+claude_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+pi_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+install_skill "$codex_dir/skills" "$codex_dir/AGENTS.md"
+install_skill "$claude_dir/skills" "$claude_dir/CLAUDE.md"
+install_skill "$pi_dir/skills" "$pi_dir/AGENTS.md"

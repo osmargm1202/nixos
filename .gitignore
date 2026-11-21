@@ -8,6 +8,10 @@ nixos/packages/windows-manager-linux-orgm-unsigned.xpi
 # Per-machine Windows VM credentials and persistent-path settings.
 containers/windows/.env
 
+# Local agent-push provisioning.
+/server/agent-push/netrc
+/server/agent-push/source
+
 # Ephemeral orchestration state.
 .superpowers/
 dotfiles/sdd-orchestrator/

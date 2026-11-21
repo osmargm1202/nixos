@@ -1,0 +1,31 @@
+set -euo pipefail
+umask 077
+
+tls_dir=/var/lib/agent-push/nginx-tls
+acme_dir=/var/lib/agent-push/acme
+domain=ntfy.or-gm.com
+
+export CF_DNS_API_TOKEN_FILE=/run/secrets/CLOUDFLARE_DNS_API_TOKEN
+lego=(/var/lib/agent-push/lego/bin/lego --accept-tos --email osmargm1202@gmail.com
+      --dns cloudflare --domains "$domain" --path "$acme_dir")
+if [[ -s "$acme_dir/certificates/$domain.crt" ]]; then
+  "${lego[@]}" renew --days 30
+else
+  "${lego[@]}" run
+fi
+
+cert_dir="$acme_dir/certificates"
+if cmp -s "$cert_dir/$domain.crt" "$tls_dir/$domain.crt" &&
+   cmp -s "$cert_dir/$domain.key" "$tls_dir/$domain.key"; then
+  exit 0
+fi
+
+stage=$(mktemp -d "$tls_dir/.renew.XXXXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+install -m 0640 -g nginx "$cert_dir/$domain."{crt,key} "$stage/"
+mv -f "$stage/$domain.key" "$tls_dir/$domain.key"
+mv -f "$stage/$domain.crt" "$tls_dir/$domain.crt"
+if [[ "${1:-}" != --no-reload ]] &&
+   systemctl is-active --quiet nginx.service; then
+  systemctl reload nginx.service
+fi

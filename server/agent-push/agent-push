@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/agent-push"
+case "${1:-}" in
+  question) action="Necesito tu respuesta" ;;
+  done) action="Objetivo terminado" ;;
+  test) action="Prueba de avisos" ;;
+  *) printf 'Uso: agent-push {question|done|test} [mensaje]\n' >&2; exit 2 ;;
+esac
+shift
+
+if [[ ! -r "$config_dir/source" || ! -r "$config_dir/netrc" ]]; then
+  printf 'Falta la configuración de agent-push en %s\n' "$config_dir" >&2
+  exit 1
+fi
+IFS= read -r source < "$config_dir/source"
+message="${*:-Abre la sesión del agente para ver los detalles.}"
+host=ntfy.or-gm.com
+
+publish() {
+  printf '%s' "${message:0:500}" | curl --fail --silent --show-error \
+    --connect-timeout 5 --max-time 15 --noproxy "$host" \
+    --netrc-file "$config_dir/netrc" --header "Title: [$source] $action" \
+    --data-binary @- --output /dev/null "$@" "https://$host/codex"
+}
+
+if error=$(publish 2>&1); then
+  exit 0
+else
+  status=$?
+fi
+if [[ "$status" == 6 ]]; then
+  # Some resolvers suppress private addresses. Keep the TLS hostname.
+  publish --resolve "$host:443:100.112.28.88"
+else
+  printf '%s\n' "$error" >&2
+  exit "$status"
+fi

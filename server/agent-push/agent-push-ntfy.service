@@ -1,0 +1,13 @@
+[Unit]
+Description=Private ntfy server for coding agents
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/run/current-system/sw/bin/podman run --rm --replace --name agent-push-ntfy --pull=never --network=host --volume=/etc/agent-push/server.yml:/etc/ntfy/server.yml:ro --volume=/var/lib/agent-push/data:/var/lib/ntfy docker.io/binwiederhier/ntfy@sha256:038da2be5e668fee6d36a62884eea48975e1b71c29a56964e5298c1b9165a573 serve
+ExecStop=/run/current-system/sw/bin/podman stop --ignore -t 10 agent-push-ntfy
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

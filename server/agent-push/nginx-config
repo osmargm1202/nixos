@@ -1,0 +1,50 @@
+set -euo pipefail
+export PATH="/run/current-system/sw/bin:$PATH"
+
+# NixOS regenerates the vendor unit and its store paths on system switches.
+unit=/etc/systemd/system/nginx.service
+start=$(grep -m1 '^ExecStart=' "$unit")
+pattern="^ExecStart=([^ ]+/nginx) -c '?([^ ']+)'?$"
+if [[ ! "$start" =~ $pattern ]]; then
+  printf 'Unable to read the original Nginx executable and config path.\n' >&2
+  exit 1
+fi
+nginx="${BASH_REMATCH[1]}"
+base="${BASH_REMATCH[2]}"
+config=/run/nginx/agent-push.conf
+stage=$(mktemp /run/nginx/agent-push.XXXXXXXX)
+trap 'unlink "$stage"' EXIT
+
+prepare() {
+  awk '
+    /^http[[:space:]]*\{/ { inside = 1 }
+    inside && /^}[[:space:]]*$/ {
+      print "  include /etc/agent-push/nginx-vhost.conf;"
+      inside = 0
+      added++
+    }
+    { print }
+    END { if (added != 1) exit 1 }
+  ' "$base" > "$stage" &&
+    "$nginx" -c "$stage" -t
+}
+
+case "$1" in
+  check) prepare ;;
+  start)
+    if ! prepare; then
+      printf 'Starting with the original Nginx configuration.\n' >&2
+      unlink "$stage"
+      exec "$nginx" -c "$base"
+    fi
+    mv -f "$stage" "$config"
+    exec "$nginx" -c "$config"
+    ;;
+  reload)
+    prepare
+    mv -f "$stage" "$config"
+    trap - EXIT
+    kill -HUP "$2"
+    ;;
+  *) exit 2 ;;
+esac

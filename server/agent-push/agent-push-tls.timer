@@ -1,0 +1,9 @@
+[Unit]
+Description=Check the agent notification HTTPS certificate daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
