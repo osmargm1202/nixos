@@ -155,6 +155,13 @@ in
                         value = target;
                       }
                     ]
+                    # Preserve favorites pinned before the Hotmail portal changed.
+                    ++ lib.optionals (app.id == "outlook") (
+                      map (name: { inherit name; value = target; }) [
+                        "brave-outlook.office.com__-Default"
+                        "chrome-outlook.office.com__-Default"
+                      ]
+                    )
                   ) checkedApps
                 )
               )

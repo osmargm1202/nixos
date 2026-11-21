@@ -15,7 +15,7 @@
   office = [
     { id = "gmail"; name = "Gmail"; url = "https://gmail.com"; icon = "gmail"; }
     { id = "google-maps"; name = "Google Maps"; url = "https://maps.google.com/"; icon = "maps"; }
-    { id = "outlook"; name = "Outlook - Hotmail"; url = "https://outlook.office.com/"; icon = "outlook-hotmail"; }
+    { id = "outlook"; name = "Outlook - Hotmail"; url = "https://outlook.live.com/"; icon = "outlook-hotmail"; }
     { id = "teams"; name = "Microsoft Teams"; url = "https://teams.microsoft.com/"; icon = "microsoft-teams"; }
     { id = "whatsapp"; name = "Whatsapp"; url = "https://web.whatsapp.com/"; icon = "whatsapp"; }
     { id = "cloud-orgm"; name = "Cloud ORGM"; url = "https://cloud.or-gm.com/"; icon = "applications-internet"; }
