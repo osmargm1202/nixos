@@ -1,0 +1,129 @@
+{
+  "apps": [
+    {
+      "detached": [
+        "setsid steam steam://rungameid/274520"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/steam-274520.png",
+      "name": "Darkwood"
+    },
+    {
+      "auto-detach": true,
+      "exclude-global-prep-cmd": false,
+      "exit-timeout": 5,
+      "image-path": "@home@/Pictures/orgm/ChatGPT Image Sep 22, 2026, 01_53_11 AM (2).png",
+      "name": "Desktop",
+      "wait-all": true
+    },
+    {
+      "detached": [
+        "setsid steam steam://rungameid/570"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/steam-570.png",
+      "name": "Dota 2"
+    },
+    {
+      "detached": [
+        "setsid steam steam://rungameid/311690"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/steam-311690.png",
+      "name": "Enter the Gungeon"
+    },
+    {
+      "detached": [
+        "setsid steam steam://rungameid/1030300"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/steam-1030300.png",
+      "name": "Hollow Knight: Silksong"
+    },
+    {
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/lichii.png",
+      "name": "Lichii",
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo"
+    },
+    {
+      "image-path": "desktop.png",
+      "name": "Low Res Desktop",
+      "prep-cmd": [
+        {
+          "do": "xrandr --output HDMI-1 --mode 1920x1080",
+          "undo": "xrandr --output HDMI-1 --mode 1920x1200"
+        }
+      ]
+    },
+    {
+      "detached": [
+        "setsid steam steam://rungameid/1380410"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/steam-1380410.png",
+      "name": "Puzzle Quest 3"
+    },
+    {
+      "detached": [
+        "setsid steam steam://open/bigpicture"
+      ],
+      "image-path": "steam.png",
+      "name": "Steam Big Picture",
+      "prep-cmd": [
+        {
+          "do": "",
+          "undo": "setsid steam steam://close/bigpicture"
+        }
+      ]
+    },
+    {
+      "name": "The Legend of Zelda: Ocarina of Time",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/The Legend of Zelda Ocarina of TIme [04004860224DEC000].nup\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/ocarina-of-time.png"
+    },
+    {
+      "name": "Star Fox",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/Star Fox [0400E88025B1A000].nup\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/star-fox.png"
+    },
+    {
+      "name": "Mega Man X Legacy Collection 2",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/Mega Man X Legacy Collection 2 [01005250086C4000][USA][v0].nsp\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/mega-man-x-legacy-collection-2.png"
+    },
+    {
+      "name": "Super Mario Bros. Wonder – Nintendo Switch 2 Edition",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/Super Mario Bros Wonders Switch 2 Edition [010015100B514000].nup\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/super-mario-bros-wonder-switch-2.png"
+    },
+    {
+      "name": "Resident Evil 4 Gold Edition",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/Resident Evil 4 Gold Edition [0400569027BF4000].nup\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/resident-evil-4-gold.png"
+    },
+    {
+      "name": "Mario Kart World",
+      "detached": [
+        "setsid @home@/Apps/lichii-linux-x86_64-pgo/tools/launch-lichii.sh --fullscreen --game \"@home@/Games/S2/Mario Kart World [0400C3F00006E000].nup\""
+      ],
+      "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
+      "image-path": "@config@/sunshine/moonlight-covers/mario-kart-world.png"
+    }
+  ],
+  "env": {
+    "PATH": "$(PATH):$(HOME)/.local/bin"
+  }
+}

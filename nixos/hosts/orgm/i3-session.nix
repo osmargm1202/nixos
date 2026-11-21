@@ -143,6 +143,7 @@ let
       ${pkgs.rofi}/bin/rofi -dmenu -i -p 'Resolución')" || exit 0
     [ -n "$choice" ] && exec ${resolution}/bin/orgm-resolution "$choice"
   '';
+  sunshineEnabled = config.services.sunshine.enable;
   # Sunshine runs these around every stream: size the desktop to the client
   # on start, return to 1920x1080 when the stream app quits.
   sunshinePrep = builtins.toJSON [
@@ -151,6 +152,11 @@ let
       undo = "${resolution}/bin/orgm-resolution reset";
     }
   ];
+  sunshineSettingArgs = lib.escapeShellArgs (
+    lib.mapAttrsToList (
+      name: value: "${name}=${if builtins.isBool value then lib.boolToString value else toString value}"
+    ) config.services.sunshine.settings
+  );
   # Under X11, Sunshine captures with X11 + NVENC, which needs libcuda from the
   # driver path. The CAP_SYS_ADMIN wrapper (for Wayland KMS capture) runs in
   # secure-exec mode and cannot load it, so bypass the wrapper only under X11.
@@ -162,16 +168,23 @@ let
       ${waitForTray}
       export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       exec ${config.services.sunshine.package}/bin/sunshine capture=x11 \
-        global_prep_cmd=${lib.escapeShellArg sunshinePrep} "$@"
+        global_prep_cmd=${lib.escapeShellArg sunshinePrep} ${sunshineSettingArgs} "$@"
     fi
-    exec /run/wrappers/bin/sunshine "$@"
+    exec /run/wrappers/bin/sunshine ${sunshineSettingArgs} "$@"
   '';
   # Sorts after a hand-made override.conf so its ExecStart wins.
-  sunshineFiles = lib.optionalAttrs config.services.sunshine.enable {
+  sunshineFiles = lib.optionalAttrs sunshineEnabled {
     "systemd/user/sunshine.service.d/zz-orgm-session.conf".text = ''
       [Service]
       ExecStart=
       ExecStart=${sunshineLauncher}
+    '';
+  };
+  sunshineMarioKartFocus = pkgs.writeShellApplication {
+    name = "sunshine-mario-kart-focus";
+    runtimeInputs = [ pkgs.python3 pkgs.systemd pkgs.i3 ];
+    text = ''
+      exec python3 ${./sunshine-mario-kart-focus.py}
     '';
   };
   i3Config = pkgs.writeText "orgm-i3-minimal.conf" (
@@ -238,6 +251,12 @@ in
   imports = [ ../../profiles/i3/game-activation.nix ];
   options = lib.optionalAttrs (profileName == "hyprland") existing.options;
   config = lib.mkIf enabled {
+    services.sunshine.settings = lib.mkIf sunshineEnabled {
+      adapter_name = "/dev/dri/card1";
+      sunshine_name = "E.H";
+      vk_rc_mode = 2;
+      vk_tune = 2;
+    };
     orgm.i3GameActivation.targets = [ target ];
     # SDDM must decide the type before starting Xorg. Fixing it in the i3
     # launcher is too late: PAM's global Wayland value selects the wrong path.
@@ -276,7 +295,7 @@ in
     ];
     home-manager.users.${userName} = lib.mkMerge [
       existing.config.home-manager.users.${userName}
-      ({ lib, ... }: {
+      ({ config, lib, ... }: {
         xdg.configFile = guardFiles // sunshineFiles // {
           "i3/orgm-minimal.conf".source = i3Config;
         };
@@ -292,6 +311,27 @@ in
             ExecStart = "${pkgs.dunst}/bin/dunst";
           };
         };
+        systemd.user.services.sunshine-mario-kart-focus = lib.mkIf sunshineEnabled {
+          Unit = {
+            Description = "Focus Mario Kart World on Moonlight connection";
+            PartOf = [ target ];
+            ConditionEnvironment = "XDG_CURRENT_DESKTOP=i3";
+          };
+          Install.WantedBy = [ target ];
+          Service = {
+            ExecStart = "${sunshineMarioKartFocus}/bin/sunshine-mario-kart-focus";
+            Restart = "on-failure";
+            RestartSec = 2;
+          };
+        };
+        home.activation.orgmSunshineCatalog = lib.mkIf sunshineEnabled (
+          lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "writeBoundary" ] ''
+            $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./sunshine/install-catalog.py} \
+              ${./sunshine} ${lib.escapeShellArg config.home.homeDirectory} \
+              ${lib.escapeShellArg config.xdg.configHome} \
+              ${lib.escapeShellArg "${config.xdg.stateHome}/sunshine/versioned-catalog"}
+          ''
+        );
         home.activation.orgmI3Dotfiles = lib.hm.dag.entryAfter [ "orgmDotBootstrap" ] ''
           $DRY_RUN_CMD ${dot}/bin/orgm-dot --profile i3 bootstrap
         '';

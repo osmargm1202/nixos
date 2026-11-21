@@ -1,7 +1,7 @@
 { lib, pkgs, userName, profileName ? null, ... }:
 
 {
-  imports = [ ./audio.nix ./i3-session.nix ../../apps/youtube-send.nix ];
+  imports = [ ./audio.nix ./i3-session.nix ./web-panels.nix ../../apps/youtube-send.nix ];
 
 
   # MSI MS-7D43 desktop: Intel Alder Lake CPU, NVIDIA primary GPU, NVMe SSD.
