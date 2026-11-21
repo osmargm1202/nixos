@@ -181,6 +181,7 @@ if ((!INSTALL_TMUX_ONLY)); then
 fi
 fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.tmux.conf' "$TEMP_DIR/files/tmux.conf"
 fetch_file 'dotfiles/config/users/osmarg/programs/tmux/.local/bin/tmux-spanish-date' "$TEMP_DIR/files/tmux-spanish-date"
+fetch_file 'server/dotfiles/.local/bin/tmux' "$TEMP_DIR/files/tmux-launcher"
 
 if ((INSTALL_PLUGINS)); then
     PERSISTENCE_SOURCES=(
@@ -278,7 +279,8 @@ ACTIVATE_HERE=0
 if [[ $TARGET_HOME == "$ACCOUNT_HOME" ]]; then ACTIVATE_HERE=1; fi
 
 # Check every possible managed destination before making any change under HOME.
-check_not_nix_managed "$TARGET_HOME/.tmux.conf" "$HELPER_DEST" "$PLUGINS_CONF"
+check_not_nix_managed "$TARGET_HOME/.tmux.conf" "$HELPER_DEST" "$PLUGINS_CONF" \
+    "$TARGET_HOME/.local/bin/tmux"
 if ((!INSTALL_TMUX_ONLY)); then
     check_not_nix_managed "$TARGET_HOME/.bashrc"
     for relative in "${TERMINAL_DESTINATIONS[@]}"; do
@@ -457,6 +459,7 @@ if ((!INSTALL_TMUX_ONLY)); then
 fi
 deploy_file "$TEMP_DIR/files/tmux.conf" "$TARGET_HOME/.tmux.conf" '.tmux.conf' 0644
 deploy_file "$TEMP_DIR/files/tmux-spanish-date" "$HELPER_DEST" '.local/bin/tmux-spanish-date' 0755
+deploy_file "$TEMP_DIR/files/tmux-launcher" "$TARGET_HOME/.local/bin/tmux" '.local/bin/tmux' 0755
 
 if [[ -n $LOGIN_UPDATE ]]; then
     deploy_file "$LOGIN_UPDATE" "$LOGIN_FILE" "${LOGIN_FILE#"$TARGET_HOME"/}" 0644

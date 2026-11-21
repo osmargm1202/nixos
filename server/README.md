@@ -9,6 +9,13 @@ El checkout real de este equipo está en `~/Hobby/nixos`, no en `~/Code/nixos`.
 - `server/dotfiles/.bashrc` y `~/.config/bash/terminal.bash`: historial,
   prompt, aliases, navegación, rutas de herramientas e integración opcional
   con Starship, Zoxide, Atuin, fnm, Eza y neofetch.
+- `~/.local/bin/tmux` fuerza `-u` también en SSH no interactivo y lanzadores como
+  Codeman, que no cargan las funciones de Bash. Busca el ejecutable del sistema
+  en PATH y omite su propia ruta para evitar recursión. Se instala también con
+  `--tmux-only`; no reemplaza `/usr/bin/tmux`. El lanzador debe tener
+  `~/.local/bin` antes del directorio del binario del sistema en PATH.
+  Los clientes ya conectados conservan su modo anterior: reconectar el cliente
+  mediante `tmux -u attach`, sin cerrar el servidor ni sus sesiones.
 - Funciones `codex` y `claude` con los permisos de los lanzadores de NixOS,
   y `omp` con resolución de sus assets cuando se instala con Bun.
 - Comandos `codex-install`, `claude-install`, `omp-install` y sus variantes

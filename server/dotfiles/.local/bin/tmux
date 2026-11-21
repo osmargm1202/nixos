@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# SSH commands and desktop launchers do not load interactive Bash functions.
+# Force UTF-8 at the executable boundary without replacing the system binary.
+set -euo pipefail
+
+self=$(readlink -f -- "${BASH_SOURCE[0]}")
+IFS=: read -r -a search_path <<< "$PATH"
+for directory in "${search_path[@]}"; do
+    candidate=${directory:-.}/tmux
+    [[ -x $candidate && ! -d $candidate ]] || continue
+    binary=$(readlink -f -- "$candidate") || continue
+    [[ $binary != "$self" ]] || continue
+    # Interactive shells may already prepend -u through their tmux function.
+    if [[ ${1:-} == -u ]]; then
+        exec "$binary" "$@"
+    fi
+    exec "$binary" -u "$@"
+done
+
+printf '%s\n' 'tmux: system executable not found in PATH' >&2
+exit 127
