@@ -180,11 +180,12 @@ let
       ExecStart=${sunshineLauncher}
     '';
   };
-  sunshineMarioKartFocus = pkgs.writeShellApplication {
-    name = "sunshine-mario-kart-focus";
+  sunshineFocus = pkgs.writeShellApplication {
+    name = "sunshine-focus";
     runtimeInputs = [ pkgs.python3 pkgs.systemd pkgs.i3 ];
     text = ''
-      exec python3 ${./sunshine-mario-kart-focus.py}
+      exec python3 ${./sunshine-focus.py} \
+        ${config.services.sunshine.package}/assets ${toString config.services.sunshine.settings.port}
     '';
   };
   i3Config = pkgs.writeText "orgm-i3-minimal.conf" (
@@ -311,15 +312,15 @@ in
             ExecStart = "${pkgs.dunst}/bin/dunst";
           };
         };
-        systemd.user.services.sunshine-mario-kart-focus = lib.mkIf sunshineEnabled {
+        systemd.user.services.sunshine-focus = lib.mkIf sunshineEnabled {
           Unit = {
-            Description = "Focus Mario Kart World on Moonlight connection";
+            Description = "Restore application focus on Moonlight connection";
             PartOf = [ target ];
             ConditionEnvironment = "XDG_CURRENT_DESKTOP=i3";
           };
           Install.WantedBy = [ target ];
           Service = {
-            ExecStart = "${sunshineMarioKartFocus}/bin/sunshine-mario-kart-focus";
+            ExecStart = "${sunshineFocus}/bin/sunshine-focus";
             Restart = "on-failure";
             RestartSec = 2;
           };
