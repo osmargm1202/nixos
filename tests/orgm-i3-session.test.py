@@ -20,6 +20,8 @@ projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  specialisations=builtins.attrNames c.specialisation;
  clipcat=c.systemd.user.services.i3-clipcat.wantedBy;
  picom=c.systemd.user.services ? picom;
+ picomPackages=builtins.filter (name: builtins.match "picom.*" name != null)
+   (map s.pkgs.lib.getName c.environment.systemPackages);
  oskTargets=c.systemd.user.services.orgm-osk.wantedBy;
  oskCondition=c.systemd.user.services.orgm-osk.unitConfig.ConditionEnvironment;
  minimalConfig=toString c.home-manager.users.osmarg.xdg.configFile."i3/orgm-minimal.conf".source;
@@ -44,7 +46,7 @@ assert c['autoLogin']=={'enable':True,'user':'osmarg'} and c['serverAutoLogin'] 
 assert 'orgm-i3' in c['sessions'] and 'hyprland' in c['sessions'] and 'orgm-gaming' not in c['sessions']
 assert c['sunshine'] and c['tailscale'] and c['syncthing']
 assert not any('90-orgm-gaming' in p for p in c['dropins'])
-assert c['clipcat']==['orgm-i3-session.target'] and not c['picom']
+assert c['clipcat']==['orgm-i3-session.target'] and not c['picom'] and not c['picomPackages']
 assert c['oskTargets']==['orgm-hyprland-session.target']
 assert c['oskCondition']=='XDG_SESSION_TYPE=wayland'
 assert c['guards']==['[Unit]\nConditionEnvironment=!XDG_CURRENT_DESKTOP=i3\n']+['[Unit]\nConditionEnvironment=XDG_SESSION_TYPE=wayland\n']*3
@@ -75,7 +77,8 @@ assert '/bin/orgm-i3-status' in minimal
 assert '/bin/rofi -show drun' in minimal and '/bin/rofi -show window' in minimal
 assert 'exec_always --no-startup-id autotiling' in minimal
 assert 'bindsym $mod+l exec --no-startup-id /nix/store/' in minimal
-assert '/bin/i3lock -c 000000' in minimal and 'bindsym $mod+l focus right' not in minimal
+assert '/bin/i3lock-color --fill -i /nix/store/' in minimal
+assert 'i3-lock-background.png -n' in minimal and 'bindsym $mod+l focus right' not in minimal
 assert 'for_window [class="(?i)^rofi$"] floating enable' in minimal
 browserConfig=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
  if line.startswith('include /nix/store/') and line.endswith('orgm-i3-browser.conf')).read_text()

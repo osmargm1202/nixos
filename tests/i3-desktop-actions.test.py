@@ -16,8 +16,11 @@ r = subprocess.run(['nix', 'build', '--no-link', '--print-out-paths',
     capture_output=True, text=True, check=True)
 content = Path(r.stdout.strip()).read_text()
 lock = next(line for line in content.splitlines() if line.startswith('bindsym $mod+l '))
-match = re.fullmatch(r'bindsym \$mod\+l exec --no-startup-id (\S+/bin/i3lock) -c 000000', lock)
-assert match and Path(match[1]).is_file(), lock
+match = re.fullmatch(
+    r'bindsym \$mod\+l exec --no-startup-id (\S+/bin/i3lock-color) --fill -i (\S+-i3-lock-background\.png)',
+    lock,
+)
+assert match and Path(match[1]).is_file() and Path(match[2]).is_file(), lock
 rule = next(line for line in content.splitlines() if line.startswith('for_window [class="(?i)^rofi$"]'))
 
 with tempfile.TemporaryDirectory(prefix='i3-actions-') as temporary:
@@ -90,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix='i3-actions-') as temporary:
         # private fixture. No password prompt or real desktop lock is invoked.
         subprocess.run(['xdotool', 'key', '--clearmodifiers', 'super+l'], env=env, check=True)
         wait(locklog.exists, 'Win+L dispatch')
-        assert locklog.read_text().splitlines() == ['-c', '000000']
+        assert locklog.read_text().splitlines() == ['--fill', '-i', match[2]]
         subprocess.run(['xdotool', 'key', '--clearmodifiers', 'super+w'], env=env, check=True)
         wait(lambda: window('Brave-origin')['focused'], 'Win+W focuses browser across workspaces')
         assert not browserlog.exists(), 'existing browser was launched again'

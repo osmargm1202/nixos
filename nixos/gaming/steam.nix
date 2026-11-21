@@ -6,6 +6,7 @@
   ...
 }:
 let
+  i3SystemComposer = config.networking.hostName == "orgm";
   nvidiaGameOffload = lib.attrByPath [ "orgm" "lenovo" "windowsVfio" "enable" ] false config == false
     && lib.attrByPath [ "hardware" "nvidia" "prime" "offload" "enable" ] false config;
   nvidiaOffloadEnv = {
@@ -30,9 +31,15 @@ in
         remotePlay.openFirewall = true;
         dedicatedServer.openFirewall = true;
         gamescopeSession.enable = true;
-        package = lib.mkIf nvidiaGameOffload (pkgs.steam.override {
-          extraEnv = nvidiaOffloadEnv;
-        });
+        package = lib.mkIf (nvidiaGameOffload || i3SystemComposer) (pkgs.steam.override (
+          lib.optionalAttrs nvidiaGameOffload { extraEnv = nvidiaOffloadEnv; }
+          // lib.optionalAttrs i3SystemComposer {
+            # Steam web windows can render black in the compositor-free i3 session.
+            extraArgs = lib.removeSuffix "\n" ''
+              $(if [ "''${XDG_CURRENT_DESKTOP:-}" = i3 ]; then printf '%s' -system-composer; fi)
+            '';
+          }
+        ));
       };
 
       environment.systemPackages = (with pkgs; [

@@ -21,7 +21,7 @@ let
   target = "orgm-i3-session.target";
   home = config.users.users.${userName}.home;
   dot = pkgs.callPackage ../../orgm/orgm-dot.nix { };
-  lock = "${pkgs.i3lock}/bin/i3lock -c 000000";
+  lock = "${pkgs.i3lock-color}/bin/i3lock-color --fill -i ${./i3-lock-background.png}";
   # i3bar only hosts XEmbed icons; StatusNotifier apps (Nextcloud, Sunshine)
   # must start after snixembed owns the watcher or they never show in the tray.
   waitForTray = pkgs.writeShellScript "orgm-wait-for-tray" ''
@@ -267,7 +267,7 @@ in
     services.displayManager.sessionPackages = [ desktop ];
     systemd.services.display-manager.restartIfChanged = false;
     environment.systemPackages =
-      existing.config.environment.systemPackages
+      lib.filter (package: lib.getName package != "picom-pijulius") existing.config.environment.systemPackages
       ++ [
         desktop
         session
