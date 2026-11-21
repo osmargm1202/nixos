@@ -12,6 +12,12 @@ lanzamiento. Otras apps se identifican por su nombre o por la clase X11 de su
 ejecutable. En las entradas de escritorio, i3 recupera la ventana que tenía el
 foco al desconectarse si sigue abierta.
 
+Los juegos, emuladores y Steam Big Picture muestran una pantalla temporal de
+carga en i3 mientras arranca la aplicación. El fondo del escritorio se conserva.
+Desconectar conserva la partida para reanudarla. Al elegir otra entrada o usar
+**Salir de la aplicación** en Moonlight, Sunshine cierra la aplicación que
+inició. En Steam se cierra el juego de esa sesión y se conserva abierto el cliente.
+
 Home Manager instala el catálogo y conserva una copia de la última versión aplicada
 en `~/.local/state/sunshine/versioned-catalog/`. Si hiciste cambios desde el panel
 de Sunshine y aparece un aviso de edición local, compara esa copia con

@@ -51,6 +51,10 @@ def main():
     home_value = json.dumps(str(home), ensure_ascii=False)[1:-1]
     config_value = json.dumps(str(config), ensure_ascii=False)[1:-1]
     catalog = raw.replace("@home@", home_value).replace("@config@", config_value).encode()
+    for asset in (source / "session").iterdir():
+        if asset.is_file():
+            deploy(config / "sunshine/session" / asset.name, asset.read_bytes(),
+                   state / "session" / asset.name)
     for app in json.loads(catalog)["apps"]:
         image = Path(app.get("image-path") or "")
         if image.is_absolute():

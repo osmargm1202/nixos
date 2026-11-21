@@ -13,7 +13,7 @@ from xml.etree import ElementTree
 import zlib
 
 
-EVENT = re.compile(r"(?:^|: )(CLIENT CONNECTED|CLIENT DISCONNECTED|Executing \[.*\])$")
+EVENT = re.compile(r"(?:^|: )(CLIENT CONNECTED|CLIENT DISCONNECTED|Executing(?::)? \[.*\])$")
 STEAM_ID = re.compile(r"steam://(?:rungameid|run)/(\d+)\b", re.IGNORECASE)
 NUP_ID = re.compile(r"\[([0-9a-f]{16})\]", re.IGNORECASE)
 PNG = b"\x89PNG\r\n\x1a\n"
@@ -21,6 +21,7 @@ STEAM_NATIVE_CLASSES = {
     "570": {"dota2"},
     "311690": {"etgx8664"},
 }
+LICHII_ALIASES = {"0400c3f00006e000": {"mkwrom"}}
 WRAPPERS = {"setsid", "env", "exec"}
 
 
@@ -74,8 +75,9 @@ def window_rule(app):
             )
         if "launch-lichii.sh" in command or "lichii" in Path(command).name.casefold():
             ids = {match.lower() for match in NUP_ID.findall(command)}
+            titles = ids | {alias for game in ids for alias in LICHII_ALIASES.get(game, ())}
             return lambda window, keys, title: (
-                "lichii" in keys and (not ids or name in title or any(game in title for game in ids))
+                "lichii" in keys and (not ids or name in title or any(game in title for game in titles))
             )
 
     # For a regular app, its executable or catalog name normally matches WM_CLASS.
@@ -127,7 +129,7 @@ def current_app(port):
 
 
 def handle_event(event, catalog, assets, port, desktops):
-    if event.startswith("Executing ["):
+    if event.startswith(("Executing [", "Executing: [")):
         desktops.clear()
         return
     identifier = current_app(port)

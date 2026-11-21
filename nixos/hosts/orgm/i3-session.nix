@@ -184,7 +184,7 @@ let
     name = "sunshine-focus";
     runtimeInputs = [ pkgs.python3 pkgs.systemd pkgs.i3 ];
     text = ''
-      exec python3 ${./sunshine-focus.py} \
+      exec python3 ${./sunshine/session/focus.py} \
         ${config.services.sunshine.package}/assets ${toString config.services.sunshine.settings.port}
     '';
   };

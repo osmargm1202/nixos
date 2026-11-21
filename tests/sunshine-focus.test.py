@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 
 HOST = Path(__file__).resolve().parents[1] / "nixos/hosts/orgm"
-focus = runpy.run_path(str(HOST / "sunshine-focus.py"))
+focus = runpy.run_path(str(HOST / "sunshine/session/focus.py"))
 catalog = HOST / "sunshine/apps.json"
 entries = json.loads(catalog.read_text())["apps"]
 by_name = {app["name"]: app for app in entries}
@@ -44,11 +44,12 @@ for name, cls in steam_windows:
     assert not matches(by_name[name], window(2, "Brave-origin", name)), name
 assert not matches(by_name["Steam Big Picture"], window(2, "steam", "Steam"))
 
-nup_games = [app for app in entries if focus["NUP_ID"].search(" ".join(app.get("detached", [])))]
+nup_games = [app for app in entries if focus["NUP_ID"].search(app.get("cmd", ""))]
 for app in nup_games:
-    title_id = focus["NUP_ID"].search(app["detached"][0])[1]
+    title_id = focus["NUP_ID"].search(app["cmd"])[1]
     assert matches(app, window(1, "Lichii", f"Lichii | {title_id} (64-bit)")), app
     assert not matches(app, window(2, "Lichii", "Lichii | 0123456789ABCDEF")), app
+assert matches(by_name["Mario Kart World"], window(1, "Lichii", "Lichii | MKW [ROM] (64-bit)"))
 assert matches(by_name["Lichii"], window(1, "Lichii", "Lichii"))
 assert matches({"name": "Video Player", "cmd": "setsid /usr/bin/mpv --fullscreen"},
                window(1, "mpv", "Example video"))
