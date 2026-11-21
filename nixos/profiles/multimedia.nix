@@ -10,6 +10,9 @@
 let
   cfg = config.orgm.multimedia;
   app = pkgs.callPackage "${inputs.orgm-multimedia}/package.nix" { };
+  touchApp = app.overridePythonAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./multimedia/touch-polling.patch ];
+  });
   receiver = pkgs.uxplay.overrideAttrs (_: {
     version = "1.73.7";
     src = pkgs.fetchFromGitHub {
@@ -125,7 +128,7 @@ let
     trap cleanup EXIT
     ${config.programs.sway.package}/bin/sway --config /etc/orgm-home/sway.conf
   '';
-  sessionService = command: {
+  sessionService = { command, sessionApp ? app }: {
     wantedBy = [ "orgm-home-session.target" ];
     partOf = [ "orgm-home-session.target" ];
     after = [ "orgm-home-session.target" ];
@@ -144,7 +147,7 @@ let
       QT_QPA_PLATFORM = "wayland";
     };
     path = with pkgs; [
-      app
+      sessionApp
       quickshell
       mirror
       sway
@@ -164,7 +167,7 @@ let
       kitty
     ];
     serviceConfig = {
-      ExecStart = if command == "orgm-home-idle-screen" then idleScreen else "${app}/bin/${command}";
+      ExecStart = if command == "orgm-home-idle-screen" then idleScreen else "${sessionApp}/bin/${command}";
       Restart = "always";
       RestartSec = 3;
       TimeoutStopSec = 10;
@@ -577,11 +580,14 @@ in
           TimeoutStopSec = 5;
         };
       };
-      orgm-home-agent = sessionService "orgm-home-agent";
-      orgm-home-kiosk = sessionService "orgm-home-kiosk";
-      orgm-home-display = sessionService "orgm-home-display";
-      orgm-home-touch = sessionService "orgm-home-touch";
-      orgm-home-idle = sessionService "orgm-home-idle-screen";
+      orgm-home-agent = sessionService { command = "orgm-home-agent"; };
+      orgm-home-kiosk = sessionService { command = "orgm-home-kiosk"; };
+      orgm-home-display = sessionService { command = "orgm-home-display"; };
+      orgm-home-touch = sessionService {
+        command = "orgm-home-touch";
+        sessionApp = touchApp;
+      };
+      orgm-home-idle = sessionService { command = "orgm-home-idle-screen"; };
       orgm-home-airplay = {
         description = "ORGM AirPlay video and audio receiver";
         wantedBy = [ "orgm-home-session.target" ];

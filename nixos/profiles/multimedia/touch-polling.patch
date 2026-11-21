@@ -1,0 +1,212 @@
+diff --git a/orgm_home/touch/PollingProcess.qml b/orgm_home/touch/PollingProcess.qml
+new file mode 100644
+index 0000000..173577e
+--- /dev/null
++++ b/orgm_home/touch/PollingProcess.qml
+@@ -0,0 +1,31 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++import Quickshell.Io
++
++Process {
++    id: worker
++
++    required property string action
++    property bool pending: false
++    signal received(string data)
++
++    command: ["orgm-home-control", "poll", action]
++    stdinEnabled: true
++
++    function poll() {
++        if (!running) {
++            running = true;
++        } else if (!pending) {
++            pending = true;
++            write("poll\n");
++        }
++    }
++
++    onStarted: poll()
++    onExited: pending = false
++    stdout: SplitParser {
++        onRead: data => {
++            worker.pending = false;
++            worker.received(data);
++        }
++    }
++}
+diff --git a/orgm_home/touch/shell.qml b/orgm_home/touch/shell.qml
+index 94d3e34..51a3e5e 100644
+--- a/orgm_home/touch/shell.qml
++++ b/orgm_home/touch/shell.qml
+@@ -21,6 +21,8 @@ Scope {
+     property var pairingRequests: []
+     property bool pairingBusy: pairingDecision.running
+     property bool powerOpened: false
++    readonly property bool sessionControlsVisible: controlsOpened || opened || optionsOpened || appsOpened || powerOpened
++    onSessionControlsVisibleChanged: if (sessionControlsVisible) status.poll()
+     property var apps: []
+     property var openedApps: []
+     property string activeApp: "home"
+@@ -64,11 +66,22 @@ Scope {
+         pairingDecision.message=JSON.stringify({id:pairingRequests[0].id,approve:approve});
+         pairingDecision.running=true;
+     }
+-    Process {
+-        id:pairingStatus
+-        command:["orgm-home-control","pairing-pending"]
+-        stdout:SplitParser { onRead:data=>{try{var result=JSON.parse(data);var next=result.ok?result.data.requests:[];if(next.length && (!root.pairingRequests.length || root.pairingRequests[0].id!==next[0].id) && !pairingWake.running)pairingWake.running=true;root.pairingRequests=next;}catch(e){root.pairingRequests=[];}} }
+-        onExited:if(exitCode!==0)root.pairingRequests=[]
++    PollingProcess {
++        id: pairingStatus
++        action: "pairing-pending"
++        onReceived: data => {
++            if (pairingDecision.running) return;
++            try {
++                var result = JSON.parse(data);
++                var next = result.ok ? result.data.requests : [];
++                if (next.length && (!root.pairingRequests.length || root.pairingRequests[0].id !== next[0].id) && !pairingWake.running)
++                    pairingWake.running = true;
++                root.pairingRequests = next;
++            } catch (e) {
++                root.pairingRequests = [];
++            }
++        }
++        onExited: root.pairingRequests = []
+     }
+     Timer { interval:20000;running:root.pairingRequests.length>0;onTriggered:pairingDim.running=true }
+     Timer { interval:60000;running:root.pairingRequests.length>0;onTriggered:pairingSleep.running=true }
+@@ -82,9 +95,9 @@ Scope {
+         stdinEnabled:true
+         onStarted:{write(message+"\n");message="";}
+         stdout:SplitParser { onRead:data=>{try{var result=JSON.parse(data);if(!result.ok)root.error=result.error;}catch(e){}} }
+-        onExited:if(!pairingStatus.running)pairingStatus.running=true
++        onExited: pairingStatus.poll()
+     }
+-    Timer { interval:1500;repeat:true;running:true;triggeredOnStart:true;onTriggered:if(!pairingStatus.running && !pairingDecision.running)pairingStatus.running=true }
++    Timer { interval:1500;repeat:true;running:true;triggeredOnStart:true;onTriggered: if (!pairingDecision.running) pairingStatus.poll() }
+     Timer { id: hideControls; interval: 8000; onTriggered: { if (!root.opened && !root.optionsOpened && !root.appsOpened && !root.powerOpened) root.controlsOpened = false; } }
+     Process {
+         id: engine
+@@ -106,26 +119,25 @@ Scope {
+         id: control
+         stdout: SplitParser { onRead: data => { try { var message=JSON.parse(data); if (!message.ok) root.error=message.error; else { root.error=""; if(message.data && typeof message.data.touch_always_on === "boolean") root.touchAlwaysOn=message.data.touch_always_on; } } catch(e) {} } }
+     }
+-    Process {
++    PollingProcess {
+         id: status
+-        command: ["orgm-home-control", "status"]
+-        stdout: SplitParser {
+-            onRead: data => {
+-                try {
+-                    var result=JSON.parse(data);
+-                    root.online=!!result.ok && !!result.data.session;
+-                    if (root.online) {
+-                        root.capabilities=result.data.capabilities || {};
+-                        root.activeName=result.data.title || "ORGM Home";
+-                        root.background=result.data.background || "costa";
+-                        root.volume=result.data.volume || 0;
+-                        root.muted=!!result.data.muted;
+-                        root.touchAlwaysOn=!!result.data.touch_always_on;
+-                        root.openedApps=result.data.open || [];
+-                        root.activeApp=result.data.app || "home";
+-                    }
+-                } catch(e) { root.online=false; }
+-            }
++        action: "status"
++        onExited: root.online = false
++        onReceived: data => {
++            try {
++                var result=JSON.parse(data);
++                root.online=!!result.ok && !!result.data.session;
++                if (root.online) {
++                    root.capabilities=result.data.capabilities || {};
++                    root.activeName=result.data.title || "ORGM Home";
++                    root.background=result.data.background || "costa";
++                    root.volume=result.data.volume || 0;
++                    root.muted=!!result.data.muted;
++                    root.touchAlwaysOn=!!result.data.touch_always_on;
++                    root.openedApps=result.data.open || [];
++                    root.activeApp=result.data.app || "home";
++                }
++            } catch(e) { root.online=false; }
+         }
+     }
+     Process {
+@@ -133,7 +145,16 @@ Scope {
+         command: ["orgm-home-control", "apps"]
+         stdout: SplitParser { onRead: data => { try { var message=JSON.parse(data);if(message.ok)root.apps=message.data.apps || []; } catch(e) {} } }
+     }
+-    Timer { interval: 1500; repeat: true; running: true; triggeredOnStart: true; onTriggered: { if (!status.running) status.running=true; if(!root.apps.length && !catalog.running)catalog.running=true; } }
++    Timer {
++        interval: root.sessionControlsVisible ? 1500 : 10000
++        repeat: true
++        running: true
++        triggeredOnStart: true
++        onTriggered: {
++            status.poll();
++            if (!root.apps.length && !catalog.running) catalog.running = true;
++        }
++    }
+     IpcHandler {
+         target: "touch"
+         function toggle(): void { root.toggle(); }
+@@ -194,7 +215,7 @@ Scope {
+             PanelWindow {
+                 id: controls
+                 screen: surface.modelData
+-                visible: root.controlsOpened || root.opened || root.optionsOpened || root.appsOpened || root.powerOpened
++                visible: root.sessionControlsVisible
+                 anchors { top:true; left:true; right:true }
+                 margins.top:12
+                 implicitHeight:80
+diff --git a/orgm_home/touch.py b/orgm_home/touch.py
+index 3722d55..114c1df 100644
+--- a/orgm_home/touch.py
++++ b/orgm_home/touch.py
+@@ -19,6 +19,23 @@ def main():
+ 
+ def control():
+     action = sys.argv[1] if len(sys.argv) >= 2 else "status"
++    if action == "poll":
++        if len(sys.argv) != 3 or sys.argv[2] not in {"status", "pairing-pending"}:
++            raise SystemExit("Expected poll status or poll pairing-pending")
++        action = sys.argv[2]
++        for line in sys.stdin:
++            if line != "poll\n":
++                continue
++            try:
++                _control(action)
++            except SystemExit as exc:
++                if exc.code != 1:
++                    raise
++        return
++    _control(action)
++
++
++def _control(action):
+     if action in {"pairing-wake", "pairing-dim", "pairing-sleep"}:
+         backlight = Path("/sys/class/backlight/intel_backlight/bl_power")
+         if backlight.exists():
+@@ -72,9 +89,9 @@ def control():
+         result = asyncio.run(
+             AgentClient(Settings.from_env().agent_socket).call(verb, **data)
+         )
+-        print(json.dumps({"ok": True, "data": result}))
++        print(json.dumps({"ok": True, "data": result}), flush=True)
+     except ControlError as exc:
+-        print(json.dumps({"ok": False, "error": str(exc)}))
++        print(json.dumps({"ok": False, "error": str(exc)}), flush=True)
+         raise SystemExit(1)
+ 
+ 
+@@ -115,7 +132,7 @@ def _pairing(action):
+     try:
+         request = Request("http://127.0.0.1:8765" + path, data=body, headers=headers)
+         with build_opener(ProxyHandler({})).open(request, timeout=3) as response:
+-            print(json.dumps({"ok": True, "data": json.load(response)}))
++            print(json.dumps({"ok": True, "data": json.load(response)}), flush=True)
+     except (OSError, ValueError):
+-        print(json.dumps({"ok": False, "error": "No se pudo consultar la autorización. Inténtalo de nuevo."}))
++        print(json.dumps({"ok": False, "error": "No se pudo consultar la autorización. Inténtalo de nuevo."}), flush=True)
+         raise SystemExit(1)
