@@ -121,6 +121,13 @@
       ],
       "working-dir": "@home@/Apps/lichii-linux-x86_64-pgo",
       "image-path": "@config@/sunshine/moonlight-covers/mario-kart-world.png"
+    },
+    {
+      "name": "RetroArch",
+      "detached": [
+        "setsid flatpak run org.libretro.RetroArch --fullscreen"
+      ],
+      "image-path": "@config@/sunshine/moonlight-covers/retroarch.png"
     }
   ],
   "env": {
