@@ -33,6 +33,14 @@
       "exit-timeout": 15
     },
     {
+      "image-path": "@config@/sunshine/moonlight-covers/steam-2909400.png",
+      "name": "Final Fantasy VII Rebirth",
+      "cmd": "python3 \"@config@/sunshine/session/launch.py\" steam steam://rungameid/2909400",
+      "auto-detach": false,
+      "wait-all": true,
+      "exit-timeout": 15
+    },
+    {
       "image-path": "@config@/sunshine/moonlight-covers/steam-1030300.png",
       "name": "Hollow Knight: Silksong",
       "cmd": "python3 \"@config@/sunshine/session/launch.py\" steam steam://rungameid/1030300",

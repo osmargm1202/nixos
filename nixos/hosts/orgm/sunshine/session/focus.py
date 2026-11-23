@@ -20,6 +20,7 @@ PNG = b"\x89PNG\r\n\x1a\n"
 STEAM_NATIVE_CLASSES = {
     "570": {"dota2"},
     "311690": {"etgx8664"},
+    "2909400": {"ff7rebirthexe"},
 }
 LICHII_ALIASES = {"0400c3f00006e000": {"mkwrom"}}
 WRAPPERS = {"setsid", "env", "exec"}

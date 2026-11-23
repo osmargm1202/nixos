@@ -35,6 +35,7 @@ steam_windows = [
     ("Darkwood", "steam_app_274520"),
     ("Dota 2", "dota2"),
     ("Enter the Gungeon", "EtG.x86_64"),
+    ("Final Fantasy VII Rebirth", "ff7rebirth_.exe"),
     ("Hollow Knight: Silksong", "Hollow Knight Silksong"),
     ("Puzzle Quest 3", "PuzzleQuest3.exe"),
     ("Steam Big Picture", "steam"),
