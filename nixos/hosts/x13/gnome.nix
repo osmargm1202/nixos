@@ -1,4 +1,4 @@
-{ lib, pkgs, userName, ... }:
+{ config, lib, pkgs, userName, ... }:
 let
   base = import ../../profiles/gnome.nix { inherit pkgs; };
   isExtension = package: package ? extensionUuid;
@@ -24,6 +24,16 @@ base // {
     home.packages = builtins.filter
       (p: isExtension p && p.extensionUuid != "gnome-ui-tune@itstime.tech")
       base.environment.systemPackages;
+    xdg.configFile."autostart/com.nextcloud.desktopclient.nextcloud.desktop" =
+      lib.mkIf config.services.desktopManager.gnome.enable {
+        text = ''
+          [Desktop Entry]
+          Type=Application
+          Name=Nextcloud
+          Exec=${lib.getExe pkgs.nextcloud-client} --background
+          OnlyShowIn=GNOME;
+        '';
+      };
     dconf.settings = {
       "org/gnome/desktop/lockdown".disable-lock-screen = false;
       "org/gnome/desktop/screensaver".lock-enabled = true;

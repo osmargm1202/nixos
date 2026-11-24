@@ -18,7 +18,8 @@ in
 
   orgm.i3LightSession.enable = true;
 
-  orgm.user.programs = lib.mkForce (builtins.filter (p: p != "nextcloud") original.orgm.user.programs);
+  specialisation.server.configuration.orgm.user.programs =
+    lib.mkForce (builtins.filter (p: p != "nextcloud") original.orgm.user.programs);
   orgm.user.autostart = lib.mkForce (builtins.filter (p: !(lib.hasPrefix "nextcloud" p)) original.orgm.user.autostart);
 
   # Raptor Lake / Iris Xe: use the stable stock kernel, not the shared Zen pin.

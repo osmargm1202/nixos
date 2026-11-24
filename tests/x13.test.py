@@ -23,7 +23,7 @@ in {
   host = c.networking.hostName;
   context = builtins.fromJSON c.environment.etc."orgm-dot/context.json".text;
   programs = c.orgm.user.programs;
-  expectedPrograms = builtins.filter (p: p != "nextcloud") original.orgm.user.programs;
+  expectedPrograms = original.orgm.user.programs;
   autostart = c.orgm.user.autostart;
   expectedAutostart = builtins.filter (p: !(lib.hasPrefix "nextcloud" p)) original.orgm.user.autostart;
   flatpaks = map (p: if builtins.isString p then p else p.appId) c.services.flatpak.packages;
@@ -36,6 +36,9 @@ in {
   accountRecovery = c.users.users.osmarg.isNormalUser && builtins.elem "wheel" c.users.users.osmarg.extraGroups && c.security.sudo.enable;
   packages = names c.environment.systemPackages;
   hmPackages = names hm.home.packages;
+  nativeNextcloud = builtins.any (p: p.outPath == s.pkgs.nextcloud-client.outPath) hm.home.packages;
+  nextcloudAutostart = hm.xdg.configFile."autostart/com.nextcloud.desktopclient.nextcloud.desktop".text;
+  nextcloudCommand = "${lib.getExe s.pkgs.nextcloud-client} --background";
   systemExtensions = extensions c.environment.systemPackages;
   userExtensions = extensions hm.home.packages;
   expectedExtensions = builtins.filter (uuid: uuid != "gnome-ui-tune@itstime.tech") (extensions base.environment.systemPackages);
@@ -93,7 +96,10 @@ assert (c["host"], c["context"]["user"], c["context"]["profile"]) == ("x13", "os
 assert c["programs"] == c["expectedPrograms"]
 assert sorted(c["webapps"]) == sorted(c["expectedWebapps"])
 assert c["autostart"] == c["expectedAutostart"]
-assert not any("nextcloud" in p.lower() for p in c["programs"] + c["autostart"] + c["packages"] + c["hmPackages"])
+assert "nextcloud" in c["programs"] and c["nativeNextcloud"]
+assert not any("nextcloud" in p.lower() for p in c["autostart"] + c["flatpaks"])
+assert f'Exec={c["nextcloudCommand"]}' in c["nextcloudAutostart"].splitlines()
+assert "OnlyShowIn=GNOME;" in c["nextcloudAutostart"].splitlines()
 assert set(c["expectedFlatpaks"]) <= set(c["flatpaks"])
 assert "ai.storyteller.artcraft-launcher" not in c["flatpaks"]
 assert c["artcraft"]

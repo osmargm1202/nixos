@@ -58,6 +58,7 @@ projection = r'''s: let
     ) [ x.users.users.osmarg x.users.users.root ];
     programs = x.orgm.user.programs;
     autostart = x.orgm.user.autostart;
+    nextcloudAutostart = x.home-manager.users.osmarg.xdg.configFile ? "autostart/com.nextcloud.desktopclient.nextcloud.desktop";
     userCatalog = x.orgm.user.flatpakPackages;
     containers = builtins.attrNames x.virtualisation.oci-containers.containers;
     vfio = lib.attrByPath [ "orgm" "lenovo" "windowsVfio" "enable" ] false x;
@@ -70,7 +71,7 @@ in {
   modes = builtins.attrNames c.specialisation;
   normal = view c;
   server = view r;
-  expectedPrograms = builtins.filter (p: p != "nextcloud") original.orgm.user.programs;
+  expectedPrograms = original.orgm.user.programs;
   expectedAutostart = builtins.filter (p: !(lib.hasPrefix "nextcloud" p)) original.orgm.user.autostart;
   expectedCatalog = original.orgm.user.flatpakPackages;
 }'''
@@ -102,6 +103,9 @@ assert server["flatpakPackages"] == []
 assert set(config["expectedCatalog"]) <= set(normal["flatpakPackages"])
 assert "ai.storyteller.artcraft-launcher" not in normal["flatpakPackages"]
 assert {"nautilus", "gnome-text-editor", "loupe", "evince", "gnome-console"} <= set(normal["packages"])
+assert normal["programs"] == config["expectedPrograms"]
+assert server["programs"] == [p for p in config["expectedPrograms"] if p != "nextcloud"]
+assert normal["nextcloudAutostart"] and not server["nextcloudAutostart"]
 for mode in (normal, server):
     assert mode["failedAssertions"] == []
     assert mode["drv"].startswith("/nix/store/") and mode["drv"].endswith(".drv")
@@ -115,7 +119,6 @@ for mode in (normal, server):
     assert "wheel" in mode["user"]["extraGroups"] and mode["user"]["sudo"]
     assert mode["user"]["wheelNeedsPassword"]
     assert mode["credentialsUnset"]
-    assert mode["programs"] == config["expectedPrograms"]
     assert mode["autostart"] == config["expectedAutostart"]
     assert mode["userCatalog"] == config["expectedCatalog"]
     assert not mode["containers"] and not mode["vfio"]

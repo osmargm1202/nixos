@@ -1,8 +1,8 @@
 # X13: GNOME on encrypted Btrfs
 
 `x13` is Osmarg's Lenovo X13 Gen 4 (Intel i7-1365U, Iris Xe, 16 GB RAM).
-It starts with the shared GNOME profile and Osmarg's applications, without
-Nextcloud, a Windows VM or passthrough. Normal GNOME is the first boot choice;
+It starts with the shared GNOME profile and Osmarg's applications, including
+the native Nextcloud Desktop client. Normal GNOME is the first boot choice;
 the `server` specialisation provides headless SSH rescue.
 
 Optional **i3 ligero (X11)** is prepared in the source for fast sessions,
@@ -110,7 +110,7 @@ remain separate acceptance steps.
 | Mount policy | Zstd compression, noatime; EFI permissions restricted |
 | Memory | Zram; disk swap and hibernation not configured |
 | Desktop | GNOME, Nautilus, native GNOME utilities, Firefox and Kitty |
-| Accounts | GNOME Online Accounts; no Nextcloud client/autostart |
+| Accounts | GNOME Online Accounts and Nextcloud Desktop, started in the background at GNOME login |
 | Extensions | Shared GNOME extension packages installed for Osmarg only |
 | Games | Steam inside GNOME; existing Flatpak emulator catalog |
 | Applications | Existing Osmarg Flatpaks, integration services, printing and AI |
