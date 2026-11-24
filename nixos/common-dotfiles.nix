@@ -4,7 +4,7 @@
 let
   hostName = config.networking.hostName;
   browserDesktop = if config.orgm.browser.enable then "brave-origin.desktop" else "firefox.desktop";
-  htmlDesktop = if config.orgm.chromium.enable then "chromium-browser.desktop" else browserDesktop;
+  htmlDesktop = if config.orgm.chromium.enable && userName != "osmarg" then "chromium-browser.desktop" else browserDesktop;
   programs = config.orgm.user.programs or [ ];
   programEnabled = name: builtins.elem name programs;
   ryokuEnabled = profileName == "ryoku" && (config.programs.ryoku.enable or false);

@@ -11,7 +11,7 @@ notify() {
 }
 
 usage() {
-  printf 'Usage: %s [--new | --new-tab] [--prompt] URL | %s --focus | %s --restore-or-focus\n' "${0##*/}" "${0##*/}" "${0##*/}" >&2
+  printf 'Usage: %s [--new | --new-tab] [--prompt] URL | %s [--focus | --focus-or-open | --restore-or-focus]\n' "${0##*/}" "${0##*/}" >&2
 }
 
 fail() {
@@ -182,7 +182,7 @@ new_window=false
 new_tab=false
 prompt=false
 focus_only=false
-restore_or_focus=false
+restore_mode=""
 input=""
 while (($#)); do
   case "$1" in
@@ -198,8 +198,9 @@ while (($#)); do
     --focus)
       focus_only=true
       ;;
-    --restore-or-focus)
-      restore_or_focus=true
+    --restore-or-focus|--focus-or-open)
+      [[ -z "$restore_mode" ]] || fail "Specify one focus mode"
+      restore_mode="$1"
       ;;
     --help)
       usage
@@ -223,7 +224,7 @@ while (($#)); do
 done
 
 if "$focus_only"; then
-  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && "$restore_or_focus" == false && -z "$input" ]] ||
+  [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && -z "$restore_mode" && -z "$input" ]] ||
     fail "--focus cannot be combined with a URL or creation options"
   focus_firefox >/dev/null 2>&1 || {
     notify "No existing Firefox window could be focused"
@@ -232,10 +233,11 @@ if "$focus_only"; then
   exit 0
 fi
 
-if "$restore_or_focus"; then
+if [[ -n "$restore_mode" ]]; then
   [[ "$new_window" == false && "$new_tab" == false && "$prompt" == false && -z "$input" ]] ||
-    fail "--restore-or-focus cannot be combined with a URL or other options"
+    fail "$restore_mode cannot be combined with a URL or other options"
   if focus_firefox >/dev/null 2>&1; then
+    [[ "$restore_mode" == --focus-or-open ]] && exit 0
     command -v firefox >/dev/null 2>&1 || {
       notify "Firefox is not installed"
       exit 1

@@ -28,7 +28,7 @@ vm.runInContext(source.replace(/^import .*;\n/gm, '').replace('export default cl
 const extension = new context.Shortcuts();
 extension.enable();
 assert.deepEqual([...bindings.keys()].sort(), ['console', 'files', 'firefox']);
-for (const [name, id] of [['console', 'org.gnome.Console.desktop'], ['firefox', 'brave-origin.desktop'], ['files', 'org.gnome.Nautilus.desktop']]) {
+for (const [name, id] of [['console', 'org.gnome.Console.desktop'], ['firefox', 'firefox.desktop'], ['files', 'org.gnome.Nautilus.desktop']]) {
     windows = []; state = 0; launches = 0; focused.length = 0;
     bindings.get(name)();
     assert.equal(ids.at(-1), id);

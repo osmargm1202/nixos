@@ -6,7 +6,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const apps = {
     console: 'org.gnome.Console.desktop',
-    firefox: 'brave-origin.desktop',
+    firefox: 'firefox.desktop',
     files: 'org.gnome.Nautilus.desktop',
 };
 

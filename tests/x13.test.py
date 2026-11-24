@@ -43,7 +43,7 @@ in {
   userExtensions = extensions hm.home.packages;
   expectedExtensions = builtins.filter (uuid: uuid != "gnome-ui-tune@itstime.tech") (extensions base.environment.systemPackages);
   webapps = c.orgm.user.webapps;
-  expectedWebapps = original.orgm.user.webapps ++ [ "slc-daily" "slc-vill-docs" "orgm-adm" "orgm-automation" "orgm-code" ];
+  expectedWebapps = original.orgm.user.webapps ++ [ "slc-daily" "slc-vill-docs" "orgm-adm" ];
   enabledExtensions = hm.dconf.settings."org/gnome/shell".enabled-extensions or [];
   gdm = c.services.displayManager.gdm.enable;
   sddm = c.services.displayManager.sddm.enable;
@@ -53,7 +53,7 @@ in {
   gnome = c.services.desktopManager.gnome.enable;
   session = c.services.displayManager.defaultSession;
   goa = c.services.gnome.gnome-online-accounts.enable;
-  browser = c.orgm.browser.enable;
+  browser = c.programs.firefox.enable && c.orgm.chromium.enable && !c.orgm.browser.enable;
   printing = c.services.printing.enable;
   ai = c.programs.nix-ld.enable;
   graphics = c.hardware.graphics.enable && c.hardware.graphics.enable32Bit;

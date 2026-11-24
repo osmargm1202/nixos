@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 mapping = json.loads(Path(sys.argv[1]).read_text())
+migration = sys.argv[2] if len(sys.argv) > 2 else "origin"
 def migrate(items, suffix=""):
     result = []
     targets = {value + suffix for value in mapping.values()}
@@ -18,7 +19,7 @@ def migrate(items, suffix=""):
             result.append(updated)
     return result
 home = Path.home()
-state = Path(os.environ.get("XDG_STATE_HOME", str(home / ".local/state"))) / "orgm-origin"
+state = Path(os.environ.get("XDG_STATE_HOME", str(home / ".local/state"))) / f"orgm-{migration}"
 state.mkdir(parents=True, exist_ok=True)
 config = Path(os.environ.get("XDG_CONFIG_HOME", str(home / ".config")))
 cache = Path(os.environ.get("XDG_CACHE_HOME", str(home / ".cache")))
@@ -32,7 +33,7 @@ for index, path in enumerate([
     before = path.read_text()
     after = "\n".join(migrate(before.splitlines())) + "\n"
     if before != after:
-        backup = state / f"pins-{index}.before-origin"
+        backup = state / f"pins-{index}.before-{migration}"
         if not backup.exists():
             shutil.copy2(path, backup)
         path.write_text(after)
@@ -46,7 +47,7 @@ if bus.exists():
         favorites = ast.literal_eval(result.stdout.removeprefix("@as ").strip())
         updated = migrate(favorites, ".desktop")
         if updated != favorites:
-            backup = state / "gnome-favorites.before-origin.json"
+            backup = state / f"gnome-favorites.before-{migration}.json"
             if not backup.exists():
                 backup.write_text(json.dumps(favorites))
             subprocess.run(["gsettings", "set", "org.gnome.shell", "favorite-apps", repr(updated)], env=env, check=True)

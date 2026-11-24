@@ -14,6 +14,8 @@ let
   bitwardenId = "{446900e4-71c2-419f-a6a7-df9c091e268b}";
   dominicanDictionaryId = "es-DO@dictionaries.addons.mozilla.org";
   hasSignedWindowsManagerLinuxOrgm = builtins.pathExists signedWindowsManagerLinuxOrgm;
+  htmlDesktop =
+    if config.orgm.chromium.enable && userName != "osmarg" then "chromium-browser.desktop" else "firefox.desktop";
 in
 {
   config = lib.mkIf (builtins.elem "webapps" config.orgm.user.programs && !config.orgm.browser.enable) {
@@ -87,8 +89,8 @@ in
   xdg.mime = {
     enable = true;
     defaultApplications = {
-      "text/html" = [ (if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop") ];
-      "application/xhtml+xml" = [ (if config.orgm.chromium.enable then "chromium-browser.desktop" else "firefox.desktop") ];
+      "text/html" = [ htmlDesktop ];
+      "application/xhtml+xml" = [ htmlDesktop ];
       "x-scheme-handler/http" = [ "firefox.desktop" ];
       "x-scheme-handler/https" = [ "firefox.desktop" ];
     };

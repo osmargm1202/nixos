@@ -28,8 +28,8 @@ assert wayland_app_id("https://claude.ai") == "chrome-claude.ai__-Default"
 catalog = evaluate("--file", str(root / "nixos/apps/webapps.catalog.nix"))
 apps = [app for group in catalog.values() for app in group]
 ids = {app["id"] for app in apps}
-assert len(apps) == len(ids) == 36, "Catalog must contain 36 unique applications"
-x13_only = {"slc-daily", "slc-vill-docs", "orgm-adm", "orgm-automation", "orgm-code"}
+assert len(apps) == len(ids) == 37, "Catalog must contain 37 unique applications"
+x13_only = {"slc-daily", "slc-vill-docs", "orgm-adm"}
 perplexity = next(app for app in apps if app["id"] == "perplexity")
 assert perplexity["name"] == "Perplexity"
 assert perplexity["url"] == "https://www.perplexity.ai/"
@@ -57,7 +57,7 @@ for configuration, native_wayland in (("hyprland", True), ("i3", False)):
         "--impure", "--file", str(root / "tests/fixtures/legacy-configurations.nix"),
         f"{configuration}.config.orgm.user.webapps",
     )
-    assert set(selected) == ids - x13_only and len(selected) == 31
+    assert set(selected) == ids - x13_only and len(selected) == 34
     selected_apps = [app for app in apps if app["id"] in selected]
     identities = {"orgm-webapp-" + id for id in selected}
     desktop_ids = {
@@ -79,7 +79,14 @@ for configuration, native_wayland in (("hyprland", True), ("i3", False)):
         exec_args = shlex.split(entry["exec"])
         assert len(exec_args) == 1 and exec_args[0].startswith("/nix/store/")
         assert exec_args[0].endswith("/bin/" + identity)
-        assert entry["name"] == app["name"] and entry["icon"] == app["icon"]
+        assert entry["name"] == app["name"]
+        icon = Path(app["icon"])
+        if icon.is_absolute():
+            assert icon.is_file()
+            assert entry["icon"].startswith("/nix/store/")
+            assert Path(entry["icon"]).name.endswith("-" + icon.name)
+        else:
+            assert entry["icon"] == app["icon"]
         assert entry["terminal"] is False
         assert entry["settings"]["StartupNotify"] == "true"
         if native_wayland:
@@ -131,7 +138,7 @@ with tempfile.TemporaryDirectory(prefix="chromium-webapps-regression-") as tempo
           orgm.user = {{ programs = [ "webapps" ]; webapps = selected; }};
         }};
       }};
-    in builtins.attrNames ((module.config.content.home-manager.users.osmarg) {{ inherit lib; }}).xdg.desktopEntries'''
+    in builtins.attrNames ((module.config.content.home-manager.users.osmarg) {{ inherit lib; config = {{}}; }}).xdg.desktopEntries'''
     cases = [
         ('{ id = "Bad_ID"; name = "Bad"; url = "https://example.com"; icon = "web"; }',
          "Invalid Chromium webapp id 'Bad_ID'"),

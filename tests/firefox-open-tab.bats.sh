@@ -161,7 +161,7 @@ wait_for_file "$tmp/firefox-args"
 [[ ! -e "$tmp/bridge-args" ]] || fail 'URL-less tab creation must not query the bridge'
 
 reset_logs
-ROFI_RESULT=pagina FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" PATH="$tmp/bin:$PATH" "$HELPER" --new-tab --prompt
+ROFI_RESULT=pagina FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" XDG_CURRENT_DESKTOP=i3 PATH="$tmp/bin:$PATH" "$HELPER" --new-tab --prompt
 wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '<--new-tab https://pagina.com>' ]] || fail 'prompt tab creation did not normalize the selected URL'
 [[ ! -e "$tmp/bridge-args" ]] || fail 'prompt tab creation must not query the bridge'
@@ -188,6 +188,12 @@ FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="
 grep -Fxq 'i3-msg [con_id=101] focus' "$tmp/focus-args" || fail 'i3 must focus the first Firefox leaf reached through focus ordering'
 wait_for_file "$tmp/firefox-args"
 [[ "$(<"$tmp/firefox-args")" == '<--new-tab about:blank>' ]] || fail 'i3 focus must open a blank tab in the existing Firefox session'
+
+reset_logs
+FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" \
+  I3_TREE="$i3_mru" XDG_CURRENT_DESKTOP=i3 PATH="$tmp/bin:$PATH" "$HELPER" --focus-or-open
+grep -Fxq 'i3-msg [con_id=101] focus' "$tmp/focus-args" || fail 'i3 must focus the existing Firefox window'
+[[ ! -e "$tmp/firefox-calls" ]] || fail 'focusing must preserve existing tabs'
 
 reset_logs
 FIREFOX_ARGS="$tmp/firefox-args" FIREFOX_CALLS="$tmp/firefox-calls" FOCUS_ARGS="$tmp/focus-args" \

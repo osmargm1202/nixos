@@ -33,10 +33,13 @@ let
   nextcloudConfig = pkgs.writeText "orgm-i3-nextcloud.conf" ''
     exec --no-startup-id sh -c '${waitForTray}; exec nextcloud --background'
   '';
+  firefoxHelper = ../../../dotfiles/config/users/osmarg/programs/webapps/.local/bin/firefox-open-tab;
+  browserCommand = if config.orgm.browser.enable then "orgm-browser" else "${firefoxHelper}";
+  browserFocus = if config.orgm.browser.enable then "--restore-or-focus" else "--focus-or-open";
   browserConfig = pkgs.writeText "orgm-i3-browser.conf" ''
-    set $browser $run orgm-browser --restore-or-focus
+    set $browser $run ${browserCommand} ${browserFocus}
     bindsym $mod+w exec --no-startup-id $browser
-    bindsym $mod+m exec --no-startup-id $run orgm-browser --new-tab --prompt
+    bindsym $mod+m exec --no-startup-id $run ${browserCommand} --new-tab --prompt
   '';
   # Adapt the shared personal bindings for the ORGM i3 session.
   personalLines = lib.splitString "\n" (
@@ -57,7 +60,7 @@ let
       (
         program:
         lib.optionalString (builtins.elem program.name config.orgm.user.programs) (
-          if program.name == "webapps" && config.orgm.browser.enable then
+          if program.name == "webapps" then
             "include ${browserConfig}\n"
           else if program.name == "nextcloud" then
             "include ${nextcloudConfig}\n"

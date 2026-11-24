@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import shlex
 import subprocess
+from urllib.parse import urlsplit
 
 root = Path(__file__).resolve().parents[1]
 expected = {
@@ -12,6 +13,7 @@ expected = {
     "orgm-adm": ("ORGM Administration", "https://adm.or-gm.com"),
     "orgm-automation": ("ORGM Automation", "https://automation.or-gm.com"),
     "orgm-code": ("ORGM Code", "https://code.or-gm.com"),
+    "dgii-facturador": ("Facturador Gratuito DGII", "https://fg.dgii.gov.do/ecf/PortalFG/login"),
     "cloud-orgm": ("Cloud ORGM", "https://cloud.or-gm.com/"),
 }
 projection = r'''s: let
@@ -24,9 +26,11 @@ in {
   selected = c.orgm.user.webapps;
   previous = original.orgm.user.webapps;
   programs = c.orgm.user.programs;
+  defaults = c.xdg.mime.defaultApplications;
+  chromium = c.orgm.chromium.enable;
   entries = builtins.mapAttrs (_: d: {
     inherit (d) name exec icon categories terminal settings;
-  }) (s.pkgs.lib.filterAttrs (name: _: s.pkgs.lib.hasPrefix "orgm-webapp-" name) hm.xdg.desktopEntries);
+  }) (s.pkgs.lib.filterAttrs (name: _: s.pkgs.lib.hasPrefix "chrome-" name) hm.xdg.desktopEntries);
   scripts = map (p: { inherit (p) name text; })
     (builtins.filter (p:
       s.pkgs.lib.hasPrefix "orgm-webapp-" (p.name or "")
@@ -39,18 +43,24 @@ result = subprocess.run([
 ], cwd=root, text=True, capture_output=True)
 assert result.returncode == 0, result.stderr
 config = json.loads(result.stdout)
-new_ids = set(expected) - {"cloud-orgm"}
-assert set(config["selected"]) == set(config["previous"]) | new_ids, "X13 must select exactly the existing apps plus five new apps"
+new_ids = {"slc-daily", "slc-vill-docs", "orgm-adm"}
+assert set(config["selected"]) == set(config["previous"]) | new_ids
 assert len(config["selected"]) == len(set(config["selected"])), "No duplicate selection, including cloud-orgm"
 assert "orgm" in config["programs"], "Existing ORGM CLI tools must remain selected"
 scripts = {p["name"]: p["text"] for p in config["scripts"]}
 assert set(scripts) == {"orgm-webapp-" + id for id in config["selected"]}
-assert set(config["entries"]) == set(scripts)
+assert len(config["entries"]) == len(scripts)
+assert config["chromium"]
+for mime in ("text/html", "application/xhtml+xml", "x-scheme-handler/http", "x-scheme-handler/https"):
+    assert config["defaults"][mime] == "firefox.desktop"
 profiles = set()
 # Include a previous catalog consumer: its identity, endpoint and profile stay intact.
 for id, (name, url) in (expected | {"gmail": ("Gmail", "https://gmail.com")}).items():
     identity = "orgm-webapp-" + id
-    entry = config["entries"][identity]
+    parsed = urlsplit(url)
+    app_name = f"{parsed.netloc}_{parsed.path or '/'}"
+    desktop_id = f"chrome-{app_name.replace('/', '_')}-Default"
+    entry = config["entries"][desktop_id]
     assert entry["name"] == name
     assert entry["terminal"] is False
     assert entry["icon"] and entry["categories"]
@@ -58,19 +68,22 @@ for id, (name, url) in (expected | {"gmail": ("Gmail", "https://gmail.com")}).it
     command = shlex.split(entry["exec"])
     assert len(command) == 1 and command[0].startswith("/nix/store/")
     assert command[0].endswith("/bin/" + identity)
-    argv = shlex.split(scripts[identity], comments=True)
+    script = scripts[identity]
+    assert 'if [[ "${XDG_SESSION_TYPE:-}" != x11 && -n "${WAYLAND_DISPLAY:-}" ]]; then' in script
+    assert "set -- --ozone-platform=wayland" in script
+    assert f"set -- --ozone-platform=x11 --class={identity}" in script
+    argv = shlex.split(script.split("exec ", 1)[1], comments=True)
+    argv.insert(0, "exec")
     assert argv[0] == "exec" and argv[1].startswith("/nix/store/")
     assert argv[1].endswith("/bin/chromium")
     profile = "/home/osmarg/.local/share/chromium-webapps/" + id
     assert argv[2:] == [
         "--app=" + url,
         "--user-data-dir=" + profile,
-        "--class=" + identity,
         "--disable-sync",
         "--no-default-browser-check",
-        "--ozone-platform=x11",
+        "$@",
     ]
     assert profile not in profiles
     profiles.add(profile)
-print("PASS: X13 six standalone HTTPS webapps, existing cloud identity, isolated profiles and ORGM CLI preserved")
-print("PASS: existing Gmail generated menu entry and Chromium launcher unchanged")
+print("PASS: Firefox defaults, independent Chromium profiles and GNOME/i3 application identities")

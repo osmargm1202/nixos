@@ -17,7 +17,7 @@ else:
       service={inherit (c.systemd.user.services."org.gnome.Shell@gdm") overrideStrategy restartIfChanged serviceConfig environment;};
       userService=c.systemd.user.services."org.gnome.Shell@user" or null;
       serverService=c.specialisation.server.configuration.systemd.user.services."org.gnome.Shell@gdm" or null;
-      origin=c.orgm.browser.enable;
+      browsers=c.programs.firefox.enable && c.orgm.chromium.enable;
       shell=toString s.pkgs.gnome-shell;
       glibDev=toString s.pkgs.glib.dev;
       gjs=toString s.pkgs.gjs;
@@ -34,7 +34,7 @@ service=c['service']
 assert service['overrideStrategy']=='asDropin' and not service['restartIfChanged']
 assert service['environment']=={}, 'preserve the greeter PATH and inherited environment'
 assert c['userService'] is None and c['serverService'] is None
-assert c['origin'],'Origin/webapp improvements must survive'
+assert c['browsers'],'Firefox and Chromium webapps must remain available'
 environment=service['serviceConfig']['Environment']
 assert environment.startswith('G_RESOURCE_OVERLAYS=/org/gnome/shell/theme=/nix/store/')
 overlay=environment.split('=',2)[2]
@@ -57,4 +57,4 @@ print('PASS: actual Gio resource lookups use both patched CSS variants');'''
 r=subprocess.run([c['gjs']+'/bin/gjs','-c',js,c['shell']+'/share/gnome-shell/gnome-shell-theme.gresource'],env=dict(os.environ,G_RESOURCE_OVERLAYS='/org/gnome/shell/theme='+overlay),capture_output=True,text=True)
 assert r.returncode==0,(r.stdout,r.stderr)
 print(r.stdout.strip())
-print('PASS: shared PNG image, GDM-only drop-in, unchanged user/Server Shell and Origin retained')
+print('PASS: shared PNG image, GDM-only drop-in, unchanged user/Server Shell and Firefox/Chromium available')

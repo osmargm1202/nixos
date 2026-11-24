@@ -8,6 +8,9 @@ projection='''s: let c=s.config; r=c.specialisation.server.configuration; in {
  x11=c.services.xserver.enable; hypr=c.programs.hyprland.enable;
  default=c.services.displayManager.defaultSession;
  autoLogin=c.services.displayManager.autoLogin;
+ browsers=c.programs.firefox.enable && c.orgm.chromium.enable && !c.orgm.browser.enable;
+ defaultBrowser=c.xdg.mime.defaultApplications."x-scheme-handler/https";
+ webapps=c.orgm.user.webapps;
  sunshineDropin=c.home-manager.users.osmarg.xdg.configFile."systemd/user/sunshine.service.d/zz-orgm-session.conf".text;
  serverAutoLogin=c.specialisation.server.configuration.services.displayManager.autoLogin.enable;
  sunshine=c.services.sunshine.enable; tailscale=c.services.tailscale.enable;
@@ -41,6 +44,8 @@ assert r.returncode==0,r.stderr
 c=json.loads(r.stdout)
 assert c['x11'] and c['hypr'] and c['greeter']
 assert c['default']=='orgm-i3' and c['specialisations']==['server']
+assert c['browsers'] and c['defaultBrowser']=='firefox.desktop'
+assert {'orgm-code','orgm-automation','dgii-facturador'} <= set(c['webapps'])
 assert 'ExecStart=\nExecStart=/nix/store/' in c['sunshineDropin']
 assert c['autoLogin']=={'enable':True,'user':'osmarg'} and c['serverAutoLogin'] is False
 assert 'orgm-i3' in c['sessions'] and 'hyprland' in c['sessions'] and 'orgm-gaming' not in c['sessions']
@@ -82,9 +87,9 @@ assert 'i3-lock-background.png -n' in minimal and 'bindsym $mod+l focus right' n
 assert 'for_window [class="(?i)^rofi$"] floating enable' in minimal
 browserConfig=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
  if line.startswith('include /nix/store/') and line.endswith('orgm-i3-browser.conf')).read_text()
-assert 'orgm-browser --restore-or-focus' in browserConfig
+assert 'firefox-open-tab --focus-or-open' in browserConfig
 assert 'bindsym $mod+w exec --no-startup-id $browser' in browserConfig
-assert 'firefox' not in browserConfig
+assert 'firefox-open-tab --new-tab --prompt' in browserConfig
 personal=next(Path(line.removeprefix('include ')) for line in minimal.splitlines()
  if line.startswith('include /nix/store/') and line.endswith('orgm-i3-personal.conf')).read_text()
 assert 'exec steam -silent' in personal

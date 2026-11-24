@@ -12,9 +12,12 @@ let
   chromium = pkgs.chromium.override { enableWideVine = true; };
   origin = config.orgm.browser.enable or false;
   backend = if origin then config.orgm.browser.package else chromium;
-  nativeWayland = origin || config.programs.hyprland.enable;
-  chromiumUrlAppId =
-    url:
+  gnome = config.services.desktopManager.gnome.enable or false;
+  sessionSpecific = !origin && userName == "osmarg"
+    && builtins.elem (config.networking.hostName or "") [ "x13" "orgm" ];
+  nativeWayland = origin || sessionSpecific || config.programs.hyprland.enable;
+  urlAppId =
+    prefix: url:
     let
       parts = builtins.match "https?://([^/?#]+)(/[^?#]*)?([?#].*)?" url;
       host = builtins.elemAt parts 0;
@@ -25,7 +28,7 @@ let
       appName = "${host}_${if path == null then "/" else path}";
     in
     assert parts != null;
-    "${if origin then "brave" else "chrome"}-${lib.replaceStrings [ "/" ] [ "_" ] appName}-Default";
+    "${prefix}-${lib.replaceStrings [ "/" ] [ "_" ] appName}-Default";
   categoryFor =
     category:
     {
@@ -72,7 +75,7 @@ let
     app:
     let
       identity = "orgm-webapp-${app.id}";
-      desktopId = if nativeWayland then chromiumUrlAppId app.url else identity;
+      desktopId = if nativeWayland then urlAppId (if origin then "brave" else "chrome") app.url else identity;
       launcherFlags = [
         "--app=${app.url}"
       ]
@@ -88,84 +91,80 @@ let
       ++ lib.optionals (!origin) [ "--disable-sync" ]
       ++ [ "--no-default-browser-check" ]
       # Origin detects the active session at launch, including optional i3.
-      ++ lib.optionals (!origin) [
+      ++ lib.optionals (!origin && !sessionSpecific) [
         # Native Wayland keeps Nautilus file transfer inside one protocol.
         # X11 desktops retain the explicit WM_CLASS used by their launchers.
         "--ozone-platform=${if nativeWayland then "wayland" else "x11"}"
       ];
       launcher = pkgs.writeShellScriptBin identity ''
-        exec ${lib.getExe backend} ${lib.escapeShellArgs launcherFlags}
+        ${lib.optionalString sessionSpecific ''
+          if [[ "''${XDG_SESSION_TYPE:-}" != x11 && -n "''${WAYLAND_DISPLAY:-}" ]]; then
+            set -- --ozone-platform=wayland
+          else
+            set -- --ozone-platform=x11 --class=${identity}
+          fi
+        ''}
+        exec ${lib.getExe backend} ${lib.escapeShellArgs launcherFlags}${lib.optionalString sessionSpecific " \"$@\"" }
       '';
     in
     {
       inherit launcher;
       entry = lib.nameValuePair desktopId {
-        inherit (app) name icon categories;
+        inherit (app) name categories;
+        icon = "${app.icon}";
         exec = "${launcher}/bin/${identity}";
         comment = "${app.name} in ${if origin then "Brave Origin" else "Chromium"}";
         terminal = false;
         settings = {
           StartupNotify = "true";
         }
-        // lib.optionalAttrs (!nativeWayland || origin) {
+        // lib.optionalAttrs (!nativeWayland || origin || sessionSpecific) {
           StartupWMClass = if origin then desktopId else identity;
         };
       };
     }
   ) checkedApps;
+  migratePins = origin || sessionSpecific;
+  pinMap = lib.listToAttrs (
+    (if origin then [
+      (lib.nameValuePair "firefox" "brave-origin")
+      (lib.nameValuePair "chromium-browser" "brave-origin")
+    ] else [
+      (lib.nameValuePair "brave-origin" "firefox")
+    ])
+    ++ lib.concatMap (
+      app:
+      let
+        target = urlAppId (if origin then "brave" else "chrome") app.url;
+      in
+      map (name: lib.nameValuePair name target) (
+        [
+          "orgm-webapp-${app.id}"
+          (urlAppId (if origin then "chrome" else "brave") app.url)
+        ]
+        ++ lib.optionals (app.id == "outlook") [
+          "brave-outlook.office.com__-Default"
+          "chrome-outlook.office.com__-Default"
+        ]
+      )
+    ) checkedApps
+  );
 in
 {
   config = lib.mkIf enabled {
     home-manager.users.${userName} = { config, lib, ... }: {
       home.packages = map (app: app.launcher) webapps;
       xdg.desktopEntries = lib.listToAttrs (map (app: app.entry) webapps);
-      home.file = lib.mkIf origin (lib.listToAttrs (map (app:
+      home.file = lib.mkIf migratePins (lib.listToAttrs (map (app:
         lib.nameValuePair ".local/share/applications/${app.entry.name}.desktop" {
           source = "${config.home.path}/share/applications/${app.entry.name}.desktop";
         }) webapps));
-      home.activation.originLauncherPins = lib.mkIf origin (
+      home.activation.browserLauncherPins = lib.mkIf migratePins (
         lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           $DRY_RUN_CMD ${pkgs.coreutils}/bin/env PATH=${lib.makeBinPath [ pkgs.glib ]}:$PATH \
+            ${lib.optionalString gnome "GSETTINGS_SCHEMA_DIR=${pkgs.gnome-shell}/share/gsettings-schemas/${pkgs.gnome-shell.name}/glib-2.0/schemas"} \
             ${pkgs.python3}/bin/python3 ${./browser-pins.py} \
-            ${pkgs.writeText "origin-pin-map.json" (
-              builtins.toJSON (
-                builtins.listToAttrs (
-                  [
-                    {
-                      name = "firefox";
-                      value = "brave-origin";
-                    }
-                    {
-                      name = "chromium-browser";
-                      value = "brave-origin";
-                    }
-                  ]
-                  ++ lib.concatMap (
-                    app:
-                    let
-                      target = chromiumUrlAppId app.url;
-                    in
-                    [
-                      {
-                        name = "orgm-webapp-${app.id}";
-                        value = target;
-                      }
-                      {
-                        name = lib.replaceStrings [ "brave-" ] [ "chrome-" ] target;
-                        value = target;
-                      }
-                    ]
-                    # Preserve favorites pinned before the Hotmail portal changed.
-                    ++ lib.optionals (app.id == "outlook") (
-                      map (name: { inherit name; value = target; }) [
-                        "brave-outlook.office.com__-Default"
-                        "chrome-outlook.office.com__-Default"
-                      ]
-                    )
-                  ) checkedApps
-                )
-              )
-            )}
+            ${pkgs.writeText "browser-pin-map.json" (builtins.toJSON pinMap)} ${if origin then "origin" else "chromium"}
         ''
       );
     };

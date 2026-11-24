@@ -191,20 +191,17 @@ PAM. Server keeps fprintd disabled. Autologin remains enabled: no fingerprint is
 requested at automatic login, but Super+L still locks the session. Fingerprints
 do not unlock LUKS or decrypt a password-protected GNOME keyring.
 
-Bitwarden Desktop is installed with its upstream `auth_self` polkit policy.
-A declarative native-messaging manifest connects the official extension to the
-packaged desktop proxy in Brave Origin's own configuration directory. The app's
-automatic integration only recognizes standard Brave's directory. Existing
-vault data and browser preferences are not modified.
+Bitwarden Desktop uses its upstream `auth_self` polkit policy. Firefox's
+native-messaging manifest allows the official extension to connect to the
+packaged desktop proxy.
 
 To finish privately, open Bitwarden Desktop and sign in to the same server as
 the extension, unlock the vault, then enable **Settings → Security → Unlock with
 system authentication** and **Settings → App settings → Allow browser
-integration**. In the Brave extension enable **Settings → Account security →
-Unlock with biometrics** and approve the connection. Keep Desktop running; if
-Brave requests the native-app permission, allow it for Bitwarden. Test locking
-and unlocking the extension. A fresh Desktop start still requires the initial
-master-password/PIN unlock; biometrics do not replace that first unlock.
+integration**. In the Firefox extension enable **Settings → Account security →
+Synchronize unlock with desktop** and approve the connection. Keep Desktop
+running and allow native messaging if prompted. Test locking and unlocking
+the extension after signing in.
 See https://bitwarden.com/help/biometrics/ for current UI instructions.
 
 Test sudo physically with `sudo -k` followed by `sudo -v`, then touch the sensor
@@ -212,20 +209,9 @@ when prompted. The serial PAM conversation may wait for fingerprint failure or
 timeout before password fallback. No enrollment, biometric test or vault login
 is performed automatically by deployment.
 
-## Netflix and protected video in Brave Origin
+## Netflix and protected video
 
-Chromium webapps explicitly enable `enableWideVine`. Brave Origin's selected
-package has no equivalent Nix override; its own opt-in is the Local State
-preference `brave.widevine_opted_in`. The shared Origin preference migration
-sets it true while the browser is closed, retaining private backups and other
-preferences. It never edits a running profile. This setting lets Brave download
-its Widevine CDM; it does not bundle a second browser or a different CDM.
-
-For an already open browser, go to `brave://settings/extensions`, enable
-**Widevine**, then restart Brave when prompted. Check Widevine CDM under
-`brave://components` and retry Netflix. If Widevine was already enabled but DRM
-still fails, Brave documents toggling it off/on and relaunching. Browser restart
-is a user step; system activation does not close existing browser/webapp windows.
-Configuration/deployment success alone does not prove Netflix playback.
-
-Reference: https://support.brave.app/hc/en-us/articles/360023851591-How-do-I-view-DRM-protected-content .
+The Netflix webapp uses the locked Chromium package with Widevine enabled.
+Open Netflix from the application menu and play a title to verify DRM in
+that profile. See the [webapp setup](../../../docs/x13-webapps.md) for
+launcher identities and profile locations.
