@@ -55,6 +55,8 @@ in {
       home.activation.remoteDesktopProfiles = lib.hm.dag.entryAfter [ "orgmDotBootstrap" "writeBoundary" ] ''
       if [ -x "$HOME/.local/bin/orgm-remote-desktop" ] \
         && ${pkgs.flatpak}/bin/flatpak info org.remmina.Remmina >/dev/null 2>&1; then
+        # System activation can run before the graphical login exports this.
+        export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(${pkgs.coreutils}/bin/id -u)}"
         # Retire only our marked no-switch rollout units, otherwise they would
         # shadow future declarative /etc/systemd/user definitions permanently.
         units="$HOME/.config/systemd/user"

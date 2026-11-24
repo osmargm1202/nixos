@@ -117,17 +117,15 @@ let
       text = "[Unit]\nConditionEnvironment=${condition}\n";
     }
   ) sessionGuards;
-  # Headless desktop size for streaming. The virtual DFP-5 monitor only offers
-  # 1920x1080, so NVIDIA renders the desktop at the requested size
-  # (ViewPortIn) and scales it to that output; Sunshine captures the full
-  # desktop. Without an argument it uses the size Moonlight asked for.
+  # Preserve the preferred EDID timing while scaling the desktop to the
+  # Moonlight client's requested size through NVIDIA's ViewPortIn.
   resolution = pkgs.writeShellApplication {
     name = "orgm-resolution";
     runtimeInputs = [ config.hardware.nvidia.package.settings pkgs.xorg.xrandr ];
     text = ''
       size="''${1:-''${SUNSHINE_CLIENT_WIDTH:-}x''${SUNSHINE_CLIENT_HEIGHT:-}}"
       case "$size" in
-        reset|x|1920x1080) mode="DFP-5: 1920x1080 +0+0" ;;
+        reset|x|1920x1080) mode="DFP-5: nvidia-auto-select +0+0" ;;
         *)
           if ! [[ "$size" =~ ^([0-9]{3,4})x([0-9]{3,4})$ ]] ||
             ((BASH_REMATCH[1] < 640 || BASH_REMATCH[1] > 3840 ||
@@ -135,7 +133,7 @@ let
             echo "usage: orgm-resolution [WIDTHxHEIGHT|reset] (640x480 to 3840x2400)" >&2
             exit 2
           fi
-          mode="DFP-5: 1920x1080 +0+0 {ViewPortIn=$size}" ;;
+          mode="DFP-5: nvidia-auto-select +0+0 {ViewPortIn=$size}" ;;
       esac
       nvidia-settings --assign CurrentMetaMode="$mode" >/dev/null
       xrandr --query | head -n 1
@@ -169,8 +167,20 @@ let
       # treats a defined WAYLAND_DISPLAY as Wayland and never tries X11.
       unset WAYLAND_DISPLAY WAYLAND_SOCKET
       ${waitForTray}
+      # Select an active output even if XRandR has no connected primary.
+      output="$("${pkgs.xrandr}/bin/xrandr" --current | "${pkgs.gawk}/bin/awk" '
+        $2 == "connected" && / [0-9]+x[0-9]+[+-][0-9]+[+-][0-9]+ / {
+          if ($3 == "primary") { primary = $1; exit }
+          if (!first) first = $1
+        }
+        END { if (primary || first) print (primary ? primary : first) }
+      ')"
+      outputArgs=()
+      if [ -n "$output" ]; then
+        outputArgs+=("output_name=$output")
+      fi
       export LD_LIBRARY_PATH=/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-      exec ${config.services.sunshine.package}/bin/sunshine capture=x11 \
+      exec ${config.services.sunshine.package}/bin/sunshine capture=x11 "''${outputArgs[@]}" \
         global_prep_cmd=${lib.escapeShellArg sunshinePrep} ${sunshineSettingArgs} "$@"
     fi
     exec /run/wrappers/bin/sunshine ${sunshineSettingArgs} "$@"

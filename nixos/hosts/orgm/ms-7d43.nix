@@ -1,5 +1,23 @@
 { lib, pkgs, userName, profileName ? null, ... }:
 
+let
+  # EDID for the headless Xorg output. The preferred timing is 1920x1080 at
+  # 144 Hz (CVT reduced blanking, 346.54 MHz). The second timing is 1080p60.
+  headlessEdid = pkgs.runCommand "orgm-1080p144-edid.bin" {
+    nativeBuildInputs = [ pkgs.xxd ];
+  } ''
+    xxd -r -p > "$out" <<'EDID'
+    00ffffffffffff0031d8000000000000
+    05160104a5321c78e25ec0a4594a9825
+    205054000000d1c00101010101010101
+    0101010101015e8780a070384d403020
+    3500f4191100001a023a801871382d40
+    582c4500f4191100001e000000fd003b
+    9142a823010a202020202020000000fc
+    004f52474d20464844203134340a009e
+    EDID
+  '';
+in
 {
   imports = [ ./audio.nix ./i3-session.nix ./web-panels.nix ../../apps/youtube-send.nix ];
 
@@ -26,14 +44,12 @@
     };
     defaultSession = lib.mkForce "orgm-i3";
   };
-  # Headless streaming: Xorg (the i3 session only; Hyprland does not read it)
-  # always sees a 1920x1080 monitor on DFP-5, the LG's usual port, so Sunshine
-  # has a full-size desktop without a display attached. With the LG plugged
-  # in, i3 also runs it at 1920x1080 60 Hz.
+  # Xorg exposes DFP-5 as DP-4, including headless boots for Sunshine.
+  # nvidia-auto-select chooses the preferred timing from the EDID.
   services.xserver.screenSection = lib.mkIf (profileName == "hyprland") ''
     Option "ConnectedMonitor" "DFP-5"
-    Option "CustomEDID" "DFP-5:${pkgs.edid-generator}/lib/firmware/edid/1920x1080.bin"
-    Option "MetaModes" "DFP-5: 1920x1080 +0+0"
+    Option "CustomEDID" "DFP-5:${headlessEdid}"
+    Option "MetaModes" "DFP-5: nvidia-auto-select +0+0"
   '';
 
   # Load NVIDIA KMS in initrd so Plymouth can render on the primary GPU early.
