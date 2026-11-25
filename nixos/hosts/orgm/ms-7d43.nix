@@ -1,4 +1,4 @@
-{ lib, pkgs, userName, profileName ? null, ... }:
+{ config, lib, pkgs, userName, profileName ? null, ... }:
 
 let
   # EDID for the headless Xorg output. The preferred timing is 1920x1080 at
@@ -16,6 +16,46 @@ let
     9142a823010a202020202020000000fc
     004f52474d20464844203134340a009e
     EDID
+  '';
+  physicalXorgConfig = lib.removePrefix "-config " (lib.findFirst
+    (lib.hasPrefix "-config ")
+    (throw "ORGM requires the generated Xorg configuration")
+    config.services.xserver.displayManager.xserverArgs);
+  headlessScreenOptions = pkgs.writeText "orgm-headless-screen-options" ''
+    Option "ConnectedMonitor" "DFP-5"
+    Option "CustomEDID" "DFP-5:${headlessEdid}"
+    Option "MetaModes" "DFP-5: nvidia-auto-select +0+0"
+  '';
+  headlessXorgConfig = pkgs.runCommand "orgm-headless-xorg.conf" { } ''
+    marker='^[[:blank:]]*# orgm-headless-screen-options$'
+    test "$(grep -c "$marker" ${lib.escapeShellArg physicalXorgConfig})" -eq 1
+    sed "/$marker/r ${headlessScreenOptions}" ${lib.escapeShellArg physicalXorgConfig} > "$out"
+  '';
+  xorg = pkgs.writeShellScript "orgm-xorg" ''
+    # Read kernel connector state before Xorg can force a virtual output.
+    # Allow a short window for DisplayPort to report a connected monitor.
+    for attempt in {1..8}; do
+      for status in /sys/class/drm/card[0-9]*-*/status; do
+        [[ -r "$status" && "$(<"$status")" == connected ]] || continue
+        connector="''${status%/status}"
+        card="''${connector%%-*}"
+        if [[ "$(${pkgs.coreutils}/bin/readlink -f "$card/device/driver")" == /sys/bus/pci/drivers/nvidia ]]; then
+          echo "ORGM Xorg: using physical monitor (''${connector##*/})" >&2
+          exec ${pkgs.xorg-server.out}/bin/X "$@"
+        fi
+      done
+      ${pkgs.coreutils}/bin/sleep 0.25
+    done
+
+    args=("$@")
+    for ((i = 0; i + 1 < $#; i++)); do
+      if [[ "''${args[i]}" == -config && "''${args[i+1]}" == ${lib.escapeShellArg physicalXorgConfig} ]]; then
+        args[i+1]=${headlessXorgConfig}
+        echo "ORGM Xorg: using headless DP-4 at 144 Hz" >&2
+        break
+      fi
+    done
+    exec ${pkgs.xorg-server.out}/bin/X "''${args[@]}"
   '';
 in
 {
@@ -44,13 +84,10 @@ in
     };
     defaultSession = lib.mkForce "orgm-i3";
   };
-  # Xorg exposes DFP-5 as DP-4, including headless boots for Sunshine.
-  # nvidia-auto-select chooses the preferred timing from the EDID.
-  services.xserver.screenSection = lib.mkIf (profileName == "hyprland") ''
-    Option "ConnectedMonitor" "DFP-5"
-    Option "CustomEDID" "DFP-5:${headlessEdid}"
-    Option "MetaModes" "DFP-5: nvidia-auto-select +0+0"
-  '';
+  services.xserver = lib.mkIf (profileName == "hyprland" && config.services.xserver.enable) {
+    screenSection = "# orgm-headless-screen-options";
+    displayManager.xserverBin = lib.mkOverride 90 "${xorg}";
+  };
 
   # Load NVIDIA KMS in initrd so Plymouth can render on the primary GPU early.
   boot.initrd.kernelModules = [

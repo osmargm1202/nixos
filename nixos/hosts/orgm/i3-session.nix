@@ -119,10 +119,14 @@ let
   ) sessionGuards;
   # Preserve the preferred EDID timing while scaling the desktop to the
   # Moonlight client's requested size through NVIDIA's ViewPortIn.
+  # A connected physical monitor owns its own mode and refresh rate.
   resolution = pkgs.writeShellApplication {
     name = "orgm-resolution";
     runtimeInputs = [ config.hardware.nvidia.package.settings pkgs.xorg.xrandr ];
     text = ''
+      outputs="$(xrandr --prop)"
+      # Hexadecimal product name of the synthetic EDID, "ORGM FHD 144".
+      [[ "$outputs" == *4f52474d2046484420313434* ]] || exit 0
       size="''${1:-''${SUNSHINE_CLIENT_WIDTH:-}x''${SUNSHINE_CLIENT_HEIGHT:-}}"
       case "$size" in
         reset|x|1920x1080) mode="DFP-5: nvidia-auto-select +0+0" ;;
