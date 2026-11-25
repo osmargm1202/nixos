@@ -20,7 +20,7 @@ base // {
   };
   # Locked release 25 supports Shell 45–49, but this host selects Shell 50.
   # Other hosts keep their shared package selection unchanged.
-  home-manager.users.${userName} = {
+  home-manager.users.${userName} = { lib, ... }: {
     home.packages = builtins.filter
       (p: isExtension p && p.extensionUuid != "gnome-ui-tune@itstime.tech")
       base.environment.systemPackages;
@@ -35,6 +35,15 @@ base // {
         '';
       };
     dconf.settings = {
+      "org/gnome/desktop/input-sources".sources = map lib.hm.gvariant.mkTuple [
+        [ "xkb" "us" ]
+        [ "xkb" "latam" ]
+      ];
+      "org/gnome/desktop/wm/keybindings".switch-input-source = [
+        "<Control><Super>space"
+        "<Super>space"
+        "XF86Keyboard"
+      ];
       "org/gnome/desktop/lockdown".disable-lock-screen = false;
       "org/gnome/desktop/screensaver".lock-enabled = true;
       "org/gnome/settings-daemon/plugins/media-keys".screensaver = [ "<Super>l" ];
