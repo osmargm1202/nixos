@@ -60,6 +60,8 @@ let
   };
 in
 {
+  imports = [ ../../profiles/usb-audio-monitor-mute.nix ];
+
   # Corsair HS55 SURROUND (1b1c:0a86) disconnects when Discord cycles audio
   # due to USB autosuspend (default: 2s). Setting to -1 disables it.
   services.udev.extraRules = ''

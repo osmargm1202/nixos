@@ -8,6 +8,7 @@ in
 {
   imports = [
     ../../profiles/i3/light-session.nix
+    ../../profiles/usb-audio-monitor-mute.nix
     ./server.nix
     ./webapps.nix
     ../../hardware/gpu/intel.nix
