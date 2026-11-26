@@ -75,7 +75,6 @@ let
     ./nixos/apps/deskflow.nix
     ./nixos/gaming/default.nix
     ./nixos/hosts/orgm/home-assistant.nix
-    ./nixos/hosts/orgm/team.nix
   ];
   jarqDesktopModules = [
     ./nixos/apps/deskflow.nix
