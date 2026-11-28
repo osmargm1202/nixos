@@ -148,6 +148,23 @@ let
       ${pkgs.rofi}/bin/rofi -dmenu -i -p 'Resolución')" || exit 0
     [ -n "$choice" ] && exec ${resolution}/bin/orgm-resolution "$choice"
   '';
+  monitorHotplug = pkgs.writeShellApplication {
+    name = "orgm-i3-monitor-hotplug";
+    runtimeInputs = [ pkgs.autorandr pkgs.xrandr pkgs.gawk pkgs.coreutils ];
+    text = ''
+      # NVIDIA can report an HDMI connection in XRandR without a DRM hotplug event.
+      previous=""
+      while true; do
+        outputs="$(xrandr --query | awk '$2 == "connected" {print $1}')"
+        if [[ -n "$outputs" && "$outputs" != "$previous" ]]; then
+          if autorandr --change --match-edid; then
+            previous="$outputs"
+          fi
+        fi
+        sleep 5
+      done
+    '';
+  };
   sunshineEnabled = config.services.sunshine.enable;
   # Sunshine runs these around every stream: size the desktop to the client
   # on start, return to 1920x1080 when the stream app quits.
@@ -302,6 +319,17 @@ in
     systemd.user.services = lib.mkMerge [
       (builtins.removeAttrs existing.config.systemd.user.services [ "picom" ])
       {
+        orgm-i3-monitor-hotplug = {
+          description = "Apply saved monitor layouts in the ORGM i3 session";
+          wantedBy = [ target ];
+          partOf = [ target ];
+          unitConfig.ConditionEnvironment = "XDG_SESSION_TYPE=x11";
+          serviceConfig = {
+            ExecStart = lib.getExe monitorHotplug;
+            Restart = "on-failure";
+            RestartSec = 2;
+          };
+        };
         i3-clipcat = {
           wantedBy = lib.mkForce [ target ];
           partOf = lib.mkForce [ target ];

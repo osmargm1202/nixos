@@ -228,18 +228,7 @@ in
     flake = lib.mkDefault "/home/${userName}/Hobby/nixos";
   };
 
-  # Keep earlyoom idle through five percent available RAM. At four percent it
-  # sends SIGTERM to the largest RSS process; SIGKILL remains reserved for two.
-  services.earlyoom = {
-    enable = true;
-    freeMemThreshold = 4;
-    freeMemKillThreshold = 2;
-    freeSwapThreshold = 100;
-    freeSwapKillThreshold = 100;
-    extraArgs = [ "--sort-by-rss" ];
-    enableNotifications = true;
-  };
-  # Resolve conflicting EarlyOOM/smartd defaults while preserving desktop notifications.
+  # Forward system service notifications to the desktop.
   services.systembus-notify.enable = true;
 
   # Weekly auto-upgrade moved to ./functions/autoupdate.nix — import it per host

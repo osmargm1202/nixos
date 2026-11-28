@@ -68,19 +68,6 @@ in
     ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="1b1c", ATTR{idProduct}=="0a86", ATTR{power/autosuspend}="-1"
   '';
 
-  # Discord must not silently increase the physical microphone's gain.
-  # These match both its Flatpak clients and the native Discord executable.
-  services.pipewire.extraConfig.pipewire-pulse."90-orgm-discord-capture" = {
-    "pulse.rules" = [ {
-      matches = [
-        { "application.process.binary" = "Discord"; }
-        { "application.process.binary" = "discord"; }
-        { "pipewire.access.portal.app_id" = "com.discordapp.Discord"; }
-      ];
-      actions.quirks = [ "block-source-volume" ];
-    } ];
-  };
-
   services.pipewire.wireplumber.extraConfig."90-orgm-audio-policy" = {
     "monitor.alsa.rules" = [
       {

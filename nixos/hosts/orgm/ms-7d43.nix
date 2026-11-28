@@ -71,9 +71,6 @@ in
   services.fstrim.enable = lib.mkDefault true;
   services.smartd.enable = lib.mkDefault true;
 
-  # This desktop should not have games terminated by the shared EarlyOOM policy.
-  services.earlyoom.enable = lib.mkForce false;
-
   # Temporary server use: boot straight into the lightweight i3 (X11) session
   # so Sunshine, Syncthing, Nextcloud and Tailscale come up unattended.
   # Hyprland stays selectable from SDDM after logging out.

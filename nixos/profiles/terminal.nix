@@ -113,20 +113,6 @@ in
   environment.etc."atuin/config.toml".text = "";
   programs.mtr.enable = true;
 
-  # Same thresholds as common.nix. Headless: no desktop notifications, and the
-  # Windows VM, the agent hub and remote access are never the first victim.
-  services.earlyoom = {
-    enable = true;
-    freeMemThreshold = 4;
-    freeMemKillThreshold = 2;
-    freeSwapThreshold = 100;
-    freeSwapKillThreshold = 100;
-    extraArgs = [
-      "--sort-by-rss"
-      "--avoid"
-      "^(qemu-system-x86|amux-server-rs|sshd|tailscaled|nginx)$"
-    ];
-  };
   programs.git.enable = hasProgram "git";
 
   hardware.enableRedistributableFirmware = true;

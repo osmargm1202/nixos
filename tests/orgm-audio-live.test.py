@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Verify the applied Discord quirk without recording or playing audio.
+"""Verify Discord clients can set the active microphone volume.
 
 Run with PACTL=/path/to/pactl python3 tests/orgm-audio-live.test.py.
-A failed policy may briefly lower the source volume; always restore it.
+The test requests the current volume, without recording or playing audio.
 """
 import json
 import os
@@ -26,13 +26,6 @@ test_env = {
     'LC_ALL': 'C',
     'PULSE_PROP': 'application.process.binary=Discord application.name=orgm-audio-policy-test',
 }
-try:
-    result = subprocess.run(
-        [pactl, 'set-source-volume', source, '70%'],
-        env=test_env, text=True, capture_output=True,
-    )
-    assert result.returncode != 0 and 'Access denied' in result.stderr, result.stderr
-    assert volume() == before, 'Discord client changed physical microphone volume'
-finally:
-    subprocess.run([pactl, 'set-source-volume', source, *original], check=True)
-print('PASS: Discord cannot change physical microphone volume')
+subprocess.run([pactl, 'set-source-volume', source, *original], env=test_env, check=True)
+assert volume() == before, 'Setting the current volume changed the microphone volume'
+print('PASS: Discord clients can set microphone volume')

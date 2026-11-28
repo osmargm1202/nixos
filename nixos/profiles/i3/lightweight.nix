@@ -36,11 +36,6 @@
     memoryPercent = 50;
     priority = 100;
   };
-  # Let swap absorb short bursts before killing applications.
-  services.earlyoom = {
-    freeSwapThreshold = lib.mkForce 10;
-    freeSwapKillThreshold = lib.mkForce 5;
-  };
   boot.tmp.useTmpfs = false;
   services.fstrim.enable = true;
   services.journald.extraConfig = "SystemMaxUse=128M\nRuntimeMaxUse=32M";
